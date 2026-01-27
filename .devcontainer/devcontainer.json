@@ -6,6 +6,9 @@
   },
   "workspaceFolder": "/workspace",
   "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,consistency=cached",
+  "mounts": [
+  "source=/mnt/git,target=/mnt/git,type=bind"
+  ],
   "runArgs": ["--gpus", "all"],
   "customizations": {
     "vscode": {
