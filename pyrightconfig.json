@@ -3,7 +3,6 @@
   "include": ["./python"],
   "exclude": [
     "**/node_modules",
-    "**/.venv",
     "**/__pycache__",
     "**/build",
     "**/dist"
