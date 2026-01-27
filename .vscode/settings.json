@@ -1,0 +1,19 @@
+{
+  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+  "cmake.configureOnOpen": true,
+  "cmake.buildDirectory": "${workspaceFolder}/build",
+  "files.associations": {
+    "*.cu": "cuda-cpp",
+    "*.cuh": "cuda-cpp",
+    "*.hpp": "cpp",
+    "*.h": "cpp"
+  },
+  "python.envFile": "${workspaceFolder}/.env",
+  "python-envs.pythonProjects": [],
+  "python.analysis.extraPaths": [
+    "./python",
+    "./python"
+  ],
+  "python-envs.defaultEnvManager": "ms-python.python:venv"
+}
