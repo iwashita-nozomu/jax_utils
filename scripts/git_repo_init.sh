@@ -3,7 +3,7 @@ set -euo pipefail
 
 read -p "Enter new repository name: " REPO_NAME
 
-REMOTE_BASE="/git"
+REMOTE_BASE="/mnt/git"
 NEW_REMOTE="${REMOTE_BASE}/${REPO_NAME}.git"
 
 # 前提チェック：template を clone した repo か
@@ -32,8 +32,8 @@ echo "[INFO] origin changed:"
 echo "  $OLD_ORIGIN"
 echo "  -> $NEW_REMOTE"
 
-# template remote を /git/template.git に固定し、push を無効化
-TEMPLATE_URL="/git/template.git"
+# template remote を /mnt/git/template.git に固定し、push を無効化
+TEMPLATE_URL="/mnt/git/template.git"
 if git remote | grep -qx template; then
   git remote set-url template "$TEMPLATE_URL"
 else

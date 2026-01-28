@@ -14,4 +14,6 @@ RUN python3 -m pip install --upgrade pip
 RUN pip install --no-cache-dir "jax[cuda12]"
 
 WORKDIR /work
+RUN git config --global --add safe.directory /mnt/git/template.git
+
 CMD ["/bin/bash"]
