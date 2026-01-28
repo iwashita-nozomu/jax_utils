@@ -3,3 +3,5 @@
 ./pythonを対象にしてください。
 ./jupyterも対象にしてください。
 複雑な分岐は避け，シンプルなコードを心がけてください。# GitHub Copilot Instructions
+./documentsにコーディング規約を置いています。規約に従ってください
+
