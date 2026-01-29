@@ -5,10 +5,11 @@ read -p "Enter new repository name: " REPO_NAME
 
 mkdir -p ./python/${REPO_NAME}
 
-touch ./python/${REPO_NAME}/__init__.py
-git add ./python/${REPO_NAME}/__init__.py
-git commit -m "chore: add ${REPO_NAME} package"
+# touch ./python/${REPO_NAME}/__init__.py
+# git add ./python/${REPO_NAME}/__init__.py
+# git commit -m "chore: add ${REPO_NAME} package"
 
+./scripts/create_toml.sh "${REPO_NAME}"
 
 REMOTE_BASE="/mnt/git"
 NEW_REMOTE="${REMOTE_BASE}/${REPO_NAME}.git"
