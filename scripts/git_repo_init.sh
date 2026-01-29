@@ -3,6 +3,13 @@ set -euo pipefail
 
 read -p "Enter new repository name: " REPO_NAME
 
+mkdir -p ./python/${REPO_NAME}
+
+touch ./python/${REPO_NAME}/__init__.py
+git add ./python/${REPO_NAME}/__init__.py
+git commit -m "chore: add ${REPO_NAME} package"
+
+
 REMOTE_BASE="/mnt/git"
 NEW_REMOTE="${REMOTE_BASE}/${REPO_NAME}.git"
 
