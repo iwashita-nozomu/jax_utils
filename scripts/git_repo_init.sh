@@ -55,6 +55,8 @@ git push -u origin "$BRANCH"
 
 git branch -m main
 
+git push -u origin main
+
 git add .
 git commit -m "chore: initialize ${REPO_NAME} repository"
 
