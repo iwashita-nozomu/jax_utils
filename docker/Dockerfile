@@ -12,8 +12,9 @@ RUN python3 -m pip install --upgrade pip
 
 # JAXは「コンテナ内同梱CUDA/cuDNN」を使う版（localじゃない）
 RUN pip install --no-cache-dir "jax[cuda12]"
+RUN pip install jaxtyping typeguard equinox
 
 WORKDIR /work
 RUN git config --global --add safe.directory /mnt/git/template.git
-
+RUN git config --global --add safe.directory /mnt/git/jax_util.git
 CMD ["/bin/bash"]
