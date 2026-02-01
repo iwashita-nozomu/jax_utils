@@ -7,7 +7,7 @@
     "**/build",
     "**/dist"
   ],
-  "extraPaths": ["./python"],
+  "extraPaths": ["./python", "./python/jax_util"],
   "reportUnknownParameterType": "none",
   "reportUnknownArgumentType": "none",
   "reportUnknownVariableType": "none",

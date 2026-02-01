@@ -13,7 +13,8 @@
   "python-envs.pythonProjects": [],
   "python.analysis.extraPaths": [
     "./python",
-    "./python"
+    "./python",
+    "./python/jax_util"
   ],
   "python-envs.defaultEnvManager": "ms-python.python:system"
 }

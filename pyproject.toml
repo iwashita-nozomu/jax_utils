@@ -28,3 +28,33 @@ target-version = "py310"
 
 [tool.ruff.lint]
 select = ["E", "F", "I"]
+
+[tool.pyright]
+# 型検査は strict を基本方針とします。
+typeCheckingMode = "strict"
+
+# 対象ディレクトリは python 配下に限定します。
+include = ["./python"]
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  "**/build",
+  "**/dist",
+]
+
+# ローカルパッケージ解決のため、python を追加します。
+extraPaths = ["./python", "./python/jax_util"]
+
+# 既存の型情報が薄い依存に配慮し、unknown 系は抑制します。
+reportUnknownParameterType = "none"
+reportUnknownArgumentType = "none"
+reportUnknownVariableType = "none"
+reportUnknownMemberType = "none"
+
+# Any は警告扱いとし、必要に応じて段階的に改善します。
+reportAny = "warning"
+
+[tool.pyright.diagnosticSeverityOverrides]
+# 既存コードとの整合性を優先し、必要箇所から段階的に強化します。
+reportUnknownMemberType = "none"
+reportAny = "none"
