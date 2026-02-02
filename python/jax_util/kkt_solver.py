@@ -4,7 +4,7 @@ import os
 if __name__=="__main__":
     os.environ['CUDA_VISIBLE_DEVICES'] = '1'
     os.environ['XLA_PYTHON_CLIENT_PREALLOCATE']='false'
-
+    os.environ["JAX_ASYNC_DISPATCH"] = "0"
 from typing import Any, Optional
 
 import equinox as eqx
@@ -17,10 +17,9 @@ from _check_mv_operator import (
     check_spd_quadratic_form,
     print_Mv_report,
 )
-from _env_value import DEBUG, DEFAULT_DTYPE, EPS
-from _fgmres import add_state, gmres_solve, initialize_fgmres_state
+from base import *
+from _fgmres import *
 from _minres import MINRESState, pminres_solve
-from _type_aliaces import LinearMap, Matrix, Scalar, Vector
 from lobpcg import (
     BlockEigenState,
     SubspaceBasis,
@@ -30,8 +29,6 @@ from lobpcg import (
 )
 
 
-def _identity(v: Vector) -> Vector:
-    return v
 
 class KKTState(eqx.Module):
     S_inv_state:BlockEigenState
@@ -40,9 +37,9 @@ class KKTState(eqx.Module):
     method:str = eqx.field(static=True)  # 'minres' or 'fgmres'
 
 def initialize_kkt_state(
-    Hv_initial:LinearMap,
-    Bv_initial:LinearMap,
-    BTv_initial:LinearMap,
+    Hv_initial:LinearOperator,
+    Bv_initial:LinearOperator,
+    BTv_initial:LinearOperator,
     n_primal:int,
     n_dual:int,
     r_Hv_min:int,
@@ -53,6 +50,9 @@ def initialize_kkt_state(
     restart:Optional[int]=None,
 
 ) -> KKTState:
+    if method=='fgmres':
+        assert "Do not use FGMRES for now"
+
     H_inv_state = init_spectral_precond(
         Mv=Hv_initial,
         n=n_primal,
@@ -62,15 +62,17 @@ def initialize_kkt_state(
 
     H_eig,H_inv_state,H_info=update_subspace(
         Hv_initial,
-        _identity,
+        LinOp(lambda v: v), # 単位行列を前処理に使う
         H_inv_state,
         maxiter=5,
     )
     
     approx_H_inv=make_rank_r_spectral_precond(basis=H_eig,)
 
-    def _schur_mv(v: Vector) -> Vector:
-        return Bv_initial(approx_H_inv(BTv_initial(v)))
+    # def _schur_mv(v: Vector) -> Vector:
+    #     return (Bv_initial * approx_H_inv *BTv_initial) @ v
+
+    _schur_mv = Bv_initial * approx_H_inv * BTv_initial
 
     S_inv_state=init_spectral_precond(
         Mv=_schur_mv,
@@ -105,9 +107,9 @@ def initialize_kkt_state(
 
 
 def _kkt_block_solver(
-    Hv: LinearMap,
-    Bv: LinearMap,
-    BTv: LinearMap,
+    Hv: LinearOperator,
+    Bv: LinearOperator,
+    BTv: LinearOperator,
     rhs_x: Vector,
     rhs_lam: Vector,
     kkt_state: KKTState,
@@ -120,7 +122,7 @@ def _kkt_block_solver(
     H_eig,new_H_inv_state,H_info=update_subspace(Hv,
                                           base_precond=base_precond_H,
                                           old_state=kkt_state.H_inv_state,
-                                          maxiter=1000,
+                                          maxiter=100,
                                           tol=EPS)
     
     H_inv_approx=make_rank_r_spectral_precond(basis=H_eig,)
@@ -128,12 +130,14 @@ def _kkt_block_solver(
     if DEBUG:
         jax.debug.print("LOBPCG update H_inv: info: {info}\n", info=H_info)
 
-    def Sv(v: Vector) -> Vector:
-        #Sv = B H^{-1} B^T v
-        Btv=BTv(v)
-        Hinv_Btv=H_inv_approx(Btv)
-        return Bv(Hinv_Btv)
+    # def Sv(v: Vector) -> Vector:
+    #     #Sv = B H^{-1} B^T v
+    #     Btv=BTv(v)
+    #     Hinv_Btv=H_inv_approx(Btv)
+    #     return Bv(Hinv_Btv)
     
+    Sv = Bv * H_inv_approx * BTv
+
     base_precond_S=make_rank_r_spectral_precond(basis=SubspaceBasis.from_state(kkt_state.S_inv_state))
     
     S_eig,new_S_inv_state,S_info=update_subspace(Sv,
@@ -151,8 +155,8 @@ def _kkt_block_solver(
         n_dual=rhs_lam.shape[0]
         x=v[:n_primal]
         lam=v[n_primal:]
-        top=Hv(x)+BTv(lam)
-        bot=Bv(x)
+        top=Hv @ x+BTv @ lam
+        bot=Bv @ x
         return jnp.concatenate([top,bot],axis=0)
 
 
@@ -164,9 +168,9 @@ def _kkt_block_solver(
         lam=v[n_primal:]
 
         # top=H_inv_approx(x + BTv(S_inv_approx(lam)))
-        top=H_inv_approx(x)
+        top=H_inv_approx @ x
         # bot=S_inv_approx(Bv(H_inv_approx(x))+ lam)
-        bot=S_inv_approx(lam)
+        bot=S_inv_approx @ lam
         return jnp.concatenate([top,bot],axis=0)
 
     rhs=jnp.concatenate([rhs_x,rhs_lam],axis=0)
@@ -194,8 +198,8 @@ def _kkt_block_solver(
     if kkt_state.method=='minres':
 
         v, new_solver_state , info = pminres_solve(
-            Mv=KKT_mv,
-            Minv=precond,
+            Mv=LinOp(KKT_mv),
+            Minv=LinOp(precond),
             rhs=rhs,
             minres_state=kkt_state.solver_state,
             rtol=scaled_tol,
@@ -203,16 +207,15 @@ def _kkt_block_solver(
         )
         
 
-    elif kkt_state.method=='fgmres':
-
-        v, new_solver_state , info = gmres_solve(
-            Mv=KKT_mv,
-            precond=add_state(precond),
-            rhs=rhs,
-            state=kkt_state.solver_state,
-            rtol=scaled_tol,
-            maxiter=maxiter,
-        )
+    # elif kkt_state.method=='fgmres':
+    #     v, new_solver_state , info = gmres_solve(
+    #         Mv=LinOp(KKT_mv),
+    #         precond=add_state(LinOp(precond)),
+    #         rhs=rhs,
+    #         state=kkt_state.solver_state,
+    #         rtol=scaled_tol,
+    #         maxiter=maxiter,
+    #     )
 
     else :
         raise ValueError(f"Unknown method: {kkt_state.method}")
@@ -231,18 +234,6 @@ def _kkt_block_solver(
     x = dx
     lam = dlam
 
-    if DEBUG:
-        def _unscaledKKT(v: Vector) -> Vector:
-            n_primal=rhs_x.shape[0]
-            n_dual=rhs_lam.shape[0]
-            x=v[:n_primal]
-            lam=v[n_primal:]
-            top=Hv(x)+BTv(lam)
-            bot=Bv(x)
-            return jnp.concatenate([top,bot],axis=0)
-        unscaled_res_kkt=_unscaledKKT(jnp.concatenate([x,lam],axis=0))-jnp.concatenate([rhs_x,rhs_lam],axis=0)
-        jax.debug.print("  residual norm KKT (MINRES unscaled): {}\n", jnp.linalg.norm(unscaled_res_kkt))
-
     new_kkt_state=KKTState(
         S_inv_state=new_S_inv_state,
         H_inv_state=new_H_inv_state,
@@ -254,9 +245,9 @@ def _kkt_block_solver(
 
 
 def kkt_block_solver(
-    Hv: LinearMap,
-    Bv: LinearMap,
-    BTv: LinearMap,
+    Hv: LinearOperator,
+    Bv: LinearOperator,
+    BTv: LinearOperator,
     rhs_x: Vector,
     rhs_lam: Vector,
     kkt_state: KKTState,
@@ -362,9 +353,9 @@ if __name__ == "__main__":
 
     # ====== KKT state 初期化 ======
     state = initialize_kkt_state(
-        Hv_initial=Hv,
-        Bv_initial=Bv,
-        BTv_initial=BTv,
+        Hv_initial=H,
+        Bv_initial=B,
+        BTv_initial=B.T,
         n_primal=n_primal,
         n_dual=n_dual,
         r_Hv_min=256,
@@ -377,14 +368,14 @@ if __name__ == "__main__":
     # ====== あなたの KKT ソルバを叩く ======
     print("=== running custom KKT solver on hard instance ===")
     x, lam, state = _kkt_block_solver(
-        Hv=Hv,
-        Bv=Bv,
-        BTv=BTv,
+        Hv=H,
+        Bv=B,
+        BTv=B.T,
         rhs_x=rhs_primal,
         rhs_lam=rhs_dual,
         kkt_state=state,
         kkt_tol=EPS,
-        maxiter=15000,
+        maxiter=150,
     )
 
     print("x (custom)      shape:", x.shape)

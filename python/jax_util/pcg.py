@@ -10,8 +10,7 @@ import jax
 import jax.numpy as jnp
 from jax import lax
 
-from _env_value import AVOID_ZERO_DIV, DEBUG, DEFAULT_DTYPE, EPS, ZERO
-from _type_aliaces import LinearMap, Matrix, Scalar, Vector
+from base import *
 
 
 # =========================
@@ -22,28 +21,28 @@ class PCGState(eqx.Module):
 
 
 def pcg_solve(
-    Mv: LinearMap,
-    precond: LinearMap,  # r -> M^{-1} r
+    Mv: LinearOperator,
+    precond: LinearOperator,  # r -> M^{-1} r
     rhs: Vector,
     pcg_state: PCGState,
     *,
     maxiter: int = 200,
     rtol: Optional[Scalar] = None,
     atol: Optional[Scalar] = None,
-    proj: LinearMap = lambda x: x,  # v -> Pv
+    proj: LinearOperator = LinOp(lambda x: x),  # v -> Pv
 
 ) -> Tuple[Vector, PCGState, Dict[str, Any]]:
     """前処理付き PCG で A x = rhs を解く（A は SPD 前提）。"""
-    pMv :LinearMap = lambda v: proj(Mv(proj(v)))  # 投影付きMv
-    pprecond :LinearMap = lambda r: proj(precond(proj(r)))  # 投影付き前処理
+    pMv :LinearOperator = Mv * proj  # 投影付きMv
+    pprecond :LinearOperator = proj * precond * proj  # 投影付き前処理
 
-    rhs_p= proj(rhs)
+    rhs_p= proj @ rhs
     if DEBUG:
         jax.debug.print("PCG rhs norm: {norm}", norm=jnp.linalg.norm(rhs_p))
-    x0 = proj(pcg_state.x0)
+    x0 = proj @ pcg_state.x0
 
-    r0 = rhs_p - pMv(x0)
-    z0 = pprecond(r0)
+    r0 = rhs_p - pMv @ x0
+    z0 = pprecond @ r0
     p0 = z0
     rs0 = jnp.dot(r0, z0)
 
@@ -67,14 +66,14 @@ def pcg_solve(
     def body_fun(state:Tuple[Any, ...]) -> Tuple[Any, ...]:
         i, x, r, z, p, rs, done = state
 
-        Ap = pMv(p)
+        Ap = pMv @ p
         denom = jnp.dot(p, Ap)
         denom = jnp.where(jnp.abs(denom) < AVOID_ZERO_DIV, AVOID_ZERO_DIV, denom)
         alpha = rs / denom
 
-        x_new = proj(x + alpha * p)
-        r_new = proj(r - alpha * Ap)
-        z_new = pprecond(r_new)
+        x_new = proj @ (x + alpha * p)
+        r_new = proj @ (r - alpha * Ap)
+        z_new = pprecond @ r_new
 
         r_norm = jnp.dot(r_new, r_new)
         done_new = (r_norm <= tol)
@@ -82,7 +81,7 @@ def pcg_solve(
         rs_new = jnp.dot(r_new, z_new)
         rs_safe = jnp.where(jnp.abs(rs) < AVOID_ZERO_DIV, AVOID_ZERO_DIV, rs)
         beta = rs_new / rs_safe #pyright: ignore
-        p_new = proj(z_new + beta * p)
+        p_new = proj @ (z_new + beta * p)
 
         return (i + 1, x_new, r_new, z_new, p_new, rs_new, done_new)
 
@@ -118,11 +117,11 @@ def test_pcg_dense_spd_identity_precond():
     x_true = jax.random.normal(jax.random.PRNGKey(1), (n,), dtype=DEFAULT_DTYPE)
     b = A @ x_true
 
-    Mv = lambda v: A @ v#pyright: ignore
+    Mv = LinOp(lambda v: A @ v) #pyright: ignore
     precond = lambda r: r  # identity #pyright: ignore
 
     x0 = jnp.zeros((n,), dtype=DEFAULT_DTYPE)
-    x, st, info = pcg_solve(Mv, precond, b, PCGState(x0=x0), maxiter=500, rtol=EPS, atol=ZERO)
+    x, st, info = pcg_solve(Mv, LinOp(precond), b, PCGState(x0=x0), maxiter=500, rtol=EPS, atol=ZERO)
 
     # check against direct solve
     x_ref = jnp.linalg.solve(A, b)
@@ -143,12 +142,11 @@ def test_pcg_dense_spd_jacobi_precond():
     x_true = jax.random.normal(jax.random.PRNGKey(3), (n,), dtype=DEFAULT_DTYPE)
     b = A @ x_true
 
-    Mv = lambda v: A @ v #pyright: ignore
+    Mv = LinOp(lambda v: A @ v) #pyright: ignore
 
     diag = jnp.diag(A)
     inv_diag = 1.0 / jnp.where(jnp.abs(diag) < 1e-12, 1e-12, diag)
-    precond = lambda r: inv_diag * r  # Jacobi#pyright: ignore
-
+    precond = LinOp(lambda r: inv_diag * r)  # Jacobi#pyright: ignore
     x0 = jnp.zeros((n,), dtype=DEFAULT_DTYPE)
     x, st, info = pcg_solve(Mv, precond, b, PCGState(x0=x0), maxiter=500, rtol=EPS, atol=ZERO)
 
@@ -169,8 +167,8 @@ def test_initial_residual_zero():
 
     x0 = jax.random.normal(jax.random.PRNGKey(5), (n,), dtype=DEFAULT_DTYPE)
     b = A @ x0  # so residual is exactly zero (up to fp)
-    Mv = lambda v: A @ v #pyright: ignore
-    precond = lambda r: r # identity #pyright: ignore
+    Mv = LinOp(lambda v: A @ v) #pyright: ignore
+    precond = LinOp(lambda r: r)  # identity #pyright: ignore
 
     x, st, info = pcg_solve(Mv, precond, b, PCGState(x0=x0), maxiter=50, rtol=EPS, atol=ZERO)
 
@@ -186,8 +184,8 @@ def test_jit_compiles():
     A = _make_spd(n, key)
     b = jax.random.normal(jax.random.PRNGKey(7), (n,), dtype=DEFAULT_DTYPE)
 
-    Mv = lambda v: A @ v #pyright: ignore
-    precond = lambda r: r # identity #pyright: ignore
+    Mv = LinOp(lambda v: A @ v) #pyright: ignore
+    precond = LinOp(lambda r: r)  # identity #pyright: ignore
 
     @jax.jit
     def solve(b, x0): #pyright: ignore

@@ -1,7 +1,7 @@
 from jax import numpy as jnp
 
-from _env_value import ONE
-from _type_aliaces import Matrix
+from base import ONE,Matrix
+
 
 def orthonormalize(X: Matrix) -> Matrix:
     """列を QR で正規直交化."""

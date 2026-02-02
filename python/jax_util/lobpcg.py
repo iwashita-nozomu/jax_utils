@@ -10,15 +10,9 @@ import equinox as eqx
 import jax
 import jax.numpy as jnp
 
-from _env_value import AVOID_ZERO_DIV, DEFAULT_DTYPE, HALF, ONE, WEAK_EPS
-from linop_utils import DiagLinOp
-from jax_typing.base_protocol import Hom, Matrix, Scalar, Vector
+from base import *
 from matrix_util import orthonormalize
 
-
-def _identity(v: Matrix) -> Matrix:
-    """恒等写像（型付け用の補助関数）。"""
-    return v
 
 # ================================================================
 #  内部: block preconditioned Rayleigh–Ritz 固有値ソルバ
@@ -42,9 +36,9 @@ class BlockEigenState(eqx.Module):
     eigenvalues: Vector
     iteration: int
 
-def init_block_eigen_state(Mv: Hom[Matrix, Matrix], X0: Matrix) -> BlockEigenState:
+def init_block_eigen_state(Mv: LinearOperator, X0: Matrix) -> BlockEigenState:
     """BlockEigState の 1 回目初期化."""
-    AX0 = Mv(X0)
+    AX0 = Mv @ X0
     P0 = jnp.zeros_like(X0)
     AP0 = jnp.zeros_like(X0)
     eig0 = jnp.zeros((X0.shape[1],), dtype=X0.dtype)
@@ -58,11 +52,11 @@ def init_block_eigen_state(Mv: Hom[Matrix, Matrix], X0: Matrix) -> BlockEigenSta
     )
 
 def _block_preconditioned_rayleigh_ritz(
-    Mv: Hom[Matrix, Matrix],
-    T_mv: Hom[Matrix, Matrix],
+    Mv: LinearOperator,
+    T_mv: LinearOperator,
     state: BlockEigenState,
     *,
-    projection: Hom[Matrix, Matrix] = _identity,
+    projection: LinearOperator | None = None,
     maxiter: int = 50,
     tol: Scalar = WEAK_EPS,
     which: str = "smallest",
@@ -79,14 +73,25 @@ def _block_preconditioned_rayleigh_ritz(
         (n,r) または (n,) のベクトル/ブロックに左から作用する射影（LinOp）。
         例: v -> v - U (U^T v) など。
         LOBPCG 内の X, R, W, P, trial-subspace の生成に対して適用される。
+
+    注意:
+        projection のデフォルト値を `LinOp(lambda x: x)` のように書くと、
+        型推論（特に静的解析）が破綻しやすいため、関数内で恒等写像を設定する。
     """
+
+    if projection is None:
+        # デフォルトは恒等写像（何もしない射影）とする。
+        def _identity_projection(x: Matrix, /) -> Matrix:
+            return x
+
+        projection = LinOp(_identity_projection)
 
     # ---- 初期 X を直交化し、射影してからもう一度直交化 ----
     X, _ = jnp.linalg.qr(state.X)  # 念のため直交化
-    X = projection(X) #pyright: ignore[reportConstantRedefinition]
+    X = projection @ X  #pyright: ignore[reportConstantRedefinition]
     X = orthonormalize(X) #pyright: ignore[reportConstantRedefinition]
 
-    AX = Mv(X)      # (n, r)
+    AX = Mv @ X      # (n, r)
     P = jnp.zeros_like(X)        # (n, r)
     AP = jnp.zeros_like(X)      # (n, r)
     eigvals = jnp.einsum("ir,ir->r", X, AX)   # diag(X^T AX)
@@ -119,24 +124,24 @@ def _block_preconditioned_rayleigh_ritz(
 
         # ---- 1. 残差 + 前処理 ----
         R:Matrix = AXc - Xc * lambdac          # (n, r)
-        R = projection(R) #pyright: ignore[reportConstantRedefinition]
+        R = projection @ R  #pyright: ignore[reportConstantRedefinition]
         R = orthonormalize(R)           #pyright: ignore[reportConstantRedefinition]
-        W:Matrix = T_mv(R)                     # (n, r)
-        W = projection(W) #pyright: ignore[reportConstantRedefinition]
+        W:Matrix = T_mv @ R                     # (n, r)
+        W = projection @ W  #pyright: ignore[reportConstantRedefinition]
         # W = orthonormalize(W)          #pyright: ignore[reportConstantRedefinition]
 
         # 既存探索方向も（数値誤差で漏れるので）射影して整える
-        Pc = projection(Pc)
+        Pc = projection @ Pc
         Pc = Pc - Xc @ (Xc.T @ Pc)
         # Pc = orthonormalize(Pc)
 
         # ---- 2. trial subspace S = [X, W, P] を QR で直交化 ----
         S_raw = jnp.concatenate([Xc, W, Pc], axis=1)   # (n, 3r)
-        S_raw = projection(S_raw)
+        S_raw = projection @ S_raw
         S = orthonormalize(S_raw)                     # (n, 3r), S^T S = I
 
         # ---- 3. S 上での Rayleigh–Ritz ----
-        HS = jax.vmap(Mv, in_axes=1, out_axes=1)(S)                     # (n, 3r)
+        HS = Mv @ S                     # (n, 3r)
         A_small = S.T @ HS               # (3r, 3r), 対称
         A_small = HALF * (A_small + A_small.T)
 
@@ -157,9 +162,9 @@ def _block_preconditioned_rayleigh_ritz(
 
         # ---- 4. 新しい Ritz ベクトル X_new ----
         X_new = S @ Y                    # (n, r)
-        X_new = projection(X_new)
+        X_new = projection @ X_new
         X_new = orthonormalize(X_new)
-        AX_new = Mv(X_new)             # (n, r)
+        AX_new = Mv @ X_new             # (n, r)
 
         # ---- 4'. 新しい検索方向 P_new ----
         # W と P 部分だけで新しい P を作る (標準的な LOBPCG の取り方の一つ)
@@ -173,10 +178,10 @@ def _block_preconditioned_rayleigh_ritz(
 
         # X_new に直交化しておく
         P_new = P_new - X_new @ (X_new.T @ P_new)
-        P_new = projection(P_new)
+        P_new = projection @ P_new
         # P_new = P_new - X_new @ (X_new.T @ P_new)
         P_new = orthonormalize(P_new)
-        AP_new = Mv(P_new)            # (n, r)
+        AP_new = Mv @ P_new            # (n, r)
 
         # ---- 5. Rayleigh quotient でもう一度 λ を整える ----
         RQ = X_new.T @ AX_new            # (r, r)
@@ -258,7 +263,7 @@ class SubspaceBasis(eqx.Module):
 
 
 def init_spectral_precond(
-    Mv: Hom[Matrix, Matrix],
+    Mv: LinearOperator,
     n: int,
     r: int,
     *,
@@ -279,7 +284,7 @@ def init_spectral_precond(
     X = orthonormalize(X0)
 
     # AX = jax.vmap(Mv,in_axes=1,out_axes=1)(X)?
-    AX = Mv(X)
+    AX = Mv @ X
     RQ = X.T @ AX
     lam, V = jnp.linalg.eigh(RQ)
 
@@ -308,8 +313,8 @@ def init_spectral_precond(
     return eig_state
 
 def update_subspace(
-    Mv: Hom[Matrix, Matrix],
-    base_precond: Hom[Matrix, Matrix],
+    Mv: LinearOperator,
+    base_precond: LinearOperator,
     old_state: BlockEigenState,
     *,
     maxiter: int = 50,
@@ -355,8 +360,8 @@ def apply_projection(
 
 def make_rank_r_spectral_precond(
     basis: SubspaceBasis,
-    base_precond: Hom[Matrix, Matrix] = _identity,
-) -> Hom[Matrix, Matrix]:
+    base_precond: LinearOperator = LinOp (lambda x: x),
+) -> LinearOperator:
     """
     Factory: build a rank-r spectral-correction preconditioner
 
@@ -379,25 +384,24 @@ def make_rank_r_spectral_precond(
     lam = basis.eigenvalues
 
     # Safe inverse of eigenvalues (rank-r correction uses Λ^{-1})
-    inv_lam = DiagLinOp(ONE / (lam + AVOID_ZERO_DIV))
+
+    inv_lam = ONE / (lam + AVOID_ZERO_DIV)
 
     def precond(v: Matrix, /) -> Matrix:
         # Spectral (rank-r) piece
         alpha = Q.T @ v                      # (r,)
-        y_spec = Q @ (inv_lam @ alpha)       # (n,)
+        y_spec = Q @ (inv_lam * alpha)       # (n,)
 
         # v_perp = apply_projection(v, basis)
         v_perp: Matrix = v - Q @ alpha
-        y_rest = base_precond(v_perp)
+        y_rest = base_precond @ v_perp
         # y_rest = apply_projection(y_rest, basis) # ensure orthogonal to Q
 
         y_rest = y_rest - Q @ (Q.T @ y_rest)
 
         return y_spec + y_rest
     
-    setattr(precond, "__batched__", True)
-    setattr(precond, "__linear__", True)
-    return precond
+    return LinOp(precond)
 
 
 
@@ -439,7 +443,7 @@ if __name__ == "__main__":
 
     # 初期化
     spec_state = init_spectral_precond(
-        Mv=H_mv,
+        Mv=H,
         n=n,
         r=r,
         which="largest",
@@ -450,8 +454,8 @@ if __name__ == "__main__":
 
     # 更新
     subspace_basis, eig_state_new, info = update_subspace(
-        Mv=H_mv,
-        base_precond=base_precond,
+        Mv=H,
+        base_precond=LinOp(base_precond),
         old_state=spec_state,
         maxiter=100,
         tol=WEAK_EPS,
@@ -462,7 +466,7 @@ if __name__ == "__main__":
     print(eig_state_new.eigenvalues)
 
     v = jax.random.normal(key, (n, 1))
-    Mv_v = make_rank_r_spectral_precond(subspace_basis, base_precond=base_precond)(v)
+    Mv_v = make_rank_r_spectral_precond(subspace_basis, base_precond=LinOp(base_precond)) @ v
 
     print("=== Preconditioned vector sample ===")
     print("Mv(v) norm =", float(jnp.linalg.norm(Mv_v)))

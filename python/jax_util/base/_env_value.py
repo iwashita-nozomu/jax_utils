@@ -2,7 +2,7 @@
 import jax
 import jax.numpy as jnp
 
-from _type_aliaces import Scalar
+from .protocols import Scalar
 
 # 共通 dtype
 jax.config.update("jax_enable_x64", True)

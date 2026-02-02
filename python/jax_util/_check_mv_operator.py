@@ -2,11 +2,10 @@ from __future__ import annotations
 
 from typing import Any, Dict, Tuple
 
-from _type_aliaces import LinearMap
-
+from base import *
 
 def check_self_adjoint(
-    Mv: LinearMap,
+    Mv: LinearOperator,
     shape: Tuple[int, ...],
     *,
     num_trials: int = 16,
@@ -21,7 +20,7 @@ def check_self_adjoint(
 
 
 def check_spd_quadratic_form(
-    Mv: LinearMap,
+    Mv: LinearOperator,
     shape: Tuple[int, ...],
     *,
     num_trials: int = 16,
