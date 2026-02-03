@@ -408,9 +408,27 @@ def test_rhs_zero():
 
 
 if __name__ == "__main__":
-    test_pminres_spd_A_with_jacobi()
-    test_minres_indef_A_no_precond()
-    test_rhs_zero()
-    print("All PMINRES tests passed.")
+    import jax.numpy as jnp
+
+    def test_minres_known_solution() -> None:
+        A: Matrix = jnp.asarray([[2.0, 0.0], [0.0, 3.0]])
+        x_true: Vector = jnp.asarray([1.0, -2.0])
+        b: Vector = A @ x_true
+
+        Mv = LinOp(lambda v: A @ v)
+        Minv = LinOp(lambda v: v)
+        st = MINRESState.initialize(x0=jnp.zeros((2,), dtype=DEFAULT_DTYPE))
+        x_approx, _, _ = pminres_solve(
+            Mv=Mv,
+            rhs=b,
+            minres_state=st,
+            Minv=Minv,
+            maxiter=20,
+            rtol=jnp.asarray(EPS, dtype=DEFAULT_DTYPE),
+            atol=jnp.asarray(ZERO, dtype=DEFAULT_DTYPE),
+        )
+        assert jnp.allclose(x_approx, x_true, rtol=1e-5, atol=1e-5)
+
+    test_minres_known_solution()
 
 

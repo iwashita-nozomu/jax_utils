@@ -71,7 +71,23 @@ __all__ = [
 ]
 
 if __name__ == "__main__":
+    import jax.numpy as jnp
 
-    import jax
+    def test_protocol_scalar_vector_matrix() -> None:
+        s: Scalar = jnp.asarray(1.0)
+        v: Vector = jnp.asarray([1.0, 2.0])
+        m: Matrix = jnp.asarray([[1.0, 0.0], [0.0, 1.0]])
+        b: Boolean = jnp.asarray(True)
+        assert s.shape == ()
+        assert v.shape == (2,)
+        assert m.shape == (2, 2)
+        assert b.shape == ()
 
-    A :LinearOperator= jax.numpy.array([[1.,2.],[3.,4.]]) 
+    def test_linear_operator_protocol() -> None:
+        A: LinearOperator = jnp.asarray([[1.0, 2.0], [3.0, 4.0]])
+        v: Vector = jnp.asarray([1.0, 1.0])
+        mv: Vector = A @ v
+        assert mv.shape == (2,)
+
+    test_protocol_scalar_vector_matrix()
+    test_linear_operator_protocol()

@@ -139,26 +139,36 @@ __all__ = [
 ]
 
 if __name__ == "__main__":
-
-    # import jax
     import jax.numpy as jnp
 
-    A :LinearOperator= jnp.array([[1.,2.],[3.,4.]]) 
-    v :Vector = jnp.array([1.,2.])
+    def test_linop_matrix_vector() -> None:
+        A: LinearOperator = jnp.asarray([[1.0, 2.0], [3.0, 4.0]])
+        v: Vector = jnp.asarray([1.0, 2.0])
+        L = LinOp(lambda x: A @ x)
+        expected: Vector = A @ v
+        actual: Vector = L @ v
+        assert jnp.allclose(actual, expected)
 
-    print(A @ v)
+    def test_linop_composition() -> None:
+        A: LinearOperator = jnp.asarray([[2.0, 0.0], [0.0, 3.0]])
+        B: LinearOperator = jnp.asarray([[0.0, 1.0], [1.0, 0.0]])
+        v: Vector = jnp.asarray([1.0, 2.0])
+        L = LinOp(lambda x: A @ x)
+        M = L * B
+        expected: Vector = (A @ (B @ v))
+        actual: Vector = M @ v
+        assert jnp.allclose(actual, expected)
 
-    L = LinOp(lambda x: A @ x)
+    def test_linop_scalar_mul() -> None:
+        A: LinearOperator = jnp.asarray([[1.0, 0.0], [0.0, 1.0]])
+        v: Vector = jnp.asarray([1.0, -1.0])
+        k: Scalar = jnp.asarray(2.0)
+        L = LinOp(lambda x: A @ x)
+        M = k * L * k
+        expected: Vector = (k * (A @ (k * v)))
+        actual: Vector = M @ v
+        assert jnp.allclose(actual, expected)
 
-    print(L @ v)
-
-    B :LinearOperator= jnp.array([[0.,1.],[1.,0.]]) 
-
-    M = L * B
-
-    print(M @ v)
-
-    k: Scalar = jnp.array(2.0)
-
-    N = k * M * k
-    print(N @ v)
+    test_linop_matrix_vector()
+    test_linop_composition()
+    test_linop_scalar_mul()

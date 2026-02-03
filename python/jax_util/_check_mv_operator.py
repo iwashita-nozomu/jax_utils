@@ -50,3 +50,16 @@ __all__ = [
     "check_spd_quadratic_form",
     "print_Mv_report",
 ]
+
+
+if __name__ == "__main__":
+    import jax.numpy as jnp
+
+    def test_reports() -> None:
+        M: LinearOperator = jnp.asarray([[1.0, 0.0], [0.0, 1.0]])
+        r1 = check_self_adjoint(Mv=M, shape=(2,))
+        r2 = check_spd_quadratic_form(Mv=M, shape=(2,))
+        assert r1["ok"] is True
+        assert r2["ok"] is True
+
+    test_reports()

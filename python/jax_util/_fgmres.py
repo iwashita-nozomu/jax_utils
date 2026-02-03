@@ -510,8 +510,31 @@ def test_gmres_dense():
 
 
 if __name__ == "__main__":
-    test_gmres_dense()
-    print("GMRES test passed.")
+    import jax.numpy as jnp
+
+    def test_gmres_known_solution() -> None:
+        A: Matrix = jnp.asarray([[4.0, 1.0], [2.0, 3.0]])
+        x_true: Vector = jnp.asarray([1.0, -1.0])
+        b: Vector = A @ x_true
+
+        def Mv(v: Vector) -> Vector:
+            return A @ v
+
+        def precond(r: Vector, state: Any) -> Tuple[Vector, Any]:
+            return r, state
+
+        workspace = GMRESWorkspace.initialize(n=2, restart=2)
+        gmres_state = GMRESState.initialize(x0=jnp.zeros((2,), dtype=DEFAULT_DTYPE))
+        x_approx, _, _ = gmres_solve(
+            Mv=Mv,
+            precond=precond,
+            rhs=b,
+            state=(workspace, gmres_state, None),
+            maxiter=20,
+        )
+        assert jnp.allclose(x_approx, x_true, rtol=1e-5, atol=1e-5)
+
+    test_gmres_known_solution()
 
 
 __all__ = [

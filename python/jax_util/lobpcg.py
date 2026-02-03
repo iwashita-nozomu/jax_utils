@@ -419,68 +419,32 @@ __all__ = [
 # ================================================================
 
 if __name__ == "__main__":
-    import jax
     import jax.numpy as jnp
 
-    key = jax.random.key(0)
+    def test_lobpcg_known_eigenvalues() -> None:
+        H: Matrix = jnp.diag(jnp.asarray([1.0, 2.0, 3.0]))
+        n = 3
+        r = 1
 
-    n = 50
-    r = 5
+        def H_mv(v: Matrix) -> Matrix:
+            return H @ v
 
-    # SPD 行列 H を作る
-    A = jax.random.normal(key, (n, n))
-    H = A.T @ A + jnp.eye(n)   # SPD
+        spec_state = init_spectral_precond(Mv=H_mv, n=n, r=r, which="smallest")
+        subspace_basis, eig_state_new, _ = update_subspace(
+            Mv=H_mv,
+            base_precond=H_mv,
+            old_state=spec_state,
+            maxiter=10,
+            tol=WEAK_EPS,
+            which="smallest",
+        )
 
-    def H_mv(v: Matrix, /) -> Matrix:
-        return H @ v
+        evals_true, _ = jnp.linalg.eigh(H)
+        expected = evals_true[:r]
+        assert jnp.allclose(eig_state_new.eigenvalues, expected, rtol=1e-5, atol=1e-5)
 
-    # Jacobi 前処理
-    diag_H = jnp.diag(H)
-    inv_diag = jnp.ones_like(diag_H) / diag_H
+        v: Matrix = jnp.ones((n, 1))
+        Mv_v = make_rank_r_spectral_precond(subspace_basis, base_precond=H_mv)(v)
+        assert Mv_v.shape == v.shape
 
-    def base_precond(v: Matrix, /) -> Matrix:
-        return inv_diag[:, None] * v if v.ndim == 2 else inv_diag * v
-
-    # 初期化
-    spec_state = init_spectral_precond(
-        Mv=H,
-        n=n,
-        r=r,
-        which="largest",
-    )
-
-    print("=== Initial eigenvalue estimates ===")
-    print(spec_state.eigenvalues)
-
-    # 更新
-    subspace_basis, eig_state_new, info = update_subspace(
-        Mv=H,
-        base_precond=LinOp(base_precond),
-        old_state=spec_state,
-        maxiter=100,
-        tol=WEAK_EPS,
-        which="largest",
-    )
-
-    print("=== After update eigenvalue estimates ===")
-    print(eig_state_new.eigenvalues)
-
-    v = jax.random.normal(key, (n, 1))
-    Mv_v = make_rank_r_spectral_precond(subspace_basis, base_precond=LinOp(base_precond)) @ v
-
-    print("=== Preconditioned vector sample ===")
-    print("Mv(v) norm =", float(jnp.linalg.norm(Mv_v)))
-
-    # 真の最小固有値と比較
-    evals_true, _ = jnp.linalg.eigh(H)
-    evals_true_small = evals_true[r:]
-
-    print("=== True smallest eigenvalues ===")
-    print(evals_true_small)
-
-    print("=== Estimated eigenvalues ===")
-    print(eig_state_new.eigenvalues)
-
-    # err = jnp.abs(eig_state_new.eigenvalues - evals_true_small)
-    print("=== Absolute error ===")
-    # print(err)
+    test_lobpcg_known_eigenvalues()

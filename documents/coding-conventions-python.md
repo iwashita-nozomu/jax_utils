@@ -1,5 +1,7 @@
 ## Python コーディング規約（型注釈）
 
+この文書は、`python/jax_util/` 配下の実装を対象に、型注釈と構造の指針をまとめます。
+
 ### 1. 型エイリアスの方針
 - 型エイリアスは `python/jax_util/base/protocols.py` に集約します。
 - 配列の意味は以下の通りに統一します。
@@ -40,15 +42,36 @@
 ### 8. ファイルごとの役割
 | ファイル | 役割 |
 | --- | --- |
-| `python/jax_util/base/protocols.py` | 型エイリアスと作用素プロトコルの定義。`Scalar` / `Vector` / `Matrix` / `Boolean` を集約する。 |
-| `python/jax_util/base/linearoperator.py` | `LinOp` 実装。`Vector`/`Matrix` を受け取り 1D/2D を内部で分岐する。 |
-| `python/jax_util/base/_env_value.py` | 既定の `dtype` と数値定数（`EPS` など）を提供する。 |
-| `python/jax_util/_fgmres.py` | 右前処理付き FGMRES の実装。再起動・ワークスペース管理を含む。 |
-| `python/jax_util/_minres.py` | MINRES の実装。前処理付き反復解法を提供する。 |
-| `python/jax_util/pcg.py` | PCG（前処理付き共役勾配法）の実装とテスト。 |
-| `python/jax_util/kkt_solver.py` | KKT 系のブロックソルバと初期化処理。 |
-| `python/jax_util/lobpcg.py` | LOBPCG 系の固有値/前処理更新ロジック。 |
-| `python/jax_util/pdipm.py` | 内点法（PDIPM）の実装と問題生成補助。 |
-| `python/jax_util/matrix_util.py` | 行列ユーティリティ（直交化など）。 |
-| `python/jax_util/_check_mv_operator.py` | 作用素の自己随伴/正定性チェック用ユーティリティ。 |
+| `python/jax_util/base/protocols.py` | 型エイリアスと作用素プロトコルの定義。`Scalar` / `Vector` / `Matrix` / `Boolean` / `Integer` を集約し、`Operator` / `LinearOperator` の契約を示す。 |
+| `python/jax_util/base/linearoperator.py` | `LinOp` 実装。`Vector`/`Matrix` を受け取り 1D/2D を内部で分岐する。合成（`__mul__` / `__matmul__`）の基本挙動を提供する。 |
+| `python/jax_util/base/_env_value.py` | 既定の `dtype` と数値定数（`EPS` など）を提供する。数値安定性のための定数を一元化する。 |
+| `python/jax_util/base/__init__.py` | `base` 系の型・定数・`LinOp` を集約してエクスポートする窓口。利用側は原則ここから import する。 |
+| `python/jax_util/_check_mv_operator.py` | 作用素の自己随伴性・SPD 性の簡易レポートを返すユーティリティ。安全確認の最小チェックに使う。 |
+| `python/jax_util/_fgmres.py` | 右前処理付き FGMRES の実装。再起動、ワークスペース管理、ウォームスタートの状態保持を担う。 |
+| `python/jax_util/_minres.py` | MINRES の実装。前処理付き反復解法を提供し、数値安定性の補助処理を含む。 |
+| `python/jax_util/pcg.py` | PCG（前処理付き共役勾配法）の実装。投影付きの反復構成と収束判定を行う。 |
+| `python/jax_util/kkt_solver.py` | KKT 系のブロックソルバ。`_minres.py` / `_fgmres.py` / `lobpcg.py` を組み合わせ、前処理を含めた解法を提供する。 |
+| `python/jax_util/lobpcg.py` | LOBPCG 系の固有値推定。ブロック固有値更新、部分空間更新、前処理構築を扱う。 |
+| `python/jax_util/matrix_util.py` | 行列ユーティリティ（直交化など）。小さく単機能の補助関数を置く。 |
+| `python/jax_util/pdipm.py` | 内点法（PDIPM）の実装。目的関数・制約の構成、KKT 解法の呼び出し、簡易な問題生成を含む。 |
+| `python/jax_util/_test_jax.py` | JAX の動作確認と最小の疎通チェック。環境の健全性を確認する。 |
+| `python/jax_util/__init__.py` | パッケージのメタ情報（`__version__`）を保持する。 |
 | `documents/type-aliases.md` | 型エイリアスの運用指針と一覧を整理する。 |
+
+### 9. 依存関係の概要
+| 対象 | 依存 | 目的 |
+| --- | --- | --- |
+| `python/jax_util/base/__init__.py` | `base/protocols.py`, `base/linearoperator.py`, `base/_env_value.py` | 型と定数の集約エクスポート。 |
+| `python/jax_util/base/linearoperator.py` | `base/protocols.py` | `LinOp` の基盤型を共有する。 |
+| `python/jax_util/_check_mv_operator.py` | `base` | 作用素チェック用の型・定数を利用する。 |
+| `python/jax_util/_fgmres.py` | `base` | 反復解法の基盤型・定数を利用する。 |
+| `python/jax_util/_minres.py` | `base` | 反復解法の基盤型・定数を利用する。 |
+| `python/jax_util/pcg.py` | `base` | 反復解法の基盤型・定数を利用する。 |
+| `python/jax_util/lobpcg.py` | `base`, `matrix_util.py` | 固有値計算の補助を利用する。 |
+| `python/jax_util/kkt_solver.py` | `base`, `_check_mv_operator.py`, `_fgmres.py`, `_minres.py`, `lobpcg.py` | KKT 解法で各モジュールを統合する。 |
+| `python/jax_util/pdipm.py` | `_env_value.py`, `kkt_solver.py` | 内点法で KKT 解法と定数を利用する。 |
+
+### 10. テストの書き方
+- `if __name__ == "__main__":` で関数を実行する形式とします。
+- 例外が起きないことと、既知解に一致することを確認します。
+- 大規模な乱数テストは避け、決定的な小規模入力を使います。

@@ -16,8 +16,8 @@ from jax import numpy as jnp
 
 from _env_value import AVOID_ZERO_DIV, DEBUG, DEFAULT_DTYPE, EPS, ONE, ZERO
 from kkt_solver import KKTState, initialize_kkt_state, kkt_block_solver
-from _linop_utils import DiagOp, LinOp
-from _type_aliaces import Hom, Matrix, Scalar, Vector
+from linop_utils import DiagOp, LinOp
+from jax_typing.base_protocol import Hom, Matrix, Scalar, Vector
 
 class PDIPMState(eqx.Module):
     kkt_state: KKTState
@@ -502,52 +502,72 @@ def c_ineq_factory(p: Problem) -> Hom[Vector, Vector]:
 
 # ---- Quick sanity check ----
 if __name__ == "__main__":
-    key = jax.random.PRNGKey(0)
-    prob = make_problem(key, n=2000, meq=200, mineq_lin=2000, mineq_nonlin=2000, margin=0.2)
+    import jax.numpy as jnp
 
-    f_opt = f_opt_factory(prob)
-    c_eq = c_eq_factory(prob)
-    c_ineq = c_ineq_factory(prob)
+    def test_pdipm_known_solution() -> None:
+        n = 1
+        meq = 1
+        mineq_lin = 1
+        mineq_nonlin = 0
 
-    # 可行性（実行可能性）を、生成時に保証している点 x0 で確認します。
-    # ここで不等式が c_ineq(x0) <= 0 を満たしていなければ、問題設定の整合性が崩れています。
-    feasibility_report(c_eq=c_eq, c_ineq=c_ineq, x=prob.x0, name="x0")
+        Q: Matrix = jnp.asarray([[1.0]])
+        q: Vector = jnp.asarray([0.0])
+        Aeq: Matrix = jnp.asarray([[1.0]])
+        beq: Vector = jnp.asarray([0.0])
+        Aiq: Matrix = jnp.asarray([[0.0]])
+        biq: Vector = jnp.asarray([1.0])
+        C: Matrix = jnp.zeros((0, 1))
+        d: Vector = jnp.zeros((0,))
+        x0: Vector = jnp.asarray([0.0])
 
-    # 参考: PDIPMのデフォルト初期点（reset=True の場合は x=0）でも観測します。
-    # 可行な問題でも、x=0 が境界から遠いと初期反復が不安定になりやすいです。
-    feasibility_report(
-        c_eq=c_eq,
-        c_ineq=c_ineq,
-        x=jnp.zeros((prob.n,), dtype=DEFAULT_DTYPE),
-        name="x=0",
-    )
+        prob = Problem(
+            n=n,
+            meq=meq,
+            mineq_lin=mineq_lin,
+            mineq_nonlin=mineq_nonlin,
+            Q=Q,
+            q=q,
+            Aeq=Aeq,
+            beq=beq,
+            Aiq=Aiq,
+            biq=biq,
+            C=C,
+            d=d,
+            x0=x0,
+        )
 
-    pdipm_state = initialize_pdipm_state(
-        n_primal=prob.n,
-        n_dual_eq=prob.meq,
-        n_dual_ineq=prob.mineq_lin + prob.mineq_nonlin,
-        r_Hv=64,
-        r_Sv=64,
-        r_max=256,
-    )
+        f_opt = f_opt_factory(prob)
+        c_eq = c_eq_factory(prob)
+        c_ineq = c_ineq_factory(prob)
 
-    opt, pdipm_state_new, info = eqx.filter_jit(_pdipm_solve)(
-        f_opt=f_opt,
-        c_eq=c_eq,
-        c_ineq=c_ineq,
-        optimizer_state=pdipm_state,
-        n_primal=prob.n,
-        m_eq=prob.meq,
-        m_ineq=prob.mineq_lin + prob.mineq_nonlin,
-        eta=jnp.asarray(0.1, dtype=DEFAULT_DTYPE),
-        reset=True,
-        alpha_max=jnp.asarray(0.995, dtype=DEFAULT_DTYPE),
-        max_steps=30,
-        log_every=1,
-    )
+        pdipm_state = initialize_pdipm_state(
+            n_primal=prob.n,
+            n_dual_eq=prob.meq,
+            n_dual_ineq=prob.mineq_lin + prob.mineq_nonlin,
+            r_Hv=2,
+            r_Sv=2,
+            r_max=2,
+        )
 
-    jax.debug.print("PDIPM finished in steps: {s}", s=info["step_count"])
-    jax.debug.print("Optimal value estimate: {v}", v=opt)
+        opt, state_new, info = _pdipm_solve(
+            f_opt=f_opt,
+            c_eq=c_eq,
+            c_ineq=c_ineq,
+            optimizer_state=pdipm_state,
+            n_primal=prob.n,
+            m_eq=prob.meq,
+            m_ineq=prob.mineq_lin + prob.mineq_nonlin,
+            eta=jnp.asarray(0.1, dtype=DEFAULT_DTYPE),
+            reset=True,
+            alpha_max=jnp.asarray(0.995, dtype=DEFAULT_DTYPE),
+            max_steps=5,
+            log_every=1,
+        )
+
+        assert jnp.allclose(state_new.x, x0, rtol=1e-4, atol=1e-4)
+        assert jnp.allclose(opt, jnp.asarray(0.0), rtol=1e-4, atol=1e-4)
+
+    test_pdipm_known_solution()
 
 
 

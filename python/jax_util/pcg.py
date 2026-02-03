@@ -205,4 +205,25 @@ def run_all_tests():
 
 
 if __name__ == "__main__":
-    run_all_tests()
+    import jax.numpy as jnp
+
+    def test_pcg_known_solution() -> None:
+        A: Matrix = jnp.asarray([[4.0, 0.0], [0.0, 5.0]])
+        x_true: Vector = jnp.asarray([1.0, -1.0])
+        b: Vector = A @ x_true
+
+        Mv = LinOp(lambda v: A @ v)
+        precond = LinOp(lambda v: v)
+        x0 = jnp.zeros((2,), dtype=DEFAULT_DTYPE)
+        x_approx, _, _ = pcg_solve(
+            Mv=Mv,
+            precond=precond,
+            rhs=b,
+            pcg_state=PCGState(x0=x0),
+            maxiter=50,
+            rtol=EPS,
+            atol=ZERO,
+        )
+        assert jnp.allclose(x_approx, x_true, rtol=1e-5, atol=1e-5)
+
+    test_pcg_known_solution()

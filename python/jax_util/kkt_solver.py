@@ -181,14 +181,14 @@ def _kkt_block_solver(
         # JAXトレース文脈ではスキップし、通常実行時のみレポートを出します。
         if not isinstance(rhs_x, jax.core.Tracer) and not isinstance(rhs_lam, jax.core.Tracer):# type: ignore
             print_Mv_report(
-                check_self_adjoint(KKT_mv, shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
-                check_spd_quadratic_form(KKT_mv, shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
+                check_self_adjoint(LinOp(KKT_mv), shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
+                check_spd_quadratic_form(LinOp(KKT_mv), shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
                 name="KKT operator",
             )
 
             print_Mv_report(
-                check_self_adjoint(precond, shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
-                check_spd_quadratic_form(precond, shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
+                check_self_adjoint(LinOp(precond), shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
+                check_spd_quadratic_form(LinOp(precond), shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
                 name="KKT preconditioner",
             )
         else:
@@ -276,157 +276,64 @@ __all__ = [
 
 
 if __name__ == "__main__":
-    import jax
     import jax.numpy as jnp
-    from jax.scipy.sparse.linalg import gmres
 
-    key = jax.random.PRNGKey(0)
+    def test_kkt_known_solution() -> None:
+        H: Matrix = jnp.asarray([[2.0, 0.0], [0.0, 3.0]])
+        B: Matrix = jnp.asarray([[1.0, 1.0]])
 
-    # ====== ユーティリティ ======
-    def make_spd_matrix(n: int, cond: float, key: Vector) -> Matrix:
-        """条件数 cond の SPD 行列を作る（かなり悪条件にできる）"""
-        k1, k2 = jax.random.split(key)
-        A = jax.random.normal(k1, (n, n))
-        Q, _ = jnp.linalg.qr(A)  # 直交行列
+        def Hv(x: Vector) -> Vector:
+            return H @ x
 
-        # 固有値を [1, cond] に対数スケールでばらまく
-        log_min = 0.0
-        log_max = jnp.log(cond)
-        eigs = jnp.exp(jnp.linspace(log_min, log_max, n))
+        def Bv(x: Vector) -> Vector:
+            return B @ x
 
-        H = (Q * eigs) @ Q.T
-        # 数値誤差で完全対称でなくなるので対称化
-        H_sym = 0.5 * (H + H.T)
-        return H_sym
+        def BTv(lam: Vector) -> Vector:
+            return B.T @ lam
 
-    def make_bad_B(m: int, n: int, key: Vector) -> Matrix:
-        """行がほぼ従属 & スケール悪い B を作る"""
-        k1, k2 = jax.random.split(key)
-        # まずランダム
-        B_base = jax.random.normal(k1, (m, n))
+        x_true: Vector = jnp.asarray([1.0, -1.0])
+        lam_true: Vector = jnp.asarray([0.5])
+        rhs_x: Vector = Hv(x_true) + BTv(lam_true)
+        rhs_lam: Vector = Bv(x_true)
 
-        # 上半分とほぼ同じ行を下半分に入れて、ほぼ従属にする
-        half = m // 2
-        noise = 1e-3 * jax.random.normal(k2, (m - half, n))
-        B = B_base.at[half:].set(B_base[: m - half] + noise)
+        state = initialize_kkt_state(
+            Hv_initial=H,
+            Bv_initial=B,
+            BTv_initial=B.T,
+            n_primal=2,
+            n_dual=1,
+            r_Hv_min=1,
+            r_Sv_min=1,
+            r_max=1,
+            method="minres",
+            restart=5,
+        )
 
-        # 列スケーリングも悪化させる（桁違いを入れる）
-        scales = jnp.logspace(0.0, 4.0, n)  # 1〜1e4
-        B_scaled = B * scales
-        return B_scaled
+        x, lam, _ = _kkt_block_solver(
+            Hv=H,
+            Bv=B,
+            BTv=B.T,
+            rhs_x=rhs_x,
+            rhs_lam=rhs_lam,
+            kkt_state=state,
+            kkt_tol=EPS,
+            maxiter=50,
+        )
 
-    # ====== 問題サイズ & 悪条件設定 ======
-    n_primal = 10000   # x の次元
-    n_dual = 5000      # 制約本数
-    cond_H = 1e4     # H の条件数（かなり悪い）
+        K = jnp.block(
+            [
+                [H, B.T],
+                [B, jnp.zeros((1, 1), dtype=H.dtype)],
+            ]
+        )
+        sol_ref = jnp.linalg.solve(K, jnp.concatenate([rhs_x, rhs_lam]))
+        x_ref = sol_ref[:2]
+        lam_ref = sol_ref[2:]
 
-    # ====== H, B, 右辺の生成 ======
-    key_H, key_B, key_rhs = jax.random.split(key, 3)
+        assert jnp.allclose(x, x_ref, rtol=1e-5, atol=1e-5)
+        assert jnp.allclose(lam, lam_ref, rtol=1e-5, atol=1e-5)
 
-    H = make_spd_matrix(n_primal, cond_H, key_H)
-    B = make_bad_B(n_dual, n_primal, key_B)
-
-    def Hv(x: Vector) -> Vector:
-        return H @ x
-
-    def Bv(x: Vector) -> Vector:
-        return B @ x
-
-    def BTv(lam: Vector) -> Vector:
-        return B.T @ lam
-    rho = 1e-1  # とりあえずパラメータ。あとでチューニング
-
-    def Hv_aug(x: Vector) -> Vector:
-        # Hv_aug(x) = Hx + ρ B^T B x
-        return Hv(x) + rho * BTv(Bv(x))
-    # ====== 既知解から rhs を生成（必ず整合する KKT） ======
-    # KKT:
-    # [ H  B^T ] [x] = [r_x]
-    # [ B   0  ] [λ]   [r_λ]
-    # まず (x_true, lam_true) をランダムに作り、rhs をそれから作る。
-    key_x, key_lam = jax.random.split(key_rhs, 2)
-    x_true = jax.random.normal(key_x, (n_primal,), dtype=DEFAULT_DTYPE)
-    lam_true = jax.random.normal(key_lam, (n_dual,), dtype=DEFAULT_DTYPE)
-
-    rhs_primal = Hv(x_true) + BTv(lam_true)
-    rhs_dual = Bv(x_true)
-
-    # ====== KKT state 初期化 ======
-    state = initialize_kkt_state(
-        Hv_initial=H,
-        Bv_initial=B,
-        BTv_initial=B.T,
-        n_primal=n_primal,
-        n_dual=n_dual,
-        r_Hv_min=256,
-        r_Sv_min=256,
-        r_max=256,
-        method='minres',
-        restart=200,
-    )
-
-    # ====== あなたの KKT ソルバを叩く ======
-    print("=== running custom KKT solver on hard instance ===")
-    x, lam, state = _kkt_block_solver(
-        Hv=H,
-        Bv=B,
-        BTv=B.T,
-        rhs_x=rhs_primal,
-        rhs_lam=rhs_dual,
-        kkt_state=state,
-        kkt_tol=EPS,
-        maxiter=150,
-    )
-
-    print("x (custom)      shape:", x.shape)
-    print("lambda (custom) shape:", lam.shape)
-
-    # ====== 残差チェック（custom solver） ======
-    Kx_top = Hv(x) + BTv(lam)
-    Kx_bot = Bv(x)
-    Kx = jnp.concatenate([Kx_top, Kx_bot], axis=0)
-
-    rhs = jnp.concatenate([rhs_primal, rhs_dual], axis=0)
-    residual_custom = jnp.linalg.norm(Kx - rhs) / jnp.linalg.norm(rhs)
-    print("KKT rel residual (custom) =", float(residual_custom))
-
-    # ====== 既知解との差分 ======
-    err_x_true = jnp.linalg.norm(x - x_true) / (jnp.linalg.norm(x_true) + 1e-16)
-    err_lam_true = jnp.linalg.norm(lam - lam_true) / (jnp.linalg.norm(lam_true) + 1e-16)
-    print("rel error vs true x   =", float(err_x_true))
-    print("rel error vs true lam =", float(err_lam_true))
-
-    # ====== GMRES で「ほぼ正解」を作る ======
-    print("=== running GMRES on full KKT (reference) ===")
-    K = jnp.block([
-        [H, B.T],
-        [B, jnp.zeros((n_dual, n_dual), dtype=H.dtype)],
-    ])
-
-    sol_direct, info = gmres(K, rhs, tol=1e-10, atol=0.0, maxiter=1000)
-    x_ref = sol_direct[:n_primal]
-    lam_ref = sol_direct[n_primal:]
-
-    print("gmres info =", info)  # 0 が成功のはず
-
-
-    # ====== 残差チェック（gmres） ======
-    Kx_ref = K @ sol_direct
-    residual_ref = jnp.linalg.norm(Kx_ref - rhs) / jnp.linalg.norm(rhs)
-    print("KKT rel residual (gmres)  =", float(residual_ref))
-    print("x (gmres)      shape:", x_ref.shape)
-    print("lambda (gmres) shape:", lam_ref.shape)
-    err_x_true_gmres = jnp.linalg.norm(x_ref - x_true) / (jnp.linalg.norm(x_true) + 1e-16)
-    err_lam_true_gmres = jnp.linalg.norm(lam_ref - lam_true) / (jnp.linalg.norm(lam_true) + 1e-16)
-    print("rel error vs true x   =", float(err_x_true_gmres))
-    print("rel error vs true lam =", float(err_lam_true_gmres))
-    print("")
-
-    # ====== 解の差分 ======
-    err_x = jnp.linalg.norm(x - x_ref) / (jnp.linalg.norm(x_ref) + 1e-16)
-    err_lam = jnp.linalg.norm(lam - lam_ref) / (jnp.linalg.norm(lam_ref) + 1e-16)
-    print("rel error x (vs gmres)   =", float(err_x))
-    print("rel error lam (vs gmres) =", float(err_lam))
+    test_kkt_known_solution()
 
 
     # #残差二乗和最小化として解いてみる
