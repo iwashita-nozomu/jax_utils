@@ -1,0 +1,82 @@
+from __future__ import annotations
+
+import json
+
+import jax.numpy as jnp
+
+from jax_util.base import LinOp, Vector
+
+
+def test_linearoperator_matmul_vector() -> None:
+    """LinOp の @ 演算でベクトル適用できることを確認します。"""
+    A = jnp.array([[4.0, 1.0], [1.0, 3.0]])
+
+    def mv(v: Vector) -> Vector:
+        return A @ v
+
+    op = LinOp(mv)
+    x = jnp.array([1.0, 2.0])
+    y = op @ x
+    expected = A @ x
+    print(json.dumps({
+        "case": "linop_matmul",
+        "expected": expected.tolist(),
+        "y": y.tolist(),
+    }))
+    assert jnp.allclose(y, A @ x)
+
+
+def test_linearoperator_composition() -> None:
+    """LinOp の合成ができることを確認します。"""
+    A = jnp.array([[2.0, 0.0], [0.0, 3.0]])
+    B = jnp.array([[1.0, 1.0], [0.0, 1.0]])
+
+    def mv_a(v: Vector) -> Vector:
+        return A @ v
+
+    def mv_b(v: Vector) -> Vector:
+        return B @ v
+
+    op_a = LinOp(mv_a)
+    op_b = LinOp(mv_b)
+    op_c = op_a * op_b
+
+    x = jnp.array([1.0, 2.0])
+    y = op_c @ x
+    expected = A @ (B @ x)
+    print(json.dumps({
+        "case": "linop_compose",
+        "expected": expected.tolist(),
+        "y": y.tolist(),
+    }))
+    assert jnp.allclose(y, A @ (B @ x))
+
+
+def test_linearoperator_batched_input() -> None:
+    """LinOp が行列入力をバッチとして処理できることを確認します。"""
+    A = jnp.array([[2.0, 0.0], [0.0, 3.0]])
+
+    def mv(v: Vector) -> Vector:
+        return A @ v
+
+    op = LinOp(mv)
+    X = jnp.array([[1.0, 2.0], [3.0, 4.0]])
+    Y = op @ X
+    expected = A @ X
+    print(json.dumps({
+        "case": "linop_batch",
+        "expected_shape": list(expected.shape),
+        "y_shape": list(Y.shape),
+    }))
+    assert jnp.allclose(Y, A @ X)
+
+
+def _run_all_tests() -> None:
+    """このファイル内のテストを順に実行します。"""
+    test_linearoperator_matmul_vector()
+    test_linearoperator_composition()
+    test_linearoperator_batched_input()
+
+
+if __name__ == "__main__":
+    _run_all_tests()

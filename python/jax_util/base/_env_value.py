@@ -2,11 +2,7 @@
 import jax
 import jax.numpy as jnp
 
-if __name__ == "__main__":
-    from protocols import Scalar
-
-else:
-    from .protocols import Scalar
+from .protocols import Scalar
 
 # 共通 dtype
 jax.config.update("jax_enable_x64", True)
@@ -37,22 +33,4 @@ __all__ = [
     "AVOID_ZERO_DIV",
     "DEBUG",
 ]
-
-
-if __name__ == "__main__":
-    def test_constants_shape() -> None:
-        assert ZERO.shape == ()
-        assert ONE.shape == ()
-        assert HALF.shape == ()
-        assert WEAK_EPS.shape == ()
-        assert EPS.shape == ()
-        assert AVOID_ZERO_DIV.shape == ()
-
-    def test_constants_dtype() -> None:
-        assert ZERO.dtype == DEFAULT_DTYPE
-        assert ONE.dtype == DEFAULT_DTYPE
-        assert HALF.dtype == DEFAULT_DTYPE
-
-    test_constants_shape()
-    test_constants_dtype()
 

@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-if __name__ == "__main__":
-    from protocols import *
-else:
-    from .protocols import *
+
+from .protocols import *
 
 import equinox as eqx
 
 from typing import Callable,overload,List,Tuple,Optional
 
 from jaxtyping import Array
+
+from jax import numpy as jnp
 
 class LinOp(eqx.Module):
     mv : Callable[[Matrix],Matrix]
@@ -99,6 +99,9 @@ class LinOp(eqx.Module):
             return other @ (self @ v)
         
         return LinOp(composed_mv)
+    
+    def __add__(self,other:LinearOperator,/)->LinearOperator:
+        return LinOp(lambda v: self @ v + other @ v,shape=self.shape)
 
 def hstack_linops(ops:List[LinearOperator])->LinearOperator:
 
@@ -137,38 +140,3 @@ def stack_linops(ops:List[List[LinearOperator]])->LinearOperator:
 __all__ = [
     "LinOp",
 ]
-
-if __name__ == "__main__":
-    import jax.numpy as jnp
-
-    def test_linop_matrix_vector() -> None:
-        A: LinearOperator = jnp.asarray([[1.0, 2.0], [3.0, 4.0]])
-        v: Vector = jnp.asarray([1.0, 2.0])
-        L = LinOp(lambda x: A @ x)
-        expected: Vector = A @ v
-        actual: Vector = L @ v
-        assert jnp.allclose(actual, expected)
-
-    def test_linop_composition() -> None:
-        A: LinearOperator = jnp.asarray([[2.0, 0.0], [0.0, 3.0]])
-        B: LinearOperator = jnp.asarray([[0.0, 1.0], [1.0, 0.0]])
-        v: Vector = jnp.asarray([1.0, 2.0])
-        L = LinOp(lambda x: A @ x)
-        M = L * B
-        expected: Vector = (A @ (B @ v))
-        actual: Vector = M @ v
-        assert jnp.allclose(actual, expected)
-
-    def test_linop_scalar_mul() -> None:
-        A: LinearOperator = jnp.asarray([[1.0, 0.0], [0.0, 1.0]])
-        v: Vector = jnp.asarray([1.0, -1.0])
-        k: Scalar = jnp.asarray(2.0)
-        L = LinOp(lambda x: A @ x)
-        M = k * L * k
-        expected: Vector = (k * (A @ (k * v)))
-        actual: Vector = M @ v
-        assert jnp.allclose(actual, expected)
-
-    test_linop_matrix_vector()
-    test_linop_composition()
-    test_linop_scalar_mul()

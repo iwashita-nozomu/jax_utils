@@ -16,3 +16,8 @@ dist/
 
 # OS
 .DS_Store
+
+# Logs
+logs/
+python/tests/logs/
+

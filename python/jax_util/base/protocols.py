@@ -6,6 +6,8 @@ from typing import (
     TypeAlias,
     overload,
     Tuple,
+    Any,
+    Dict,
 )
 
 from jaxtyping import Array, Float,  Bool, Int
@@ -24,12 +26,7 @@ class Operator(Protocol):
     #__isoperator__: Literal[True]
 
 
-    #適用
-    @overload
     def __call__(self,other:Matrix)-> Matrix: ...
-    @overload
-    def __call__(self,other:Operator)-> Operator: ...
-
 
     #作用素の明示合成
     @overload
@@ -58,7 +55,13 @@ class LinearOperator(Protocol):
     def __rmul__(self,other:Scalar,/)-> "LinearOperator":  ...
     @overload
     def __rmul__(self,other:"LinearOperator",/)-> "LinearOperator": ...
+    
+    def __add__(self,other:"LinearOperator",/)-> "LinearOperator": ...
     ...
+
+class SolverLike(Protocol):
+    def __call__(self, *args: Any,**kwargs: Any) -> Tuple[Vector, Any, Dict[str,Any]]: ...
+
 
 __all__ = [
     "Operator",
@@ -68,26 +71,5 @@ __all__ = [
     "Matrix",
     "Boolean",
     "Integer",
+    "SolverLike",
 ]
-
-if __name__ == "__main__":
-    import jax.numpy as jnp
-
-    def test_protocol_scalar_vector_matrix() -> None:
-        s: Scalar = jnp.asarray(1.0)
-        v: Vector = jnp.asarray([1.0, 2.0])
-        m: Matrix = jnp.asarray([[1.0, 0.0], [0.0, 1.0]])
-        b: Boolean = jnp.asarray(True)
-        assert s.shape == ()
-        assert v.shape == (2,)
-        assert m.shape == (2, 2)
-        assert b.shape == ()
-
-    def test_linear_operator_protocol() -> None:
-        A: LinearOperator = jnp.asarray([[1.0, 2.0], [3.0, 4.0]])
-        v: Vector = jnp.asarray([1.0, 1.0])
-        mv: Vector = A @ v
-        assert mv.shape == (2,)
-
-    test_protocol_scalar_vector_matrix()
-    test_linear_operator_protocol()

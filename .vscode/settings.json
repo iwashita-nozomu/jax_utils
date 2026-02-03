@@ -16,5 +16,5 @@
     "./python",
     "./python/jax_util"
   ],
-  "python-envs.defaultEnvManager": "ms-python.python:system"
+  "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

@@ -1,0 +1,13 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run jax_util module",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "jax_util.base.nonlinearoperator",
+      "cwd": "${workspaceFolder}/python",
+      "console": "integratedTerminal"
+    }
+  ]
+}

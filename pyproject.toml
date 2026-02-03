@@ -58,3 +58,6 @@ reportAny = "warning"
 # 既存コードとの整合性を優先し、必要箇所から段階的に強化します。
 reportUnknownMemberType = "none"
 reportAny = "none"
+
+[tool.pytest.ini_options]
+testpaths = ["python/tests"]
