@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 from jax_util.base.protocols import LinearOperator, Operator
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 def test_protocols_exist() -> None:
@@ -11,6 +15,8 @@ def test_protocols_exist() -> None:
     assert Operator is not None
     print(json.dumps({
         "case": "protocols",
+        "source_file": SOURCE_FILE,
+        "test": "test_protocols_exist",
         "linear_operator": True,
         "operator": True,
     }))

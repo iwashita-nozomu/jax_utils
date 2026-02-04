@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import jax.numpy as jnp
 
 from jax_util.base import LinOp, Vector
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 def test_linearoperator_matmul_vector() -> None:
@@ -20,6 +24,8 @@ def test_linearoperator_matmul_vector() -> None:
     expected = A @ x
     print(json.dumps({
         "case": "linop_matmul",
+        "source_file": SOURCE_FILE,
+        "test": "test_linearoperator_matmul_vector",
         "expected": expected.tolist(),
         "y": y.tolist(),
     }))
@@ -46,6 +52,8 @@ def test_linearoperator_composition() -> None:
     expected = A @ (B @ x)
     print(json.dumps({
         "case": "linop_compose",
+        "source_file": SOURCE_FILE,
+        "test": "test_linearoperator_composition",
         "expected": expected.tolist(),
         "y": y.tolist(),
     }))
@@ -65,6 +73,8 @@ def test_linearoperator_batched_input() -> None:
     expected = A @ X
     print(json.dumps({
         "case": "linop_batch",
+        "source_file": SOURCE_FILE,
+        "test": "test_linearoperator_batched_input",
         "expected_shape": list(expected.shape),
         "y_shape": list(Y.shape),
     }))

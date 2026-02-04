@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import jax.numpy as jnp
 
 from jax_util.base import DEFAULT_DTYPE, EPS, LinOp, Vector
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 def test_base_exports_basic() -> None:
@@ -17,6 +21,8 @@ def test_base_exports_basic() -> None:
     y = op @ x
     print(json.dumps({
         "case": "base_exports",
+        "source_file": SOURCE_FILE,
+        "test": "test_base_exports_basic",
         "expected": x.tolist(),
         "y": y.tolist(),
         "eps": float(EPS),

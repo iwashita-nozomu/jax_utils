@@ -1,15 +1,14 @@
 from __future__ import annotations
 
-if __name__ == "__main__":
-    from protocols import *
-    from linearoperator import LinOp
-else:
-    from .protocols import *
-    from .linearoperator import LinOp
+
+from .protocols import *
+from .linearoperator import LinOp
 
 import equinox as eqx
 import jax
 from typing import Callable,Tuple
+
+
 
 def linearize(
     f: Callable[[Vector], Vector],

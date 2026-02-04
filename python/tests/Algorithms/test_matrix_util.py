@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import jax.numpy as jnp
 
 from jax_util.Algorithms.matrix_util import orthonormalize
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 def test_orthonormalize_basic() -> None:
@@ -14,6 +18,8 @@ def test_orthonormalize_basic() -> None:
     eye = jnp.eye(Q.shape[1])
     print(json.dumps({
         "case": "orthonormalize_basic",
+        "source_file": SOURCE_FILE,
+        "test": "test_orthonormalize_basic",
         "expected": eye.tolist(),
         "qtq": (Q.T @ Q).tolist(),
     }))
@@ -26,6 +32,8 @@ def test_orthonormalize_idempotent() -> None:
     Q1 = orthonormalize(Q0)
     print(json.dumps({
         "case": "orthonormalize_idempotent",
+        "source_file": SOURCE_FILE,
+        "test": "test_orthonormalize_idempotent",
         "expected": Q0.tolist(),
         "q1": Q1.tolist(),
     }))

@@ -10,3 +10,4 @@
 - **合成と適用を曖昧に書かない**（例: `A @ B @ v` は括弧なしで書かない）。
 - **内部関数を直接呼び出さない**（例: `LinOp.mv(x)` / `Op.func(x)` は禁止）。
 - **型の意味が曖昧な `Array` を引数・戻り値に使わない**。
+	- ただし **`python/jax_util/base/` 内部** と **`python/jax_util/base/protocols.py`** は例外とします。

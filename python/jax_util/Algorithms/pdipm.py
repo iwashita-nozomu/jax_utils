@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from typing import Any, Dict, Tuple , Callable
+from pathlib import Path
 
 import equinox as eqx
 import jax
@@ -9,6 +10,9 @@ from jax import numpy as jnp
 from ..base import *
 
 from .kkt_solver import *
+
+
+SOURCE_FILE = Path(__file__).name
 
 class PDIPMState(eqx.Module):
     kkt_state: KKTState
@@ -273,10 +277,12 @@ def _pdipm_solve(
             # (A) PRE: stopping residuals (MAIN)
             # ============================================================
             jax.debug.print(
-                "[k={k}] ipm_res={ipm:.3e} "
-                "(Rx,Req,Ri,Rc)rel=({rx:.2e},{req:.2e},{ri:.2e},{rc:.2e}) "
-                "mu={mu:.3e} min(s)={smin:.2e} min(lam)={lmin:.2e}",
-                k=step_count,
+                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
+                "\"func\":\"_pdipm_solve\",\"event\":\"residuals\",\"step\":{step},"
+                "\"ipm_res\":{ipm},\"rx_rel\":{rx},\"req_rel\":{req},\"ri_rel\":{ri},"
+                "\"rc_rel\":{rc},\"mu\":{mu},\"s_min\":{smin},\"lam_min\":{lmin}}}",
+                source_file=SOURCE_FILE,
+                step=step_count,
                 ipm=ipm_res,
                 rx=R_x_rel,
                 req=R_eq_rel,
@@ -286,14 +292,17 @@ def _pdipm_solve(
                 smin=jnp.min(s),
                 lmin=jnp.min(lam),
             )
-
             # ============================================================
             # (A-2) additional summary
             # ============================================================
             jax.debug.print(
-                "  obj={f:.3e} ||x||={xn:.3e} ||s||={sn:.3e} ||lam||={ln:.3e} "
-                "||r_x||={rxn:.3e} ||r_eq||={ren:.3e} ||r_ineq||={rin:.3e}",
-                f=f_val,
+                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
+                "\"func\":\"_pdipm_solve\",\"event\":\"summary\",\"step\":{step},"
+                "\"obj\":{obj},\"x_norm\":{xn},\"s_norm\":{sn},\"lam_norm\":{ln},"
+                "\"rx_norm\":{rxn},\"req_norm\":{ren},\"ri_norm\":{rin}}}",
+                source_file=SOURCE_FILE,
+                step=step_count,
+                obj=f_val,
                 xn=x_norm,
                 sn=s_norm,
                 ln=lam_norm,
@@ -306,10 +315,12 @@ def _pdipm_solve(
             # (B) Mehrotra predictor–corrector summary
             # ============================================================
             jax.debug.print(
-                "  mehrotra: "
-                "a_aff(pri,dual)=({aap:.3f},{aad:.3f}) "
-                "mu_aff={mua:.3e} sigma={sg:.3e} "
-                "a(pri,dual)=({ap:.3f},{ad:.3f})",
+                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
+                "\"func\":\"_pdipm_solve\",\"event\":\"mehrotra\",\"step\":{step},"
+                "\"alpha_aff_pri\":{aap},\"alpha_aff_dual\":{aad},\"mu_aff\":{mua},"
+                "\"sigma\":{sg},\"alpha_pri\":{ap},\"alpha_dual\":{ad}}}",
+                source_file=SOURCE_FILE,
+                step=step_count,
                 aap=alpha_aff_pri,
                 aad=alpha_aff_dual,
                 mua=mu_aff,
@@ -322,7 +333,11 @@ def _pdipm_solve(
             # (C) KKT difficulty / forcing
             # ============================================================
             jax.debug.print(
-                "  kkt: rtol={rt:.1e} ||rhs_aff||={ra:.2e} ||rhs_corr||={rc:.2e}",
+                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
+                "\"func\":\"_pdipm_solve\",\"event\":\"kkt\",\"step\":{step},"
+                "\"kkt_rtol\":{rt},\"rhs_aff_norm\":{ra},\"rhs_corr_norm\":{rc}}}",
+                source_file=SOURCE_FILE,
+                step=step_count,
                 rt=kkt_rtol,
                 ra=jnp.linalg.norm(rhs_top_aff),
                 rc=jnp.linalg.norm(rhs_top_corr),
@@ -339,8 +354,11 @@ def _pdipm_solve(
             mu_post = jnp.sum(comp_vec_next) / m
 
             jax.debug.print(
-                "  post: prim={pr:.2e} mu={mu:.3e} "
-                "min(s)={smin:.2e} min(lam)={lmin:.2e} ||a*dx||={sdx:.2e}",
+                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
+                "\"func\":\"_pdipm_solve\",\"event\":\"post\",\"step\":{step},"
+                "\"prim\":{pr},\"mu\":{mu},\"s_min\":{smin},\"lam_min\":{lmin},\"step_norm\":{sdx}}}",
+                source_file=SOURCE_FILE,
+                step=step_count,
                 pr=prim_post,
                 mu=mu_post,
                 smin=jnp.min(s_next),
@@ -379,6 +397,19 @@ def _pdipm_solve(
         "compl_final": jnp.dot(lam_f, s_f),
     }
 
+    if DEBUG:
+        jax.debug.print(
+            "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
+            "\"func\":\"_pdipm_solve\",\"event\":\"return\",\"step\":{step},"
+            "\"prim_res_final\":{prim},\"dual_res_final\":{dual},\"mu_final\":{mu}}}",
+            source_file=SOURCE_FILE,
+            step=step_count,
+            prim=info["prim_res_final"],
+            dual=info["dual_res_final"],
+            mu=info["mu_final"],
+        )
+        jax.debug.print("")
+
     opt = f_opt(x_f)
     return (
         opt,
@@ -392,10 +423,53 @@ def _pdipm_solve(
         info,
     )
 
+
+def pdipm_solve(
+    f_opt: Callable[[Vector], Scalar],
+    c_eq: Callable[[Vector], Vector],
+    c_ineq: Callable[[Vector], Vector],
+    optimizer_state: PDIPMState,
+    n_primal: int,
+    m_eq: int,
+    m_ineq: int,
+    eta: Scalar = jnp.asarray(0.1, dtype=DEFAULT_DTYPE),
+    *,
+    reset: bool = False,
+    alpha_max: Scalar = jnp.asarray(0.995, dtype=DEFAULT_DTYPE),
+    max_steps: int = 30,
+    ipm_tol: Scalar = EPS,
+    log_every: int = 1,
+    kkt_rtol_min: Scalar = jnp.asarray(1e-12, dtype=DEFAULT_DTYPE),
+    kkt_rtol_max: Scalar = jnp.asarray(1e-2, dtype=DEFAULT_DTYPE),
+    kkt_forcing_c: Scalar = jnp.asarray(0.5, dtype=DEFAULT_DTYPE),
+    kkt_forcing_alpha: Scalar = jnp.asarray(0.5, dtype=DEFAULT_DTYPE),
+) -> tuple[Scalar, PDIPMState, Dict[str, Any]]:
+    """公開用の PDIPM ソルバー。"""
+    return _pdipm_solve(
+        f_opt=f_opt,
+        c_eq=c_eq,
+        c_ineq=c_ineq,
+        optimizer_state=optimizer_state,
+        n_primal=n_primal,
+        m_eq=m_eq,
+        m_ineq=m_ineq,
+        eta=eta,
+        reset=reset,
+        alpha_max=alpha_max,
+        max_steps=max_steps,
+        ipm_tol=ipm_tol,
+        log_every=log_every,
+        kkt_rtol_min=kkt_rtol_min,
+        kkt_rtol_max=kkt_rtol_max,
+        kkt_forcing_c=kkt_forcing_c,
+        kkt_forcing_alpha=kkt_forcing_alpha,
+    )
+
 __all__ = [
     "PDIPMState",
     "initialize_pdipm_state",
     "_pdipm_solve",
+    "pdipm_solve",
 ]
 
 

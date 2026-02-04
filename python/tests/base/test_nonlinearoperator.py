@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import jax.numpy as jnp
 
 from jax_util.base import LinOp, Vector
+
+SOURCE_FILE = Path(__file__).name
 from jax_util.base.nonlinearoperator import adjoint, linearize
 
 
@@ -24,6 +27,8 @@ def test_linearize_and_adjoint() -> None:
     expected = A @ v
     print(json.dumps({
         "case": "linearize",
+            "source_file": SOURCE_FILE,
+        "test": "test_linearize_and_adjoint",
         "expected": expected.tolist(),
         "y": y.tolist(),
     }))
@@ -34,6 +39,8 @@ def test_linearize_and_adjoint() -> None:
     expected_adj = A.T @ v
     print(json.dumps({
         "case": "adjoint",
+            "source_file": SOURCE_FILE,
+        "test": "test_linearize_and_adjoint",
         "expected": expected_adj.tolist(),
         "adj_y": adj_y.tolist(),
     }))
@@ -50,6 +57,8 @@ def test_nonlinear_linop_roundtrip() -> None:
     y = op @ x
     print(json.dumps({
         "case": "nonlinear_linop",
+            "source_file": SOURCE_FILE,
+        "test": "test_nonlinear_linop_roundtrip",
         "expected": x.tolist(),
         "y": y.tolist(),
     }))

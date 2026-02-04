@@ -12,4 +12,8 @@
 	- `Matrix`: 2 次元（`Float[Array, "m n"]`）
 	- `Boolean`: 0 次元（`Bool[Array, ""]`）
 - `Array` は型エイリアス定義内でのみ使用し、関数の引数・戻り値では使いません。
+- ただし **`python/jax_util/base/` 内部実装** と **`python/jax_util/base/protocols.py`** では、
+	型境界の定義として `Array` を使ってもよいものとします。
 - `Scalar` / `Vector` / `Matrix` / `Boolean` のいずれかで意味を必ず明示します。
+- `Matrix` は **バッチ化されたベクトル列**も含みます（axis = 1 がバッチ方向）。
+- `LinOp` はバッチ対応を明示するため、`Matrix` へ作用できる設計とします。

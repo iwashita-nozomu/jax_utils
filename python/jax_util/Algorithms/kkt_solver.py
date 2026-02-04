@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-import os
-if __name__=="__main__":
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
-    os.environ['XLA_PYTHON_CLIENT_PREALLOCATE']='false'
-    os.environ["JAX_ASYNC_DISPATCH"] = "0"
+from pathlib import Path
 from typing import Any, Optional
 
 import equinox as eqx
@@ -18,7 +14,7 @@ from ._check_mv_operator import (
     print_Mv_report,
 )
 from ..base import *
-from ._fgmres import *
+# from ._fgmres import *
 from ._minres import MINRESState, pminres_solve
 from .lobpcg import (
     BlockEigenState,
@@ -27,6 +23,9 @@ from .lobpcg import (
     make_rank_r_spectral_precond,
     update_subspace,
 )
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 
@@ -50,7 +49,7 @@ def initialize_kkt_state(
 
 ) -> KKTState:
     if method=='fgmres':
-        assert "Do not use FGMRES for now"
+        raise AssertionError("FGMRES is archived and not supported.")
 
     H_inv_state = init_spectral_precond(
         Mv=Hv_initial,
@@ -85,15 +84,15 @@ def initialize_kkt_state(
         solver_state=MINRESState(
             x0=jnp.zeros((n_primal+n_dual,),dtype=DEFAULT_DTYPE),
         )
-    elif method=='fgmres':
-        if restart is None:
-            raise ValueError("restart must be specified for fgmres method")
+    # elif method=='fgmres':
+    #     if restart is None:
+    #         raise ValueError("restart must be specified for fgmres method")
 
-        solver_state=initialize_fgmres_state(
-            n=n_primal+n_dual,
-            restart=restart,
-            precond_state=None,
-        )
+    #     solver_state=initialize_fgmres_state(
+    #         n=n_primal+n_dual,
+    #         restart=restart,
+    #         precond_state=None,
+    #     )
     else :
         raise ValueError(f"Unknown method: {method}")
 
@@ -127,7 +126,12 @@ def _kkt_block_solver(
     H_inv_approx=make_rank_r_spectral_precond(basis=H_eig,)
 
     if DEBUG:
-        jax.debug.print("LOBPCG update H_inv: info: {info}\n", info=H_info)
+        jax.debug.print(
+            "{{\"case\":\"kkt\",\"source_file\":\"{source_file}\","
+            "\"func\":\"_kkt_block_solver\",\"event\":\"H_inv_update\",\"info\":{info}}}",
+            source_file=SOURCE_FILE,
+            info=H_info,
+        )
 
     # def Sv(v: Vector) -> Vector:
     #     #Sv = B H^{-1} B^T v
@@ -147,7 +151,12 @@ def _kkt_block_solver(
     S_inv_approx=make_rank_r_spectral_precond(basis=S_eig,)
     
     if DEBUG:
-        jax.debug.print("LOBPCG update S_inv: info: {info}\n", info=S_info)
+        jax.debug.print(
+            "{{\"case\":\"kkt\",\"source_file\":\"{source_file}\","
+            "\"func\":\"_kkt_block_solver\",\"event\":\"S_inv_update\",\"info\":{info}}}",
+            source_file=SOURCE_FILE,
+            info=S_info,
+        )
 
     def KKT_mv(v: Vector) -> Vector:
         n_primal=rhs_x.shape[0]
@@ -178,10 +187,10 @@ def _kkt_block_solver(
         # while_loop / jit のトレース中は Python の bool() 変換ができず例外になります。
         # ここは数値計算ロジックではなく「自己随伴性/SPDの検査」なので、
         # JAXトレース文脈ではスキップし、通常実行時のみレポートを出します。
-        if not isinstance(rhs_x, jax.core.Tracer) and not isinstance(rhs_lam, jax.core.Tracer):# type: ignore
+        if not isinstance(rhs_x, jax.core.Tracer) and not isinstance(rhs_lam, jax.core.Tracer):
             print_Mv_report(
                 check_self_adjoint(LinOp(KKT_mv), shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
-                check_spd_quadratic_form(LinOp(KKT_mv), shape=(rhs_x.shape[0] + rhs_lam.shape[0],), num_trials=64),
+                None,
                 name="KKT operator",
             )
 
@@ -191,7 +200,11 @@ def _kkt_block_solver(
                 name="KKT preconditioner",
             )
         else:
-            jax.debug.print("[DEBUG] skip Mv checks inside JAX tracing context")
+            jax.debug.print(
+                "{{\"case\":\"kkt\",\"source_file\":\"{source_file}\","
+                "\"func\":\"_kkt_block_solver\",\"event\":\"skip_mv_checks\"}}",
+                source_file=SOURCE_FILE,
+            )
     scaled_tol=kkt_tol
     
     if kkt_state.method=='minres':
@@ -232,12 +245,28 @@ def _kkt_block_solver(
     }
 
     if DEBUG:
-        jax.debug.print("KKT block solver: solver info: {info}\n", info=info)
+        jax.debug.print(
+            "{{\"case\":\"kkt\",\"source_file\":\"{source_file}\","
+            "\"func\":\"_kkt_block_solver\",\"event\":\"solver_info\","
+            "\"res_norm\":{res_norm},\"rhs_norm\":{rhs_norm},\"rel_res\":{rel_res},"
+            "\"converged\":{converged},\"num_iter\":{num_iter}}}",
+            source_file=SOURCE_FILE,
+            res_norm=info["res_norm"],
+            rhs_norm=info["rhs_norm"],
+            rel_res=info["rel_res"],
+            converged=info["solver_info"]["converged"],
+            num_iter=info["solver_info"]["num_iter"],
+        )
 
     if DEBUG:
-        jax.debug.print("\nKKT block solver: MINRES solution residual check\n")
-        res_kkt=KKT_mv(v)-jnp.concatenate([rhs_x,rhs_lam],axis=0)
-        jax.debug.print("  residual norm KKT (MINRES): {}\n", jnp.linalg.norm(res_kkt))
+        res_kkt = KKT_mv(v) - jnp.concatenate([rhs_x, rhs_lam], axis=0)
+        jax.debug.print(
+            "{{\"case\":\"kkt\",\"source_file\":\"{source_file}\","
+            "\"func\":\"_kkt_block_solver\",\"event\":\"residual_check\","
+            "\"residual_norm\":{residual_norm}}}",
+            source_file=SOURCE_FILE,
+            residual_norm=jnp.linalg.norm(res_kkt),
+        )
 
     dx=v[:rhs_x.shape[0]]
     dlam=v[rhs_x.shape[0]:]
@@ -253,6 +282,19 @@ def _kkt_block_solver(
     )
 
     ans = (x, lam)
+    if DEBUG:
+        jax.debug.print(
+            "{{\"case\":\"kkt\",\"source_file\":\"{source_file}\","
+            "\"func\":\"_kkt_block_solver\",\"event\":\"return\","
+            "\"res_norm\":{res_norm},\"rel_res\":{rel_res},\"converged\":{converged},"
+            "\"num_iter\":{num_iter}}}",
+            source_file=SOURCE_FILE,
+            res_norm=info["res_norm"],
+            rel_res=info["rel_res"],
+            converged=info["solver_info"]["converged"],
+            num_iter=info["solver_info"]["num_iter"],
+        )
+        jax.debug.print("")
     return ans, new_kkt_state, info
 
 

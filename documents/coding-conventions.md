@@ -16,6 +16,7 @@
 - [テスト規約](./coding-conventions-testing.md) — テスト配置、ログ出力、実行方法を定めます。
 - [ログ規約](./coding-conventions-logging.md) — JSONL ログの形式・出力先・運用手順を定めます。
 - [ソルバー規約](./coding-conventions-solvers.md) — 反復法の戻り値・情報出力・安定化を定めます。
+- [プロジェクト運用規約](./coding-conventions-project.md) — Docker・ドキュメント・依存関係の運用を定めます。
 
 ## 補助資料
 - [型エイリアス一覧](./type-aliases.md) — `Scalar` / `Vector` / `Matrix` などの指針と一覧。

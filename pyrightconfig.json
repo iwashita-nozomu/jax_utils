@@ -16,6 +16,7 @@
   "reportAny": "warning",
   "diagnosticSeverityOverrides": {
     "reportUnknownMemberType": "none",
-    "reportAny": "none"
+    "reportAny": "none",
+    "reportMissingTypeStubs": "none"
   }
 }

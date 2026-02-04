@@ -10,6 +10,6 @@ def orthonormalize(X: Matrix) -> Matrix:
     signs = jnp.sign(diag)
     one = jnp.array(ONE, dtype=X.dtype)
     signs = jnp.where(signs == 0, one, signs)
-    Q = Q * signs#pyright: ignore[reportConstantRedefinition]
-    return Q
+    Q_adjusted = Q * signs
+    return Q_adjusted
 

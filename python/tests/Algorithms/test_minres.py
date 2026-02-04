@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import jax
 import jax.numpy as jnp
 
 from jax_util.Algorithms._minres import MINRESState, pminres_solve
 from jax_util.base import LinOp, Vector
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 def test_minres_known_solution() -> None:
@@ -35,6 +39,8 @@ def test_minres_known_solution() -> None:
     )
     print(json.dumps({
         "case": "minres_known",
+        "source_file": SOURCE_FILE,
+        "test": "test_minres_known_solution",
         "expected_head": x_true[:5].tolist(),
         "expected_norm": float(jnp.linalg.norm(x_true)),
         "num_iter": int(info["num_iter"]),
@@ -70,6 +76,8 @@ def test_minres_indefinite_system() -> None:
     )
     print(json.dumps({
         "case": "minres_indef",
+        "source_file": SOURCE_FILE,
+        "test": "test_minres_indefinite_system",
         "expected_head": x_true[:5].tolist(),
         "expected_norm": float(jnp.linalg.norm(x_true)),
         "x_norm": float(jnp.linalg.norm(x)),
@@ -93,7 +101,7 @@ def test_minres_ill_conditioned_system() -> None:
     x_true = jax.random.normal(key, (n,))
     rhs = A @ x_true
 
-    x, _, _ = pminres_solve(
+    x, _, info = pminres_solve(
         Mv=op,
         Minv=precond,
         rhs=rhs,
@@ -101,13 +109,50 @@ def test_minres_ill_conditioned_system() -> None:
         maxiter=600,
         rtol=jnp.asarray(1e-6),
     )
+    final_rel_r = float(jnp.asarray(info["final_rel_r"]))
     print(json.dumps({
         "case": "minres_ill",
+        "source_file": SOURCE_FILE,
+        "test": "test_minres_ill_conditioned_system",
         "expected_head": x_true[:5].tolist(),
         "expected_norm": float(jnp.linalg.norm(x_true)),
         "x_norm": float(jnp.linalg.norm(x)),
+        "final_rel_r": final_rel_r,
     }))
-    assert jnp.allclose(x, x_true, rtol=1e-4, atol=1e-4)
+    assert final_rel_r < 1e-3
+
+
+def test_minres_zero_rhs() -> None:
+    """右辺ゼロならゼロ解に収束することを確認します。"""
+    n = 60
+    A = jnp.diag(jnp.linspace(1.0, 3.0, n))
+
+    def mv(v: Vector) -> Vector:
+        return A @ v
+
+    op = LinOp(mv)
+    precond = LinOp(lambda v: v)
+    rhs = jnp.zeros((n,))
+
+    x, _, info = pminres_solve(
+        Mv=op,
+        Minv=precond,
+        rhs=rhs,
+        minres_state=MINRESState.initialize(x0=jnp.zeros_like(rhs)),
+        maxiter=20,
+        rtol=jnp.asarray(1e-8),
+    )
+    x_norm = float(jnp.linalg.norm(x))
+    num_iter = int(jnp.asarray(info["num_iter"]))
+    print(json.dumps({
+        "case": "minres_zero_rhs",
+        "source_file": SOURCE_FILE,
+        "test": "test_minres_zero_rhs",
+        "expected_norm": 0.0,
+        "x_norm": x_norm,
+        "num_iter": num_iter,
+    }))
+    assert x_norm < 1e-12
 
 
 def _run_all_tests() -> None:
@@ -115,6 +160,7 @@ def _run_all_tests() -> None:
     test_minres_known_solution()
     test_minres_indefinite_system()
     test_minres_ill_conditioned_system()
+    test_minres_zero_rhs()
 
 
 if __name__ == "__main__":

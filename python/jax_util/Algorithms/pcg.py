@@ -1,8 +1,5 @@
 from __future__ import annotations
-import os
-if __name__ == "__main__":
-    # 必要なら GPU 固定（不要なら消してOK）
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import equinox as eqx
@@ -11,6 +8,9 @@ import jax.numpy as jnp
 from jax import lax
 
 from ..base import *
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 # =========================
@@ -38,7 +38,12 @@ def pcg_solve(
 
     rhs_p= proj @ rhs
     if DEBUG:
-        jax.debug.print("PCG rhs norm: {norm}", norm=jnp.linalg.norm(rhs_p))
+        jax.debug.print(
+            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
+            "\"func\":\"pcg_solve\",\"event\":\"rhs_norm\",\"value\":{value}}}",
+            source_file=SOURCE_FILE,
+            value=jnp.linalg.norm(rhs_p),
+        )
     x0 = proj @ pcg_state.x0
 
     r0 = rhs_p - pMv @ x0
@@ -54,6 +59,17 @@ def pcg_solve(
     atol_val = jnp.asarray(atol, DEFAULT_DTYPE) if atol is not None else jnp.asarray(0.0, DEFAULT_DTYPE)
     rtol_val = jnp.asarray(rtol, DEFAULT_DTYPE) if rtol is not None else jnp.asarray(0.0, DEFAULT_DTYPE)
     tol = jnp.maximum(atol_val * atol_val, (rtol_val * rtol_val) * r0_norm)
+
+    if DEBUG:
+        jax.debug.print(
+            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
+            "\"func\":\"pcg_solve\",\"event\":\"init\","
+            "\"r0_norm\":{r0},\"tol\":{tol},\"maxiter\":{maxiter}}}",
+            source_file=SOURCE_FILE,
+            r0=r0_norm,
+            tol=tol,
+            maxiter=maxiter,
+        )
 
     done0 = (r0_norm <= tol)
 
@@ -80,7 +96,7 @@ def pcg_solve(
 
         rs_new = jnp.dot(r_new, z_new)
         rs_safe = jnp.where(jnp.abs(rs) < AVOID_ZERO_DIV, AVOID_ZERO_DIV, rs)
-        beta = rs_new / rs_safe #pyright: ignore
+        beta = rs_new / rs_safe
         p_new = proj @ (z_new + beta * p)
 
         return (i + 1, x_new, r_new, z_new, p_new, rs_new, done_new)
@@ -95,7 +111,24 @@ def pcg_solve(
         "num_iter": i_f,
     }
     if DEBUG:
-        jax.debug.print("PCG info: {info}", info=info)
+        jax.debug.print(
+            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
+            "\"func\":\"pcg_solve\",\"event\":\"summary\","
+            "\"num_iter\":{num_iter},\"final_norm_r\":{final_norm_r},"
+            "\"final_rel_r\":{final_rel_r},\"converged\":{converged}}}",
+            source_file=SOURCE_FILE,
+            num_iter=i_f,
+            final_norm_r=info["final_norm_r"],
+            final_rel_r=info["final_rel_r"],
+            converged=info["converged"],
+        )
+        jax.debug.print(
+            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
+            "\"func\":\"pcg_solve\",\"event\":\"return\"}}"
+            ,
+            source_file=SOURCE_FILE,
+        )
+        jax.debug.print("")
     return x_f, PCGState(x0=x_f), info
 
 

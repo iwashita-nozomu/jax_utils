@@ -1,17 +1,16 @@
 from __future__ import annotations
-from typing import Any, Dict,Tuple,cast
-
-import os
-if __name__ == "__main__":
-    os.environ["CUDA_VISIBLE_DEVICES"] = "1"
-    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+from typing import Any, Dict,Tuple
+from pathlib import Path
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
 from jax import lax
 
-from ..base import *  # Array, DEFAULT_DTYPE, StatelessMvlike, EPS, ZERO, ONE, WEAK_EPS, AVOID_ZERO_DIV, DEBUG
+from ..base import *  # Array, DEFAULT_DTYPE, EPS, ZERO, ONE, WEAK_EPS, AVOID_ZERO_DIV, DEBUG
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 class MINRESState(eqx.Module):
@@ -53,9 +52,9 @@ def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Sc
             r: Scalar = a / jnp.where(c == ZERO, avoid_zero_div, c)
             return c, s, jnp.abs(r)
 
-        return cast(Tuple[Scalar, Scalar, Scalar], lax.cond(abs_b >= abs_a, branch1, branch2))
+        return lax.cond(abs_b >= abs_a, branch1, branch2)
 
-    return lax.cond(b == ZERO, case_b0, lambda: lax.cond(a == ZERO, case_a0, general)) # type: ignore
+    return lax.cond(b == ZERO, case_b0, lambda: lax.cond(a == ZERO, case_a0, general))
 
 
 def pminres_solve(
@@ -94,6 +93,18 @@ def pminres_solve(
     r0 = proj @ (b - Mv @ x)
     rnorm0 = jnp.linalg.norm(r0)
     done0 = (rnorm0 <= tol_true) | (bnorm == ZERO)
+
+    if DEBUG:
+        jax.debug.print(
+            "{{\"case\":\"minres\",\"source_file\":\"{source_file}\","
+                "\"func\":\"pminres_solve\",\"event\":\"init\","
+            "\"r0_norm\":{r0},\"b_norm\":{bn},\"tol\":{tol},\"maxiter\":{maxiter}}}",
+            source_file=SOURCE_FILE,
+            r0=rnorm0,
+            bn=bnorm,
+            tol=tol_true,
+            maxiter=maxiter,
+        )
 
     # ---- Choi–Saunders initialization (use z1 = r0) ----
     z_prev = jnp.zeros_like(r0)  # z0
@@ -140,11 +151,12 @@ def pminres_solve(
         p = proj @ (Mv @ q)
 
         # alpha_k = (q_k^T p_k) / beta_k^2
-        beta2 = jnp.where(beta < avoid_zero_div, avoid_zero_div, beta) ** 2 # pyright: ignore
+        beta_safe = jnp.where(beta < avoid_zero_div, avoid_zero_div, beta)
+        beta2 = beta_safe * beta_safe
         alpha = jnp.dot(q, p) / beta2
 
         # ---- Algorithm 1 line 9: z_{k+1} recurrence (unnormalized) ----
-        inv_beta = ONE / jnp.where(beta < avoid_zero_div, avoid_zero_div, beta) # pyright: ignore
+        inv_beta = ONE / beta_safe
         coef_prev = jnp.where(
             k == 0,
             ZERO,
@@ -258,6 +270,19 @@ def pminres_solve(
         "converged": (rnorm_f <= tol_true),
         "num_iter": k_f,
     }
+    if DEBUG:
+        jax.debug.print(
+            "{{\"case\":\"minres\",\"source_file\":\"{source_file}\","
+            "\"func\":\"pminres_solve\",\"event\":\"return\","
+            "\"num_iter\":{num_iter},\"final_norm_r\":{final_norm_r},"
+            "\"final_rel_r\":{final_rel_r},\"converged\":{converged}}}",
+            source_file=SOURCE_FILE,
+            num_iter=info["num_iter"],
+            final_norm_r=info["final_norm_r"],
+            final_rel_r=info["final_rel_r"],
+            converged=info["converged"],
+        )
+        jax.debug.print("")
     return x_f, MINRESState.initialize(x0=x_f), info
 
 

@@ -1,8 +1,4 @@
 from __future__ import annotations
-import os
-
-if __name__=="__main__":
-    os.environ['CUDA_VISIBLE_DEVICES'] = '1'
 
 from typing import Any, Dict, Tuple
 
@@ -34,7 +30,7 @@ class BlockEigenState(eqx.Module):
     P: Matrix
     AP: Matrix
     eigenvalues: Vector
-    iteration: int
+    iteration: Integer
 
 def init_block_eigen_state(Mv: LinearOperator, X0: Matrix) -> BlockEigenState:
     """BlockEigState の 1 回目初期化."""
@@ -87,9 +83,9 @@ def _block_preconditioned_rayleigh_ritz(
         projection = LinOp(_identity_projection)
 
     # ---- 初期 X を直交化し、射影してからもう一度直交化 ----
-    X, _ = jnp.linalg.qr(state.X)  # 念のため直交化
-    X = projection @ X  #pyright: ignore[reportConstantRedefinition]
-    X = orthonormalize(X) #pyright: ignore[reportConstantRedefinition]
+    X_base, _ = jnp.linalg.qr(state.X)  # 念のため直交化
+    X_proj = projection @ X_base
+    X = orthonormalize(X_proj)
 
     AX = Mv @ X      # (n, r)
     P = jnp.zeros_like(X)        # (n, r)
@@ -124,11 +120,11 @@ def _block_preconditioned_rayleigh_ritz(
 
         # ---- 1. 残差 + 前処理 ----
         R:Matrix = AXc - Xc * lambdac          # (n, r)
-        R = projection @ R  #pyright: ignore[reportConstantRedefinition]
-        R = orthonormalize(R)           #pyright: ignore[reportConstantRedefinition]
+        R_proj = projection @ R
+        R = orthonormalize(R_proj)
         W:Matrix = T_mv @ R                     # (n, r)
-        W = projection @ W  #pyright: ignore[reportConstantRedefinition]
-        # W = orthonormalize(W)          #pyright: ignore[reportConstantRedefinition]
+        W = projection @ W
+        # W = orthonormalize(W)
 
         # 既存探索方向も（数値誤差で漏れるので）射影して整える
         Pc = projection @ Pc
@@ -193,7 +189,7 @@ def _block_preconditioned_rayleigh_ritz(
             idx2 = jnp.argsort(lam)
 
         lam = lam[idx2]                  # (r,)
-        V = V[:, idx2]                   # (r, r)#pyright: ignore[reportConstantRedefinition]
+        V = V[:, idx2]
 
         # Ritz ベクトルの並び替え
         X_new = X_new @ V                # (n, r)
@@ -233,7 +229,7 @@ def _block_preconditioned_rayleigh_ritz(
         P=P_f,
         AP=AP_f,
         eigenvalues=lam_f,
-        iteration=iter0 + steps_f,# pyright: ignore
+        iteration=iter0 + steps_f,
     )
 
     return X_f, lam_f, new_state, info
@@ -294,10 +290,10 @@ def init_spectral_precond(
         idx = jnp.argsort(lam)
 
     lam = lam[idx]
-    V = V[:, idx] # pyright: ignore[reportConstantRedefinition]
+    V = V[:, idx]
 
-    X = X @ V #pyright: ignore[reportConstantRedefinition]
-    AX = AX @ V #pyright: ignore[reportConstantRedefinition]
+    X = X @ V
+    AX = AX @ V
 
 
     

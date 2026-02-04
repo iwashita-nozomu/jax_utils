@@ -40,13 +40,11 @@ class LinOp(eqx.Module):
     def __matmul__(self,x:LinearOperator,/)->LinearOperator: ...
 
     def __matmul__(self,x:Array|LinearOperator,/)->Array|LinearOperator:
-        if __name__ == "__main__":
-            print("matmul called")
         if isinstance(x,Array):
             return self.mv(x)
         else:
             def composed_mv(v:Array)->Array:
-                return self @ x @ v
+                return self @ (x @ v)
             return LinOp(composed_mv)
         
     @overload
@@ -55,8 +53,6 @@ class LinOp(eqx.Module):
     def __mul__(self,other:LinearOperator,/)->LinearOperator: ...
 
     def __mul__(self,other:Array|LinearOperator) -> LinearOperator:
-        if __name__ == "__main__":
-            print("mul called")
         if isinstance(other,Array):
 
             if other.ndim == 0:
@@ -81,10 +77,6 @@ class LinOp(eqx.Module):
     def __rmul__(self,other:LinearOperator,/)->LinearOperator: ...
 
     def __rmul__(self,other:Array|LinearOperator) -> LinearOperator:
-
-        if __name__ == "__main__":
-            print("rmul called")
-
         def composed_mv(v:Array)->Array:
             if isinstance(other,Array):
                 if other.ndim == 0:
@@ -102,6 +94,7 @@ class LinOp(eqx.Module):
     
     def __add__(self,other:LinearOperator,/)->LinearOperator:
         return LinOp(lambda v: self @ v + other @ v,shape=self.shape)
+
 
 def hstack_linops(ops:List[LinearOperator])->LinearOperator:
 

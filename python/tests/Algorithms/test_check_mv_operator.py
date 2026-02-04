@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import jax.numpy as jnp
 
@@ -10,6 +11,9 @@ from jax_util.Algorithms._check_mv_operator import (
     print_Mv_report,
 )
 from jax_util.base import LinOp, Vector
+
+
+SOURCE_FILE = Path(__file__).name
 
 
 def test_check_mv_operator_reports() -> None:
@@ -32,6 +36,8 @@ def test_check_mv_operator_reports() -> None:
     print_Mv_report(report1, report2, name="test")
     print(json.dumps({
         "case": "check_mv_operator",
+        "source_file": SOURCE_FILE,
+        "test": "test_check_mv_operator_reports",
         "expected_ok": True,
         "self_adjoint": report1,
         "spd": report2,

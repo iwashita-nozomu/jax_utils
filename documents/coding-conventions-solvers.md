@@ -12,22 +12,34 @@
 
 ## 3. `state` の方針
 - `state` はウォームスタートや内部状態の保持に使います。
-- 何も保持しない場合は、空の構造体を用意します。
-- 例:
-	- `@dataclass(frozen=True)` の空クラス
-	- `eqx.Module` の空クラス
+- 何も保持しない場合は、**`eqx.Module` の空クラス**を用意します。
+- `dataclass` は使わず、`eqx.Module` に統一します。
 
 ## 4. `info` の方針
 - `info` は辞書で返します。
 - 反復回数・残差・相対誤差・収束判定を含めます。
 - 例キー: `num_iter`, `res_norm`, `rel_res`, `converged`
 
-## 5. 例（イメージ）
+## 5. ログ出力の方針
+- **中間ログは `DEBUG` ガードの内側でのみ出力**します。
+- ログは **JSONL（1 行 1 JSON）** に統一します。
+- 推奨キーは次の通りです。
+    - `case`: どのソルバーか（例: `pcg`, `minres`）
+    - `source_file`: 実装ファイル（`__file__`）
+    - `func`: 関数名（例: `pcg_solve`）
+    - `event`: イベント名（例: `residuals`, `summary`, `return`）
+    - `iter` / `step`: 反復番号
+- **リターン直前に空行を 1 行**挿入し、ログの区切りを明確にします。
+- 正解値の出力は不要です（テスト側で出力します）。
+
+## 6. 例（イメージ）
 - 戻り値の形だけを示します。
 
 ```
-@dataclass(frozen=True)
-class EmptyState:
+import equinox as eqx
+
+
+class EmptyState(eqx.Module):
     """状態を持たないソルバー用の空構造体。"""
 
 
