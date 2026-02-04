@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable,Tuple
+from typing import Tuple
 
 from ..base import *
 
@@ -10,31 +10,47 @@ import equinox as eqx
 import jax
 from jax import numpy as jnp
 
+
+
 class NeuralNetwork(eqx.Module):
-    Layers: Tuple[NeuralNetworkLayer,...] = eqx.field(static=True)
+    layers: Tuple[NeuralNetworkLayer,...] = eqx.field(static=False)
     network_type: str = eqx.field(static=True)
+    layer_sizes: Tuple[int, ...] = eqx.field(static=True)
 
-    def __call__(self,x:Matrix):
+    def __call__(self, x: Matrix) -> Matrix:
+        ctx, carry = state_initializer(
+            network_type=self.network_type,
+            x=x,
+            layer_sizes=self.layer_sizes,
+        )
+        for layer in self.layers:
+            carry = layer(carry, ctx)
+        return carry.z
 
-        if self.network_type == "standard":
-            ctx = StandardCtx()
-        elif self.network_type == "icnn":
-            ctx = IcnnCtx(x=x)
-        else:
-            raise ValueError(f"Unsupported network type: {self.network_type}")
-        
-        for layer in self.Layers:
-            x,ctx = layer(x,ctx)
-            
-        return x
-        
-    
 
-    
+def state_initializer(
+    network_type: str,
+    x: Matrix,
+    layer_sizes: Tuple[int, ...] | None,
+) -> tuple[Ctx, Carry]:
+    """ネットワークの初期状態を作成します。"""
+    if network_type == "standard":
+        ctx = StandardCtx()
+        carry = StandardCarry(z=x)
+        return ctx, carry
+
+    if network_type == "icnn":
+        if layer_sizes is None or len(layer_sizes) < 2:
+            raise ValueError("layer_sizes must have at least 2 elements for icnn.")
+        ctx = IcnnCtx(x=x)
+        carry = IcnnCarry(z=x)
+        return ctx, carry
+
+    raise ValueError(f"Unsupported network type: {network_type}")
 
 
 def build_neuralnetwork(
-    networktype: str,
+    network_type: str,
     layer_sizes: Tuple[int,...],
     activation: str,
 
@@ -57,7 +73,7 @@ def build_neuralnetwork(
 
     layers = []
     key = random_key
-    if networktype == "standard":
+    if network_type == "standard":
         for i in range(len(layer_sizes) - 1):
             layer, key = standardNN_layer_factory(
                 input_dim=layer_sizes[i],
@@ -66,19 +82,13 @@ def build_neuralnetwork(
                 random_key=key,
             )
             layers.append(layer)
-        
-        def nn_forward(x: Matrix) -> Matrix:
-            z = x
-            for layer in layers:
-                z = layer(z)
-            return z
-        
         return NeuralNetwork(
-            Layers=tuple(layers),
-            forward=nn_forward,
+            layers=tuple(layers),
+            network_type=network_type,
+            layer_sizes=layer_sizes,
         )
 
-    elif networktype == "icnn":
+    elif network_type == "icnn":
         x_dim = layer_sizes[0]
         for i in range(1, len(layer_sizes)):
             layer, key = icnn_layer_factory(
@@ -89,17 +99,11 @@ def build_neuralnetwork(
                 random_key=key,
             )
             layers.append(layer)
-        
-        def icnn_forward(x: Matrix) -> Matrix:
-            z = jnp.zeros((layer_sizes[1], x.shape[1]), dtype=DEFAULT_DTYPE)
-            for layer in layers:
-                z = layer(z, x)
-            return z
-        
         return NeuralNetwork(
-            Layers=tuple(layers),
-            forward=icnn_forward,
+            layers=tuple(layers),
+            network_type=network_type,
+            layer_sizes=layer_sizes,
         )
 
     else:
-        raise ValueError(f"Unsupported network type: {networktype}")
+        raise ValueError(f"Unsupported network type: {network_type}")

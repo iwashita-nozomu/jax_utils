@@ -14,10 +14,9 @@
 8. [合成型の定義](./conventions/python/08_composition.md) — 合成は演算子として最小限に定義します。
 9. [ファイルごとの役割](./conventions/python/09_file_roles.md) — `base` と `Algorithms` の役割を明確化します。
 10. [依存関係の概要](./conventions/python/10_dependencies.md) — `base` を基盤とした依存構造を整理します。
-11. [テストの書き方](./conventions/python/11_testing.md) — テストの配置と参照規約を示します。
-12. [演算子記法の厳格ルール](./conventions/python/12_operator_rules.md) — `@` と `*` の厳格運用を定めます。
-13. [禁止パターン（演算子記法）](./conventions/python/13_operator_forbidden.md) — 記法の誤用を禁止します。
-14. [投影・前処理の記法](./conventions/python/14_projection_precond.md) — 投影・前処理の表記を統一します。
-15. [JAX/Equinox の運用規約](./conventions/python/15_jax_rules.md) — 反復・JIT・デバッグ方針を定めます。
-16. [ソルバーの戻り値](./conventions/python/16_solver_returns.md) — `ans, state, info` を統一します。
-17. [数値安定性](./conventions/python/17_numerical_stability.md) — ゼロ除算回避と悪条件ログを徹底します。
+11. テスト規約（共通）: `documents/coding-conventions-testing.md` を参照します。
+12. [演算子記法（線形/非線形・投影/前処理）](./conventions/python/12_operator_rules.md) — `@` と `*` の厳格運用、禁止事項、投影/前処理の表記をまとめます。
+13. [JAX/Equinox の運用規約](./conventions/python/15_jax_rules.md) — 反復・JIT・デバッグ方針を定めます。
+14. ソルバー規約（共通）: `documents/coding-conventions-solvers.md` を参照します。
+15. [数値安定性](./conventions/python/17_numerical_stability.md) — ゼロ除算回避と悪条件ログを徹底します。
+16. [ニューラルネットワーク規約](./conventions/python/18_neuralnetwork.md) — `neuralnetwork` 配下の設計と役割を整理します。

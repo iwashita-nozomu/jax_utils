@@ -10,6 +10,17 @@
 4. [演算子記法（共通）](./conventions/common/04_operators.md) — 適用は `@`、合成は `*` を基本にします。
 5. [ドキュメント運用](./conventions/common/05_docs.md) — 実装変更に合わせて文書も更新します。
 
+## 適用範囲の整理
+### 全体に共通で適用される規約
+- `documents/coding-conventions.md` の共通規約（上記 1〜5）
+- `documents/coding-conventions-project.md` のプロジェクト運用規約
+
+### サブモジュール別に適用される規約
+- `documents/coding-conventions-python.md` と `documents/conventions/python/`（`python/jax_util/` 配下）
+- `documents/coding-conventions-solvers.md`（数値解法に限定）
+- `documents/coding-conventions-logging.md`（ログに限定）
+- `documents/coding-conventions-testing.md`（テストに限定）
+
 ## 言語・領域別の規約（要約）
 - [Python 規約](./coding-conventions-python.md) — `python/jax_util/` の型注釈・演算子記法・JAX 運用を整理します。
 - [C++ 規約](./coding-conventions-cpp.md) — C++ 実装に関する命名・設計・注意点を整理します。
@@ -20,7 +31,4 @@
 
 ## 補助資料
 - [型エイリアス一覧](./type-aliases.md) — `Scalar` / `Vector` / `Matrix` などの指針と一覧。
-## 5. ドキュメント運用
-
-- 変更が入った場合は、該当する `documents/` 内の文書を同時に更新します。
 

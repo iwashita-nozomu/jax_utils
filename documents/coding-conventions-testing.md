@@ -10,6 +10,7 @@
 - 分類は次の通りです。
 	- `python/tests/base/`: 単体テスト（高速）。
 	- `python/tests/Algorithms/`: 数値アルゴリズムの検証（中〜高コスト）。
+	- `python/tests/neuralnetwork/`: NN 系の検証（小〜中コスト）。
 - 大規模ケースは `case` や `*_large` の名称で明示します。
 
 ## 3. 実行方法

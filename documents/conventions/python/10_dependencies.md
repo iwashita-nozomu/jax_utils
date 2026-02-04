@@ -16,3 +16,7 @@
 | `python/jax_util/Algorithms/lobpcg.py` | `base`, `Algorithms/matrix_util.py` | 固有値計算の補助を利用する。 |
 | `python/jax_util/Algorithms/kkt_solver.py` | `base`, `Algorithms/_check_mv_operator.py`, `Algorithms/_minres.py`, `Algorithms/lobpcg.py` | KKT 解法で各モジュールを統合する。 |
 | `python/jax_util/Algorithms/pdipm.py` | `base/_env_value.py`, `Algorithms/kkt_solver.py` | 内点法で KKT 解法と定数を利用する。 |
+| `python/jax_util/neuralnetwork/protocols.py` | `base` | 型エイリアスを利用してプロトコルを定義する。 |
+| `python/jax_util/neuralnetwork/layer_utils.py` | `base`, `neuralnetwork/protocols.py` | 層の実装と初期化に基盤型を利用する。 |
+| `python/jax_util/neuralnetwork/neuralnetwork.py` | `base`, `neuralnetwork/protocols.py`, `neuralnetwork/layer_utils.py` | ネットワークの構成と forward を提供する。 |
+| `python/jax_util/neuralnetwork/train.py` | `base`, `neuralnetwork/protocols.py` | 学習ループで共通型と損失プロトコルを利用する。optax を前提とする。 |

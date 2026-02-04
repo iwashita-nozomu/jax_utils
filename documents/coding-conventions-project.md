@@ -12,7 +12,8 @@
 - 追加パッケージが必要な場合は、**Dockerfile と requirements を同時に更新**します。
   - Python パッケージは `docker/requirements.txt` に追記します。
   - JAX などのシステム依存は `docker/Dockerfile` のインストール手順で管理します。
-- 仮想環境の作成は行いません（Docker 環境前提）。
+- 仮想環境の作成は **一切行いません**（Docker 環境前提）。
+- `venv` / `virtualenv` / `conda` などの導入は **禁止**します。
 - **Docker の Bash 環境を前提**とし、ローカル環境との差分は規約に明記します。
 
 ## 3. ドキュメント運用
@@ -38,7 +39,7 @@
 
 ### 4.3 `python/tests`
 - テストは `python/tests/` に集約します。
-- `base` / `Algorithms` に依存するだけに留めます。
+- `base` / `Algorithms` / `neuralnetwork` に依存するだけに留めます。
 
 ### 4.4 `scripts`
 - 実行補助スクリプト群です。
@@ -55,7 +56,7 @@
 | `documents/` | なし | ルールの一次情報源。実装に合わせて更新する。 |
 | `python/jax_util/base` | なし（標準ライブラリと JAX 等のみ） | 型・定数・基本作用素の基盤。 |
 | `python/jax_util/Algorithms` | `base` | 数値アルゴリズムの実装層。 |
-| `python/tests` | `base`, `Algorithms` | 検証とログの出力。 |
+| `python/tests` | `base`, `Algorithms`, `neuralnetwork` | 検証とログの出力。 |
 | `scripts` | `python/tests`, `documents` | 実行補助（テスト・ログ運用）。 |
 
 ### 4.7 ファイルごとの依存関係（要点）
@@ -66,7 +67,64 @@
   - `python/jax_util/Algorithms/pcg.py` → `base`
   - `python/jax_util/Algorithms/kkt_solver.py` → `base`, `Algorithms/_check_mv_operator.py`, `Algorithms/_minres.py`, `Algorithms/lobpcg.py`
   - `python/jax_util/Algorithms/pdipm.py` → `base/_env_value.py`, `Algorithms/kkt_solver.py`
+  - `python/jax_util/neuralnetwork/neuralnetwork.py` → `base`, `neuralnetwork/protocols.py`, `neuralnetwork/layer_utils.py`
 
-## 5. 参照
-- 依存関係の詳細: `documents/conventions/python/10_dependencies.md`
-- ファイル役割: `documents/conventions/python/09_file_roles.md`
+## 5. プロジェクト共通の実装規約
+この節は **Algorithms 以外にも適用される**共通ルールです。
+
+### 5.1 適用範囲
+- `python/jax_util/` 配下の全サブパッケージに適用します。
+- `Algorithms` / `neuralnetwork` / `base` / `tests` を含みます。
+
+### 5.2 型・形状の統一
+- `Scalar` / `Vector` / `Matrix` を優先します。
+- `Matrix` は **ベクトルのバッチ**を含む型として扱います。
+- `Matrix` のバッチ軸は **最後の軸（axis=-1）** を原則とします。
+- バッチ軸の定義は **この節に集約**し、他文書は参照のみとします。
+
+#### 5.2.1 形状の見方（Solver / NN 共通）
+- 本プロジェクトでは「ベクトルは列ベクトル」とみなし、`Matrix` は **列ベクトルを並べたもの**として扱います。
+- 具体的には、次を原則とします。
+  - `Vector`: `shape == (n,)`
+  - `Matrix`: `shape == (n, batch)`（最後の軸がバッチ）
+- この統一により、明示行列 `A: Matrix` を用いた `A @ x` と、線形作用素 `Mv @ x` の読み替えが自然になります。
+- NN も同様に `x.shape == (in_dim, batch)` を入力の原則とし、Solver 系と形状規約を共有します。
+
+### 5.3 作用素・演算子の統一
+- 適用は `@`、合成は `*` を原則とします。
+- 例外や特殊用途は `documents/conventions/python/12_operator_rules.md` に従います。
+
+### 5.4 JAX のルール
+- 反復は `jax.lax.scan` / `jax.lax.while_loop` を優先します。
+- Python の `for` は **JIT 対象外の範囲のみ**で使います。
+
+### 5.5 ログとデバッグ
+- ログ出力は `DEBUG` ガードの内側でのみ行います。
+- `jax.debug.print` を優先します。
+
+### 5.6 テストと実行
+- テストは `python/tests/` に集約します。
+- ライブラリ配下に `__main__` を置かず、実行はテスト側で行います。
+
+## 6. 環境設定の運用
+### 6.1 集約ルール
+- 実行環境の設定は `python/jax_util/base/_env_value.py` に集約します。
+- 設定の追加・変更時は **規約とセット**で更新します。
+
+### 6.2 環境変数の扱い
+- 環境変数は **上書き専用**です。
+- 既定値はコード側で保持し、環境変数がない場合は既定値を使います。
+
+### 6.3 実行手順の明文化
+- 実行時に必要な環境変数は `documents/` に記載します。
+- 変更があれば **必ず更新**します。
+- 仮想環境の導入は **禁止**します。依存は Docker と `docker/requirements.txt` で管理します。
+
+## 7. タスク運用
+### 7.1 `task.md` の位置づけ
+- `task.md` は **実装の進行管理**に使います。
+- 粒度は **ファイル単位**で統一します。
+
+### 7.2 更新ルール
+- 完了した項目は `task.md` から削除します。
+- 詳細設計や仕様は `documents/` に追記します。

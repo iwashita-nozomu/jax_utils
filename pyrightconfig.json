@@ -8,6 +8,7 @@
     "**/dist"
   ],
   "extraPaths": ["./python", "./python/jax_util"],
+  "stubPath": "./python/typings",
   "reportUnknownParameterType": "none",
   "reportUnknownArgumentType": "none",
   "reportUnknownVariableType": "none",

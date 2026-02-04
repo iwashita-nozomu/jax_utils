@@ -1,18 +1,31 @@
-from typing import Protocol
+from typing import Protocol, TypeAlias
 
-from typing import Tuple
-from base import *
+from jaxtyping import PyTree, Array
+from ..base import *
 
-class Ctx(Protocol):#固定状態
+Params: TypeAlias = PyTree[Array]
+
+class Ctx(Protocol):
+    """固定状態を表します。"""
     ...
-class Carry(Protocol):#層の計算に使う状態zとか
+
+class Carry(Protocol):
+    """更新状態を表します。"""
+    z: Matrix
     ...
 
 class NeuralNetworkLayer(Protocol):
-    def __call__(self, carry: Carry,ctx: Ctx,/) -> Tuple[Carry, Ctx]: ... # 順伝播
-    def __matmal__(self,other:"NeuralNetworkLayer",/)->"NeuralNetworkLayer":...  # レイヤーの合成
-    ...
+    def __call__(self, carry: Carry, ctx: Ctx, /) -> Carry: ...
+
+
+class LossFn(Protocol):
+    def __call__(self, params: Params, batch: Matrix, /) -> Scalar: ...
+
 
 __all__ = [
+    "Params",
+    "Ctx",
+    "Carry",
     "NeuralNetworkLayer",
+    "LossFn",
 ]

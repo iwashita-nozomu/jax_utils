@@ -15,5 +15,7 @@
 - ただし **`python/jax_util/base/` 内部実装** と **`python/jax_util/base/protocols.py`** では、
 	型境界の定義として `Array` を使ってもよいものとします。
 - `Scalar` / `Vector` / `Matrix` / `Boolean` のいずれかで意味を必ず明示します。
-- `Matrix` は **バッチ化されたベクトル列**も含みます（axis = 1 がバッチ方向）。
+- `Matrix` は **バッチ化されたベクトル列**も含みます。
+- バッチ軸（`axis=-1`）などの共通定義は `documents/coding-conventions-project.md` の **5.2** に集約します。
+- `neuralnetwork` 固有の型（例: `Params`）は `python/jax_util/neuralnetwork/protocols.py` に置きます。
 - `LinOp` はバッチ対応を明示するため、`Matrix` へ作用できる設計とします。

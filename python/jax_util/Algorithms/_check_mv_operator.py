@@ -84,13 +84,24 @@ def print_Mv_report(
     name: str,
 ) -> None:
     """Mv 検査結果を表示する。"""
+    def _to_jsonable(value: Any) -> Any:
+        if isinstance(value, dict):
+            return {k: _to_jsonable(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple)):
+            return [_to_jsonable(v) for v in value]
+        if isinstance(value, (jax.Array, jnp.ndarray)):
+            if value.shape == ():
+                return float(value)
+            return value.tolist()
+        return value
+
     print(json.dumps({
         "case": "mv_report",
         "source_file": SOURCE_FILE,
         "func": "print_Mv_report",
         "event": "self_adjoint",
         "name": name,
-        "report": self_adjoint_report,
+        "report": _to_jsonable(self_adjoint_report),
     }))
     if spd_report is not None:
         print(json.dumps({
@@ -99,7 +110,7 @@ def print_Mv_report(
             "func": "print_Mv_report",
             "event": "spd",
             "name": name,
-            "report": spd_report,
+            "report": _to_jsonable(spd_report),
         }))
 
 

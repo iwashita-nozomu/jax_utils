@@ -27,7 +27,7 @@
 - `Array` を直接注釈に使うのは避けます。
 - 作用素の契約は `Operator` / `LinearOperator` を使用し、演算子（`__mul__`, `__matmul__`）で合成します。
 - `Matrix` をバッチとして扱う場合は、コメントで意図を明示します。
-- `Matrix` の **axis = 1 をバッチ方向**とします（列がバッチ）。
+- バッチ軸（`axis=-1`）などの共通定義は `documents/coding-conventions-project.md` の **5.2** に集約します。
 - `Vector` と `Matrix` のどちらかで迷う場合は、入出力の次元を優先して選びます。
 
 ## LinOp との関係

@@ -30,24 +30,20 @@ def _solve_with_scipy(
     def fun(x: NDArray[np.float64]) -> float:
         return float(objective(x))
 
-    def eq_fun(x: NDArray[np.float64]) -> float:
-        return float(eq_constraint(x))
+    def eq_fun(x: NDArray[np.float64]) -> NDArray[np.float64]:
+        value = float(eq_constraint(x))
+        return np.asarray([value], dtype=np.float64)
 
-    def ineq_fun(x: NDArray[np.float64]) -> float:
+    def ineq_fun(x: NDArray[np.float64]) -> NDArray[np.float64]:
         # SciPy は g(x) >= 0 を想定するので符号を反転します。
-        return float(-ineq_constraint(x))
+        value = float(-ineq_constraint(x))
+        return np.asarray([value], dtype=np.float64)
 
     bounds = sp_opt.Bounds(0.0, np.inf)
-    constraints = (
-        {
-            "type": "eq",
-            "fun": eq_fun,
-        },
-        {
-            "type": "ineq",
-            "fun": ineq_fun,
-        },
-    )
+    constraints = [
+        sp_opt.NonlinearConstraint(eq_fun, 0.0, 0.0),
+        sp_opt.NonlinearConstraint(ineq_fun, 0.0, np.inf),
+    ]
     x0 = np.full((n_primal,), 1.0 / n_primal, dtype=np.float64)
     result = sp_opt.minimize(
         fun,

@@ -6,7 +6,7 @@ from .protocols import *
 import equinox as eqx
 
 from typing import Callable,overload,List,Tuple,Optional
-
+import jax
 from jaxtyping import Array
 
 from jax import numpy as jnp
@@ -40,7 +40,7 @@ class LinOp(eqx.Module):
     def __matmul__(self,x:LinearOperator,/)->LinearOperator: ...
 
     def __matmul__(self,x:Array|LinearOperator,/)->Array|LinearOperator:
-        if isinstance(x,Array):
+        if isinstance(x,jax.Array):
             return self.mv(x)
         else:
             def composed_mv(v:Array)->Array:
@@ -53,7 +53,7 @@ class LinOp(eqx.Module):
     def __mul__(self,other:LinearOperator,/)->LinearOperator: ...
 
     def __mul__(self,other:Array|LinearOperator) -> LinearOperator:
-        if isinstance(other,Array):
+        if isinstance(other,jax.Array):
 
             if other.ndim == 0:
                 return LinOp(lambda v: other * (self @ v))
@@ -78,7 +78,7 @@ class LinOp(eqx.Module):
 
     def __rmul__(self,other:Array|LinearOperator) -> LinearOperator:
         def composed_mv(v:Array)->Array:
-            if isinstance(other,Array):
+            if isinstance(other,jax.Array):
                 if other.ndim == 0:
                     return other * (self @ v)
                 elif other.ndim ==1:

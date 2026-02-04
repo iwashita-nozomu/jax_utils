@@ -5,8 +5,7 @@
 - `Matrix` はバッチとして扱う場合を明示します。
 
 ## 規約
-- バッチ対応は `python/jax_util/base/linearoperator.py` の `LinOp` を通して明示します。
-- 入力は `Vector` / `Matrix` で受け、内部で 1D/2D の分岐を行います。
-- `Matrix` を「ベクトルのバッチ」とみなす場合は、その意図をコメントで明示します。
-- `Matrix` は **ベクトルのバッチ**も含む型とし、**axis = 1 をバッチ方向**とします（列がバッチ）。
-- `LinOp` は **`Matrix` 入力のバッチ適用に対応**する前提で設計します。
+- バッチ軸（`axis=-1`）などの共通定義は `documents/coding-conventions-project.md` の **5.2** に集約します。
+- 本章は `LinOp` の **入出力が `Vector` / `Matrix` に揃う**ことだけを扱います。
+- `LinOp` は `Vector` / `Matrix` を受け、内部で 1D/2D の分岐を行います。
+- `Matrix` を「ベクトルのバッチ」として扱う場合は、意図をコメントで明示します。

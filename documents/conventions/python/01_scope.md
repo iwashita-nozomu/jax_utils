@@ -8,6 +8,6 @@
 - この文書は、`python/jax_util/` 配下の実装を対象にします。
 
 ### 関連文書
-- `../../coding-conventions-testing.md`
-- `../../coding-conventions-logging.md`
-- `../../coding-conventions-solvers.md`
+- テスト規約: `../../coding-conventions-testing.md`
+- ログ規約: `../../coding-conventions-logging.md`
+- ソルバー規約: `../../coding-conventions-solvers.md`

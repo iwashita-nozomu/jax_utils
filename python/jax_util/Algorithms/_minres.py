@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any, Dict,Tuple
+from typing import Any, Dict, Tuple
 from pathlib import Path
 
 import equinox as eqx
@@ -54,7 +54,10 @@ def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Sc
 
         return lax.cond(abs_b >= abs_a, branch1, branch2)
 
-    return lax.cond(b == ZERO, case_b0, lambda: lax.cond(a == ZERO, case_a0, general))
+    def case_not_b0() -> Tuple[Scalar, Scalar, Scalar]:
+        return lax.cond(a == ZERO, case_a0, general)
+
+    return lax.cond(b == ZERO, case_b0, case_not_b0)
 
 
 def pminres_solve(
@@ -152,6 +155,7 @@ def pminres_solve(
 
         # alpha_k = (q_k^T p_k) / beta_k^2
         beta_safe = jnp.where(beta < avoid_zero_div, avoid_zero_div, beta)
+        beta_safe = jnp.asarray(beta_safe, dtype=DEFAULT_DTYPE)
         beta2 = beta_safe * beta_safe
         alpha = jnp.dot(q, p) / beta2
 
