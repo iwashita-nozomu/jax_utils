@@ -27,4 +27,6 @@ __all__ = [
     "SolverLike",
     "adjoint",
     "linearize",
+    "ScalarFn",
+    "VectorFn",
 ]

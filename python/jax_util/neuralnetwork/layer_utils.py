@@ -1,13 +1,16 @@
 from __future__ import annotations
 
-from typing import Callable, Tuple
-
+from typing import Callable, Tuple, TypeVar,cast ,Generic,NamedTuple
 import equinox as eqx
 import jax
 
 from jax import numpy as jnp
 
 from ..base import Matrix, Vector, Scalar
+
+from jax import  flatten_util
+
+from .protocols import Params,Static
 
 class StandardCtx(eqx.Module):
     ...
@@ -72,6 +75,21 @@ def icnn_layer_factory(
         activation=activation
     ), k3
 
+M = TypeVar("M", bound=eqx.Module)
+
+class RebuildState(NamedTuple, Generic[M]):
+    unravel_fn: Callable[[Vector], Params]
+    static: Static
+
+def module_to_vector(module: M) -> tuple[Vector, RebuildState[M]]:
+    param, static = eqx.partition(module, eqx.is_inexact_array)
+    flat_params, unravel_fn = flatten_util.ravel_pytree(param)
+    return flat_params, RebuildState(unravel_fn, static)
+
+def vector_to_module(vector: Vector, st: RebuildState[M]) -> M:
+    param = st.unravel_fn(vector)
+    return cast(M, eqx.combine(param, st.static))
+
 __all__ = [
     "StandardCtx",
     "StandardCarry",
@@ -81,4 +99,7 @@ __all__ = [
     "IcnnCarry",
     "IcnnLayer",
     "icnn_layer_factory",
+    "RebuildState",
+    "module_to_vector",
+    "vector_to_module",
 ]

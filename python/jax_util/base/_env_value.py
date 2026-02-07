@@ -18,6 +18,18 @@ def _get_bool_env(name: str, default: bool) -> bool:
     return default
 
 
+def get_bool_env(name: str, default: bool) -> bool:
+        """環境変数を bool として取得します（公開API）。
+
+        Notes
+        -----
+        - `_get_bool_env` は基底モジュール内部用です。
+        - テストや対話環境で環境変数を書き換えるケースでは、モジュール定数ではなく
+            この関数で都度評価することを推奨します。
+        """
+        return _get_bool_env(name, default)
+
+
 def _get_float_env(name: str, default: float) -> float:
     """環境変数を float として取得します。"""
     value = os.getenv(name)
@@ -54,6 +66,10 @@ AVOID_ZERO_DIV: Scalar = jnp.asarray(
 
 DEBUG: bool = _get_bool_env("JAX_UTIL_DEBUG", True)
 
+# HLO (XLA) 解析ログの出力を制御します。
+# True のときのみ、HLO の取得・整形・JSONL 出力などの重い処理を実行します。
+ENABLE_HLO_DUMP: bool = _get_bool_env("JAX_UTIL_ENABLE_HLO_DUMP", False)
+
 
 
 __all__ = [
@@ -66,5 +82,7 @@ __all__ = [
     "EPS",
     "AVOID_ZERO_DIV",
     "DEBUG",
+    "ENABLE_HLO_DUMP",
+    "get_bool_env",
 ]
 

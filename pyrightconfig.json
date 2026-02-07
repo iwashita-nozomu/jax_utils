@@ -14,6 +14,7 @@
   "reportUnknownVariableType": "none",
   "reportUnknownMemberType": "none",
   "reportUnusedVariable": "none",
+  "reportConstantRedefinition": "none",
   "reportAny": "warning",
   "diagnosticSeverityOverrides": {
     "reportUnknownMemberType": "none",

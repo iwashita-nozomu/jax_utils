@@ -62,6 +62,16 @@ class LinearOperator(Protocol):
 
 class SolverLike(Protocol):
     def __call__(self, *args: Any,**kwargs: Any) -> Tuple[Vector, Any, Dict[str,Any]]: ...
+    ...
+
+class ScalarFn(Protocol):
+    def __call__(self,x:Vector, /) -> Scalar: ...
+    ...
+
+class VectorFn(Protocol):
+    def __call__(self,x:Vector, /) -> Vector: ...
+    ...
+
 
 
 __all__ = [
@@ -73,4 +83,6 @@ __all__ = [
     "Boolean",
     "Integer",
     "SolverLike",
+    "ScalarFn",
+    "VectorFn",
 ]

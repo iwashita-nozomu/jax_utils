@@ -16,6 +16,17 @@
 - `venv` / `virtualenv` / `conda` などの導入は **禁止**します。
 - **Docker の Bash 環境を前提**とし、ローカル環境との差分は規約に明記します。
 
+### 2.1 Bash 環境変数（import パス）
+- テストやスクリプトは `PYTHONPATH=/workspace/python` を基本とします。
+  - 目的: `python/jax_util/` をトップレベルパッケージ `jax_util` として import できる状態にするためです。
+  - 例: `from jax_util.base import DEFAULT_DTYPE`
+- ただし、ディレクトリ再編で旧 import パスが残る場合に備え、
+
+- `PYTHONPATH` は「ディレクトリ名」ではなく「パッケージのルート（`/workspace/python`）」のみを指すようにします。
+  - `solvers/` や `optimizers/` などのサブパッケージ名を環境変数で切り替える運用は行いません。
+- ディレクトリ再編（例: `Algorithms` → `solvers`）を行った場合は、
+  **環境変数ではなく import パス（`jax_util.*`）と規約文書を更新**して追従します。
+
 ## 3. ドキュメント運用
 - 変更が入った場合は、該当する `documents/` 内の文書を同時に更新します。
 - 目次は以下を基準に整理します。
@@ -33,19 +44,23 @@
 - 型・定数・基本作用素の基盤です。
 - 依存元は `base` に集約します。
 
-### 4.2 `python/jax_util/Algorithms`
-- 数値アルゴリズム群の実装です。
-- `base` に依存し、`Algorithms` 同士の依存は最小限に抑えます。
+### 4.2 `python/jax_util/solvers`
+- 数値ソルバ群（反復解法・KKT・LOBPCG など）の実装です。
+- `base` に依存し、`solvers` 同士の依存は最小限に抑えます。
 
-### 4.3 `python/tests`
+### 4.3 `python/jax_util/optimizers`
+- 最適化アルゴリズム群（例: PDIPM）の実装です。
+- `base` と `solvers` に依存します。
+
+### 4.4 `python/tests`
 - テストは `python/tests/` に集約します。
-- `base` / `Algorithms` / `neuralnetwork` に依存するだけに留めます。
+- `base` / `solvers` / `optimizers` / `neuralnetwork` に依存するだけに留めます。
 
-### 4.4 `scripts`
+### 4.5 `scripts`
 - 実行補助スクリプト群です。
 - 既存のテスト・ログ規約と整合するよう運用します。
 
-### 4.5 `documents`
+### 4.6 `documents`
 - 規約と運用方針の一次情報源です。
 - 実装変更と同時に更新します。
 
@@ -55,18 +70,19 @@
 | `docker/` | OS / CUDA / Python / JAX | 実行環境の基盤。バージョンと依存の源泉。 |
 | `documents/` | なし | ルールの一次情報源。実装に合わせて更新する。 |
 | `python/jax_util/base` | なし（標準ライブラリと JAX 等のみ） | 型・定数・基本作用素の基盤。 |
-| `python/jax_util/Algorithms` | `base` | 数値アルゴリズムの実装層。 |
-| `python/tests` | `base`, `Algorithms`, `neuralnetwork` | 検証とログの出力。 |
+| `python/jax_util/solvers` | `base` | 数値ソルバの実装層。 |
+| `python/jax_util/optimizers` | `base`, `solvers` | 最適化アルゴリズムの実装層。 |
+| `python/tests` | `base`, `solvers`, `optimizers`, `neuralnetwork` | 検証とログの出力。 |
 | `scripts` | `python/tests`, `documents` | 実行補助（テスト・ログ運用）。 |
 
 ### 4.7 ファイルごとの依存関係（要点）
 - 詳細な表は `documents/conventions/python/10_dependencies.md` に集約します。
 - 代表的な依存関係は以下の通りです。
   - `python/jax_util/base/__init__.py` → `base/protocols.py`, `base/linearoperator.py`, `base/_env_value.py`
-  - `python/jax_util/Algorithms/_minres.py` → `base`
-  - `python/jax_util/Algorithms/pcg.py` → `base`
-  - `python/jax_util/Algorithms/kkt_solver.py` → `base`, `Algorithms/_check_mv_operator.py`, `Algorithms/_minres.py`, `Algorithms/lobpcg.py`
-  - `python/jax_util/Algorithms/pdipm.py` → `base/_env_value.py`, `Algorithms/kkt_solver.py`
+  - `python/jax_util/solvers/_minres.py` → `base`
+  - `python/jax_util/solvers/pcg.py` → `base`
+  - `python/jax_util/solvers/kkt_solver.py` → `base`, `solvers/_check_mv_operator.py`, `solvers/_minres.py`, `solvers/lobpcg.py`
+  - `python/jax_util/optimizers/pdipm.py` → `base/_env_value.py`, `solvers/kkt_solver.py`
   - `python/jax_util/neuralnetwork/neuralnetwork.py` → `base`, `neuralnetwork/protocols.py`, `neuralnetwork/layer_utils.py`
 
 ## 5. プロジェクト共通の実装規約
@@ -74,7 +90,7 @@
 
 ### 5.1 適用範囲
 - `python/jax_util/` 配下の全サブパッケージに適用します。
-- `Algorithms` / `neuralnetwork` / `base` / `tests` を含みます。
+- `solvers` / `optimizers` / `neuralnetwork` / `base` / `tests` を含みます。
 
 ### 5.2 型・形状の統一
 - `Scalar` / `Vector` / `Matrix` を優先します。
@@ -110,6 +126,19 @@
 ### 6.1 集約ルール
 - 実行環境の設定は `python/jax_util/base/_env_value.py` に集約します。
 - 設定の追加・変更時は **規約とセット**で更新します。
+
+### 6.1.0 共通の環境変数（一覧）
+- このプロジェクトで利用する環境変数は、原則として `JAX_UTIL_` プレフィックスで統一します。
+- 現状、`base/_env_value.py` が評価する代表例は次の通りです。
+  - `JAX_UTIL_ENABLE_X64`: JAX の `jax_enable_x64` を制御します。
+  - `JAX_UTIL_DEFAULT_DTYPE`: 既定 dtype 名（`float64` / `float32` など）を指定します。
+  - `JAX_UTIL_DEBUG`: デバッグログの有効/無効を制御します。
+  - `JAX_UTIL_WEAK_EPS` / `JAX_UTIL_EPS` / `JAX_UTIL_AVOID_ZERO_DIV`: 数値安定性の補助定数を上書きします。
+  - `JAX_UTIL_ENABLE_HLO_DUMP`: HLO 解析ログの有効/無効を制御します（重い処理のガード）。
+
+#### 6.1.1 HLO 解析フラグ
+- HLO 解析ログの出力は `JAX_UTIL_ENABLE_HLO_DUMP` で制御します。
+- 既定は **無効（False）** とし、必要なときだけ有効化します。
 
 ### 6.2 環境変数の扱い
 - 環境変数は **上書き専用**です。

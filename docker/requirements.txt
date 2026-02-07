@@ -1,3 +1,4 @@
 pytest>=8
 scipy-stubs
 optax
+pyright

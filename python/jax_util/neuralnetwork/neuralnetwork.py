@@ -2,13 +2,20 @@ from __future__ import annotations
 
 from typing import Tuple
 
-from ..base import *
-
-from .protocols import *
-from .layer_utils import *
 import equinox as eqx
 import jax
 from jax import numpy as jnp
+
+from ..base import Matrix, Scalar
+from .layer_utils import (
+    IcnnCarry,
+    IcnnCtx,
+    StandardCarry,
+    StandardCtx,
+    icnn_layer_factory,
+    standardNN_layer_factory,
+)
+from .protocols import Carry, Ctx, NeuralNetworkLayer, Params,Static
 
 
 
@@ -26,7 +33,6 @@ class NeuralNetwork(eqx.Module):
         for layer in self.layers:
             carry = layer(carry, ctx)
         return carry.z
-
 
 def state_initializer(
     network_type: str,
@@ -107,3 +113,20 @@ def build_neuralnetwork(
 
     else:
         raise ValueError(f"Unsupported network type: {network_type}")
+
+
+def forward_with_cache(x:Matrix,network: NeuralNetwork) -> Tuple[Matrix,Tuple[Carry],Ctx]:
+    
+    # network:NeuralNetwork = eqx.combine(params,static)
+    """中間状態をキャッシュしながら順伝播を行います。"""
+    ctx, carry = state_initializer(
+        network_type=network.network_type,
+        x=x,
+        layer_sizes=network.layer_sizes,
+    )
+
+    carries = []
+    for layer in network.layers:
+        carry = layer(carry, ctx)
+        carries.append(carry)
+    return carry.z, tuple(carries), ctx

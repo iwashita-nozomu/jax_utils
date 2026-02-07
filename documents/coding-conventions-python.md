@@ -12,9 +12,10 @@
 6. [コメント](./conventions/python/06_comments.md) — 意図と前提を丁寧に説明します。
 7. [型チェッカの活用](./conventions/python/07_type_checker.md) — cast ではなく pyright を優先します。
 8. [合成型の定義](./conventions/python/08_composition.md) — 合成は演算子として最小限に定義します。
-9. [ファイルごとの役割](./conventions/python/09_file_roles.md) — `base` と `Algorithms` の役割を明確化します。
+9. [ファイルごとの役割](./conventions/python/09_file_roles.md) — `base` と `solvers` / `optimizers` の役割を明確化します。
 10. [依存関係の概要](./conventions/python/10_dependencies.md) — `base` を基盤とした依存構造を整理します。
-11. テスト規約（共通）: `documents/coding-conventions-testing.md` を参照します。
+11. [命名規約](./conventions/python/11_naming.md) — ファイル名・関数名のルール（公開/内部の区別）を定めます。
+12. テスト規約（共通）: `documents/coding-conventions-testing.md` を参照します。
 12. [演算子記法（線形/非線形・投影/前処理）](./conventions/python/12_operator_rules.md) — `@` と `*` の厳格運用、禁止事項、投影/前処理の表記をまとめます。
 13. [JAX/Equinox の運用規約](./conventions/python/15_jax_rules.md) — 反復・JIT・デバッグ方針を定めます。
 14. ソルバー規約（共通）: `documents/coding-conventions-solvers.md` を参照します。
