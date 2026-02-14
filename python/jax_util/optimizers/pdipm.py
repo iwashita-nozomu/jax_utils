@@ -27,7 +27,6 @@ from ..solvers.kkt_solver import KKTState, initialize_kkt_state, kkt_block_solve
 
 from jax.typing import DTypeLike
 
-from .protocols import OptimizeProblem, OptimizeProblemState
 
 
 SOURCE_FILE = Path(__file__).name

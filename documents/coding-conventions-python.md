@@ -4,6 +4,7 @@
 各章は `documents/conventions/python/` に分割してあります。
 
 ## 目次（章ごとの要約）
+
 1. [対象と関連文書](./conventions/python/01_scope.md) — 対象は `python/jax_util/`、テスト・ログ・ソルバーは専用文書を参照します。
 2. [型エイリアスの方針](./conventions/python/02_type_aliases.md) — `Scalar` / `Vector` / `Matrix` を基準に型を統一します。
 3. [作用素と継承関係](./conventions/python/03_operators.md) — `Operator` / `LinearOperator` を基準に設計します。
@@ -16,8 +17,8 @@
 10. [依存関係の概要](./conventions/python/10_dependencies.md) — `base` を基盤とした依存構造を整理します。
 11. [命名規約](./conventions/python/11_naming.md) — ファイル名・関数名のルール（公開/内部の区別）を定めます。
 12. テスト規約（共通）: `documents/coding-conventions-testing.md` を参照します。
-12. [演算子記法（線形/非線形・投影/前処理）](./conventions/python/12_operator_rules.md) — `@` と `*` の厳格運用、禁止事項、投影/前処理の表記をまとめます。
-13. [JAX/Equinox の運用規約](./conventions/python/15_jax_rules.md) — 反復・JIT・デバッグ方針を定めます。
-14. ソルバー規約（共通）: `documents/coding-conventions-solvers.md` を参照します。
-15. [数値安定性](./conventions/python/17_numerical_stability.md) — ゼロ除算回避と悪条件ログを徹底します。
-16. [ニューラルネットワーク規約](./conventions/python/18_neuralnetwork.md) — `neuralnetwork` 配下の設計と役割を整理します。
+13. [演算子記法（線形/非線形・投影/前処理）](./conventions/python/12_operator_rules.md) — `@` と `*` の厳格運用、禁止事項、投影/前処理の表記をまとめます。
+14. [JAX/Equinox の運用規約](./conventions/python/15_jax_rules.md) — 反復・JIT・デバッグ方針を定めます。
+15. ソルバー規約（共通）: `documents/coding-conventions-solvers.md` を参照します。
+16. [数値安定性](./conventions/python/17_numerical_stability.md) — ゼロ除算回避と悪条件ログを徹底します。
+17. [ニューラルネットワーク規約](./conventions/python/18_neuralnetwork.md) — `neuralnetwork` 配下の設計と役割を整理します。

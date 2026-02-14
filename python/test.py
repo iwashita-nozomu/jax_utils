@@ -5,7 +5,7 @@ os.environ["JAX_LOG_COMPILES"] = "1"
 
 import jax
 from typing import Callable
-
+from jax import flatten_util
 
 def foo(x:jax.Array,y:jax.Array)->jax.Array:
     return x + y
@@ -13,6 +13,21 @@ def foo(x:jax.Array,y:jax.Array)->jax.Array:
 
 def bar(f: Callable[[jax.Array],jax.Array],x:jax.Array)-> jax.Array:
     return f(x)
+
+
+import equinox as eqx
+class tt(eqx.Module):
+    param :jax.Array
+    
+def boo(t:tt)->tt:
+    p,st = eqx.partition(t,eqx.is_inexact_array)
+
+    f,u = flatten_util.ravel_pytree(p)
+
+    
+
+
+
 @jax.jit
 def run(x: jax.Array,y:jax.Array)-> None:
 
