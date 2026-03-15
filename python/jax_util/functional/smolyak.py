@@ -12,6 +12,7 @@ from scipy.fft import dct
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax.typing import DTypeLike
 
 from ..base import DEFAULT_DTYPE, Matrix, Vector
 from .protocols import Function
@@ -445,14 +446,15 @@ def smolyak_integral(
     weights: Vector,
     /,
 ) -> Vector:
-    values = jax.vmap(f, in_axes=1, out_axes=0)(points)
-    return jnp.tensordot(weights, values, axes=(0, 0))
+    values = jax.vmap(f, in_axes=-1, out_axes=-1)(points)
+    return jnp.tensordot(values, weights, axes=(-1, 0))
 
 
 class SmolyakIntegrator(eqx.Module):
     dimension: int
     level: int
     rule: Rule1D = eqx.field(static=True)
+    dtype: DTypeLike = eqx.field(static=True)
     points: Matrix
     weights: Vector
 
@@ -461,11 +463,15 @@ class SmolyakIntegrator(eqx.Module):
         dimension: int,
         level: int,
         rule: Rule1D = clenshaw_curtis_rule,
+        dtype: DTypeLike = DEFAULT_DTYPE,
     ):
         self.dimension = dimension
         self.level = level
         self.rule = rule
-        self.points, self.weights = smolyak_grid(dimension, level, rule=rule)
+        self.dtype = dtype
+        points, weights = smolyak_grid(dimension, level, rule=rule)
+        self.points = jnp.asarray(points, dtype=dtype)
+        self.weights = jnp.asarray(weights, dtype=dtype)
 
     def __call__(self, f: Function, /) -> Vector:
         return smolyak_integral(f, self.points, self.weights)
@@ -476,6 +482,7 @@ class SmolyakIntegrator(eqx.Module):
             dimension=self.dimension,
             level=self.level + 1,
             rule=self.rule,
+            dtype=self.dtype,
         )
 
 

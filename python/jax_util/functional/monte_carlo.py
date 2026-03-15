@@ -35,8 +35,8 @@ def uniform_cube_samples(
 
 # 責務: サンプル列上の平均を取り、単位体積領域の積分値を推定する。
 def monte_carlo_integral(f: Function, samples: Matrix, /) -> Vector:
-    values = jax.vmap(f, in_axes=1, out_axes=0)(samples)
-    return jnp.mean(values, axis=0)
+    values = jax.vmap(f, in_axes=-1, out_axes=-1)(samples)
+    return jnp.mean(values, axis=-1)
 
 
 class MonteCarloIntegrator(eqx.Module):

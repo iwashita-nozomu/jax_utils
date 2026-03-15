@@ -132,7 +132,7 @@ def test_smolyak_resolves_analytic_exponential_integral_with_numeric_accuracy() 
 
 # 責務: refine がより高いレベルと多い格子点数を持つ積分器を返すことを確認する。
 def test_smolyak_integrator_refine_increases_resolution() -> None:
-    integrator = SmolyakIntegrator(dimension=3, level=2)
+    integrator = SmolyakIntegrator(dimension=3, level=2, dtype=jnp.float32)
     refined = integrator.refine()
 
     print(json.dumps({
@@ -143,9 +143,13 @@ def test_smolyak_integrator_refine_increases_resolution() -> None:
         "level_after": refined.level,
         "points_before": int(integrator.points.shape[1]),
         "points_after": int(refined.points.shape[1]),
+        "dtype_before": str(integrator.points.dtype),
+        "dtype_after": str(refined.points.dtype),
     }))
     assert refined.level == integrator.level + 1
     assert refined.points.shape[1] > integrator.points.shape[1]
+    assert integrator.points.dtype == jnp.float32
+    assert refined.points.dtype == jnp.float32
 
 
 def _run_all_tests() -> None:

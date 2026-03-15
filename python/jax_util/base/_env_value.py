@@ -51,7 +51,11 @@ import jax.numpy as jnp
 
 FP32 = jnp.float32
 _dtype_name = os.getenv("JAX_UTIL_DEFAULT_DTYPE", "float64").strip().lower()
-if _dtype_name in ("float32", "f32"):
+if _dtype_name in ("float16", "f16"):
+    DEFAULT_DTYPE = jnp.float16
+elif _dtype_name in ("bfloat16", "bf16"):
+    DEFAULT_DTYPE = jnp.bfloat16
+elif _dtype_name in ("float32", "f32"):
     DEFAULT_DTYPE = jnp.float32
 else:
     DEFAULT_DTYPE = jnp.float64
