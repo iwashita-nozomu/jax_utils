@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="572" height="822" viewBox="0 0 572 822">
+<rect width="572" height="822" fill="#f7f2e8" />
+<text x="18" y="24" font-size="18" font-family="monospace" fill="#2b2926">average integral time</text>
+<text x="554" y="24" text-anchor="end" font-size="12" font-family="monospace" fill="#1f5f7a">log10=-4.89 -> log10=-2.78</text>
+<rect x="10" y="34" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="54" font-size="14" font-family="monospace" fill="#2b2926">dtype=float16</text>
+<text x="134.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="108" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="86" width="88" height="30" fill="#eeded0" stroke="#cabfae" rx="6" />
+<text x="132.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">21.2 us</text>
+<rect x="180" y="86" width="88" height="30" fill="#f5ecdd" stroke="#cabfae" rx="6" />
+<text x="224.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">13.2 us</text>
+<rect x="272" y="86" width="88" height="30" fill="#f5edde" stroke="#cabfae" rx="6" />
+<text x="316.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">12.8 us</text>
+<rect x="364" y="86" width="88" height="30" fill="#f0e1d3" stroke="#cabfae" rx="6" />
+<text x="408.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">18.9 us</text>
+<rect x="456" y="86" width="88" height="30" fill="#f1e4d5" stroke="#cabfae" rx="6" />
+<text x="500.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">17.6 us</text>
+<text x="74" y="142" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="120" width="88" height="30" fill="#f4ebdc" stroke="#cabfae" rx="6" />
+<text x="132.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">13.9 us</text>
+<rect x="180" y="120" width="88" height="30" fill="#f3eadb" stroke="#cabfae" rx="6" />
+<text x="224.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">14.4 us</text>
+<rect x="272" y="120" width="88" height="30" fill="#f3e8d9" stroke="#cabfae" rx="6" />
+<text x="316.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">15.4 us</text>
+<rect x="364" y="120" width="88" height="30" fill="#dbb2a7" stroke="#cabfae" rx="6" />
+<text x="408.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">92.7 us</text>
+<rect x="456" y="120" width="88" height="30" fill="#d6a79d" stroke="#cabfae" rx="6" />
+<text x="500.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">133.6 us</text>
+<text x="74" y="176" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="154" width="88" height="30" fill="#f4ebdd" stroke="#cabfae" rx="6" />
+<text x="132.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">13.5 us</text>
+<rect x="180" y="154" width="88" height="30" fill="#ddb7ac" stroke="#cabfae" rx="6" />
+<text x="224.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">77.7 us</text>
+<rect x="272" y="154" width="88" height="30" fill="#d5a79d" stroke="#cabfae" rx="6" />
+<text x="316.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">135.9 us</text>
+<rect x="364" y="154" width="88" height="30" fill="#c37d77" stroke="#cabfae" rx="6" />
+<text x="408.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">537.6 us</text>
+<rect x="456" y="154" width="88" height="30" fill="#c7857e" stroke="#cabfae" rx="6" />
+<text x="500.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">411.2 us</text>
+<rect x="10" y="240" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="260" font-size="14" font-family="monospace" fill="#2b2926">dtype=bfloat16</text>
+<text x="134.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="314" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="292" width="88" height="30" fill="#ddb8ad" stroke="#cabfae" rx="6" />
+<text x="132.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">75.1 us</text>
+<rect x="180" y="292" width="88" height="30" fill="#f2e5d7" stroke="#cabfae" rx="6" />
+<text x="224.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">16.6 us</text>
+<rect x="272" y="292" width="88" height="30" fill="#f4eadb" stroke="#cabfae" rx="6" />
+<text x="316.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">14.2 us</text>
+<rect x="364" y="292" width="88" height="30" fill="#dfbbb0" stroke="#cabfae" rx="6" />
+<text x="408.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">68.0 us</text>
+<rect x="456" y="292" width="88" height="30" fill="#e7cdc0" stroke="#cabfae" rx="6" />
+<text x="500.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">37.5 us</text>
+<text x="74" y="348" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="326" width="88" height="30" fill="#f5ecdd" stroke="#cabfae" rx="6" />
+<text x="132.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">13.3 us</text>
+<rect x="180" y="326" width="88" height="30" fill="#e1c1b5" stroke="#cabfae" rx="6" />
+<text x="224.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">56.4 us</text>
+<rect x="272" y="326" width="88" height="30" fill="#e1bfb4" stroke="#cabfae" rx="6" />
+<text x="316.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">59.3 us</text>
+<rect x="364" y="326" width="88" height="30" fill="#dbb2a7" stroke="#cabfae" rx="6" />
+<text x="408.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">92.7 us</text>
+<rect x="456" y="326" width="88" height="30" fill="#d6a79d" stroke="#cabfae" rx="6" />
+<text x="500.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">133.2 us</text>
+<text x="74" y="382" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="360" width="88" height="30" fill="#dfbbb0" stroke="#cabfae" rx="6" />
+<text x="132.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">68.1 us</text>
+<rect x="180" y="360" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="224.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">80.0 us</text>
+<rect x="272" y="360" width="88" height="30" fill="#d5a59b" stroke="#cabfae" rx="6" />
+<text x="316.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">143.3 us</text>
+<rect x="364" y="360" width="88" height="30" fill="#d6a79d" stroke="#cabfae" rx="6" />
+<text x="408.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">134.5 us</text>
+<rect x="456" y="360" width="88" height="30" fill="#c7867e" stroke="#cabfae" rx="6" />
+<text x="500.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">409.8 us</text>
+<rect x="10" y="446" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="466" font-size="14" font-family="monospace" fill="#2b2926">dtype=float32</text>
+<text x="134.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="520" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="498" width="88" height="30" fill="#dfbcb1" stroke="#cabfae" rx="6" />
+<text x="132.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.2 us</text>
+<rect x="180" y="498" width="88" height="30" fill="#f4eadb" stroke="#cabfae" rx="6" />
+<text x="224.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">14.1 us</text>
+<rect x="272" y="498" width="88" height="30" fill="#f4ecdd" stroke="#cabfae" rx="6" />
+<text x="316.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">13.4 us</text>
+<rect x="364" y="498" width="88" height="30" fill="#e0beb3" stroke="#cabfae" rx="6" />
+<text x="408.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">61.5 us</text>
+<rect x="456" y="498" width="88" height="30" fill="#e7cdc0" stroke="#cabfae" rx="6" />
+<text x="500.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">37.8 us</text>
+<text x="74" y="554" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="532" width="88" height="30" fill="#ecd9cb" stroke="#cabfae" rx="6" />
+<text x="132.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">25.1 us</text>
+<rect x="180" y="532" width="88" height="30" fill="#e1c1b5" stroke="#cabfae" rx="6" />
+<text x="224.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">56.5 us</text>
+<rect x="272" y="532" width="88" height="30" fill="#deb9ae" stroke="#cabfae" rx="6" />
+<text x="316.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">72.7 us</text>
+<rect x="364" y="532" width="88" height="30" fill="#d8aca2" stroke="#cabfae" rx="6" />
+<text x="408.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">114.8 us</text>
+<rect x="456" y="532" width="88" height="30" fill="#d09b93" stroke="#cabfae" rx="6" />
+<text x="500.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">196.7 us</text>
+<text x="74" y="588" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="566" width="88" height="30" fill="#dfbbb0" stroke="#cabfae" rx="6" />
+<text x="132.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">68.6 us</text>
+<rect x="180" y="566" width="88" height="30" fill="#dbb3a8" stroke="#cabfae" rx="6" />
+<text x="224.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">89.3 us</text>
+<rect x="272" y="566" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="316.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">579.7 us</text>
+<rect x="364" y="566" width="88" height="30" fill="#cb9088" stroke="#cabfae" rx="6" />
+<text x="408.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">292.3 us</text>
+<rect x="456" y="566" width="88" height="30" fill="#bd716b" stroke="#cabfae" rx="6" />
+<text x="500.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">817.4 us</text>
+<rect x="10" y="652" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="672" font-size="14" font-family="monospace" fill="#2b2926">dtype=float64</text>
+<text x="134.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="726" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="704" width="88" height="30" fill="#dfbcb1" stroke="#cabfae" rx="6" />
+<text x="132.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.2 us</text>
+<rect x="180" y="704" width="88" height="30" fill="#f2e7d8" stroke="#cabfae" rx="6" />
+<text x="224.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">15.9 us</text>
+<rect x="272" y="704" width="88" height="30" fill="#ecdacc" stroke="#cabfae" rx="6" />
+<text x="316.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">24.5 us</text>
+<rect x="364" y="704" width="88" height="30" fill="#d6a79e" stroke="#cabfae" rx="6" />
+<text x="408.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">132.1 us</text>
+<rect x="456" y="704" width="88" height="30" fill="#e0bfb4" stroke="#cabfae" rx="6" />
+<text x="500.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">59.8 us</text>
+<text x="74" y="760" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="738" width="88" height="30" fill="#eddacd" stroke="#cabfae" rx="6" />
+<text x="132.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">24.1 us</text>
+<rect x="180" y="738" width="88" height="30" fill="#d29f96" stroke="#cabfae" rx="6" />
+<text x="224.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">173.2 us</text>
+<rect x="272" y="738" width="88" height="30" fill="#cf988f" stroke="#cabfae" rx="6" />
+<text x="316.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">222.0 us</text>
+<rect x="364" y="738" width="88" height="30" fill="#c4817a" stroke="#cabfae" rx="6" />
+<text x="408.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">482.0 us</text>
+<rect x="456" y="738" width="88" height="30" fill="#d29e95" stroke="#cabfae" rx="6" />
+<text x="500.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">179.5 us</text>
+<text x="74" y="794" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="772" width="88" height="30" fill="#d4a39a" stroke="#cabfae" rx="6" />
+<text x="132.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">153.0 us</text>
+<rect x="180" y="772" width="88" height="30" fill="#c98a82" stroke="#cabfae" rx="6" />
+<text x="224.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">353.9 us</text>
+<rect x="272" y="772" width="88" height="30" fill="#d29f96" stroke="#cabfae" rx="6" />
+<text x="316.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">177.2 us</text>
+<rect x="364" y="772" width="88" height="30" fill="#c17a74" stroke="#cabfae" rx="6" />
+<text x="408.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">601.4 us</text>
+<rect x="456" y="772" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="500.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">1646.9 us</text>
+</svg>
