@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="54" viewBox="0 0 320 54">
+  <rect x="0" y="0" width="320" height="54" fill="#f7f2e8" rx="12" />
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f5edde" /><stop offset="10%" stop-color="#eeded1" /><stop offset="20%" stop-color="#e8d0c3" /><stop offset="30%" stop-color="#e2c2b6" /><stop offset="40%" stop-color="#dbb3a8" /><stop offset="50%" stop-color="#d4a49b" /><stop offset="60%" stop-color="#ce968e" /><stop offset="70%" stop-color="#c88880" /><stop offset="80%" stop-color="#c17973" /><stop offset="90%" stop-color="#ba6a65" /><stop offset="100%" stop-color="#b45c58" />
+    </linearGradient>
+  </defs>
+  <text x="16" y="18" font-size="13" font-family="monospace" fill="#2b2926">numeric heatmaps</text>
+  <rect x="16" y="24" width="288" height="12" fill="url(#grad)" stroke="#cabfae" />
+  <text x="16" y="50" font-size="11" font-family="monospace" fill="#2b2926">lighter = smaller</text>
+  <text x="304" y="50" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">darker = larger</text>
+</svg>
