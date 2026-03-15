@@ -66,6 +66,7 @@
 - 実装コードと生成物は、必要に応じてブランチを分けます。
 - 実験を実行するときは、実験専用の worktree を作ってその worktree 上で動かします。
 - `main` の worktree ではコード編集・文書更新・通常テストのみを行い、長時間走る実験は開始しません。
+- worktree は VS Code やホスト OS から見える共有パスに置くことを原則とし、既定では `/workspace/.worktrees/<name>` を使います。
 - 実験コードそのものは `main` に載せてもよいですが、生成された実験結果は専用の results ブランチへ分離することを原則とします。
 - results ブランチ名は `results/<topic>` 形式を原則とし、実験ごとに固有の名前を使います。
 - 実験用 worktree は results ブランチに対応づけ、`main` と同じ worktree のまま branch を切り替えて使い回しません。

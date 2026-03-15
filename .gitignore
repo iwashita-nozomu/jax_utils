@@ -21,3 +21,5 @@ dist/
 logs/
 python/tests/logs/
 
+# Local git worktrees
+.worktrees/
