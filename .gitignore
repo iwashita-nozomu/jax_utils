@@ -21,3 +21,8 @@ dist/
 logs/
 python/tests/logs/
 
+# Local git worktrees
+.worktrees/
+
+# Local latest experiment snapshots
+experiments/functional/smolyak_scaling/results/latest.json

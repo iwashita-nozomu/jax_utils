@@ -321,7 +321,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
         "var_abs_err": float(np.var(abs_errors)),
         "max_abs_err": float(np.max(abs_errors)),
         "num_repeats": _config_int(run_config, "num_repeats"),
-        "cpu_init_seconds": t1 - t0,
+        "integrator_init_seconds": t1 - t0,
         "device_transfer_seconds": t2 - t1,
         "warmup_seconds": t3 - t2,
         "batched_integral_seconds": t4 - t3,
