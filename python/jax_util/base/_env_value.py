@@ -5,6 +5,7 @@ import jax
 from .protocols import Scalar
 
 
+# 責務: 真偽値の環境変数を内部向けに解釈します。
 def _get_bool_env(name: str, default: bool) -> bool:
     """環境変数を bool として取得します。"""
     value = os.getenv(name)
@@ -18,6 +19,7 @@ def _get_bool_env(name: str, default: bool) -> bool:
     return default
 
 
+# 責務: 真偽値の環境変数を公開 API として都度評価します。
 def get_bool_env(name: str, default: bool) -> bool:
         """環境変数を bool として取得します（公開API）。
 
@@ -30,6 +32,7 @@ def get_bool_env(name: str, default: bool) -> bool:
         return _get_bool_env(name, default)
 
 
+# 責務: 浮動小数の環境変数を内部向けに解釈します。
 def _get_float_env(name: str, default: float) -> float:
     """環境変数を float として取得します。"""
     value = os.getenv(name)
@@ -85,4 +88,3 @@ __all__ = [
     "ENABLE_HLO_DUMP",
     "get_bool_env",
 ]
-

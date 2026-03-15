@@ -61,3 +61,12 @@ def test_neuralnetwork_train_step() -> None:
     })
     assert "loss" in metrics
     assert metrics["loss"].shape == ()
+
+
+def _run_all_tests() -> None:
+    """このファイル内のテストを順に実行します。"""
+    test_neuralnetwork_train_step()
+
+
+if __name__ == "__main__":
+    _run_all_tests()

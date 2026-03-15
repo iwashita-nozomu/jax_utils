@@ -8,6 +8,7 @@ from ..base import LinearOperator
 SOURCE_FILE = Path(__file__).name
 
 
+# 責務: 実行中の JAX バージョンと利用可能デバイスを JSON で出力します。
 def _print_jax_env() -> None:
 	"""JAX の環境情報を標準出力へ JSON で出力します。"""
 	print(
@@ -32,6 +33,7 @@ def _print_jax_env() -> None:
 	)
 
 
+# 責務: JAX の最小疎通確認だけを行います。
 def _smoke_test() -> None:
 	"""最小の smoke test を実行します。"""
 	_ = jax.numpy.array([[1.0, 2.0], [3.0, 4.0]])

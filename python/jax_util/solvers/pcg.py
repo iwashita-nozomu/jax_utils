@@ -29,6 +29,7 @@ class PCGState(eqx.Module):
     x0: Vector
 
 
+# 責務: 投影と前処理を組み込んだ PCG 反復で SPD 系を解きます。
 def pcg_solve(
     Mv: LinearOperator,
     precond: LinearOperator,  # r -> M^{-1} r
@@ -84,10 +85,12 @@ def pcg_solve(
 
     state0 = (jnp.asarray(0, jnp.int32), x0, r0, z0, p0, rs0, done0)
 
+    # 責務: 反復上限と収束判定に基づいて while_loop 継続可否を返します。
     def cond_fun(state: Tuple[Any, ...]) -> bool:
         i, x, r, z, p, rs, done = state
         return (i < maxiter) & (~done)
 
+    # 責務: PCG の 1 反復分の更新をまとめて行います。
     def body_fun(state:Tuple[Any, ...]) -> Tuple[Any, ...]:
         i, x, r, z, p, rs, done = state
 
@@ -139,5 +142,4 @@ def pcg_solve(
         )
         jax.debug.print("")
     return x_f, PCGState(x0=x_f), info
-
 

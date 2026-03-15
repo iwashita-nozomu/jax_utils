@@ -30,27 +30,33 @@ class MINRESState(eqx.Module):
     x0: Vector
 
     @staticmethod
+    # 責務: 次回の反復に引き継ぐ初期解を状態として包む。
     def initialize(x0: Vector) -> "MINRESState":
         return MINRESState(x0=x0)
 
+# 責務: MINRES の Givens 回転係数を数値的に安定に計算する。
 def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Scalar, Scalar]:
     """Algorithm 2 SymOrtho(a,b): returns (c,s,r) with r>=0, [c s; s -c][a;b]=[r;0]."""
     abs_a : Scalar = jnp.abs(a)
     abs_b : Scalar = jnp.abs(b)
 
+    # 責務: b が 0 のとき回転を使わず a の符号だけを残す。
     def case_b0()-> Tuple[Scalar, Scalar, Scalar]:
         r = abs_a
         c = jnp.where(a == ZERO, ONE, jnp.sign(a))
         s = ZERO
         return c, s, r
 
+    # 責務: a が 0 のとき s 側だけで回転を構成する。
     def case_a0()-> Tuple[Scalar, Scalar, Scalar]:
         r = abs_b
         c = ZERO
         s: Scalar = jnp.where(b == ZERO, ZERO, jnp.sign(b))
         return c, s, r
 
+    # 責務: a, b がともに非零の一般ケースを分岐込みで処理する。
     def general()-> Tuple[Scalar, Scalar, Scalar]:
+        # 責務: |b| >= |a| のとき b を基準に正規化して回転を作る。
         def branch1()-> Tuple[Scalar, Scalar, Scalar]:  # |b| >= |a|
             tau: Scalar = a / jnp.where(b == ZERO, avoid_zero_div, b)
             s: Scalar = jnp.sign(b) / jnp.sqrt(ONE + tau * tau)
@@ -58,6 +64,7 @@ def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Sc
             r: Scalar = b / jnp.where(s == ZERO, avoid_zero_div, s)
             return c, s, jnp.abs(r)
 
+        # 責務: |a| > |b| のとき a を基準に正規化して回転を作る。
         def branch2()-> Tuple[Scalar, Scalar, Scalar]:  # |a| > |b|
             tau: Scalar = b / jnp.where(a == ZERO, avoid_zero_div, a)
             c: Scalar = jnp.sign(a) / jnp.sqrt(ONE + tau * tau)
@@ -67,12 +74,14 @@ def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Sc
 
         return lax.cond(abs_b >= abs_a, branch1, branch2)
 
+    # 責務: b != 0 側で a の零判定と一般ケースを切り替える。
     def case_not_b0() -> Tuple[Scalar, Scalar, Scalar]:
         return lax.cond(a == ZERO, case_a0, general)
 
     return lax.cond(b == ZERO, case_b0, case_not_b0)
 
-
+    
+# 責務: 前処理付き MINRES の本体反復を実行して近似解と次状態を返す。
 def pminres_solve(
     Mv: LinearOperator,
     rhs: Vector,
@@ -150,10 +159,12 @@ def pminres_solve(
     dbar_old = jnp.zeros_like(q)    # dbar_{k-1}
     dbar_oold = jnp.zeros_like(q)   # dbar_{k-2}
 
+    # 責務: 反復継続条件として反復回数と収束フラグを判定する。
     def cond_fun(carry: Tuple[Any, ...]) -> bool:
         k, _x, *_rest, done = carry
         return (k < maxiter) & (~done)
 
+    # 責務: Lanczos 1 ステップと MINRES 更新をまとめて進める。
     def body_fun(carry: Tuple[Any, ...]) -> Tuple[Any, ...]:
         (
             k, x,
@@ -226,6 +237,7 @@ def pminres_solve(
         #     )
 
         # If breakdown, stop without using divisions by beta_next anywhere (we already avoided)
+        # 責務: Lanczos breakdown 時に現在の解で安全に反復を打ち切る。
         def branch_break(_):
             return (
                 k + 1,
@@ -245,6 +257,7 @@ def pminres_solve(
                 True,
             )
 
+        # 責務: 次反復に必要な Lanczos/MINRES 状態を更新して引き渡す。
         def branch_ok(_):
             return (
                 k + 1,
@@ -306,6 +319,7 @@ def pminres_solve(
     return x_f, MINRESState.initialize(x0=x_f), info
 
 
+# 責務: 後方互換の公開名から本体の PMINRES 実装を呼び出す。
 def minres_solve(
     Mv: LinearOperator,
     rhs: Vector,
@@ -338,5 +352,3 @@ __all__ = [
     "minres_solve",
     "pminres_solve",
 ]
-
-

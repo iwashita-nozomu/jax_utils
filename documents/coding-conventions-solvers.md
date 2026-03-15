@@ -1,60 +1,51 @@
 # ソルバー規約（共通）
 
-この文書は、`python/jax_util/Algorithms/` 配下のソルバー系実装を対象にします。
+この文書は、`python/jax_util/solvers/` 配下の安定なソルバー実装を対象にします。
+`python/jax_util/solvers/archive/` は対象外です。
 
 ## 1. 対象と目的
-この文書は、`python/jax_util/Algorithms/` 配下のソルバー系実装を対象にします。
+
+- 対象は `python/jax_util/solvers/` 配下の公開ソルバーと補助ユーティリティです。
+- 目的は、戻り値・内部状態・ログ形式を揃えて保守しやすくすることです。
 
 ## 2. 戻り値の統一
+
 - ソルバー系の戻り値は、将来的に **`ans, state, info`** の順番へ統一します。
 - ただし現状はソルバーごとに戻り値が揺れているため、まずは **「新規・改修時は統一形へ寄せる」**運用とします。
 - **API（関数名・引数・公開範囲）は現在の形を維持**し、移行は段階的に行います。
 
 ### 2.1 「統一形」の定義
+
 - `ans`: 主結果（多くの場合は解ベクトル `Vector`）。
 - `state`: ウォームスタート等のための内部状態（`eqx.Module`）。
 - `info`: 実行情報（辞書）。
 
 ### 2.2 例外（当面の互換）
+
 - 既存コードが `ans, info` や `ans, aux, state, info` のような形を返している場合は、
-    **破壊的変更は行わず**、次回改修のタイミングで統一形に寄せます。
+  **破壊的変更は行わず**、次回改修のタイミングで統一形に寄せます。
 
 ## 3. `state` の方針
+
 - `state` はウォームスタートや内部状態の保持に使います。
 - 何も保持しない場合は、**`eqx.Module` の空クラス**を用意します。
 - `dataclass` は使わず、`eqx.Module` に統一します。
 
 ## 4. `info` の方針
+
 - `info` は辞書で返します。
 - 反復回数・残差・相対誤差・収束判定を含めます。
 - 例キー: `num_iter`, `res_norm`, `rel_res`, `converged`
 
 ## 5. ログ出力の方針
+
 - **中間ログは `DEBUG` ガードの内側でのみ出力**します。
 - ログは **JSONL（1 行 1 JSON）** に統一します。
 - 推奨キーは次の通りです。
-    - `case`: どのソルバーか（例: `pcg`, `minres`）
-    - `source_file`: 実装ファイル（`__file__`）
-    - `func`: 関数名（例: `pcg_solve`）
-    - `event`: イベント名（例: `residuals`, `summary`, `return`）
-    - `iter` / `step`: 反復番号
+  - `case`: どのソルバーか（例: `pcg`, `minres`）
+  - `source_file`: 実装ファイル（`__file__`）
+  - `func`: 関数名（例: `pcg_solve`）
+  - `event`: イベント名（例: `residuals`, `summary`, `return`）
+  - `iter` / `step`: 反復番号
 - **リターン直前に空行を 1 行**挿入し、ログの区切りを明確にします。
 - 正解値の出力は不要です（テスト側で出力します）。
-
-## 6. 例（イメージ）
-- 戻り値の形だけを示します。
-
-```
-import equinox as eqx
-
-
-class EmptyState(eqx.Module):
-    """状態を持たないソルバー用の空構造体。"""
-
-
-def solve(...):
-    ans = ...
-    state = EmptyState()
-    info = {"num_iter": 0, "res_norm": 0.0, "converged": True}
-    return ans, state, info
-```

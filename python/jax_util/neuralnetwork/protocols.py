@@ -39,6 +39,7 @@ class Aux(Protocol):
 class BackpropState(Protocol):#上位レイヤーからの伝搬情報を格納する
     ...
 
+
 class OptimizeProblemPytree(Protocol):#パラメータ更新用の最適化問題
     objective: Callable[[Params], Scalar]
     # static: Static

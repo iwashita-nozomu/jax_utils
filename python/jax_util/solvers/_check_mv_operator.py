@@ -21,6 +21,7 @@ from ..base import (
 
 SOURCE_FILE = Path(__file__).name
 
+# 責務: 作用素の自己随伴性をランダム試行で簡易検査します。
 def check_self_adjoint(
     Mv: LinearOperator,
     shape: Tuple[int, ...],
@@ -57,6 +58,7 @@ def check_self_adjoint(
     }
 
 
+# 責務: 作用素の SPD 性を二次形式の符号で簡易検査します。
 def check_spd_quadratic_form(
     Mv: LinearOperator,
     shape: Tuple[int, ...],
@@ -88,6 +90,7 @@ def check_spd_quadratic_form(
     }
 
 
+# 責務: 作用素検査の結果を JSON ログとして整形出力します。
 def print_Mv_report(
     self_adjoint_report: Dict[str, Any],
     spd_report: Optional[Dict[str, Any]],
@@ -95,6 +98,7 @@ def print_Mv_report(
     name: str,
 ) -> None:
     """Mv 検査結果を表示する。"""
+    # 責務: JAX 配列を JSON 出力できる値へ整形します。
     def _to_jsonable(value: Any) -> Any:
         if isinstance(value, dict):
             return {k: _to_jsonable(v) for k, v in value.items()}

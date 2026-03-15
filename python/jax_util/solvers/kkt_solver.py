@@ -46,6 +46,7 @@ class KKTState(eqx.Module):
     solver_state:Any
     method:str = eqx.field(static=True)  # 'minres' or 'fgmres'
 
+# 責務: KKT ソルバで再利用するスペクトル前処理状態と内部反復状態を初期化する。
 def initialize_kkt_state(
     Hv_initial:LinearOperator,
     Bv_initial:LinearOperator,
@@ -116,6 +117,7 @@ def initialize_kkt_state(
     )
 
 
+# 責務: KKT 系の前処理更新と線形方程式求解をまとめて実行する。
 def _kkt_block_solver(
     Hv: LinearOperator,
     Bv: LinearOperator,
@@ -171,6 +173,7 @@ def _kkt_block_solver(
             info=S_info,
         )
 
+    # 責務: primal-dual 連立を 1 本の KKT 作用素としてまとめる。
     def KKT_mv(v: Vector) -> Vector:
         n_primal=rhs_x.shape[0]
         n_dual=rhs_lam.shape[0]
@@ -181,6 +184,7 @@ def _kkt_block_solver(
         return jnp.concatenate([top,bot],axis=0)
 
 
+    # 責務: ブロック対角近似で MINRES 用の前処理を与える。
     def precond(v: Vector) -> Vector:
         #KKTのminres用前処理
         n_primal=rhs_x.shape[0]
@@ -329,6 +333,7 @@ def _kkt_block_solver(
     return ans, new_kkt_state, info
 
 
+# 責務: 公開 API として内部 KKT ブロックソルバを既定値付きで公開する。
 def kkt_block_solver(
     Hv: LinearOperator,
     Bv: LinearOperator,

@@ -9,6 +9,7 @@ import jax
 from ..base import get_bool_env
 
 
+# 責務: JSONL に安全に書ける値へ再帰的に正規化します。
 def _to_jsonable(value: Any) -> Any:
     """JSON へ変換可能な形へ正規化します。
 
@@ -28,6 +29,7 @@ def _to_jsonable(value: Any) -> Any:
         return str(value)
 
 
+# 責務: lowering 済み関数から利用可能な HLO テキストを取得します。
 def _get_hlo_text(func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> str:
     """JAX lowering から HLO 文字列を取得します。
 
@@ -52,6 +54,7 @@ def _get_hlo_text(func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> str
     raise RuntimeError("Failed to get HLO text from lowered compiler IR.")
 
 
+# 責務: HLO を 1 レコードの JSONL として追記保存します。
 def dump_hlo_jsonl(
     func: Callable[..., Any],
     /,

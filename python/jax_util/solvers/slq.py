@@ -17,6 +17,7 @@ from ..base import Vector
 # 1) Lanczos: build tridiagonal T (m x m) from matvec only
 # -----------------------------
 
+# 責務: matvec のみから Lanczos 三重対角行列を構成します。
 def _lanczos_tridiag_from_v0(
     mv: LinearOperator,
     v0: Matrix,
@@ -34,6 +35,7 @@ def _lanczos_tridiag_from_v0(
     """
     v0 = v0 / (jnp.linalg.norm(v0) + eps)
 
+    # 責務: Lanczos の 3 項漸化式を 1 ステップ進めます。
     def step(carry: tuple[Vector, Vector, Scalar], _):
         v_prev, v_curr, beta_prev = carry
 
@@ -61,6 +63,7 @@ def _lanczos_tridiag_from_v0(
 # 2) One-probe SLQ quadrature nodes+weights from T
 # -----------------------------
 
+# 責務: 三重対角行列から Gauss 求積のノードと重みを取り出します。
 def _nodes_weights_from_T(T: Matrix) -> tuple[Vector, Vector]:
     """Lanczos が誘導する Gauss 求積のノード・重みを返します。"""
     evals, evecs = jnp.linalg.eigh(T)
@@ -68,6 +71,7 @@ def _nodes_weights_from_T(T: Matrix) -> tuple[Vector, Vector]:
     return evals, w
 
 
+# 責務: SLQ 用の正規化済みプローブベクトル列を生成します。
 def _make_probe_vectors(
     *,
     dim: int,
@@ -82,6 +86,7 @@ def _make_probe_vectors(
     keys = jax.random.split(key, s)
 
     if probe == "rademacher":
+        # 責務: Rademacher 分布の 1 本分のプローブを作ります。
         def one(k: jax.Array) -> Vector:
             z = jax.random.rademacher(k, (dim,), dtype=dtype)
             return z / jnp.sqrt(jnp.asarray(dim, dtype=dtype))
@@ -89,6 +94,7 @@ def _make_probe_vectors(
         v = jax.vmap(one)(keys)  # (s, dim)
         return jnp.asarray(v.T)
 
+    # 責務: 正規分布の 1 本分のプローブを正規化して作ります。
     def one(k: jax.Array) -> Vector:
         x = jax.random.normal(k, (dim,), dtype=dtype)
         return x / (jnp.linalg.norm(x) + eps)
@@ -100,6 +106,7 @@ def _make_probe_vectors(
 # -----------------------------
 # 3) SLQ estimator of trace(f(A))
 # -----------------------------
+# 責務: SLQ により `tr(f(A))` を推定します。
 def slq_trace_f(
     mv: LinearOperator,
     dim: int,
@@ -125,6 +132,7 @@ def slq_trace_f(
 
     probes = _make_probe_vectors(dim=dim, s=s, probe=probe, seed=seed, dtype=dtype, eps=eps)
 
+    # 責務: 1 本のプローブから単一の求積推定値を計算します。
     def one_probe(v0: Vector) -> Scalar:
         T = _lanczos_tridiag_from_v0(mv, v0, m, eps=eps)
         nodes, w = _nodes_weights_from_T(T)
@@ -137,6 +145,7 @@ def slq_trace_f(
 # -----------------------------
 # 4) Spectral density (PDF-like) and CDF via SLQ
 # -----------------------------
+# 責務: SLQ により平滑化スペクトル密度を推定します。
 def slq_spectral_density(
     mv: LinearOperator,
     dim: int,
@@ -166,6 +175,7 @@ def slq_spectral_density(
 
     probes = _make_probe_vectors(dim=dim, s=s, probe=probe, seed=seed, dtype=dtype, eps=eps)
 
+    # 責務: 1 本のプローブから密度カーブ 1 本分を計算します。
     def one_probe(v0: Vector) -> Vector:
         T = _lanczos_tridiag_from_v0(mv, v0, m, eps=eps)
         nodes, w = _nodes_weights_from_T(T)  # (m,), (m,)
@@ -183,6 +193,7 @@ def slq_spectral_density(
     return rho
 
 
+# 責務: SLQ によりスペクトル CDF を推定します。
 def slq_spectral_cdf(
     mv: LinearOperator,
     dim: int,
@@ -204,6 +215,7 @@ def slq_spectral_cdf(
     grid = jnp.asarray(grid, dtype=dtype)
     probes = _make_probe_vectors(dim=dim, s=s, probe=probe, seed=seed, dtype=dtype, eps=eps)
 
+    # 責務: 1 本のプローブから CDF カーブ 1 本分を計算します。
     def one_probe(v0: Vector) -> Vector:
         T = _lanczos_tridiag_from_v0(mv, v0, m, eps=eps)
         nodes, w = _nodes_weights_from_T(T)  # (m,), (m,)

@@ -57,3 +57,13 @@ def test_neuralnetwork_icnn_forward() -> None:
         "y_dtype": str(y.dtype),
     })
     assert y.shape == (1, 3)
+
+
+def _run_all_tests() -> None:
+    """このファイル内のテストを順に実行します。"""
+    test_neuralnetwork_standard_forward()
+    test_neuralnetwork_icnn_forward()
+
+
+if __name__ == "__main__":
+    _run_all_tests()

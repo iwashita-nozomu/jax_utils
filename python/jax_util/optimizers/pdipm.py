@@ -39,6 +39,7 @@ class PDIPMState(eqx.Module):
     lam_ineq: Vector
     s: Vector
 
+# 責務: PDIPM の初期 primal-dual 点と内部 KKT 状態を組み立てる。
 def initialize_pdipm_state(
     n_primal:int,
     n_dual_eq:int,
@@ -48,12 +49,15 @@ def initialize_pdipm_state(
     *,
     dtype: DTypeLike = DEFAULT_DTYPE,
 )->PDIPMState:
+    # 責務: 初期 KKT 近似で使う単位 Hessian 作用素を与える。
     def _identity(v: Vector) -> Vector:
         return v
 
+    # 責務: 等式制約が未設定の初期化で零作用素を与える。
     def _zero_dual(_: Vector) -> Vector:
         return jnp.zeros((n_dual_eq,), dtype=dtype)
 
+    # 責務: 等式制約転置が未設定の初期化で零作用素を与える。
     def _zero_primal(_: Vector) -> Vector:
         return jnp.zeros((n_primal,), dtype=dtype)
 
@@ -74,6 +78,8 @@ def initialize_pdipm_state(
         lam_ineq=jnp.ones((n_dual_ineq,),dtype=dtype),
         s=jnp.ones((n_dual_ineq,),dtype=dtype),
     )
+
+# 責務: Mehrotra 型 PDIPM を 1 問題分まとめて解き切る。
 def _pdipm_solve(
     f_opt: Callable[[Vector], Scalar],
     c_eq: Callable[[Vector], Vector],
@@ -112,6 +118,7 @@ def _pdipm_solve(
     grad_f = jax.grad(f_opt)
 
     # ---- fraction-to-boundary (Mehrotra; primal/dual separate) ----
+    # 責務: 正の領域を保つ最大ステップ長を成分ごとに評価する。
     def frac_to_boundary(v: Vector, dv: Vector, tau: Scalar) -> Scalar:
         mask = dv < ZERO
         cand = jnp.where(mask, -v / dv, jnp.inf)
@@ -120,10 +127,12 @@ def _pdipm_solve(
         a = jnp.minimum(ONE, tau * a)
         return jnp.minimum(a, ONE)
 
+    # 責務: 反復回数と IPM 残差に基づいて継続条件を判定する。
     def cond(carry: Tuple[Any, ...]) -> Scalar:
         step_count, res,*_ = carry
         return jnp.logical_and(step_count < max_steps, res > ipm_tol)
 
+    # 責務: 線形化・KKT 求解・Mehrotra 更新を 1 ステップ進める。
     def pdipm_step(carry: Tuple[Any, ...]) -> Tuple[Any, ...]:
         step_count, _, x, lam_eq, lam, s, kkt_state = carry
 
@@ -181,6 +190,7 @@ def _pdipm_solve(
 
         # Hessian-vector product of ∇_x L(x, lam_eq, lam) at current x
         # NOTE: predictor/corrector で2回KKTを解くが、どちらも「現在の (x, lam_eq, lam)」の線形化を使うので1回で良い
+        # 責務: 現在点でのラグランジアンを定義して Hessian 線形化に渡す。
         def _L_for_H(xx: Vector) -> Scalar:
             return f_opt(xx) + jnp.dot(lam_eq, c_eq(xx)) + jnp.dot(lam, c_ineq(xx))
 
@@ -229,6 +239,7 @@ def _pdipm_solve(
         # We pass r_c_used such that: S dlam + Lam ds = - r_c_used
         # Schur-eliminated:
         # (H + J^T S^{-1}Lam J) dx + J_eq^T dlam_eq = -r_x + J^T S^{-1}(r_c - Lam r_ineq)
+        # 責務: 指定した相補残差に対する Newton 方向を KKT 解法で求める。
         def solve_direction(r_c_used: Vector, kkt_state_in: KKTState):
             rhs_top = -r_x + (J_ineq_T * diag_S_inv) @ (r_c_used - diag_Lam @ r_ineq)
             rhs_bot = -r_eq
@@ -444,6 +455,7 @@ def _pdipm_solve(
     )
 
 
+# 責務: 公開 API として既定パラメータ付きの PDIPM ソルバを提供する。
 def pdipm_solve(
     f_opt: Callable[[Vector], Scalar],
     c_eq: Callable[[Vector], Vector],

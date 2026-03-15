@@ -176,7 +176,7 @@ def test_slq_density_integrates_to_one() -> None:
     assert float(abs_err) < 0.10
 
 
-def _run_all_for_script() -> None:
+def _run_all_tests() -> None:
     """`python test_slq.py` での補助実行を提供します。
 
     Notes
@@ -191,4 +191,4 @@ def _run_all_for_script() -> None:
 
 
 if __name__ == "__main__":
-    _run_all_for_script()
+    _run_all_tests()

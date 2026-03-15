@@ -10,6 +10,7 @@ from typing import Callable,Tuple
 
 
 
+# 責務: 関数値と Jacobian の線形作用素を同時に返します。
 def linearize(
     f: Callable[[Vector], Vector],
     x0: Vector,
@@ -22,12 +23,14 @@ def linearize(
     )
     return val, linop
 
+# 責務: 関数値と Jacobian の随伴作用素を同時に返します。
 def adjoint(
     f: Callable[[Vector], Vector],
     x0: Vector,
 ) -> Tuple[Vector, LinearOperator]:
     val, vjp_fn = eqx.filter_vjp(f, x0)   # val = f(x0)
 
+    # 責務: VJP を使って随伴作用素の matvec を実装します。
     def _adjoint_mv(v: Vector) -> Vector:
         (xbar,) = vjp_fn(v)              # xbar = J(x0)^T @ v
         return xbar

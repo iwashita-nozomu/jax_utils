@@ -45,6 +45,7 @@ class BlockEigenState(eqx.Module):
     eigenvalues: Vector
     iteration: Integer
 
+# 責務: 初期ブロックとその作用結果から固有値反復の状態を立ち上げる。
 def init_block_eigen_state(Mv: LinearOperator, X0: Matrix) -> BlockEigenState:
     """BlockEigState の 1 回目初期化."""
     AX0 = Mv @ X0
@@ -60,6 +61,7 @@ def init_block_eigen_state(Mv: LinearOperator, X0: Matrix) -> BlockEigenState:
         iteration=jnp.asarray(0, dtype=jnp.int32),
     )
 
+# 責務: block Rayleigh-Ritz 反復で固有空間近似を更新する。
 def _block_preconditioned_rayleigh_ritz(
     Mv: LinearOperator,
     T_mv: LinearOperator,
@@ -90,6 +92,7 @@ def _block_preconditioned_rayleigh_ritz(
 
     if projection is None:
         # デフォルトは恒等写像（何もしない射影）とする。
+        # 責務: 射影未指定時の恒等写像を型安全に用意する。
         def _identity_projection(x: Matrix, /) -> Matrix:
             return x
 
@@ -109,6 +112,7 @@ def _block_preconditioned_rayleigh_ritz(
     n, r = X.shape
     steps0 = jnp.array(0, dtype=jnp.int32)
 
+    # 責務: 最大残差が許容値を下回るまで block RR を継続する。
     def cond_fun(carry:Any):
         Xc, AXc, Pc, APc, lambdac, steps = carry
 
@@ -128,6 +132,7 @@ def _block_preconditioned_rayleigh_ritz(
         not_maxiter = steps < maxiter
         return jnp.logical_and(not_converged, not_maxiter)
 
+    # 責務: 残差前処理・Rayleigh-Ritz・探索方向更新の 1 反復を行う。
     def body_fun(carry:Tuple[Any, ...]) -> Tuple[Any, ...]:
         Xc, AXc, Pc, APc, lambdac, steps = carry
 
@@ -260,6 +265,7 @@ class SubspaceBasis(eqx.Module):
     eigenvalues: Vector    # (r,)
     # dtype: Any
     @staticmethod
+    # 責務: 固有値反復の状態から前処理用の部分空間だけを切り出す。
     def from_state(
         state: BlockEigenState,
     ) -> SubspaceBasis:
@@ -270,7 +276,7 @@ class SubspaceBasis(eqx.Module):
         )
 
 
-
+# 責務: ランダム初期基底からスペクトル前処理の初期状態を作る。
 def init_spectral_precond(
     Mv: LinearOperator,
     n: int,
@@ -322,6 +328,7 @@ def init_spectral_precond(
 
     return eig_state
 
+# 責務: 既存部分空間を warm start に使って固有空間近似を更新する。
 def update_subspace(
     Mv: LinearOperator,
     base_precond: LinearOperator,
@@ -356,7 +363,7 @@ def update_subspace(
     )
     return subspace_basis, eig_state_new,info
 
-#射影関数
+# 責務: 補空間への直交射影を適用して既知基底成分を除く。
 def apply_projection(
     v: Matrix,
     state: SubspaceBasis,
@@ -368,6 +375,7 @@ def apply_projection(
 
     return v - Q @ (Q.T @ v)
 
+# 責務: 低ランク補正付きスペクトル前処理作用素を構成する。
 def make_rank_r_spectral_precond(
     basis: SubspaceBasis,
     base_precond: LinearOperator = LinOp (lambda x: x),
@@ -397,6 +405,7 @@ def make_rank_r_spectral_precond(
 
     inv_lam = ONE / (lam + AVOID_ZERO_DIV)
 
+    # 責務: スペクトル補正と補空間前処理を合成して 1 回作用させる。
     def precond(v: Matrix, /) -> Matrix:
         # Spectral (rank-r) piece
         alpha = Q.T @ v                      # (r,)

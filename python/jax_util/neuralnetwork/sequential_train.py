@@ -30,10 +30,9 @@ class NormalBP(eqx.Module):
             self,
             layer: NeuralNetworkLayer,
             cache: Tuple[Carry, Ctx],
-            obj: OptimizeProblem,
-            state: OptimizeProblemState,
-    ) -> Tuple[NeuralNetworkLayer, BackpropState, OptimizeProblemState, OptimizeProblem,Aux]:
-        
+            obj: OptimizeProblemPytree,
+    ) -> Tuple["SingleLayerBackprop",NeuralNetworkLayer, OptimizeProblemPytree,Aux]:
+            
         param, static, layer_optim = self.buildoptim(
             layer,
             obj,
@@ -42,28 +41,33 @@ class NormalBP(eqx.Module):
         new_param, new_state, aux = self.update(
             param,
             # cache,
-            state,
             layer_optim,
         )
         new_layer: NeuralNetworkLayer = eqx.combine(new_param, static) #pyright: ignore
 
         _, ctx = cache
 
-        #下段の目的関数を定義する
-        def new_loss(param: Params) -> Scalar:
-            return obj.objective(new_layer(param, ctx).z)
+        #下段で使う目的関数を定義する
+        # def new_loss(_param: Params) -> Scalar:
+        #     return obj.objective(new_layer(_param, ctx).z)
         
+        def new_loss(_param:Params)-> Scalar:
+            lower_model = eqx.combine(_param, static)
+
         new_obj = PytrreeOptim(
             objective=new_loss,
+            # static = obj.static.layers[:-1]
             # variable_dim=new_layer_param.shape[0],
         )
 
-        return new_layer, new_obj, new_state, obj, aux
+        return NormalBP(
+            optstate=new_state,
+        ), new_layer, new_obj, aux
 
     def buildoptim(
             self,
             layer: NeuralNetworkLayer,
-            obj: OptimizeProblem,# R^(n^k) * b -> R 
+            obj: OptimizeProblemPytree,# R^(n^k) * b -> R 
             train_params: Tuple[Carry,Ctx],
     ) -> Tuple[Params,Static,OptimizeProblemPytree]:
         # layer_param, rebuild_static = module_to_vector(layer)
@@ -87,13 +91,13 @@ class NormalBP(eqx.Module):
             self,
             layer_param: Params,
             # cache: Tuple[Carry,Ctx],
-            state: OptimizeProblemState,
-            optim: OptimizeProblemPytree) -> Tuple[Params, OptimizeProblemState, Aux]:
+            # state: OptimizeProblemStatePytree,
+            optim: OptimizeProblemPytree) -> Tuple[Params, OptimizeProblemStatePytree, Aux]:
         
         grads = jax.grad(optim.objective)(layer_param)
         new_param = layer_param - grads
 
-        return new_param, state, None
+        return new_param, self.optstate, None
 
 
 def sequential_train_step(
