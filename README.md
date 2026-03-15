@@ -3,6 +3,7 @@
 Common Python module.
 
 ## Development
+
 ```bash
 pip install -e ".[dev]"
 pytest

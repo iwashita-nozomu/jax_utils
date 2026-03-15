@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, TypeAlias
+from typing import Callable
 
 import equinox as eqx
 import jax
@@ -8,9 +8,6 @@ from jax import numpy as jnp
 
 from ..base import Matrix, Vector
 from .protocols import Function
-
-MonteCarloSampler: TypeAlias = Callable[[jax.Array, int, int], tuple[jax.Array, Matrix]]
-
 
 def _integrator_key(integrator: "MonteCarloIntegrator") -> jax.Array:
     return integrator.key
@@ -45,7 +42,7 @@ def monte_carlo_integral(f: Function, samples: Matrix, /) -> Vector:
 class MonteCarloIntegrator(eqx.Module):
     dimension: int
     num_samples: int
-    sampler: MonteCarloSampler = eqx.field(static=True)
+    sampler: Callable[[jax.Array, int, int], tuple[jax.Array, Matrix]] = eqx.field(static=True)
     key: jax.Array
     samples: Matrix
 
@@ -54,7 +51,7 @@ class MonteCarloIntegrator(eqx.Module):
         dimension: int,
         num_samples: int,
         key: jax.Array,
-        sampler: MonteCarloSampler = uniform_cube_samples,
+        sampler: Callable[[jax.Array, int, int], tuple[jax.Array, Matrix]] = uniform_cube_samples,
     ):
         self.dimension = dimension
         self.num_samples = num_samples

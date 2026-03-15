@@ -5,12 +5,18 @@ from pathlib import Path
 
 import jax
 import jax.numpy as jnp
+import numpy as np
 
 from jax_util.functional import Func, MonteCarloIntegrator, integrate
 from jax_util.functional.monte_carlo import uniform_cube_samples
 
 
 SOURCE_FILE = Path(__file__).name
+
+
+def _to_host_list(values: jnp.ndarray) -> list[float]:
+    host_values = np.asarray(values)
+    return [float(component) for component in host_values.reshape(-1)]
 
 
 class _MidpointCubeSampler:
@@ -45,8 +51,8 @@ def test_integrate_preserves_constant_functions() -> None:
         "case": "functional_integrate_constant",
         "source_file": SOURCE_FILE,
         "test": "test_integrate_preserves_constant_functions",
-        "expected": [float(component) for component in constant],
-        "actual": [float(component) for component in value],
+        "expected": _to_host_list(constant),
+        "actual": _to_host_list(value),
         "requests": sampler.requests,
     }))
     assert jnp.allclose(value, constant)
@@ -69,8 +75,8 @@ def test_integrate_cancels_odd_function_on_symmetric_samples() -> None:
         "case": "functional_integrate_odd",
         "source_file": SOURCE_FILE,
         "test": "test_integrate_cancels_odd_function_on_symmetric_samples",
-        "expected": [float(component) for component in expected],
-        "actual": [float(component) for component in value],
+        "expected": _to_host_list(expected),
+        "actual": _to_host_list(value),
     }))
     assert jnp.allclose(value, expected, atol=1e-6)
 
@@ -92,9 +98,9 @@ def test_integrate_resolves_quadratic_moment_with_numeric_accuracy() -> None:
         "case": "functional_integrate_quadratic_moment",
         "source_file": SOURCE_FILE,
         "test": "test_integrate_resolves_quadratic_moment_with_numeric_accuracy",
-        "expected": [float(component) for component in expected],
-        "actual": [float(component) for component in value],
-        "abs_err": [float(component) for component in abs_err],
+        "expected": _to_host_list(expected),
+        "actual": _to_host_list(value),
+        "abs_err": _to_host_list(abs_err),
     }))
     assert float(jnp.max(abs_err)) < 5.0e-6
 
@@ -116,8 +122,8 @@ def test_integrate_supports_vector_valued_integrands() -> None:
         "case": "functional_integrate_vector_valued",
         "source_file": SOURCE_FILE,
         "test": "test_integrate_supports_vector_valued_integrands",
-        "expected": [float(component) for component in expected],
-        "actual": [float(component) for component in value],
+        "expected": _to_host_list(expected),
+        "actual": _to_host_list(value),
         "max_abs_err": float(abs_err),
     }))
     assert jnp.allclose(value, expected, atol=5.0e-6)
@@ -132,8 +138,8 @@ def test_uniform_cube_samples_returns_points_inside_normalized_domain() -> None:
         "source_file": SOURCE_FILE,
         "test": "test_uniform_cube_samples_returns_points_inside_normalized_domain",
         "shape": list(samples.shape),
-        "min": float(jnp.min(samples)),
-        "max": float(jnp.max(samples)),
+        "min": float(np.asarray(jnp.min(samples))),
+        "max": float(np.asarray(jnp.max(samples))),
     }))
     assert samples.shape == (3, 256)
     assert bool(jnp.all(samples >= -0.5))
@@ -155,7 +161,7 @@ def test_monte_carlo_integrator_update_samples_returns_new_integrator() -> None:
         "test": "test_monte_carlo_integrator_update_samples_returns_new_integrator",
         "old_shape": list(integrator.samples.shape),
         "new_shape": list(updated.samples.shape),
-        "same_key": bool(jnp.array_equal(integrator.key, updated.key)),
+        "same_key": bool(np.array_equal(np.asarray(integrator.key), np.asarray(updated.key))),
     }))
     assert updated.samples.shape == integrator.samples.shape
     assert not bool(jnp.array_equal(integrator.key, updated.key))
