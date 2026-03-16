@@ -36,6 +36,7 @@
 | `python/jax_util/solvers/archive` | 保管 | 現在使わないアルゴリズムの退避先。 |
 | `python/tests` | 安定 | 検証とログ出力。 |
 | `scripts` | 安定 | テスト・ログ・依存解析の補助。 |
+| `experiments` | 実験運用 | 長時間実験、結果整理、レポート生成。 |
 | `documents` | 安定 | 規約と設計書の一次情報源。 |
 
 ## 5. 共通ルール

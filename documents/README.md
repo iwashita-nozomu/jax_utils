@@ -5,9 +5,10 @@
 ## 1. General なコーディング方針
 
 - `documents/coding-conventions.md`
+- `documents/coding-conventions-experiments.md`
 - `documents/conventions/common/`
 - `documents/conventions/python/`
-- 対象: 命名、コメント、型注釈、演算子記法、テスト、ログ、JAX 運用などの共通ルール
+- 対象: 命名、コメント、型注釈、演算子記法、テスト、ログ、JAX 運用、実験環境運用などの共通ルール
 
 ## 2. ベースとなるクラス / Protocol / 型の設計
 
