@@ -15,6 +15,13 @@ STATUS_COLORS = {
     "timeout": "#d79b2e",
     "missing": "#d9d5cc",
 }
+FAILURE_KIND_COLORS = {
+    "ok": "#2f7d4a",
+    "oom": "#c96f2d",
+    "error": "#c9573b",
+    "timeout": "#d79b2e",
+    "missing": "#d9d5cc",
+}
 PANEL_BACKGROUND = "#f7f2e8"
 GRID_LINE = "#cabfae"
 TEXT_COLOR = "#2b2926"
@@ -73,12 +80,56 @@ def _maybe_float(case: Mapping[str, object], key: str, /) -> float | None:
     return None
 
 
+# 責務: 整数列を見やすいレンジ表記または短い列挙へ整形する。
+def _format_int_sequence(values: Sequence[object], /) -> str:
+    ints = [int(value) for value in values if isinstance(value, int)]
+    if not ints:
+        return "-"
+    if len(ints) == 1:
+        return str(ints[0])
+    steps = [right - left for left, right in zip(ints, ints[1:])]
+    if steps and len(set(steps)) == 1 and steps[0] > 0:
+        step = steps[0]
+        return f"{ints[0]}:{ints[-1]}" if step == 1 else f"{ints[0]}:{ints[-1]}:{step}"
+    if len(ints) <= 12:
+        return ", ".join(str(value) for value in ints)
+    prefix = ", ".join(str(value) for value in ints[:6])
+    return f"{prefix}, ... ({len(ints)} values)"
+
+
 # 責務: 新旧 JSON の差を吸収しつつ可視化用メトリクス値を返す。
 def _metric_value(case: Mapping[str, object], metric_name: str, /) -> float | None:
     if metric_name == "mean_abs_err":
         mean_value = _maybe_float(case, "mean_abs_err")
         return mean_value if mean_value is not None else _maybe_float(case, "abs_err")
+    if metric_name == "integrator_init_seconds":
+        init_seconds = _maybe_float(case, "integrator_init_seconds")
+        return init_seconds if init_seconds is not None else _maybe_float(case, "cpu_init_seconds")
+    if metric_name == "device_peak_bytes_in_use":
+        raw_stats = case.get("device_memory_stats")
+        if isinstance(raw_stats, Mapping):
+            peak_value = raw_stats.get("peak_bytes_in_use")
+            if isinstance(peak_value, int):
+                return float(peak_value)
+            current_value = raw_stats.get("bytes_in_use")
+            if isinstance(current_value, int):
+                return float(current_value)
     return _maybe_float(case, metric_name)
+
+
+# 責務: ケースの failure kind を可視化向けの短いラベルへ正規化する。
+def _failure_kind_label(case: Mapping[str, object] | None, /) -> str:
+    if case is None:
+        return "missing"
+    status = str(case.get("status", "failed"))
+    if status == "ok":
+        return "ok"
+    if status == "timeout":
+        return "timeout"
+    if status == "failed":
+        failure_kind = case.get("failure_kind")
+        return str(failure_kind) if isinstance(failure_kind, str) and failure_kind else "error"
+    return status
 
 
 # 責務: dtype・level・dimension ごとのケース辞書を引ける表を構築する。
@@ -115,6 +166,17 @@ def _format_mib_label(value: float | None, /) -> str:
     if value is None:
         return "-"
     return f"{value / (1024.0 * 1024.0):.2f} MiB"
+
+
+# 責務: 秒数を見やすい単位付きラベルへ整形する。
+def _format_seconds_label(value: float | None, /) -> str:
+    if value is None:
+        return "-"
+    if value < 1.0e-3:
+        return f"{value * 1.0e6:.1f} us"
+    if value < 1.0:
+        return f"{value * 1.0e3:.1f} ms"
+    return f"{value:.2f} s"
 
 
 # 責務: 0..1 の正規化値を落ち着いた暖色系グラデーションへ写す。
@@ -181,10 +243,14 @@ def _normalize_value(value: float, vmin: float, vmax: float, /, *, log_scale: bo
 def _format_metric_label(metric_name: str, value: float | None, /) -> str:
     if value is None:
         return "-"
-    if metric_name == "storage_bytes":
+    if metric_name in {"storage_bytes", "device_peak_bytes_in_use"}:
         return _format_mib_label(value)
-    if metric_name == "avg_integral_seconds":
-        return f"{value * 1.0e6:.1f} us"
+    if metric_name in {"avg_integral_seconds", "integrator_init_seconds", "device_transfer_seconds", "warmup_seconds", "batched_integral_seconds", "run_wall_seconds"}:
+        return _format_seconds_label(value)
+    if metric_name == "num_points":
+        return f"{int(round(value)):,}"
+    if metric_name == "process_rss_mb":
+        return f"{value:.1f} MiB"
     return _format_short_number(value)
 
 
@@ -329,6 +395,71 @@ def render_status_heatmap(
     return "\n".join(svg)
 
 
+# 責務: dtype ごとの failure kind ヒートマップ SVG を構築する。
+def render_failure_kind_heatmap(
+    *,
+    cases: Sequence[Mapping[str, object]],
+    dtype_names: Sequence[str],
+    dimensions: Sequence[int],
+    levels: Sequence[int],
+) -> str:
+    lookup = _case_lookup(cases)
+    cell_w = 92
+    cell_h = 34
+    left_margin = 88
+    top_margin = 52
+    panel_gap = 28
+    panel_h = top_margin + cell_h * len(levels) + 24
+    width = left_margin + cell_w * len(dimensions) + 24
+    height = panel_h * len(dtype_names) + panel_gap * max(0, len(dtype_names) - 1) + 56
+
+    legend_items = ("ok", "oom", "error", "timeout", "missing")
+    svg: list[str] = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
+        f'<rect width="{width}" height="{height}" fill="{PANEL_BACKGROUND}" />',
+        f'<text x="18" y="24" font-size="18" font-family="monospace" fill="{TEXT_COLOR}">failure kind</text>',
+    ]
+    legend_x = 18
+    for index, kind in enumerate(legend_items):
+        x = legend_x + index * 90
+        color = FAILURE_KIND_COLORS[kind]
+        svg.append(f'<rect x="{x}" y="32" width="14" height="14" fill="{color}" stroke="{GRID_LINE}" rx="3" />')
+        svg.append(f'<text x="{x + 20}" y="43" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{html.escape(kind)}</text>')
+
+    for dtype_index, dtype_name in enumerate(dtype_names):
+        panel_y = 52 + dtype_index * (panel_h + panel_gap)
+        svg.append(
+            f'<rect x="10" y="{panel_y}" width="{width - 20}" height="{panel_h - 6}" rx="14" fill="#fffdfa" stroke="{GRID_LINE}" />'
+        )
+        svg.append(
+            f'<text x="22" y="{panel_y + 20}" font-size="14" font-family="monospace" fill="{TEXT_COLOR}">dtype={html.escape(dtype_name)}</text>'
+        )
+        for col, dimension in enumerate(dimensions):
+            x = left_margin + col * cell_w
+            svg.append(
+                f'<text x="{x + cell_w / 2:.1f}" y="{panel_y + 38}" text-anchor="middle" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">d={dimension}</text>'
+            )
+        for row, level in enumerate(levels):
+            y = panel_y + top_margin + row * cell_h
+            svg.append(
+                f'<text x="{left_margin - 14}" y="{y + 22}" text-anchor="end" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">l={level}</text>'
+            )
+            for col, dimension in enumerate(dimensions):
+                x = left_margin + col * cell_w
+                case = lookup.get((dtype_name, level, dimension))
+                label = _failure_kind_label(case)
+                fill = FAILURE_KIND_COLORS.get(label, FAILURE_KIND_COLORS["error"])
+                svg.append(
+                    f'<rect x="{x}" y="{y}" width="{cell_w - 4}" height="{cell_h - 4}" fill="{fill}" stroke="{GRID_LINE}" rx="6" />'
+                )
+                svg.append(
+                    f'<text x="{x + (cell_w - 4) / 2:.1f}" y="{y + 20}" text-anchor="middle" font-size="9" font-family="monospace" fill="{TEXT_COLOR}">{html.escape(label)}</text>'
+                )
+
+    svg.append("</svg>")
+    return "\n".join(svg)
+
+
 # 責務: dtype ごとの成功 frontier をレベル対最大成功次元で可視化する。
 def render_frontier_svg(
     *,
@@ -418,16 +549,66 @@ def render_index_html(
     meta_rows = [
         ("experiment", str(results.get("experiment", "-"))),
         ("started_at_utc", str(results.get("started_at_utc", "-"))),
+        ("finished_at_utc", str(results.get("finished_at_utc", "-"))),
+        ("run_wall_seconds", _format_seconds_label(_maybe_float(results, "run_wall_seconds"))),
         ("platform", str(results.get("platform", "-"))),
+        ("gpu_indices", _format_int_sequence(results.get("gpu_indices", [])) if isinstance(results.get("gpu_indices"), list) else "-"),
+        ("dimensions", _format_int_sequence(results.get("dimensions", [])) if isinstance(results.get("dimensions"), list) else "-"),
+        ("levels", _format_int_sequence(results.get("levels", [])) if isinstance(results.get("levels"), list) else "-"),
         ("num_cases", str(results.get("num_cases", "-"))),
         ("num_repeats", str(results.get("num_repeats", "-"))),
         ("num_accuracy_problems", str(results.get("num_accuracy_problems", "-"))),
+        ("timeout_seconds", str(results.get("timeout_seconds", "-"))),
+        ("coeff_range", f"{results.get('coeff_start', '-')} .. {results.get('coeff_stop', '-')}"),
         ("dtypes", ", ".join(dtype_names)),
+        ("results_branch", str(results.get("results_branch", "-"))),
+        ("git_branch", str(results.get("git_branch", "-"))),
+        ("git_commit", str(results.get("git_commit", "-"))),
+        ("worktree_path", str(results.get("worktree_path", "-"))),
+        ("script_path", str(results.get("script_path", "-"))),
     ]
     rows_html = "\n".join(
         f"<tr><th>{html.escape(key)}</th><td>{html.escape(value)}</td></tr>"
         for key, value in meta_rows
     )
+    raw_summaries = results.get("summary_by_dtype")
+    summary_rows_html = ""
+    if isinstance(raw_summaries, list):
+        for summary in raw_summaries:
+            if not isinstance(summary, Mapping):
+                continue
+            summary_rows_html += (
+                "<tr>"
+                f"<td>{html.escape(str(summary.get('dtype_name', '-')))}</td>"
+                f"<td>{html.escape(str(summary.get('num_cases', '-')))}</td>"
+                f"<td>{html.escape(str(summary.get('num_success', '-')))}</td>"
+                f"<td>{html.escape(str(summary.get('num_failure', '-')))}</td>"
+                f"<td>{html.escape(_format_short_number(_maybe_float(summary, 'mean_mean_abs_err')))}</td>"
+                f"<td>{html.escape(_format_short_number(_maybe_float(summary, 'max_mean_abs_err')))}</td>"
+                f"<td>{html.escape(_format_seconds_label(_maybe_float(summary, 'mean_avg_integral_seconds')))}</td>"
+                f"<td>{html.escape(_format_seconds_label(_maybe_float(summary, 'max_avg_integral_seconds')))}</td>"
+                "</tr>"
+            )
+
+    raw_cases = _cases(results)
+    failure_labels = ["ok", "oom", "error", "timeout"]
+    failure_summary_rows: list[str] = []
+    for dtype_name in dtype_names:
+        dtype_cases = [case for case in raw_cases if str(case.get("dtype_name", "unknown")) == dtype_name]
+        counts = {label: 0 for label in failure_labels}
+        for case in dtype_cases:
+            label = _failure_kind_label(case)
+            if label in counts:
+                counts[label] += 1
+        failure_summary_rows.append(
+            "<tr>"
+            f"<td>{html.escape(dtype_name)}</td>"
+            f"<td>{counts['ok']}</td>"
+            f"<td>{counts['oom']}</td>"
+            f"<td>{counts['error']}</td>"
+            f"<td>{counts['timeout']}</td>"
+            "</tr>"
+        )
     figures_html = "\n".join(
         f'<section><h2>{html.escape(title)}</h2><img src="{html.escape(path)}" alt="{html.escape(title)}" /></section>'
         for title, path in figures
@@ -451,6 +632,25 @@ def render_index_html(
   <table>
     {rows_html}
   </table>
+  <section>
+    <h2>Summary By Dtype</h2>
+    <table>
+      <tr>
+        <th>dtype</th><th>cases</th><th>success</th><th>failure</th>
+        <th>mean abs err</th><th>max abs err</th><th>mean avg time</th><th>max avg time</th>
+      </tr>
+      {summary_rows_html}
+    </table>
+  </section>
+  <section>
+    <h2>Failure Summary</h2>
+    <table>
+      <tr>
+        <th>dtype</th><th>ok</th><th>oom</th><th>error</th><th>timeout</th>
+      </tr>
+      {"".join(failure_summary_rows)}
+    </table>
+  </section>
   {figures_html}
 </body>
 </html>
@@ -470,10 +670,16 @@ def generate_report(input_path: Path, output_dir: Path, /) -> None:
 
     figure_specs = [
         ("status heatmap", "status.svg", render_status_heatmap(cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels)),
+        ("failure kind heatmap", "failure_kind.svg", render_failure_kind_heatmap(cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels)),
         ("mean absolute error heatmap", "mean_abs_err.svg", render_numeric_heatmap(title="mean absolute error", metric_name="mean_abs_err", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
         ("absolute error variance heatmap", "var_abs_err.svg", render_numeric_heatmap(title="absolute error variance", metric_name="var_abs_err", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
+        ("integrator init time heatmap", "integrator_init_seconds.svg", render_numeric_heatmap(title="integrator init time", metric_name="integrator_init_seconds", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
+        ("device transfer time heatmap", "device_transfer_seconds.svg", render_numeric_heatmap(title="device transfer time", metric_name="device_transfer_seconds", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
         ("average time heatmap", "avg_integral_seconds.svg", render_numeric_heatmap(title="average integral time", metric_name="avg_integral_seconds", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
+        ("num points heatmap", "num_points.svg", render_numeric_heatmap(title="num points", metric_name="num_points", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
         ("storage heatmap", "storage_bytes.svg", render_numeric_heatmap(title="storage bytes", metric_name="storage_bytes", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
+        ("process rss heatmap", "process_rss_mb.svg", render_numeric_heatmap(title="process rss", metric_name="process_rss_mb", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
+        ("peak device bytes heatmap", "device_peak_bytes_in_use.svg", render_numeric_heatmap(title="peak device bytes in use", metric_name="device_peak_bytes_in_use", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
         ("success frontier", "frontier.svg", render_frontier_svg(cases=cases, dtype_names=dtype_names, levels=levels, dimensions=dimensions)),
     ]
 

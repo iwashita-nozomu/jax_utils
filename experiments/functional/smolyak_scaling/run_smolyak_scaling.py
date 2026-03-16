@@ -100,6 +100,37 @@ def _discover_gpu_indices() -> list[int]:
     return [int(line) for line in lines]
 
 
+# 責務: Git コマンドの標準出力を取り出せるときだけ返す。
+def _git_stdout(args: list[str], /) -> str | None:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=WORKSPACE_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        return None
+    stdout = completed.stdout.strip()
+    return stdout if stdout else None
+
+
+# 責務: 実験結果へ残す Git と worktree のメタデータを構築する。
+def _experiment_metadata() -> dict[str, object]:
+    metadata: dict[str, object] = {
+        "results_branch": RESULTS_BRANCH_NAME,
+        "worktree_path": str(WORKSPACE_ROOT),
+        "script_path": str(Path(__file__).resolve()),
+    }
+    branch = _git_stdout(["branch", "--show-current"])
+    commit = _git_stdout(["rev-parse", "HEAD"])
+    if branch is not None:
+        metadata["git_branch"] = branch
+    if commit is not None:
+        metadata["git_commit"] = commit
+    return metadata
+
+
 # 責務: レンジ指定から解析解つきベンチマークケース列を構成する。
 def _build_cases(
     dimensions: list[int],
@@ -569,7 +600,7 @@ def run_benchmark(
     coeff_start: float,
     coeff_stop: float,
 ) -> dict[str, object]:
-    started_at = datetime.now(timezone.utc).isoformat()
+    started_at = datetime.now(timezone.utc)
     run_config: dict[str, object] = {
         "platform": platform,
         "gpu_indices": gpu_indices,
@@ -579,12 +610,16 @@ def run_benchmark(
         "coeff_start": coeff_start,
         "coeff_stop": coeff_stop,
     }
+    metadata = _experiment_metadata()
     cases = _build_cases(dimensions, levels, dtype_names)
     results = _run_cases_in_parallel(cases, run_config)
+    finished_at = datetime.now(timezone.utc)
 
     return {
         "experiment": "smolyak_scaling_benchmark",
-        "started_at_utc": started_at,
+        "started_at_utc": started_at.isoformat(),
+        "finished_at_utc": finished_at.isoformat(),
+        "run_wall_seconds": (finished_at - started_at).total_seconds(),
         "platform": platform,
         "gpu_indices": gpu_indices if platform == "gpu" else [],
         "dimensions": dimensions,
@@ -596,6 +631,7 @@ def run_benchmark(
         "timeout_seconds": timeout_seconds,
         "coeff_start": coeff_start,
         "coeff_stop": coeff_stop,
+        **metadata,
         "cases": results,
         "summary_by_dtype": _summary_by_dtype(results, dtype_names),
         "frontier_by_dtype_and_level": _frontier_by_dtype_and_level(results, dtype_names, levels),
