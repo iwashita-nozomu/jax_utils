@@ -73,4 +73,5 @@
 - 実験そのものの code は `main` に置いてよいです。
 - 巨大な JSON、画像、ログは `main` へ常設しません。
 - 実験の所在、branch 名、定性的な考察は `main` の `./notes/experiments/` に残してよいです。
+- 日付依存の強い実験ログや途中判断は `main` の `./diary/` に残してよいです。
 - 実験環境の運用ルールを変えた場合は、この文書と `coding-conventions-project.md` を同時に更新します。
