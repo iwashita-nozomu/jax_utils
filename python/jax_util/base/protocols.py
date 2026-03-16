@@ -4,10 +4,13 @@ from typing import (
     Protocol,
     runtime_checkable,
     TypeAlias,
+    TypeVar,
     overload,
     Tuple,
     Any,
     Dict,
+    Callable,
+    # Generic,
 )
 
 from jaxtyping import Array, Float,  Bool, Int
@@ -73,6 +76,31 @@ class VectorFn(Protocol):
     ...
 
 
+T = TypeVar("T")
+U = TypeVar("U")
+V = TypeVar("V")
+@runtime_checkable
+class OptimizationProblem(Protocol[T]):
+    objective: Callable[[T], Scalar]
+    ...
+
+@runtime_checkable
+class ConstraintedOptimizationProblem(OptimizationProblem[T], Protocol[T,U,V]):
+    constraint_eq: Callable[[T], U]
+    constraint_ineq: Callable[[T], V]
+    ...
+
+class OptimizationState(Protocol[T]):
+    x: T
+    ...
+
+W = TypeVar("W") #双対空間
+
+class ConstrainedOptimizationState(OptimizationState[T], Protocol[T,W]):
+    lam_eq: W
+    lam_ineq: W
+    slack: T
+    ...
 
 __all__ = [
     "Operator",
@@ -85,4 +113,8 @@ __all__ = [
     "SolverLike",
     "ScalarFn",
     "VectorFn",
+    "OptimizationProblem",
+    "ConstraintedOptimizationProblem",
+    "OptimizationState",
+    "ConstrainedOptimizationState"
 ]

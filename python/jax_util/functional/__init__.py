@@ -13,7 +13,7 @@ from .smolyak import (
     smolyak_integral,
     trapezoidal_rule,
 )
-from .protocols import Func, Function, Functional, Integrator
+from .protocols import Func, Function, Functional, Integrator,FunctionalOptimizationProblem, ConstrainedFunctionalOptimizationProblem, DifferentialOperator
 
 __all__ = [
     "Integrator",
@@ -31,4 +31,7 @@ __all__ = [
     "smolyak_grid",
     "smolyak_integral",
     "integrate",
+    "DifferentialOperator",
+    "FunctionalOptimizationProblem",
+    "ConstrainedFunctionalOptimizationProblem",
 ]

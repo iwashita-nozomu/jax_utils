@@ -4,7 +4,7 @@ from typing import Callable, Protocol
 
 import equinox as eqx
 
-from ..base import Scalar, Vector
+from ..base import Scalar, Vector,OptimizationProblem,ConstraintedOptimizationProblem
 
 
 class Function(Protocol):
@@ -44,10 +44,25 @@ class Functional(Protocol):
 class Integrator(Protocol):
     def __call__(self, f: Function, /) -> Vector: ...
 
+class DifferentialOperator(Protocol):
+    def __call__(self, f: Function, /) -> Function: ...
+
+
+
+class FunctionalOptimizationProblem(OptimizationProblem[Function], Protocol):
+    ... #note:: 目的関数は関数空間上の関数であることに注意してください。
+class ConstrainedFunctionalOptimizationProblem(ConstraintedOptimizationProblem[Function,Function,Function],
+                                               FunctionalOptimizationProblem,
+                                                Protocol):
+    ... #note:: 目的関数,制約関数は関数空間上の関数であることに注意してください。
+
 
 __all__ = [
     "Integrator",
     "Function",
     "Func",
     "Functional",
+    "DifferentialOperator",
+    "FunctionalOptimizationProblem",
+    "ConstrainedFunctionalOptimizationProblem",
 ]

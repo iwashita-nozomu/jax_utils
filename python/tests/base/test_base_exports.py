@@ -5,7 +5,16 @@ from pathlib import Path
 
 import jax.numpy as jnp
 
-from jax_util.base import DEFAULT_DTYPE, EPS, LinOp, Vector
+from jax_util.base import (
+    DEFAULT_DTYPE,
+    EPS,
+    ConstraintedOptimizationProblem,
+    ConstrainedOptimizationState,
+    LinOp,
+    OptimizationProblem,
+    OptimizationState,
+    Vector,
+)
 
 
 SOURCE_FILE = Path(__file__).name
@@ -29,6 +38,10 @@ def test_base_exports_basic() -> None:
     }))
     assert y.shape == x.shape
     assert EPS > 0
+    assert OptimizationProblem is not None
+    assert ConstraintedOptimizationProblem is not None
+    assert OptimizationState is not None
+    assert ConstrainedOptimizationState is not None
 
 
 def _run_all_tests() -> None:

@@ -1,35 +1,34 @@
 from __future__ import annotations
 
 from ..base import (
-    ScalarFn,
-    VectorFn,
     Vector,
+    OptimizationProblem,
+    ConstraintedOptimizationProblem,
+    OptimizationState,
+    ConstrainedOptimizationState,
 )
 from typing import Protocol
 
-class VectorOptimizationProblem(Protocol):
-    objective:ScalarFn #min f
+class VectorOptimizationProblem(OptimizationProblem[Vector], Protocol):
     variable_dim: int
+    ... #note:: 目的関数はベクトル空間上の関数であることに注意してください。
 
-class ConstrainedVectorOptimizationProblem(VectorOptimizationProblem, Protocol):
-    # objective:ScalarFn #min f
-    constraint_eq : VectorFn #c_eq==0
-    constraint_ineq : VectorFn #c_ineq<=0
-
+class ConstrainedVectorOptimizationProblem(ConstraintedOptimizationProblem[Vector,Vector,Vector],
+                                                  VectorOptimizationProblem,
+                                                    Protocol):
     # variable_dim: int
     constraint_eq_dim: int
     constraint_ineq_dim: int
+    ... #note:: 目的関数,制約関数はベクトル空間上の関数であることに注意してください。
 
 
-class VectorOptimizationState(Protocol):
-    x : Vector
+class VectorOptimizationState(OptimizationState[Vector], Protocol):
+    ... #note:: xはベクトル空間上の変数であることに注意してください。
 
-class ConstrainedVectorOptimizationState(VectorOptimizationState, Protocol):
-    # x : Vector
-
-    lam_eq : Vector
-    lam_ineq : Vector
-    slack : Vector
+class ConstrainedVectorOptimizationState(ConstrainedOptimizationState[Vector, Vector],
+                                         VectorOptimizationState,
+                                          Protocol):
+    ... #note:: xはベクトル空間上の変数であることに注意してください。lam_eq, lam_ineqは双対空間上の変数であることに注意してください。
 
 __all__ = [
     "VectorOptimizationProblem",
