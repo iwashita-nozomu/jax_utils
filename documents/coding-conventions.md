@@ -18,4 +18,5 @@
 - [テスト規約](./coding-conventions-testing.md)
 - [ログ規約](./coding-conventions-logging.md)
 - [実験環境規約](./coding-conventions-experiments.md)
+- [レビュー文書規約](./coding-conventions-reviews.md)
 - [プロジェクト運用規約](./coding-conventions-project.md)

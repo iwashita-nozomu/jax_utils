@@ -15,6 +15,7 @@
 - base の型・Protocol・共通クラスは `design/base_components.md` に置きます。
 - 安定サブモジュールの API 詳細は `design/apis/` にサブモジュール単位で置きます。
 - 補助資料は `type-aliases.md` などの独立文書として置きます。
+- レビュー報告と実装進捗報告は `./reviews/` に置きます。
 
 ## 3. Docker 環境の方針
 
@@ -37,6 +38,7 @@
 | `python/tests` | 安定 | 検証とログ出力。 |
 | `scripts` | 安定 | テスト・ログ・依存解析の補助。 |
 | `experiments` | 実験運用 | 長時間実験、結果整理、レポート生成。 |
+| `reviews` | 安定 | Git 管理するレビュー報告と進捗文書。 |
 | `documents` | 安定 | 規約と設計書の一次情報源。 |
 
 ## 5. 共通ルール
