@@ -76,6 +76,7 @@
 - 実験そのものの code は `main` に置いてよいです。
 - 巨大な JSON、画像、ログは `main` へ常設しません。
 - 実験の所在、branch 名、定性的な考察は `main` の `./notes/experiments/` に残してよいです。
+- ただし、後から図や集計を再生成できるよう、各 branch の最終結果として必要最小限の JSON は `main` の `./notes/experiments/results/` へ持ち帰ります。
 - `./notes/experiments/` のメモは、原則として実験ごとに分け、複数の unrelated な実験を 1 ファイルへ混ぜません。
 - `./notes/experiments/` では、文献由来の内容に対象文献を明示し、`Idea:`、`Interpretation:`、`Consideration:` などで自前の発案や考察を区別します。
 - `./notes/experiments/` に一度残した過去の実験メモ本文は、原則として書き換えません。

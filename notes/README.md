@@ -5,6 +5,7 @@
 - `experiments/`
   - 実験結果の所在、定性的な考察、branch 対応を残します。
   - 実験メモは実験ごとに分けて置きます。
+  - `results/` には、`main` に持ち帰る最小限の final JSON を置きます。
 - `branches/`
   - branch ごとの要約と、関連 note への入口を残します。
 - `worktrees/`

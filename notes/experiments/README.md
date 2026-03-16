@@ -18,6 +18,7 @@
 - 追加調査のメモ
 
 大きな JSON、HTML、SVG、ログ本体は results branch 側に置き、`main` にはメモだけを残します。
+ただし、後から別の図を再生成できるよう、各 branch の最終結果として必要最小限の JSON は `notes/experiments/results/` に持ち帰ります。
 
 数式が必要な場合は、GitHub Flavored Markdown の数式記法をそのまま使って構いません。
 
@@ -42,3 +43,9 @@
   - 実験結果の読みや比較、設計判断
 
 文献から得た記述は、対象文献を具体的に明示します。
+
+## Final JSON
+
+- `main` へ持ち帰る final JSON は `notes/experiments/results/` に置きます。
+- raw な JSONL や大量ログまでは持ち込まず、後段の図再生成に必要な最小限の JSON を選びます。
+- note 本文からは、その JSON へのリンクを必ず張ります。

@@ -20,6 +20,7 @@
 - branch ごとの要約と note 入口は `./notes/branches/` に置きます。
 - 日付ごとの作業ログは `./diary/` に置きます。
 - `./notes/experiments/` のメモは実験ごとに分けます。
+- `./notes/experiments/results/` には、`main` に持ち帰る最小限の final JSON を置きます。
 - 削除予定の worktree から吸い出したメモは `./notes/worktrees/` に置きます。
 - `./diary/` は日付ファイルへ逐次追記する運用を基本とします。
 - `./notes/` と `./diary/` では、文献由来の記述に対象文献を明示し、アイデアや考察はラベルで区別します。
