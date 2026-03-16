@@ -74,6 +74,8 @@
 - 巨大な JSON、画像、ログは `main` へ常設しません。
 - 実験の所在、branch 名、定性的な考察は `main` の `./notes/experiments/` に残してよいです。
 - `./notes/experiments/` のメモは、原則として実験ごとに分け、複数の unrelated な実験を 1 ファイルへ混ぜません。
+- `./notes/experiments/` では、文献由来の内容に対象文献を明示し、`Idea:`、`Interpretation:`、`Consideration:` などで自前の発案や考察を区別します。
 - 日付依存の強い実験ログや途中判断は `main` の `./diary/` に残してよいです。
 - `./diary/` は日付ファイルへ逐次追記する運用を基本とし、その日の流れが読めるように保ちます。
+- `./diary/` でも、文献に基づく記述は出典を明示し、未確認の仮説は断定しません。
 - 実験環境の運用ルールを変えた場合は、この文書と `coding-conventions-project.md` を同時に更新します。
