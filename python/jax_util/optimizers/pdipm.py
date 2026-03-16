@@ -1,3 +1,21 @@
+"""Mehrotra 型内点法（PDIPM）の実装。
+
+References
+----------
+- Mehrotra, S. (1992).
+  "On the implementation of a primal-dual interior point method."
+  SIAM journal on optimization, 2(4), 575-601.
+  https://epubs.siam.org/doi/abs/10.1137/0802028
+  
+- Wright, S. J. (1997).
+  "Primal-Dual Interior-Point Methods."
+  SIAM, Philadelphia, PA.
+  
+  このモジュールは Mehrotra の predictor-corrector スキームを採用し、
+  凸最適化問題 (P) minimize c^T x s.t. Ax=b, x≥0 および双対問題 (D) を
+  解きます。KKT ブロックソルバと組み合わせることで、大規模稀疎問題でも
+  高速収束を実現する inexact Newton 法による求解が可能です。
+"""
 from __future__ import annotations
 
 from typing import Any, Dict, Tuple , Callable

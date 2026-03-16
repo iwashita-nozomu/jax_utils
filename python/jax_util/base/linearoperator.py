@@ -71,13 +71,13 @@ class LinOp(eqx.Module):
                 return LinOp(lambda v: other * (self @ v))
             
             elif other.ndim ==1:
-                raise ValueError(f"Scalar or LinearOperator expected for multiplication.{other.__name__} is vector.")
+                raise ValueError(f"Scalar or LinearOperator expected for multiplication. Got {other.ndim}D array (vector).")
             
             elif other.ndim ==2:
                 return LinOp(lambda v: (self @ other) @ v)
             
             else:
-                raise ValueError(f"Scalar or LinearOperator expected for multiplication.{other.__name__} is {other.ndim}D array.")
+                raise ValueError(f"Scalar or LinearOperator expected for multiplication. Got {other.ndim}D array.")
 
         else:
             # 責務: 右側の線形作用素を先に適用する合成 matvec を作ります。
@@ -99,11 +99,11 @@ class LinOp(eqx.Module):
                 if other.ndim == 0:
                     return other * (self @ v)
                 elif other.ndim ==1:
-                    raise ValueError(f"Scalar or LinearOperator expected for multiplication.{other.__name__} is vector.")
+                    raise ValueError(f"Scalar or LinearOperator expected for multiplication. Got {other.ndim}D array (vector).")
                 elif other.ndim ==2:
                     return other @ (self @ v)
                 else:
-                    raise ValueError(f"Scalar or LinearOperator expected for multiplication.{other.__name__} is {other.ndim}D array.")
+                    raise ValueError(f"Scalar or LinearOperator expected for multiplication. Got {other.ndim}D array.")
                 
             return other @ (self @ v)
         
@@ -114,16 +114,23 @@ class LinOp(eqx.Module):
         return LinOp(lambda v: self @ v + other @ v,shape=self.shape)
 
 
-# 責務: 共通の出力次元を持つ線形作用素を横方向に連結します。
+# 責務: 複数の線形作用素を入力次元で並べて合成（block-row 加算合成）します。
+# 数学的には: [ A1 A2 ... An ] @ [v1; v2; ...; vn] = A1@v1 + A2@v2 + ... + An@vn
+# （出力次元が同じ複数の作用素の weighted sum）
 def hstack_linops(ops:List[LinearOperator])->LinearOperator:
-
+    """複数の線形作用素を block-row で加算合成します。
+    
+    入力は block vector [v1; v2; ...; vn] として解釈され、
+    各ブロック vi は ops[i] の入力次元になります。
+    出力は共通の u_dim になり、A1@v1 + A2@v2 + ... + An@vn で計算されます。
+    """
     v_dims = [op.shape[1] for op in ops]
     u_dims = [op.shape[0] for op in ops]
     for op in ops:
         if op.shape[0] != u_dims[0]:
-            raise ValueError("All LinearOperators must have the same input dimension for hstack.")
+            raise ValueError("All LinearOperators must have the same output dimension for hstack.")
 
-    # 責務: 分割した入力ベクトルへ各作用素を適用し、結果を合算します。
+    # 責務: 分割した入力ベクトルへ各作用素を適用し、結果を加算します。
     def hstack_mv(v:Vector)->Vector:
         results = []
         cnt = 0
@@ -138,7 +145,7 @@ def vstack_linops(ops:List[LinearOperator])->LinearOperator:
 
     for op in ops:
         if op.shape[1] != ops[0].shape[1]:
-            raise ValueError("All LinearOperators must have the same output dimension for vstack.")
+            raise ValueError("All LinearOperators must have the same input dimension for vstack.")
     # 責務: 同じ入力へ各作用素を適用し、出力を縦に積みます。
     def vstack_mv(v:Vector)->Vector:
         results = []
