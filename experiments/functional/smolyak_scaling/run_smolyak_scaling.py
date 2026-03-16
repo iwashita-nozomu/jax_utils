@@ -1,4 +1,4 @@
-# Results branch: results/functional-smolyak-scaling
+# Results branch: results/functional-smolyak-scaling-tuned
 from __future__ import annotations
 
 import argparse
@@ -30,7 +30,7 @@ DEFAULT_NUM_ACCURACY_PROBLEMS = 9
 DEFAULT_COEFF_START = -0.55
 DEFAULT_COEFF_STOP = 0.65
 SUPPORTED_FLOAT_DTYPES = ("float16", "bfloat16", "float32", "float64")
-RESULTS_BRANCH_NAME = "results/functional-smolyak-scaling"
+RESULTS_BRANCH_NAME = "results/functional-smolyak-scaling-tuned"
 GPU_PREALLOCATION_DISABLED = True
 
 

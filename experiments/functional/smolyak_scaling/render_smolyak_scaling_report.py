@@ -1,4 +1,4 @@
-# Results branch: results/functional-smolyak-scaling
+# Results branch: results/functional-smolyak-scaling-tuned
 from __future__ import annotations
 
 import argparse

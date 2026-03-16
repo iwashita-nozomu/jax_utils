@@ -2,7 +2,7 @@
 
 `SmolyakIntegrator` の計算規模探索とベンチマークを、テストとは分離して行うための実験置き場です。
 
-結果 JSON を載せるブランチ名は `results/functional-smolyak-scaling` を想定しています。
+結果 JSON を載せるブランチ名は `results/functional-smolyak-scaling-tuned` を想定しています。
 
 ## What It Does
 
