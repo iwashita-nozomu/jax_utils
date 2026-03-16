@@ -18,6 +18,7 @@
 - レビュー報告と実装進捗報告は `./reviews/` に置きます。
 - 軽量なメモと実験の考察は `./notes/` に置きます。
 - branch ごとの要約と note 入口は `./notes/branches/` に置きます。
+- topic ごとの知識整理は `./notes/themes/` に置きます。
 - 日付ごとの作業ログは `./diary/` に置きます。
 - `./notes/experiments/` のメモは実験ごとに分けます。
 - `./notes/experiments/results/` には、`main` に持ち帰る最小限の final JSON を置きます。
