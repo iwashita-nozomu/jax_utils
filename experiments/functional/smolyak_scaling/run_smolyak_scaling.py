@@ -29,6 +29,7 @@ DEFAULT_NUM_REPEATS = 100
 DEFAULT_NUM_ACCURACY_PROBLEMS = 9
 DEFAULT_COEFF_START = -0.55
 DEFAULT_COEFF_STOP = 0.65
+DEFAULT_WORKERS_PER_GPU = 2
 SUPPORTED_FLOAT_DTYPES = ("float16", "bfloat16", "float32", "float64")
 RESULTS_BRANCH_NAME = "results/functional-smolyak-scaling"
 GPU_PREALLOCATION_DISABLED = True
@@ -102,6 +103,37 @@ def _discover_gpu_indices() -> list[int]:
 
     lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
     return [int(line) for line in lines]
+
+
+# 責務: 現在のプロセスから利用可能な CPU index 列を返す。
+def _available_cpu_indices() -> list[int]:
+    if hasattr(os, "sched_getaffinity"):
+        return sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+    count = os.cpu_count() or 1
+    return list(range(count))
+
+
+# 責務: worker 数に応じて CPU index 列をなるべく均等に分割する。
+def _partition_cpu_indices(num_workers: int, /) -> list[list[int]]:
+    cpu_indices = _available_cpu_indices()
+    if num_workers < 1:
+        raise ValueError("num_workers must be positive.")
+    if not cpu_indices:
+        return [[] for _ in range(num_workers)]
+
+    base = len(cpu_indices) // num_workers
+    extra = len(cpu_indices) % num_workers
+    groups: list[list[int]] = []
+    start = 0
+    for worker_index in range(num_workers):
+        group_size = base + (1 if worker_index < extra else 0)
+        if group_size <= 0:
+            groups.append([cpu_indices[worker_index % len(cpu_indices)]])
+            continue
+        stop = start + group_size
+        groups.append(cpu_indices[start:stop])
+        start = stop
+    return groups
 
 
 # 責務: Git コマンドの標準出力を取り出せるときだけ返す。
@@ -313,6 +345,10 @@ def _parent_failure_result(
 ) -> dict[str, object]:
     gpu_index_value = worker_config.get("gpu_index")
     gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
+    gpu_slot_value = worker_config.get("gpu_slot")
+    gpu_slot = gpu_slot_value if isinstance(gpu_slot_value, int) else 0
+    cpu_affinity_value = worker_config.get("cpu_affinity")
+    cpu_affinity = [cpu for cpu in cpu_affinity_value if isinstance(cpu, int)] if isinstance(cpu_affinity_value, list) else []
     return {
         "status": "failed",
         "failure_kind": failure_kind,
@@ -321,6 +357,8 @@ def _parent_failure_result(
         "level": _case_int(case, "level"),
         "dtype_name": str(case["dtype_name"]),
         "assigned_gpu_index": gpu_index,
+        "gpu_slot": gpu_slot,
+        "cpu_affinity": cpu_affinity,
         "worker_label": _config_str(worker_config, "worker_label"),
         "error": error,
         "traceback": traceback_text[-4000:],
@@ -439,6 +477,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
         "device_kind": target_device.device_kind,
         "visible_device_id": int(target_device.id),
         "assigned_gpu_index": os.environ.get("SMOLYAK_GPU_INDEX"),
+        "cpu_affinity": sorted(int(cpu) for cpu in os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "num_terms": int(integrator.num_terms),
         "num_points": int(integrator.num_evaluation_points),
         "num_evaluation_points": int(integrator.num_evaluation_points),
@@ -466,9 +505,18 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
 # 責務: worker プロセス開始時に dtype とデバイス向けの環境を固定する。
 def _initialize_worker(run_config: Mapping[str, object], worker_config: Mapping[str, object], /) -> None:
     os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["NUMEXPR_NUM_THREADS"] = "1"
     platform = _config_str(run_config, "platform")
     gpu_index_value = worker_config.get("gpu_index")
     gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
+    cpu_affinity_value = worker_config.get("cpu_affinity")
+    cpu_affinity = [cpu for cpu in cpu_affinity_value if isinstance(cpu, int)] if isinstance(cpu_affinity_value, list) else []
+
+    if cpu_affinity and hasattr(os, "sched_setaffinity"):
+        os.sched_setaffinity(0, set(cpu_affinity))
 
     if platform == "gpu":
         os.environ.pop("JAX_PLATFORMS", None)
@@ -490,15 +538,28 @@ def _build_worker_configs(run_config: Mapping[str, object], /) -> list[dict[str,
         if not isinstance(gpu_indices_value, list):
             raise TypeError("run_config['gpu_indices'] must be list.")
         gpu_indices = [gpu_index for gpu_index in gpu_indices_value if isinstance(gpu_index, int)]
+        workers_per_gpu = _config_int(run_config, "workers_per_gpu")
+        if workers_per_gpu < 1:
+            raise ValueError("workers_per_gpu must be positive.")
+        total_workers = len(gpu_indices) * workers_per_gpu
+        cpu_groups = _partition_cpu_indices(total_workers) if total_workers > 0 else []
+        worker_index = 0
         for gpu_index in gpu_indices:
-            worker_configs.append({
-                "worker_label": f"gpu-{gpu_index}",
-                "gpu_index": gpu_index,
-            })
+            for gpu_slot in range(workers_per_gpu):
+                cpu_affinity = cpu_groups[worker_index] if worker_index < len(cpu_groups) else []
+                worker_configs.append({
+                    "worker_label": f"gpu-{gpu_index}-w{gpu_slot}",
+                    "gpu_index": gpu_index,
+                    "gpu_slot": gpu_slot,
+                    "cpu_affinity": cpu_affinity,
+                })
+                worker_index += 1
     else:
         worker_configs.append({
             "worker_label": "cpu-0",
             "gpu_index": None,
+            "gpu_slot": 0,
+            "cpu_affinity": _available_cpu_indices(),
         })
     return worker_configs
 
@@ -532,6 +593,10 @@ def _run_case_in_worker(
     worker_label = _config_str(worker_config, "worker_label")
     gpu_index_value = worker_config.get("gpu_index")
     gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
+    gpu_slot_value = worker_config.get("gpu_slot")
+    gpu_slot = gpu_slot_value if isinstance(gpu_slot_value, int) else 0
+    cpu_affinity_value = worker_config.get("cpu_affinity")
+    cpu_affinity = [cpu for cpu in cpu_affinity_value if isinstance(cpu, int)] if isinstance(cpu_affinity_value, list) else []
 
     try:
         result = _run_single_case(case, run_config)
@@ -547,6 +612,8 @@ def _run_case_in_worker(
             "level": _case_int(case, "level"),
             "dtype_name": str(case["dtype_name"]),
             "assigned_gpu_index": gpu_index,
+            "gpu_slot": gpu_slot,
+            "cpu_affinity": cpu_affinity,
             "error": message,
             "traceback": traceback_text[-4000:],
         }
@@ -554,6 +621,8 @@ def _run_case_in_worker(
     result["worker_label"] = worker_label
     if "assigned_gpu_index" not in result:
         result["assigned_gpu_index"] = gpu_index
+    result["gpu_slot"] = gpu_slot
+    result["cpu_affinity"] = cpu_affinity
     jsonl_output_path_value = run_config.get("jsonl_output_path")
     if isinstance(jsonl_output_path_value, str):
         _append_jsonl_record(Path(jsonl_output_path_value), result)
@@ -769,6 +838,7 @@ def run_benchmark(
     output_path: Path,
     platform: str,
     gpu_indices: list[int],
+    workers_per_gpu: int,
     timeout_seconds: int,
     num_repeats: int,
     num_accuracy_problems: int,
@@ -782,6 +852,7 @@ def run_benchmark(
     run_config: dict[str, object] = {
         "platform": platform,
         "gpu_indices": gpu_indices,
+        "workers_per_gpu": workers_per_gpu,
         "timeout_seconds": timeout_seconds,
         "num_repeats": num_repeats,
         "num_accuracy_problems": num_accuracy_problems,
@@ -801,6 +872,7 @@ def run_benchmark(
         "run_wall_seconds": (finished_at - started_at).total_seconds(),
         "platform": platform,
         "gpu_indices": gpu_indices if platform == "gpu" else [],
+        "workers_per_gpu": workers_per_gpu if platform == "gpu" else 1,
         "dimensions": dimensions,
         "levels": levels,
         "dtype_names": dtype_names,
@@ -831,6 +903,7 @@ def main() -> None:
     parser.add_argument("--levels", required=True, help="Inclusive integer range start:end[:step] for levels.")
     parser.add_argument("--platform", choices=["cpu", "gpu"], default="gpu")
     parser.add_argument("--gpu-indices", default=None, help="Comma-separated physical GPU indices. Defaults to all visible GPUs.")
+    parser.add_argument("--workers-per-gpu", type=int, default=DEFAULT_WORKERS_PER_GPU)
     parser.add_argument("--dtypes", default="all", help="Comma-separated dtype names or 'all'.")
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--num-repeats", type=int, default=DEFAULT_NUM_REPEATS)
@@ -863,6 +936,7 @@ def main() -> None:
         output_path=output_path,
         platform=args.platform,
         gpu_indices=gpu_indices,
+        workers_per_gpu=args.workers_per_gpu,
         timeout_seconds=args.timeout_seconds,
         num_repeats=args.num_repeats,
         num_accuracy_problems=args.num_accuracy_problems,

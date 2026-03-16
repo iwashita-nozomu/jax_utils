@@ -129,6 +129,23 @@ def _infer_hlo_hints(summary: dict[str, Any], /) -> list[str]:
     arithmetic = count_matching("dot", "multiply", "add", "subtract")
     scatter_count = count_matching("scatter")
     dot_count = count_matching("dot")
+    size_summary = summary.get("size")
+    compiled_memory = summary.get("compiled_memory")
+    preferred_text_bytes_max = 0.0
+    generated_code_size_max = 0.0
+    temp_size_max = 0.0
+
+    if isinstance(size_summary, dict):
+        preferred_text = size_summary.get("preferred_text.utf8_bytes")
+        if isinstance(preferred_text, dict):
+            preferred_text_bytes_max = float(preferred_text.get("max", 0.0))
+    if isinstance(compiled_memory, dict):
+        generated_code = compiled_memory.get("generated_code_size_in_bytes")
+        if isinstance(generated_code, dict):
+            generated_code_size_max = float(generated_code.get("max", 0.0))
+        temp_size = compiled_memory.get("temp_size_in_bytes")
+        if isinstance(temp_size, dict):
+            temp_size_max = float(temp_size.get("max", 0.0))
 
     if control_flow > 0:
         hints.append("制御フロー (`while` / `call`) が HLO に含まれています。loop 構造が kernel 分割や launch 回数へ影響している可能性があります。")
@@ -138,6 +155,12 @@ def _infer_hlo_hints(summary: dict[str, Any], /) -> list[str]:
         hints.append("scatter が現れており、prefix 更新や点構成のための書き戻しが HLO に残っています。点構成の表現が GPU 実行コストを押し上げている可能性があります。")
     if arithmetic > 0 and dot_count == 0:
         hints.append("主要演算に `dot` 系が見えず、GEMM 主体ではない構造です。GPU の高スループットを引き出しにくい可能性があります。")
+    if preferred_text_bytes_max >= 1_000_000:
+        hints.append("preferred HLO テキストが 1MB を超えており、lowering 後の IR 自体がかなり大きい可能性があります。")
+    if generated_code_size_max >= 1_000_000:
+        hints.append("generated code size が 1MB を超えており、コンパイル済みコードの肥大化がボトルネック候補です。")
+    if temp_size_max >= 100_000_000:
+        hints.append("compiled temp buffer が 100MB を超えており、一時メモリの確保コストや device memory pressure が疑われます。")
     if not hints:
         hints.append("単純な op 数だけでは支配項が明確でありません。HLO 本文と profiler を併用して確認してください。")
     return hints
@@ -217,6 +240,12 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
 
     summary = _summarize_hlo_jsonl(jsonl_path)
     summary_path.write_text(json.dumps(_json_compatible(summary), ensure_ascii=False, indent=2), encoding="utf-8")
+    size_digest = {
+        "preferred_text_utf8_bytes_max": summary.get("size", {}).get("preferred_text.utf8_bytes", {}).get("max"),
+        "hlo_proto_bytes_max": summary.get("size", {}).get("hlo_proto_bytes", {}).get("max"),
+        "generated_code_size_in_bytes_max": summary.get("compiled_memory", {}).get("generated_code_size_in_bytes", {}).get("max"),
+        "temp_size_in_bytes_max": summary.get("compiled_memory", {}).get("temp_size_in_bytes", {}).get("max"),
+    }
 
     result: dict[str, Any] = {
         "experiment": "smolyak_hlo",
@@ -237,6 +266,7 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
         "json_path": str(output_path),
         "jsonl_path": str(jsonl_path),
         "summary_path": str(summary_path),
+        "size_digest": _json_compatible(size_digest),
         "summary": summary,
         "hints": _infer_hlo_hints(summary),
     }
@@ -273,6 +303,7 @@ def main() -> None:
         "json": result["json_path"],
         "jsonl": result["jsonl_path"],
         "summary": result["summary_path"],
+        "size_digest": result["size_digest"],
         "hints": result["hints"],
     }), ensure_ascii=False))
 
