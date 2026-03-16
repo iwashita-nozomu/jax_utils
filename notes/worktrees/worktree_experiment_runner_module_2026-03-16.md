@@ -1,9 +1,11 @@
-# Experiment Runner Modularization 2026-03-16
+# Worktree Extraction: Experiment Runner Modularization 2026-03-16
 
 ## Context
 
 - branch:
   - `work/experiment-runner-module-20260316`
+- extracted_to_main_from:
+  - `/workspace/.worktrees/work-experiment-runner-20260316`
 - base:
   - `work/smolyak-tuning-20260316`
 - scope:
