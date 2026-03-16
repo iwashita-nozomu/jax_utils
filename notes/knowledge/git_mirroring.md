@@ -16,6 +16,10 @@
   - `/mnt/git/jax_util.git/config`
 - bare repo の hook:
   - `/mnt/git/jax_util.git/hooks/post-receive`
+- SSH config:
+  - `~/.ssh/config`
+- GitHub 用公開鍵:
+  - `~/.ssh/id_ed25519_github_mirror.pub`
 
 ## 今回確認できたこと
 
@@ -58,6 +62,26 @@
 
 つまり、`origin/main` と `GitHub/main` は一致していません。確認時点では、GitHub は `39` commits 分だけ遅れています。
 
+同日に、mirror 経路は HTTPS から SSH へ切り替えました。
+
+- local repo `GitHub` remote:
+  - `git@github.com:iwashita-nozomu/jax_utils.git`
+- bare repo `github` remote:
+  - `git@github.com:iwashita-nozomu/jax_utils.git`
+- SSH config:
+  - `~/.ssh/config`
+- generated key:
+  - `~/.ssh/id_ed25519_github_mirror`
+  - `~/.ssh/id_ed25519_github_mirror.pub`
+
+この時点では、SSH 接続自体は公開鍵認証待ちで止まっています。
+
+```text
+git@github.com: Permission denied (publickey).
+```
+
+つまり、経路は SSH に切り替わっていますが、GitHub 側に公開鍵がまだ登録されていません。
+
 ## 実際の確認手順
 
 まず、local と `origin` が一致しているかを見ます。
@@ -88,9 +112,16 @@ git rev-list --count GitHub/main..origin/main
 ```bash
 git remote -v
 git config --get-all remote.GitHub.pushurl
+git --git-dir=/mnt/git/jax_util.git config --get remote.github.url
 ```
 
-少なくとも、`GitHub` remote に push 先が設定されている必要があります。
+少なくとも、local repo と bare repo の両方で GitHub remote が正しい必要があります。
+
+SSH を使うなら、どちらも次の形にそろえるのが分かりやすいです。
+
+```text
+git@github.com:iwashita-nozomu/jax_utils.git
+```
 
 ### 2. まずは direct push を試す
 
@@ -123,6 +154,45 @@ fatal: could not read Username for 'https://github.com': terminal prompts disabl
 
 - HTTPS token を credential helper 経由で渡す
 - SSH remote に切り替えて、bare repo と local repo の両方で鍵を使う
+
+SSH を使う場合は、次も確認します。
+
+```bash
+ssh -T git@github.com
+```
+
+ここで
+
+```text
+Permission denied (publickey)
+```
+
+が出るなら、鍵ファイルはあっても GitHub 側への登録がまだです。
+
+### 4.1 SSH 鍵を作る
+
+```bash
+ssh-keygen -t ed25519 -C "niwashita@users.noreply.github.com" -f ~/.ssh/id_ed25519_github_mirror
+```
+
+```bash
+cat ~/.ssh/id_ed25519_github_mirror.pub
+```
+
+この公開鍵を GitHub の SSH keys に登録してから、再度 `ssh -T git@github.com` を試します。
+
+### 4.2 SSH config をそろえる
+
+```sshconfig
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_github_mirror
+  IdentitiesOnly yes
+  StrictHostKeyChecking accept-new
+```
+
+この設定があると、local repo と bare repo の両方で同じ鍵を使いやすくなります。
 
 ### 5. 通ったあとに再確認する
 
