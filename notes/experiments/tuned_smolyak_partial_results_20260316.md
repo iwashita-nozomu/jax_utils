@@ -42,3 +42,22 @@ $$
 ## Addendum
 
 この partial の再解析用 JSON は、`main` 側にも [tuned_smolyak_partial_results_20260316.json](/workspace/notes/experiments/results/tuned_smolyak_partial_results_20260316.json) として持ち帰ってある。これは `cases` 配列を含み、元の JSONL と同等のケース情報を保持している。
+
+### Quick Reference
+
+- branch:
+  - `results/functional-smolyak-scaling-tuned`
+- source JSONL:
+  - [smolyak_scaling_gpu_20260316T132125Z.jsonl](/workspace/.worktrees/results-functional-smolyak-scaling-tuned/experiments/functional/smolyak_scaling/results/smolyak_scaling_gpu_20260316T132125Z.jsonl)
+- source partial JSON:
+  - [smolyak_scaling_gpu_20260316T132125Z_partial.json](/workspace/.worktrees/results-functional-smolyak-scaling-tuned/experiments/functional/smolyak_scaling/results/smolyak_scaling_gpu_20260316T132125Z_partial.json)
+- archived final JSON in `main`:
+  - [tuned_smolyak_partial_results_20260316.json](/workspace/notes/experiments/results/tuned_smolyak_partial_results_20260316.json)
+- cases observed:
+  - `547 / 40804`
+- status summary:
+  - `ok=99`, `failed=448`
+- dtype progress:
+  - `float16=137`, `bfloat16=137`, `float32=137`, `float64=136`
+- strongest current conclusion:
+  - `level=1` でも `num_points=1` なのに初期化時間と RSS が急増しており、主因は積分 kernel より初期化・lowering・compile 側にある

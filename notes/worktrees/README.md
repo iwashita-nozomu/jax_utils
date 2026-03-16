@@ -19,6 +19,7 @@
 - 観測したボトルネックや failure pattern
 - 次に残すべき `Idea:` / `Interpretation:` / `Consideration:`
 - Dockerfile 更新候補や、解析に使ったツールのメモ
+- その worktree を一度しか開かなくても状況が分かる quick reference
 
 ## Naming
 
@@ -26,6 +27,11 @@
 - 1 つの file に unrelated な worktree を混ぜません。
 - 文書タイトルや先頭 H1 は、日付ではなく worktree のトピックを主にして付けます。
 - 日付は file 名や metadata に残し、タイトル自体は `Smolyak Tuning Worktree Extraction` のように topic-first にします。
+
+## Reading Principle
+
+- worktree note はリンク集だけで終わらせず、その file 単体で branch の役割、主要変更、重要結果、最終判断が読めるようにします。
+- 詳細ログや raw 結果へのリンクは補助として置きますが、核心の結論は本文に残します。
 
 ## Source And Idea Marking
 

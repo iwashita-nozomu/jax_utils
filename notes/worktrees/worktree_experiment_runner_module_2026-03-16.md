@@ -164,3 +164,23 @@
 2. runner 共通ロジックと Smolyak 固有ロジックの境界を決める
 3. 内部モジュールの最小単位を切る
 4. 既存 CLI を壊さない形で import 経由へ置き換える
+
+## Addendum
+
+### Quick Reference
+
+- branch:
+  - `work/experiment-runner-module-20260316`
+- final landing place:
+  - `python/jax_util/experiment_runner/`
+- main changes:
+  - host scheduler / child execution の分離
+  - JSONL 逐次保存
+  - completion record を child が明示送信する runner 方式
+  - multi-GPU child probe test の追加
+- validation:
+  - GPU child probe
+  - direct execution
+  - `pyright`
+- final status:
+  - 成果は `main` と `results/functional-smolyak-scaling-tuned` に統合済み

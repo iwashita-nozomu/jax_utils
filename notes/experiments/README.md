@@ -42,6 +42,15 @@
 - `Interpretation:` / `Consideration:`
   - 実験結果の読みや比較、設計判断
 
+実験 note では、少なくとも次の情報が 1 ファイル内で見えるようにします。
+
+- branch 名
+- source JSON / JSONL
+- `main` に持ち帰った final JSON
+- 主要な観測値
+- 定性的な結論
+- 次の課題
+
 文献から得た記述は、対象文献を具体的に明示します。
 
 ## Final JSON

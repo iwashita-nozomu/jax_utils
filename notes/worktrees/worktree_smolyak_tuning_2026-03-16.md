@@ -126,3 +126,24 @@
 - tuning worktree の tracked な成果は `results/functional-smolyak-scaling-tuned` に包含済み。
 - 未追跡の `debug_gpu_visibility.py` と小さい CPU smoke JSON/JSONL は、本ノートへの要約吸い出しで十分。
 - したがって、`/workspace/.worktrees/work-smolyak-tuning-20260316` は削除してよい。
+
+## Addendum
+
+### Quick Reference
+
+- branch:
+  - `work/smolyak-tuning-20260316`
+- downstream branch:
+  - `results/functional-smolyak-scaling-tuned`
+- main outcomes:
+  - explicit grid 依存の公開経路削減
+  - `integrate(f, integrator)` への API 集約
+  - HLO dump / summary / bottleneck scan の拡充
+  - GPU 可視性は正しく分離されており、主問題は CPU 側初期化支配だと確認
+- tracked history:
+  - `results/functional-smolyak-scaling-tuned` に包含済み
+- untracked leftovers at deletion time:
+  - `debug_gpu_visibility.py`
+  - 小さい CPU smoke JSON/JSONL 3 組
+- final decision:
+  - 結論を本ノートへ吸い出したうえで worktree を削除
