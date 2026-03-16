@@ -34,6 +34,7 @@
 - 実験固有ではない共通コード変更を `main` で先に行った場合だけ、results worktree へ `main` を取り込みます。
 - worktree を削除する前に、その worktree にしか残っていない知見を `main` の `./notes/worktrees/` へ吸い出して整理します。
 - 吸い出しでは、少なくとも branch 名、worktree の用途、関連結果、主要な観測、次の `Idea:` を残します。
+- 実験 branch と results branch は、`main` の `./notes/branches/README.md` から参照できるようにし、関連する experiment note や worktree note への入口を置きます。
 
 ## 4. 生成物の扱い
 

@@ -17,6 +17,7 @@
 - 補助資料は `type-aliases.md` などの独立文書として置きます。
 - レビュー報告と実装進捗報告は `./reviews/` に置きます。
 - 軽量なメモと実験の考察は `./notes/` に置きます。
+- branch ごとの要約と note 入口は `./notes/branches/` に置きます。
 - 日付ごとの作業ログは `./diary/` に置きます。
 - `./notes/experiments/` のメモは実験ごとに分けます。
 - 削除予定の worktree から吸い出したメモは `./notes/worktrees/` に置きます。
@@ -89,3 +90,4 @@
 - `main` で先に変更するのは、実験固有ではない共通コードや規約更新に限ります。
 - 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
 - `main` には再生成可能なコード・文書・最小限の雛形だけを置き、大きな JSON・画像・ログを常設しません。
+- 長く使う branch や results branch は、`./notes/branches/README.md` に登録し、関連 note へ main から一段で辿れるようにします。
