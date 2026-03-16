@@ -1,4 +1,4 @@
-# Worktree Extraction: Smolyak Tuning 2026-03-16
+# Smolyak Tuning Worktree Extraction
 
 ## Context
 
@@ -39,7 +39,7 @@
 - tuning note:
   - `/workspace/.worktrees/work-smolyak-tuning-20260316/notes/experiments/smolyak_tuning_20260316.md`
 
-### Interpretation
+### Interpretation (HLO Analysis)
 
 - HLO 解析拡充の成果は commit 済みで、`results/functional-smolyak-scaling-tuned` にすでに含まれている。
 - tuning worktree を残す理由として、HLO 関連の tracked file はもうない。
@@ -56,7 +56,7 @@
 - untracked probe script:
   - `/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_scaling/debug_gpu_visibility.py`
 
-### Interpretation
+### Interpretation (GPU Visibility Probe)
 
 - probe は 2 系統を比較していた:
   - `ProcessPoolExecutor(..., initializer=...)`
@@ -85,7 +85,7 @@
   - `smolyak_scaling_cpu_20260316T083540Z.json/.jsonl`
   - `smolyak_scaling_cpu_20260316T084926Z.json/.jsonl`
 
-### Interpretation
+### Interpretation (Small CPU Smoke Results)
 
 - 3 run とも条件は同じだった:
   - `platform=cpu`

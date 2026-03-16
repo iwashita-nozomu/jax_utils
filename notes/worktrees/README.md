@@ -24,6 +24,8 @@
 
 - ファイル名は `worktree_<topic>_YYYY-MM-DD.md` のように、対象が分かる形にします。
 - 1 つの file に unrelated な worktree を混ぜません。
+- 文書タイトルや先頭 H1 は、日付ではなく worktree のトピックを主にして付けます。
+- 日付は file 名や metadata に残し、タイトル自体は `Smolyak Tuning Worktree Extraction` のように topic-first にします。
 
 ## Source And Idea Marking
 

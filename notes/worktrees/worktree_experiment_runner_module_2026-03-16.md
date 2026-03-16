@@ -1,4 +1,4 @@
-# Worktree Extraction: Experiment Runner Modularization 2026-03-16
+# Experiment Runner Modularization Worktree Extraction
 
 ## Context
 

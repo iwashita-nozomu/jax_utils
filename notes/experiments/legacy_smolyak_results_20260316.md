@@ -1,4 +1,4 @@
-# Legacy Smolyak Results 2026-03-16
+# Legacy Smolyak Results
 
 ## 0. このメモの目的
 
