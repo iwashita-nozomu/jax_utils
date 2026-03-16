@@ -27,3 +27,6 @@ python/tests/logs/
 # Local latest experiment snapshots
 experiments/functional/smolyak_scaling/results/latest.json
 experiments/functional/smolyak_scaling/results/latest.jsonl
+experiments/functional/smolyak_hlo/results/latest.json
+experiments/functional/smolyak_hlo/results/latest.jsonl
+experiments/functional/smolyak_hlo/results/latest_summary.json

@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="204" height="274" viewBox="0 0 204 274">
+<rect width="204" height="274" fill="#f7f2e8" />
+<text x="18" y="24" font-size="18" font-family="monospace" fill="#2b2926">storage bytes</text>
+<text x="186" y="24" text-anchor="end" font-size="12" font-family="monospace" fill="#1f5f7a">log10=2.91 -> log10=3.21</text>
+<rect x="10" y="34" width="184" height="104" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="54" font-size="14" font-family="monospace" fill="#2b2926">dtype=float32</text>
+<text x="134.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=4</text>
+<text x="74" y="108" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=3</text>
+<rect x="88" y="86" width="88" height="30" fill="#f5edde" stroke="#cabfae" rx="6" />
+<text x="132.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">0.00 MiB</text>
+<rect x="10" y="172" width="184" height="104" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="192" font-size="14" font-family="monospace" fill="#2b2926">dtype=float64</text>
+<text x="134.0" y="210" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=4</text>
+<text x="74" y="246" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=3</text>
+<rect x="88" y="224" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="132.0" y="244" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">0.00 MiB</text>
+</svg>

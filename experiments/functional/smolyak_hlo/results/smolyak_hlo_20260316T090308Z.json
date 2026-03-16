@@ -1,0 +1,253 @@
+{
+  "experiment": "smolyak_hlo",
+  "results_branch": "results/functional-smolyak-hlo",
+  "worktree_path": "/workspace/.worktrees/work-smolyak-tuning-20260316",
+  "script_path": "/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_hlo/run_smolyak_hlo_case.py",
+  "git_branch": "work/smolyak-tuning-20260316",
+  "git_commit": "691967cb23b83f8c75999c35e3acab75dbf3b196",
+  "platform": "cpu",
+  "dimension": 3,
+  "level": 2,
+  "prepared_level": 2,
+  "dtype": "float32",
+  "chunk_size": 16384,
+  "num_repeats": 4,
+  "coeff_start": -0.55,
+  "coeff_stop": 0.65,
+  "json_path": "/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_hlo/results/smolyak_hlo_20260316T090308Z.json",
+  "jsonl_path": "/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_hlo/results/smolyak_hlo_20260316T090308Z.jsonl",
+  "summary_path": "/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_hlo/results/smolyak_hlo_20260316T090308Z_summary.json",
+  "summary": {
+    "jsonl": "/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_hlo/results/smolyak_hlo_20260316T090308Z.jsonl",
+    "total_records": 2,
+    "total_selected": 2,
+    "filter": {
+      "only_case": "hlo"
+    },
+    "tags": [
+      [
+        "smolyak_single_integral",
+        1
+      ],
+      [
+        "smolyak_repeated_integral",
+        1
+      ]
+    ],
+    "dialects": [
+      [
+        "stablehlo_or_hlo",
+        2
+      ]
+    ],
+    "hlo_text": {
+      "total_lines": 396,
+      "total_chars": 34278
+    },
+    "top_ops": [
+      [
+        "stablehlo.constant dense<0> : tensor<i64>",
+        15
+      ],
+      [
+        "stablehlo.constant dense<1> : tensor<i64>",
+        15
+      ],
+      [
+        "stablehlo.while",
+        9
+      ],
+      [
+        "func.call @_take_0",
+        8
+      ],
+      [
+        "\"stablehlo.gather\"",
+        7
+      ],
+      [
+        "stablehlo.constant dense<1> : tensor<i32>",
+        6
+      ],
+      [
+        "\"stablehlo.scatter\"",
+        6
+      ],
+      [
+        "stablehlo.constant dense<16384> : tensor<i64>",
+        6
+      ],
+      [
+        "stablehlo.broadcast_in_dim %arg1, dims = [] :",
+        5
+      ],
+      [
+        "stablehlo.constant dense<4> : tensor<i64>",
+        4
+      ],
+      [
+        "call @_take",
+        4
+      ],
+      [
+        "func.call @_take_1",
+        4
+      ],
+      [
+        "stablehlo.broadcast_in_dim %0, dims = [] :",
+        4
+      ],
+      [
+        "func.call @_take",
+        4
+      ],
+      [
+        "stablehlo.constant dense<0.000000e+00> : tensor<f32>",
+        3
+      ],
+      [
+        "stablehlo.broadcast_in_dim %cst, dims = [] :",
+        3
+      ],
+      [
+        "1 : i32, mhlo.num_replicas = 1 : i32} {",
+        2
+      ],
+      [
+        "\"result\"}) {",
+        2
+      ],
+      [
+        "func.call @None",
+        2
+      ],
+      [
+        "stablehlo.add %arg7, %c : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.compare  LT, %arg7, %c_0,  SIGNED :",
+        2
+      ],
+      [
+        "stablehlo.convert %arg7 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.add %2, %c_1 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.select %1, %3, %arg7 : tensor<i1>, tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.dynamic_slice %arg0, %4, %c_0, sizes = [1, 3] :",
+        2
+      ],
+      [
+        "stablehlo.reshape %5 :",
+        2
+      ],
+      [
+        "stablehlo.slice %6 [0:1] :",
+        2
+      ],
+      [
+        "stablehlo.reshape %7 :",
+        2
+      ],
+      [
+        "stablehlo.subtract %8, %c_2 : tensor<i32>",
+        2
+      ],
+      [
+        "stablehlo.constant dense<1.000000e+00> : tensor<f32>",
+        2
+      ],
+      [
+        "stablehlo.compare  LT, %iterArg_11, %iterArg_12,  SIGNED :",
+        2
+      ],
+      [
+        "stablehlo.add %iterArg_11, %c_14 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.convert %iterArg_11 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.add %iterArg, %14 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.constant dense<0> : tensor<i32>",
+        2
+      ],
+      [
+        "stablehlo.broadcast_in_dim %c_15, dims = [] :",
+        2
+      ],
+      [
+        "stablehlo.multiply %iterArg_6, %17 : tensor<f32>",
+        2
+      ],
+      [
+        "stablehlo.slice %iterArg_7 [1:2] :",
+        2
+      ],
+      [
+        "stablehlo.reshape %21 :",
+        2
+      ],
+      [
+        "stablehlo.subtract %22, %c_16 : tensor<i32>",
+        2
+      ],
+      [
+        "stablehlo.compare  LT, %iterArg_27, %iterArg_28,  SIGNED :",
+        2
+      ],
+      [
+        "stablehlo.add %iterArg_27, %c_30 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.convert %iterArg_27 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.add %iterArg_18, %28 : tensor<i64>",
+        2
+      ],
+      [
+        "stablehlo.broadcast_in_dim %c_31, dims = [] :",
+        2
+      ],
+      [
+        "stablehlo.multiply %iterArg_22, %31 : tensor<f32>",
+        2
+      ],
+      [
+        "stablehlo.slice %iterArg_23 [2:3] :",
+        2
+      ],
+      [
+        "stablehlo.reshape %35 :",
+        2
+      ],
+      [
+        "stablehlo.subtract %36, %c_31 : tensor<i32>",
+        2
+      ],
+      [
+        "stablehlo.iota dim = 0 : tensor<16384xi64>",
+        2
+      ]
+    ]
+  },
+  "hints": [
+    "単純な op 数だけでは支配項が明確でありません。HLO 本文と profiler を併用して確認してください。"
+  ]
+}
