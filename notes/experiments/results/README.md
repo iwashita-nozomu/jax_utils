@@ -14,3 +14,13 @@
 - その JSON を持ち帰った理由
 
 が辿れるようにします。
+
+## Current Files
+
+- [tuned_smolyak_partial_results_20260316.json](/workspace/notes/experiments/results/tuned_smolyak_partial_results_20260316.json)
+  - source branch:
+    - `results/functional-smolyak-scaling-tuned`
+  - source file:
+    - `/workspace/.worktrees/results-functional-smolyak-scaling-tuned/experiments/functional/smolyak_scaling/results/smolyak_scaling_gpu_20260316T132125Z_partial.json`
+  - reason:
+    - raw JSONL 相当の `cases` 情報を含み、後から別の図や集計を再生成できるため

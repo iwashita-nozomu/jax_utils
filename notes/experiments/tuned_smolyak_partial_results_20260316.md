@@ -38,3 +38,7 @@ $$
   - [worktree_smolyak_tuning_2026-03-16.md](/workspace/notes/worktrees/worktree_smolyak_tuning_2026-03-16.md)
 - runner modularization extraction:
   - [worktree_experiment_runner_module_2026-03-16.md](/workspace/notes/worktrees/worktree_experiment_runner_module_2026-03-16.md)
+
+## Addendum
+
+この partial の再解析用 JSON は、`main` 側にも [tuned_smolyak_partial_results_20260316.json](/workspace/notes/experiments/results/tuned_smolyak_partial_results_20260316.json) として持ち帰ってある。これは `cases` 配列を含み、元の JSONL と同等のケース情報を保持している。
