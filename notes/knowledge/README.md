@@ -28,3 +28,4 @@
 - [Environment Setup](/workspace/notes/knowledge/environment_setup.md)
 - [Experiment Operations](/workspace/notes/knowledge/experiment_operations.md)
 - [Literature Intake](/workspace/notes/knowledge/literature_intake.md)
+- [Git Mirroring](/workspace/notes/knowledge/git_mirroring.md)

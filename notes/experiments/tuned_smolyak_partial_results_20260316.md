@@ -26,9 +26,32 @@ $$
 
 もう一つ重要なのは、dtype 差より構造差の影響が大きいことである。`float16` と `bfloat16` は `d=25` まで成功し、`float64` は `d=24` まで、`float32` は `d=27` まで一応成功しているが、これはそのまま「float32 が最良」という話にはならない。実際には `float32` で `d=24` に OOM が出ているので、frontier が単調ではない。したがってこの partial は、数値誤差比較の根拠というより「実装がどこで不安定になるか」を見る資料として読むべきである。
 
+この `frontier が単調でない` という点は重要である。もし支配的なのが数学的な近似精度だけなら、dtype ごとの限界はもっと滑らかに並ぶはずである。実際には OOM と `worker_terminated` が混ざっているため、ここで見えているのは `数値誤差の壁` より `実行可能性の壁` に近い。
+
+## Quantitative Snapshot
+
+`level=1` の定量スナップショットを抜くと、次のようになる。
+
+- `float16`
+  - success max dimension: `25`
+  - first failure dimension: `26`
+- `bfloat16`
+  - success max dimension: `25`
+  - first failure dimension: `26`
+- `float32`
+  - success max dimension: `27`
+  - first failure dimension: `24`
+- `float64`
+  - success max dimension: `24`
+  - first failure dimension: `25`
+
+この並びから読み取るべきなのは、`float32` が絶対に強いということではない。失敗が先に混じっている以上、現段階の限界は dtype の丸め誤差だけでは説明できない。
+
 ## Practical Consequences
 
 現時点では、`level>=2` での精度改善や dtype ごとの高 level 比較を議論するのは早い。まず必要なのは、`level=1` でも次元 25 前後から重くなる理由を切り分けることである。これには HLO 解析、初期化時間の分解、JIT まわりの tracing / lowering / execution の分離計測が有効である。また、case 順は frontier を早く読むという観点で `dimension -> level -> dtype` に見直したので、今後の partial はこのメモより実用的な形になるはずである。
+
+現時点で言えるのは、`点数が少ないから軽いはず` という見方は誤りだということである。`num_points=1` でも重いなら、見るべきは quadrature の点数ではなく、積分器をその形へ持っていくまでの実装コストである。
 
 ## Related Notes
 

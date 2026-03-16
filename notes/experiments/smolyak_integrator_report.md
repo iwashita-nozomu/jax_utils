@@ -160,6 +160,38 @@ Observation:
 
 この report の段階で最も重要なのは、「現時点の実装はまだ initialization-bound であり、数値比較より前に構造コストの整理が必要」という点です。
 
+## Addendum: 定量スナップショット
+
+`level=1` の範囲だけを切り出しても、いくつかの重要な定量事実があります。
+
+- `float16`
+  - 成功最大次元 `25`
+  - 最初の失敗次元 `26`
+- `bfloat16`
+  - 成功最大次元 `25`
+  - 最初の失敗次元 `26`
+- `float32`
+  - 成功最大次元 `27`
+  - ただし `24` で OOM があり、frontier は単調でない
+- `float64`
+  - 成功最大次元 `24`
+  - 最初の失敗次元 `25`
+
+この結果は、`float32` が一様に優れるとか、`float64` が常に最後まで残るといった単純な物語を支持しません。むしろ、現在見えている frontier が、数値誤差だけでなくメモリ・初期化・child 終了の不安定性を含んでいることを示しています。
+
+Observation:
+この節は `tuned_smolyak_partial_results_20260316.json` の再集計に基づきます。
+
+## Addendum: まだ言えないこと
+
+この report は、Smolyak 積分の最終的な数値比較を与えるものではありません。今の段階では、少なくとも次の点は未確定です。
+
+- 高 level でどの dtype が最も安定か
+- plan ベースの方法が最終的にどこまで伸びるか
+- ここで見えている OOM のどこまでが compile 起因か
+
+これらは、初期化時間の分解、child 側 backend 初期化の安定化、より進んだ partial の取得なしには詰めきれません。
+
 ## 12. Data And References
 
 ### Final JSON Archived In Main
