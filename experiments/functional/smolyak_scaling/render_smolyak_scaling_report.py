@@ -18,6 +18,8 @@ STATUS_COLORS = {
 FAILURE_KIND_COLORS = {
     "ok": "#2f7d4a",
     "oom": "#c96f2d",
+    "host_oom": "#9f4f1d",
+    "worker_terminated": "#8a3f56",
     "error": "#c9573b",
     "timeout": "#d79b2e",
     "missing": "#d9d5cc",
@@ -413,7 +415,7 @@ def render_failure_kind_heatmap(
     width = left_margin + cell_w * len(dimensions) + 24
     height = panel_h * len(dtype_names) + panel_gap * max(0, len(dtype_names) - 1) + 56
 
-    legend_items = ("ok", "oom", "error", "timeout", "missing")
+    legend_items = ("ok", "oom", "host_oom", "worker_terminated", "error", "timeout", "missing")
     svg: list[str] = [
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">',
         f'<rect width="{width}" height="{height}" fill="{PANEL_BACKGROUND}" />',
@@ -591,7 +593,7 @@ def render_index_html(
             )
 
     raw_cases = _cases(results)
-    failure_labels = ["ok", "oom", "error", "timeout"]
+    failure_labels = ["ok", "oom", "host_oom", "worker_terminated", "error", "timeout"]
     failure_summary_rows: list[str] = []
     for dtype_name in dtype_names:
         dtype_cases = [case for case in raw_cases if str(case.get("dtype_name", "unknown")) == dtype_name]
@@ -605,6 +607,8 @@ def render_index_html(
             f"<td>{html.escape(dtype_name)}</td>"
             f"<td>{counts['ok']}</td>"
             f"<td>{counts['oom']}</td>"
+            f"<td>{counts['host_oom']}</td>"
+            f"<td>{counts['worker_terminated']}</td>"
             f"<td>{counts['error']}</td>"
             f"<td>{counts['timeout']}</td>"
             "</tr>"
@@ -646,7 +650,7 @@ def render_index_html(
     <h2>Failure Summary</h2>
     <table>
       <tr>
-        <th>dtype</th><th>ok</th><th>oom</th><th>error</th><th>timeout</th>
+        <th>dtype</th><th>ok</th><th>oom</th><th>host_oom</th><th>worker_terminated</th><th>error</th><th>timeout</th>
       </tr>
       {"".join(failure_summary_rows)}
     </table>

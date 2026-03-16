@@ -9,10 +9,13 @@
 - 次元レンジとレベルレンジからケース列を生成します。
 - 各ケースは fresh な subprocess で実行します。
 - GPU 実行では物理 GPU ごとに 1 worker を立てて並列に流します。
-- 積分器は CPU で初期化し、その後に対象デバイスへ転送します。
+- 同じ GPU では、前ケースのプロセス終了後に次ケースを開始します。
+- 各ケースは fresh process で実行し、積分器は CPU で初期化し、その後に対象デバイスへ転送します。
 - 同じ積分問題を `fori_loop` で `100` 回解いて、平均積分時間を計測します。
 - `SmolyakIntegrator(dtype=...)` を切り替えて複数の float 精度を比較できます。
 - 各ケースについて、誤差平均、誤差分散、点数、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、転送時間、実行時間を JSON に保存します。
+- 各ケースは終了時に JSONL へ 1 行ずつ追記されるので、途中停止しても部分結果を回収できます。
+- GPU 実験では `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
 - 実験全体について、`git_branch`、`git_commit`、`results_branch`、`worktree_path`、`script_path`、実行条件レンジをトップレベル JSON に保存します。
 - 実験後は `render_smolyak_scaling_report.py` で SVG/HTML のレポートを生成できます。
 
@@ -24,6 +27,7 @@
   - 結果 JSON から、誤差・時間・メモリ・failure kind・frontier をまとめた可視化レポートを生成するスクリプトです。
 - `results/`
   - 実行結果を保存するディレクトリです。
+  - `<run>.jsonl` は case 単位の逐次保存結果です。
 
 ## Usage
 
