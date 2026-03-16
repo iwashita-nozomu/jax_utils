@@ -7,11 +7,11 @@ from ..base import (
 )
 from typing import Protocol
 
-class OptimizeProblem(Protocol):
+class VectorOptimizationProblem(Protocol):
     objective:ScalarFn #min f
     variable_dim: int
 
-class OptimizeProblemWithConstraint(OptimizeProblem, Protocol):
+class ConstrainedVectorOptimizationProblem(VectorOptimizationProblem, Protocol):
     # objective:ScalarFn #min f
     constraint_eq : VectorFn #c_eq==0
     constraint_ineq : VectorFn #c_ineq<=0
@@ -21,10 +21,10 @@ class OptimizeProblemWithConstraint(OptimizeProblem, Protocol):
     constraint_ineq_dim: int
 
 
-class OptimizeProblemState(Protocol):
+class VectorOptimizationState(Protocol):
     x : Vector
 
-class OptimizeProblemStateWithConstraint(OptimizeProblemState, Protocol):
+class ConstrainedVectorOptimizationState(VectorOptimizationState, Protocol):
     # x : Vector
 
     lam_eq : Vector
@@ -32,9 +32,9 @@ class OptimizeProblemStateWithConstraint(OptimizeProblemState, Protocol):
     slack : Vector
 
 __all__ = [
-    "OptimizeProblem",
-    "OptimizeProblemState",
-    "OptimizeProblemWithConstraint",
-    "OptimizeProblemStateWithConstraint",
-    
+    "VectorOptimizationProblem",
+    "VectorOptimizationState",
+    "ConstrainedVectorOptimizationProblem",
+    "ConstrainedVectorOptimizationState",
+
 ]

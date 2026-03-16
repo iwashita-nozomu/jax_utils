@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import Callable, Tuple, TypeVar,cast ,Generic,NamedTuple
+from dataclasses import dataclass
+from typing import Callable, Tuple, TypeVar,cast ,Generic
 import equinox as eqx
 import jax
 
@@ -77,7 +78,8 @@ def icnn_layer_factory(
 
 M = TypeVar("M", bound=eqx.Module)
 
-class RebuildState(NamedTuple, Generic[M]):
+@dataclass(frozen=True)
+class RebuildState(Generic[M]):
     unravel_fn: Callable[[Vector], Params]
     static: Static
 

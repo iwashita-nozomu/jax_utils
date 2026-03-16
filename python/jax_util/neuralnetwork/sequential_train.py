@@ -25,13 +25,13 @@ class PytrreeOptim(eqx.Module):
     
 
 class NormalBP(eqx.Module):
-    optstate: OptimizeProblemStatePytree
+    optstate: PyTreeOptimizationState
     def __call__(
             self,
             layer: NeuralNetworkLayer,
             cache: Tuple[Carry, Ctx],
-            obj: OptimizeProblemPytree,
-    ) -> Tuple["SingleLayerBackprop",NeuralNetworkLayer, OptimizeProblemPytree,Aux]:
+            obj: PyTreeOptimizationProblem,
+    ) -> Tuple["SingleLayerBackprop",NeuralNetworkLayer, PyTreeOptimizationProblem,Aux]:
             
         param, static, layer_optim = self.buildoptim(
             layer,
@@ -67,9 +67,9 @@ class NormalBP(eqx.Module):
     def buildoptim(
             self,
             layer: NeuralNetworkLayer,
-            obj: OptimizeProblemPytree,# R^(n^k) * b -> R 
+            obj: PyTreeOptimizationProblem,# R^(n^k) * b -> R 
             train_params: Tuple[Carry,Ctx],
-    ) -> Tuple[Params,Static,OptimizeProblemPytree]:
+    ) -> Tuple[Params,Static,PyTreeOptimizationProblem]:
         # layer_param, rebuild_static = module_to_vector(layer)
         param, static = eqx.partition(layer, eqx.is_inexact_array)
 
@@ -91,8 +91,8 @@ class NormalBP(eqx.Module):
             self,
             layer_param: Params,
             # cache: Tuple[Carry,Ctx],
-            # state: OptimizeProblemStatePytree,
-            optim: OptimizeProblemPytree) -> Tuple[Params, OptimizeProblemStatePytree, Aux]:
+            # state: PyTreeOptimizationState,
+            optim: PyTreeOptimizationProblem) -> Tuple[Params, PyTreeOptimizationState, Aux]:
         
         grads = jax.grad(optim.objective)(layer_param)
         new_param = layer_param - grads
@@ -104,7 +104,7 @@ def sequential_train_step(
         model: NeuralNetwork,
         trainers:Tuple[SingleLayerBackprop,...],
         x: Matrix,
-        optim: OptimizeProblemPytree,
+        optim: PyTreeOptimizationProblem,
 ) -> Tuple[NeuralNetwork,Tuple[SingleLayerBackprop,...]]:
 
     z,carrys, ctx = forward_with_cache(
