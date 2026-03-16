@@ -6,6 +6,7 @@ Common Python module.
 
 - 軽量な実験メモは [notes/README.md](/workspace/notes/README.md) に置きます。
 - topic ごとの知識整理は [notes/themes/README.md](/workspace/notes/themes/README.md) に置きます。
+- 実務向けの横断的な知識メモは [notes/knowledge/README.md](/workspace/notes/knowledge/README.md) に置きます。
 - branch ごとのメモ入口は [notes/branches/README.md](/workspace/notes/branches/README.md) に置きます。
 - 日付ごとの作業ログは [diary/README.md](/workspace/diary/README.md) に置きます。
 - 規約や設計の一次情報は引き続き [documents/README.md](/workspace/documents/README.md) を参照します。

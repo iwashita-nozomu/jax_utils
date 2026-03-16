@@ -1,67 +1,290 @@
-# Smolyak Integrator Theme
+# Smolyak 積分器
 
-## Scope
+## このページの役割
 
-このページは、Smolyak 積分器について複数 branch と実験から得た知見を、再利用しやすい形でまとめた theme note である。詳細な経緯や日付順の判断は report や worktree note に譲り、ここでは「いま何が言えるか」を topic-first で整理する。
+このページは、Smolyak 積分器について今わかっていることを、外から読んでも分かる形でまとめたページです。
 
-## Known
+ここでは、内部の branch 名や作業履歴ではなく、手法そのものを主語にします。
 
-現在の知見として最も確かなのは、旧版の explicit-grid 型実装では host 側の grid 構築と重複統合が主要コストになっていたということである。point 配列、weight 配列、term ごとの一時 tensor、`np.unique(axis=0)` を含む大域集約が CPU RSS と pinned host memory を強く圧迫し、GPU 利用率が低く見える原因にもなっていた。
+## いま一番大事な結論
 
-tuned 版では explicit grid 依存を減らし、`initialize_smolyak_integrator(...)` と `integrate(f, integrator)` を中心に据える設計へ寄せたが、それで問題が完全に消えたわけではない。少なくとも `level=1` の partial では、`num_points=1` の時点ですでに `integrator_init_seconds` と `process_rss_mb` が次元に対して急増している。したがって現在の主要制約は、積分点数よりも初期化、lowering、compile、あるいはそれに付随する metadata 構築にあると考えてよい。
+Smolyak 積分器の問題は 1 つではありません。
 
-HLO 解析でも同じ傾向が見えている。小さい case でも `stablehlo.while`, `func.call`, `stablehlo.gather` が目立ち、算術 kernel が主役になっている形ではない。これは tuned 実装が「explicit grid を減らした」ことと、「GPU 算術が支配的になった」ことが同義ではないと示している。
+`点を全部作ってから積分する方法` では、host 側のメモリと初期化が先に限界に来ます。
 
-## Worked
+`点を全部は作らず、plan を先に作って評価する方法` では、点群の保持は軽くなりますが、今度は初期化、lowering、compile の重さが前に出ます。
 
-公開 API を `integrate(f, integrator)` に寄せ、explicit grid を返す経路を外したことは有効だった。これにより、積分器の責務が「点集合を外へ見せる」ことから「積分を実行する」ことへ整理され、内部表現を rule table と term plan に寄せやすくなった。また、experiment runner を `jax_util.experiment_runner` に切り出したことで、JSONL 逐次保存、child completion の明示通知、multi-GPU の slot 管理が実験ごとに再利用できるようになった。
+つまり、ボトルネックは消えたのではなく、場所が変わっています。
 
-長時間実験の運用では、JSONL 逐次保存と final JSON の `main` への持ち帰りも有効だった。これにより、途中停止しても partial を集計し直せるし、後から別の図を再生成することもできる。
+この状況は、概念的には
 
-## Coding Pattern
+$$
+T_{\mathrm{total}}
+=
+T_{\mathrm{init}}
++ T_{\mathrm{transfer}}
++ T_{\mathrm{integral}}
+$$
 
-この topic で効いた coding pattern は、公開 API と内部表現を分けること、runner と experiment 固有ロジックを分けること、そして note を self-contained に保つことである。特に experiment runner では、host が free slot を管理し、child が JSONL 追記と completion record を担当する形が扱いやすかった。失敗分類も、`oom`, `worker_terminated`, `error` を分けて記録しておくと、partial の段階でも結果が読みやすくなる。
+と書けます。
 
-また、長時間実験の case ordering は coding detail に見えて、結果解釈に直結する。`dtype -> level -> dimension` では途中停止時に比較が崩れやすく、`dimension -> level -> dtype` のほうが frontier を読みやすかった。実験コードは「何を測るか」だけでなく、「どの順に落ちても何が読めるか」まで含めて設計すべきである。
+今の観測では、問題になっているのは主に $T_{\mathrm{init}}$ です。
 
-## Did Not Work
+## 代表図
 
-explicit grid を前提にした大域統合は、少なくともこの project の規模ではうまくいかなかった。`np.unique(axis=0)` を含む host 側集約は、数値計算そのものより前にメモリと初期化時間の問題を引き起こした。また、tuned 版でも「explicit grid を減らしたから GPU が主役になる」とはならず、代わりに initializaion-bound な挙動が前面に出た。
+### 初期化時間
 
-実験運用では、`dtype -> level -> dimension` 順の case 配列もよくなかった。途中停止すると先頭 dtype だけが大量に残り、比較用データとして偏ってしまう。さらに、`main` に note だけ残して raw JSON 相当を持ち帰らない運用も不十分だった。後から別の可視化や集計をやり直すためには、少なくとも `cases` 配列を含む final JSON を `main` に持ち帰る必要がある。
+次元が上がると、積分本体より先に初期化時間が急増します。
 
-## Pitfall
+![plan-based partial の初期化時間](../assets/smolyak_integrator/integrator_init_seconds_plan_based_partial.svg)
 
-「GPU が使われていないように見える」ことと「GPU 分離が壊れている」ことは同じではない。今回のケースでは、GPU 1,2 が idle に見える場面があっても、child ごとの GPU 可視性分離自体は成立していた。問題は runner の GPU 割当ではなく、CPU 側初期化が長く、GPU 実行が短く観測しにくいことだった。このように、観測上の症状と原因を直接結び付けないことが重要である。
+この図で重要なのは、まだ `level=1` の段階でも重くなっていることです。
 
-## Likely
+### メモリ使用量
 
-実験 runner 側の問題は、以前よりかなり整理されたとみてよい。child ごとの GPU 可視性は切り分け済みで、各 child が `CUDA_VISIBLE_DEVICES` に応じて 1 GPU だけを見ていることは確認されている。したがって、GPU 1,2 が遊んで見える現象の主因は GPU 分離バグではなく、CPU 側初期化が長いこと、そして GPU 実行が短く観測しにくいことだとみるのが自然である。
+同じ partial では、process RSS も次元とともに急増します。
 
-case ordering は結果の読みやすさに大きく効く。`dtype -> level -> dimension` は途中停止時に比較が崩れやすく、`dimension -> level -> dtype` のほうが frontier を早く読みやすい。これは Smolyak 固有の数学ではなく、長時間実験を設計するうえでの実務的知見である。
+![plan-based partial の process RSS](../assets/smolyak_integrator/process_rss_mb_plan_based_partial.svg)
 
-## Open
+このため、現段階では GPU の積分 kernel より、初期化と保持の経路を見るほうが重要です。
 
-まだ未解決なのは、tuned 版の初期化コストの正体をどこまで分離できるかである。現在は `integrator_init_seconds` という大きな塊として観測しているが、その中に
+### 実行可能領域
+
+途中結果の frontier からも、限界がまず実装側にあることが分かります。
+
+![plan-based partial の frontier](../assets/smolyak_integrator/frontier_plan_based_partial.svg)
+
+この図は、数値精度の限界というより、現実にどこまで run が進んだかを示しています。
+
+## うまくいかなかった方法
+
+### 点群を全部作る方法
+
+この方法では、各 term の tensor-product points を host 上で作り、それらをまとめて重複統合します。
+
+この構造は分かりやすいですが、メモリに厳しいです。
+
+特に重かったのは、点配列そのものだけではありません。重み配列、各 term の一時配列、`np.unique(axis=0)` に必要な補助配列も同時に大きくなります。
+
+その結果、GPU 計算に入る前に host 側で時間とメモリを使い切りやすくなります。
+
+この方法で見えた教訓ははっきりしています。Smolyak 積分では、`積分点数` だけでなく、`点の保持方法` そのものが支配的な要因になります。
+
+Source:
+この節の「Smolyak 近似を多重添字の和として書く」部分は Holtz の sparse grid quadrature の説明に対応します。[Holtz 2010, p. 58, Eq. (4.5)](/workspace/references/978-3-642-16004-2.pdf)
+
+Source:
+`点の保持方法が重要になる`、`hash table` や `tree` が sparse grid storage の典型である、という点は Murarasu の整理に対応します。[Murarasu 2013, p. 20](/workspace/references/sparse_grid/Murarasu_2013_PhD_Advanced_Optimization_Techniques_for_Sparse_Grids_on_Modern_Heterogeneous_Systems.pdf) [Murarasu 2013, p. 43](/workspace/references/sparse_grid/Murarasu_2013_PhD_Advanced_Optimization_Techniques_for_Sparse_Grids_on_Modern_Heterogeneous_Systems.pdf)
+
+## 改善した点
+
+### 公開 API を単純にしたこと
+
+公開 API を `integrate(f, integrator)` にそろえたのは良い変更でした。
+
+これで、積分器の役割がはっきりしました。
+
+外から見ると必要なのは「積分する」ことだけです。点群を外へ返す必要はありません。
+
+この整理により、内部では点群よりも rule table や term plan を中心に持てるようになりました。
+
+### 実験 runner を分けたこと
+
+実験 runner を共通サブモジュールに切り出したのも有効でした。
+
+これにより、JSONL の逐次保存、child の完了通知、GPU slot の管理を実験ごとに書き直さずに済むようになりました。
+
+長時間実験では、実装の速さだけでなく、途中停止しても結果を回収できることが重要です。
+
+Observation:
+この節はこの project の実験運用から得た観測です。文献からの直接の要約ではありません。
+
+## まだ重い方法
+
+### plan を先に作って再帰的に評価する方法
+
+この方法は、点群を全部作る方法よりは筋が良いです。
+
+しかし、現時点ではまだ十分軽いとは言えません。
+
+観測では、`level=1` で `num_points=1` のケースでも、次元が増えると `integrator_init_seconds` と `process_rss_mb` が急増しました。
+
+これは大事な点です。
+
+もし本当に重いのが積分点数なら、`num_points=1` ではここまで苦しくならないはずです。
+
+したがって、今の主問題は積分本体ではなく、初期化、lowering、compile、あるいはその前段の metadata 構築にあると見るのが自然です。
+
+Observation:
+この節は partial JSON と HLO 解析からの観測です。特に `num_points=1` でも初期化時間が急増する、という判断は project 内の実験結果に基づいています。
+
+## HLO から見えること
+
+HLO 解析でも同じ方向の結果が出ています。
+
+小さいケースでも目立つのは、重い算術演算ではなく、
+
+- `while`
+- `call`
+- `gather`
+
+です。
+
+これは、今の実装が `大きな線形代数を GPU にまとめて投げる形` ではなく、`制御フローと index 処理が目立つ形` であることを示しています。
+
+つまり、点群を作らなくなっただけでは、GPU が自動的に主役になるわけではありません。
+
+この点は、次のように見れば整理しやすいです。
+
+$$
+\text{heavy arithmetic}
+\neq
+\text{heavy implementation}
+$$
+
+今の実装では、重いのは大きな行列演算というより、制御フローと index 処理です。
+
+Observation:
+この節は project 内の HLO dump の読みです。`while`、`call`、`gather` が目立つという主張は、実験で得た HLO JSONL に基づいています。
+
+## 数値精度について
+
+数値精度の問題と、実装コストの問題は分けて考える必要があります。
+
+低精度では、Smolyak の重み付き和で相殺誤差が出やすいです。
+
+たとえば逐次加算の誤差は概念的には
+
+$$
+|\hat s_n - s_n|
+\lesssim
+\gamma_{n-1}\sum_{k=1}^n |a_k|,
+\qquad
+\gamma_m=\frac{mu}{1-mu}
+$$
+
+の形で増えます。
+
+Smolyak では正負の寄与が混ざりやすいので、真の和が小さいのに $\sum |a_k|$ は大きい、という状況が起きます。
+
+この条件では、低精度が不利になるのは自然です。
+
+Source:
+低精度で相殺誤差が出やすいという一般論は数値線形代数の標準的な見方に従っています。ここでの式は逐次加算誤差の教科書的な書き方であり、Smolyak 固有の公式ではありません。
+
+ただし、今の大規模実験では、数値精度を十分比べる前に初期化コストが限界になっています。
+
+したがって、現段階で見えている frontier は、精度の限界というより実装の限界を多く含んでいます。
+
+## 実験コードで効いた工夫
+
+### JSONL を逐次保存する
+
+これは必須でした。
+
+最終 JSON だけに頼ると、途中停止した run から何も読めません。
+
+JSONL があれば、partial をあとから集計し直せます。
+
+### child が明示的に完了を返す
+
+child が `完了した` ことを host に明示的に返す設計は分かりやすいです。
+
+これにより、`timeout`、`worker_terminated`、`oom` を分けて扱いやすくなりました。
+
+### ケース順を設計する
+
+ケース順は細部ではありません。
+
+長時間実験では、途中で止まっても何が読めるかを決める要素です。
+
+`dimension -> level -> dtype` の順は、次元ごとの frontier を早く読みたいときに向いています。
+
+一方、`dtype -> level -> dimension` の順では、途中停止したときに先頭の dtype だけが進みやすく、比較しにくくなります。
+
+Observation:
+この節は project 内の長時間実験の運用から得た知見です。文献由来ではありません。
+
+## 誤解しやすい点
+
+### GPU が遊んで見える = GPU 割り当てバグ、ではない
+
+これは今回とても大事だった点です。
+
+GPU 1,2 がほとんど使われていないように見えても、実際には child ごとの GPU 可視性分離は成立していました。
+
+問題は、GPU の割り当てではなく、CPU 側初期化が長く、GPU の実行時間が短く見えにくいことでした。
+
+観測上の症状と原因を直接結び付けないことが重要です。
+
+失敗の種類をまとめた図も、この読み方を助けます。
+
+![plan-based partial の failure kind](../assets/smolyak_integrator/failure_kind_plan_based_partial.svg)
+
+ここでは、`oom` や `worker_terminated` が前に出ています。したがって、まず疑うべきは数値近似そのものより実行基盤です。
+
+Observation:
+この節は project 内の multi-GPU 実験と `debug_gpu_visibility.py` の切り分けに基づく判断です。
+
+## まだ分かっていないこと
+
+まだ分かっていないのは、初期化コストの内訳です。
+
+今は `integrator_init_seconds` という大きな塊で見えているだけです。
+
+この中にどれだけ
 
 - rule 準備
 - tracing
 - lowering
 - compilation
-- device まわりの初期化
+- device 初期化
 
-のどれがどの程度入っているかは、さらに切り分けが必要である。また、高 level における dtype ごとの数値精度比較は、現時点では initialization-bound な挙動に隠れて十分に観測できていない。
+が含まれているかは、まだ十分には分かっていません。
 
-## Practical Guidance
+また、高い level での dtype 差も、今は初期化コストに隠れていて、まだきれいには読めていません。
 
-Smolyak 積分器を今後改善するときは、数値精度の議論だけでなく、保持戦略と初期化経路の議論を常に分けるべきである。旧版の主問題は explicit grid と host memory であり、tuned 版の主問題は初期化・lowering・compile 側に移っている。したがって、次の改善は「旧版より tuned 版が優れているか」ではなく、「tuned 版の initialization-bound をどこまで崩せるか」を基準に評価するのがよい。
+## 実務上の指針
 
-実験運用としては、JSONL 逐次保存、child completion の明示通知、case ordering の明確化、そして `main` 側への final JSON 持ち帰りが重要である。これにより、途中停止しても知見が失われず、あとから別の図や集計を再生成できる。
+Smolyak 積分器を改善するときは、次の 2 つを分けて議論したほうがよいです。
+
+1. 数値精度の問題
+2. 保持戦略と初期化経路の問題
+
+前者は重み付き和の安定性の話です。
+
+後者は、点群をどう持つか、plan をどう作るか、compile がどこで重くなるかの話です。
+
+この 2 つを混ぜると、何を直せばよいかが見えにくくなります。
+
+## 文献との対応
+
+ここで述べた内容のうち、`点群の保持方法が支配的になりうる`、`combination technique や sparse grid の保持戦略が重要である`、`適応的な index set の考え方が有効である` といった部分は、既知の sparse grid 文献とも整合します。
+
+特に、Smolyak 近似の一般論と sparse grid の背景は Holtz の本がまとまっています。保持戦略や heterogeneous system 上での実装上の論点は Murarasu の thesis が参考になります。combination technique の誤差解析には Lastdrager-Koren が役に立ちます。適応的な quadrature と index set の扱いには Jakeman-Roberts や Hegland がつながります。
+
+Source:
+Smolyak と sparse grid quadrature の全体像は [Holtz 2010, Chapter 4](/workspace/references/978-3-642-16004-2.pdf)、dimension-adaptive の背景は [Holtz 2010, p. 12](/workspace/references/978-3-642-16004-2.pdf) に対応します。
+
+Source:
+storage と heterogeneous system 上の sparse grid 実装は [Murarasu 2013, p. 20, p. 43, p. 49](/workspace/references/sparse_grid/Murarasu_2013_PhD_Advanced_Optimization_Techniques_for_Sparse_Grids_on_Modern_Heterogeneous_Systems.pdf) に対応します。
+
+Source:
+combination technique の誤差解析は [Lastdrager-Koren 1998, p. 3-4](/workspace/references/sparse_grid/Lastdrager_Koren_1998_Error_analysis_for_function_representation_by_the_sparse_grid_combination_technique.pdf) に対応します。
+
+Source:
+adaptive quadrature と dimension adaptivity の説明は [Jakeman-Roberts 2011, p. 2-4](/workspace/references/sparse_grid/Jakeman_Roberts_2011_Local_and_Dimension_Adaptive_Sparse_Grid_Interpolation_and_Quadrature.pdf) と [Hegland 2003, p. 1-4](/workspace/references/sparse_grid/Hegland_2003_Adaptive_sparse_grids.pdf) に対応します。
 
 ## References
 
 - [Smolyak Integrator Tuning Report](/workspace/notes/experiments/smolyak_integrator_report.md)
-- [Legacy Smolyak Results](/workspace/notes/experiments/legacy_smolyak_results_20260316.md)
-- [Tuned Smolyak Partial Results](/workspace/notes/experiments/tuned_smolyak_partial_results_20260316.md)
-- [Smolyak Tuning Worktree Extraction](/workspace/notes/worktrees/worktree_smolyak_tuning_2026-03-16.md)
-- [Experiment Runner Modularization Worktree Extraction](/workspace/notes/worktrees/worktree_experiment_runner_module_2026-03-16.md)
+- [Smolyak partial results JSON archive](/workspace/notes/experiments/results/tuned_smolyak_partial_results_20260316.json)
+- [Smolyak partial results note](/workspace/notes/experiments/tuned_smolyak_partial_results_20260316.md)
+- [Path Resolution](/workspace/notes/knowledge/path_resolution.md)
+- [Environment Setup](/workspace/notes/knowledge/environment_setup.md)
+- [Experiment Operations](/workspace/notes/knowledge/experiment_operations.md)
+- [Markus Holtz, Sparse Grid Quadrature in High Dimensions with Applications in Finance and Insurance, 2010](/workspace/references/978-3-642-16004-2.pdf)
+- [Adina-Eliza Murarasu, Advanced Optimization Techniques for Sparse Grids on Modern Heterogeneous Systems, 2013](/workspace/references/sparse_grid/Murarasu_2013_PhD_Advanced_Optimization_Techniques_for_Sparse_Grids_on_Modern_Heterogeneous_Systems.pdf)
+- [Fredrik N. Lastdrager and Barry Koren, Error analysis for function representation by the sparse grid combination technique, 1998](/workspace/references/sparse_grid/Lastdrager_Koren_1998_Error_analysis_for_function_representation_by_the_sparse_grid_combination_technique.pdf)
+- [J. D. Jakeman and S. G. Roberts, Local and Dimension Adaptive Sparse Grid Interpolation and Quadrature, 2011](/workspace/references/sparse_grid/Jakeman_Roberts_2011_Local_and_Dimension_Adaptive_Sparse_Grid_Interpolation_and_Quadrature.pdf)
+- [Mark Hegland, Adaptive sparse grids, 2003](/workspace/references/sparse_grid/Hegland_2003_Adaptive_sparse_grids.pdf)
