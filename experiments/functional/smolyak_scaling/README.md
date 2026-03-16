@@ -2,13 +2,13 @@
 
 `SmolyakIntegrator` の計算規模探索とベンチマークを、テストとは分離して行うための実験置き場です。
 
-結果 JSON を載せるブランチ名は `results/functional-smolyak-scaling-tuned` を想定しています。
+結果 JSON を載せるブランチ名は `results/functional-smolyak-scaling` を想定しています。
 
 ## What It Does
 
 - 次元レンジとレベルレンジからケース列を生成します。
 - 各ケースは fresh な subprocess で実行します。
-- GPU 実行では物理 GPU ごとに 1 worker を立てて並列に流します。
+- GPU 実行では物理 GPU ごとに `workers_per_gpu` 本の logical worker を立てて並列に流します。
 - 同じ GPU では、前ケースのプロセス終了後に次ケースを開始します。
 - 各ケースは fresh process で実行し、積分器は CPU で初期化し、その後に対象デバイスへ転送します。
 - 同じ積分問題を `fori_loop` で `100` 回解いて、平均積分時間を計測します。
@@ -16,6 +16,8 @@
 - 各ケースについて、誤差平均、誤差分散、点数、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、転送時間、実行時間を JSON に保存します。
 - 各ケースは終了時に JSONL へ 1 行ずつ追記されるので、途中停止しても部分結果を回収できます。
 - GPU 実験では `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
+- worker ごとに CPU affinity を自動分割し、空いている CPU core を使いやすくします。
+- worker 内では `OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `NUMEXPR_NUM_THREADS=1` を設定して、隠れた thread oversubscription を避けます。
 - 実験全体について、`git_branch`、`git_commit`、`results_branch`、`worktree_path`、`script_path`、実行条件レンジをトップレベル JSON に保存します。
 - 実験後は `render_smolyak_scaling_report.py` で SVG/HTML のレポートを生成できます。
 
@@ -48,6 +50,7 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
 PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_scaling/run_smolyak_scaling.py \
   --platform gpu \
   --gpu-indices 0,1,2 \
+  --workers-per-gpu 2 \
   --dimensions 8:48:4 \
   --levels 4:8 \
   --dtypes float16,bfloat16,float32,float64 \
@@ -60,6 +63,7 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
 PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_scaling/run_smolyak_scaling.py \
   --platform gpu \
   --gpu-indices 0,1,2 \
+  --workers-per-gpu 2 \
   --dimensions 8:64:4 \
   --levels 4:10 \
   --num-repeats 100 \
@@ -67,6 +71,16 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
   --coeff-start -0.55 \
   --coeff-stop 0.65
 ```
+
+## OS-Side Tuning
+
+- `--workers-per-gpu`
+  - GPU 台数より多い host worker を立てて、CPU 側初期化が支配的なケースでも CPU の空きを使いやすくします。
+- `cpu_affinity`
+  - 各 logical worker に disjoint な CPU index 群を自動割り当てします。
+  - 割り当て結果は case JSON に `cpu_affinity` として残ります。
+- `gpu_slot`
+  - 同じ GPU 内の logical worker 番号です。`gpu-0-w0`, `gpu-0-w1` のようにログへ出ます。
 
 実験後に結果レポートを作る例です。
 
