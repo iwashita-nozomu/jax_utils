@@ -12,7 +12,8 @@
 - 積分器は CPU で初期化し、その後に対象デバイスへ転送します。
 - 同じ積分問題を `fori_loop` で `100` 回解いて、平均積分時間を計測します。
 - `SmolyakIntegrator(dtype=...)` を切り替えて複数の float 精度を比較できます。
-- 各ケースについて、誤差平均、誤差分散、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、実行時間を JSON に保存します。
+- 各ケースについて、誤差平均、誤差分散、点数、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、転送時間、実行時間を JSON に保存します。
+- 実験全体について、`git_branch`、`git_commit`、`results_branch`、`worktree_path`、`script_path`、実行条件レンジをトップレベル JSON に保存します。
 - 実験後は `render_smolyak_scaling_report.py` で SVG/HTML のレポートを生成できます。
 
 ## Files
@@ -20,7 +21,7 @@
 - `run_smolyak_scaling.py`
   - レンジ指定ベースのベンチマーク実行スクリプトです。
 - `render_smolyak_scaling_report.py`
-  - 結果 JSON から可視化レポートを生成するスクリプトです。
+  - 結果 JSON から、誤差・時間・メモリ・failure kind・frontier をまとめた可視化レポートを生成するスクリプトです。
 - `results/`
   - 実行結果を保存するディレクトリです。
 
