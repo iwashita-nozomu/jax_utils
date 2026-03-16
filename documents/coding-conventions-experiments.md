@@ -27,7 +27,11 @@
 - 既定の配置は `/workspace/.worktrees/<name>` とします。
 - 実験結果を保存するブランチは `results/<topic>` 形式を原則とします。
 - 実験用 worktree は results ブランチに対応づけ、同じ worktree のまま branch を切り替えて使い回しません。
-- 実験コードを更新した場合は、まず `main` へ commit / push し、その後に results worktree へ `main` を取り込みます。
+- 実験開始前に、`main` と対象の results ブランチの両方を `origin` と同期します。
+- 実験開始前に、`main` worktree と対象 results worktree の両方が clean であることを確認します。
+- 実験固有のコード変更は、まず対応する results ブランチの worktree で行います。
+- 実験ブランチ上で十分に検証した変更だけを、最後に `main` へ merge します。
+- 実験固有ではない共通コード変更を `main` で先に行った場合だけ、results worktree へ `main` を取り込みます。
 
 ## 4. 生成物の扱い
 
