@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import multiprocessing as mp
 import os
 import resource
+import shutil
 import subprocess
 import time
 import traceback
-from concurrent.futures import Future, ProcessPoolExecutor, as_completed
+from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor, TimeoutError, as_completed
+from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -28,6 +31,7 @@ DEFAULT_COEFF_START = -0.55
 DEFAULT_COEFF_STOP = 0.65
 SUPPORTED_FLOAT_DTYPES = ("float16", "bfloat16", "float32", "float64")
 RESULTS_BRANCH_NAME = "results/functional-smolyak-scaling"
+GPU_PREALLOCATION_DISABLED = True
 
 
 # 責務: `start:end[:step]` 形式の整数レンジを inclusive な整数列へ展開する。
@@ -121,6 +125,7 @@ def _experiment_metadata() -> dict[str, object]:
         "results_branch": RESULTS_BRANCH_NAME,
         "worktree_path": str(WORKSPACE_ROOT),
         "script_path": str(Path(__file__).resolve()),
+        "gpu_preallocation_disabled": GPU_PREALLOCATION_DISABLED,
     }
     branch = _git_stdout(["branch", "--show-current"])
     commit = _git_stdout(["rev-parse", "HEAD"])
@@ -247,6 +252,71 @@ def _compact_memory_stats(device: object, /) -> dict[str, int] | None:
     return compact
 
 
+# 責務: 出力 JSON に対応する逐次保存用 JSONL パスを返す。
+def _jsonl_path_for_output(output_path: Path, /) -> Path:
+    return output_path.with_suffix(".jsonl")
+
+
+# 責務: 競合を避けながら JSONL へ 1 レコード追記する。
+def _append_jsonl_record(output_path: Path, record: Mapping[str, object], /) -> None:
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with output_path.open("a", encoding="utf-8") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            handle.write(json.dumps(dict(record), ensure_ascii=True) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+
+
+# 責務: 例外情報から失敗種別を粗く分類する。
+def _failure_kind_from_exception(exc: BaseException, traceback_text: str, /) -> str:
+    lower = traceback_text.lower()
+    if isinstance(exc, MemoryError):
+        return "host_oom"
+    if "xla_gpu_host_bfc" in lower or "pinned host" in lower:
+        return "host_oom"
+    if "resource_exhausted" in lower or "out of memory" in lower:
+        return "oom"
+    return "error"
+
+
+# 責務: 親側で補完した失敗結果レコードを構築する。
+def _parent_failure_result(
+    case: Mapping[str, object],
+    worker_config: Mapping[str, object],
+    failure_kind: str,
+    error: str,
+    traceback_text: str,
+    /,
+) -> dict[str, object]:
+    gpu_index_value = worker_config.get("gpu_index")
+    gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
+    return {
+        "status": "failed",
+        "failure_kind": failure_kind,
+        "case_id": _case_int(case, "case_id"),
+        "dimension": _case_int(case, "dimension"),
+        "level": _case_int(case, "level"),
+        "dtype_name": str(case["dtype_name"]),
+        "assigned_gpu_index": gpu_index,
+        "worker_label": _config_str(worker_config, "worker_label"),
+        "error": error,
+        "traceback": traceback_text[-4000:],
+    }
+
+
+# 責務: ケース識別用の短い文字列を作る。
+def _case_label(case: Mapping[str, object], /) -> str:
+    return (
+        f"case={_case_int(case, 'case_id')} "
+        f"d={_case_int(case, 'dimension')} "
+        f"l={_case_int(case, 'level')} "
+        f"dtype={case['dtype_name']}"
+    )
+
+
 # 責務: 単一ケースのベンチマークを実行して JSON 互換結果へまとめる。
 def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object], /) -> dict[str, object]:
     import equinox as eqx
@@ -364,6 +434,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
 
 # 責務: worker プロセス開始時に dtype とデバイス向けの環境を固定する。
 def _initialize_worker(run_config: Mapping[str, object], worker_config: Mapping[str, object], /) -> None:
+    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
     platform = _config_str(run_config, "platform")
     gpu_index_value = worker_config.get("gpu_index")
     gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
@@ -436,7 +507,7 @@ def _run_case_in_worker(
     except Exception as exc:
         message = "".join(traceback.format_exception_only(type(exc), exc)).strip()
         traceback_text = traceback.format_exc(limit=8)
-        failure_kind = "oom" if ("RESOURCE_EXHAUSTED" in traceback_text or "out of memory" in traceback_text.lower()) else "error"
+        failure_kind = _failure_kind_from_exception(exc, traceback_text)
         result: dict[str, object] = {
             "status": "failed",
             "failure_kind": failure_kind,
@@ -452,45 +523,117 @@ def _run_case_in_worker(
     result["worker_label"] = worker_label
     if "assigned_gpu_index" not in result:
         result["assigned_gpu_index"] = gpu_index
+    jsonl_output_path_value = run_config.get("jsonl_output_path")
+    if isinstance(jsonl_output_path_value, str):
+        _append_jsonl_record(Path(jsonl_output_path_value), result)
     return result
 
 
-# 責務: 並列 worker 群へケース列を配り、全結果を集約する。
+# 責務: 単一ケースを fresh process で実行し、親側の失敗補完も含めて返す。
+def _run_case_in_fresh_process(
+    case: Mapping[str, object],
+    run_config: Mapping[str, object],
+    worker_config: Mapping[str, object],
+    /,
+) -> dict[str, object]:
+    timeout_seconds = _config_int(run_config, "timeout_seconds")
+    mp_context = mp.get_context("spawn")
+    executor = ProcessPoolExecutor(
+        max_workers=1,
+        mp_context=mp_context,
+        initializer=_initialize_worker,
+        initargs=(run_config, worker_config),
+    )
+    shutdown_wait = True
+    try:
+        future = executor.submit(_run_case_in_worker, case, run_config, worker_config)
+        return future.result(timeout=timeout_seconds)
+    except TimeoutError as exc:
+        shutdown_wait = False
+        result = _parent_failure_result(
+            case,
+            worker_config,
+            "timeout",
+            f"TimeoutError: case exceeded timeout_seconds={timeout_seconds}.",
+            "".join(traceback.format_exception_only(type(exc), exc)),
+        )
+    except BrokenProcessPool as exc:
+        result = _parent_failure_result(
+            case,
+            worker_config,
+            "worker_terminated",
+            "BrokenProcessPool: worker terminated abruptly; possible host OOM or SIGKILL.",
+            "".join(traceback.format_exception(type(exc), exc, exc.__traceback__, limit=8)),
+        )
+    except Exception as exc:
+        traceback_text = traceback.format_exc(limit=8)
+        result = _parent_failure_result(
+            case,
+            worker_config,
+            _failure_kind_from_exception(exc, traceback_text),
+            "".join(traceback.format_exception_only(type(exc), exc)).strip(),
+            traceback_text,
+        )
+    finally:
+        executor.shutdown(wait=shutdown_wait, cancel_futures=not shutdown_wait)
+
+    jsonl_output_path_value = run_config.get("jsonl_output_path")
+    if isinstance(jsonl_output_path_value, str):
+        _append_jsonl_record(Path(jsonl_output_path_value), result)
+    return result
+
+
+# 責務: 単一 worker 割当ぶんのケース列を順番に処理し、case 単位で fresh process を作る。
+def _run_worker_cases_serial(
+    worker_cases: list[dict[str, object]],
+    run_config: Mapping[str, object],
+    worker_config: Mapping[str, object],
+    /,
+) -> list[dict[str, object]]:
+    worker_label = _config_str(worker_config, "worker_label")
+    results: list[dict[str, object]] = []
+    for case in worker_cases:
+        started_at = datetime.now(timezone.utc).isoformat()
+        print(f"[{started_at}] start {worker_label} {_case_label(case)}", flush=True)
+        result = _run_case_in_fresh_process(case, run_config, worker_config)
+        finished_at = datetime.now(timezone.utc).isoformat()
+        status = str(result.get("status", "unknown"))
+        failure_kind = str(result.get("failure_kind", "-"))
+        print(
+            f"[{finished_at}] done  {worker_label} {_case_label(case)} status={status} failure_kind={failure_kind}",
+            flush=True,
+        )
+        results.append(result)
+    return results
+
+
+# 責務: 並列 worker 群へケース列を配り、GPU ごとに逐次・ケースごとに fresh process で全結果を集約する。
 def _run_cases_in_parallel(
     cases: list[dict[str, object]],
     run_config: Mapping[str, object],
     /,
 ) -> list[dict[str, object]]:
-    timeout_seconds = _config_int(run_config, "timeout_seconds")
     worker_configs = _build_worker_configs(run_config)
     assignments = _assign_cases_to_workers(cases, worker_configs)
-    mp_context = mp.get_context("spawn")
     all_results: list[dict[str, object]] = []
-    future_to_worker: dict[Future[dict[str, object]], str] = {}
-    executors: list[ProcessPoolExecutor] = []
+    future_to_worker: dict[Future[list[dict[str, object]]], str] = {}
 
-    try:
+    with ThreadPoolExecutor(max_workers=len(worker_configs), thread_name_prefix="smolyak-runner") as executor:
         for worker_config in worker_configs:
             worker_label = _config_str(worker_config, "worker_label")
             worker_cases = assignments.get(worker_label, [])
             if not worker_cases:
                 continue
-            executor = ProcessPoolExecutor(
-                max_workers=1,
-                mp_context=mp_context,
-                initializer=_initialize_worker,
-                initargs=(run_config, worker_config),
+            future = executor.submit(
+                _run_worker_cases_serial,
+                worker_cases,
+                run_config,
+                worker_config,
             )
-            executors.append(executor)
-            for case in worker_cases:
-                future = executor.submit(_run_case_in_worker, case, run_config, worker_config)
-                future_to_worker[future] = worker_label
+            future_to_worker[future] = worker_label
 
-        for future in as_completed(future_to_worker.keys(), timeout=timeout_seconds * max(1, len(future_to_worker))):
-            all_results.append(future.result())
-    finally:
-        for executor in executors:
-            executor.shutdown(wait=True, cancel_futures=False)
+        for future in as_completed(future_to_worker.keys()):
+            all_results.extend(future.result())
 
     all_results.sort(key=lambda result: _result_int(result, "case_id"))
     return all_results
@@ -592,6 +735,7 @@ def run_benchmark(
     dtype_names: list[str],
     /,
     *,
+    output_path: Path,
     platform: str,
     gpu_indices: list[int],
     timeout_seconds: int,
@@ -601,6 +745,9 @@ def run_benchmark(
     coeff_stop: float,
 ) -> dict[str, object]:
     started_at = datetime.now(timezone.utc)
+    jsonl_output_path = _jsonl_path_for_output(output_path)
+    jsonl_output_path.parent.mkdir(parents=True, exist_ok=True)
+    jsonl_output_path.write_text("", encoding="utf-8")
     run_config: dict[str, object] = {
         "platform": platform,
         "gpu_indices": gpu_indices,
@@ -609,6 +756,7 @@ def run_benchmark(
         "num_accuracy_problems": num_accuracy_problems,
         "coeff_start": coeff_start,
         "coeff_stop": coeff_stop,
+        "jsonl_output_path": str(jsonl_output_path),
     }
     metadata = _experiment_metadata()
     cases = _build_cases(dimensions, levels, dtype_names)
@@ -631,6 +779,7 @@ def run_benchmark(
         "timeout_seconds": timeout_seconds,
         "coeff_start": coeff_start,
         "coeff_stop": coeff_stop,
+        "jsonl_output_path": str(jsonl_output_path),
         **metadata,
         "cases": results,
         "summary_by_dtype": _summary_by_dtype(results, dtype_names),
@@ -674,10 +823,13 @@ def main() -> None:
     else:
         gpu_indices = []
 
+    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    output_path = args.output or (RESULTS_DIR / f"smolyak_scaling_{args.platform}_{timestamp}.json")
     results = run_benchmark(
         dimensions,
         levels,
         dtype_names,
+        output_path=output_path,
         platform=args.platform,
         gpu_indices=gpu_indices,
         timeout_seconds=args.timeout_seconds,
@@ -687,10 +839,11 @@ def main() -> None:
         coeff_stop=args.coeff_stop,
     )
 
-    timestamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
-    output_path = args.output or (RESULTS_DIR / f"smolyak_scaling_{args.platform}_{timestamp}.json")
     save_results(results, output_path)
     save_results(results, RESULTS_DIR / "latest.json")
+    jsonl_output_path = _jsonl_path_for_output(output_path)
+    if jsonl_output_path.exists():
+        shutil.copyfile(jsonl_output_path, RESULTS_DIR / "latest.jsonl")
     print(output_path)
 
 
