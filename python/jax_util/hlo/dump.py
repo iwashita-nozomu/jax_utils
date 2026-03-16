@@ -29,100 +29,29 @@ def _to_jsonable(value: Any) -> Any:
         return str(value)
 
 
-# 責務: HLO テキストのサイズ情報を数えます。
-def _text_metrics(text: str, /) -> dict[str, int]:
-    return {
-        "chars": len(text),
-        "lines": len([line for line in text.splitlines() if line.strip()]),
-        "utf8_bytes": len(text.encode("utf-8")),
-    }
+# 責務: lowering 済み関数から利用可能な HLO テキストを取得します。
+def _get_hlo_text(func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> str:
+    """JAX lowering から HLO 文字列を取得します。
 
+    優先順:
+    1) stablehlo
+    2) hlo
 
-# 責務: lowering 済み関数から dialect ごとの HLO 情報を取り出します。
-def _collect_ir_metadata(lowered: Any, /) -> tuple[str, str, dict[str, object]]:
-    stablehlo_text: str | None = None
-    hlo_text: str | None = None
-    hlo_proto_bytes: int | None = None
+    Raises
+    ------
+    RuntimeError
+        HLO の取得に失敗した場合。
+    """
+    lowered = jax.jit(func).lower(*args, **kwargs)
 
-    try:
-        stablehlo_ir = lowered.compiler_ir(dialect="stablehlo")
-        stablehlo_text = str(stablehlo_ir)
-    except Exception:
-        stablehlo_text = None
+    for dialect in ("stablehlo", "hlo"):
+        try:
+            ir = lowered.compiler_ir(dialect=dialect)
+            return str(ir)
+        except Exception:
+            continue
 
-    try:
-        hlo_ir = lowered.compiler_ir(dialect="hlo")
-        if hasattr(hlo_ir, "as_hlo_text"):
-            hlo_text = str(hlo_ir.as_hlo_text())
-        else:
-            hlo_text = str(hlo_ir)
-        if hasattr(hlo_ir, "as_serialized_hlo_module_proto"):
-            hlo_proto_bytes = len(hlo_ir.as_serialized_hlo_module_proto())
-    except Exception:
-        hlo_text = None
-        hlo_proto_bytes = None
-
-    if stablehlo_text is not None:
-        preferred_dialect = "stablehlo"
-        preferred_text = stablehlo_text
-    elif hlo_text is not None:
-        preferred_dialect = "hlo"
-        preferred_text = hlo_text
-    else:
-        raise RuntimeError("Failed to get HLO text from lowered compiler IR.")
-
-    size: dict[str, object] = {
-        "preferred_dialect": preferred_dialect,
-        "preferred_text": _text_metrics(preferred_text),
-        "stablehlo_text": _text_metrics(stablehlo_text) if stablehlo_text is not None else None,
-        "hlo_text": _text_metrics(hlo_text) if hlo_text is not None else None,
-        "hlo_proto_bytes": hlo_proto_bytes,
-    }
-    return preferred_dialect, preferred_text, size
-
-
-# 責務: compile 後に取れる size / cost 情報を JSON 化します。
-def _collect_compiled_metadata(lowered: Any, /) -> dict[str, object]:
-    try:
-        compiled = lowered.compile()
-    except Exception as exc:
-        return {
-            "available": False,
-            "error": str(exc),
-        }
-
-    cost_analysis: dict[str, float] | None = None
-    memory_analysis: dict[str, int | float] | None = None
-
-    try:
-        raw_cost = compiled.cost_analysis()
-        if isinstance(raw_cost, dict):
-            cost_analysis = {str(key): float(value) for key, value in raw_cost.items()}
-    except Exception:
-        cost_analysis = None
-
-    try:
-        raw_memory = compiled.memory_analysis()
-        memory_analysis = {
-            "generated_code_size_in_bytes": int(raw_memory.generated_code_size_in_bytes),
-            "argument_size_in_bytes": int(raw_memory.argument_size_in_bytes),
-            "output_size_in_bytes": int(raw_memory.output_size_in_bytes),
-            "alias_size_in_bytes": int(raw_memory.alias_size_in_bytes),
-            "temp_size_in_bytes": int(raw_memory.temp_size_in_bytes),
-            "host_generated_code_size_in_bytes": int(raw_memory.host_generated_code_size_in_bytes),
-            "host_argument_size_in_bytes": int(raw_memory.host_argument_size_in_bytes),
-            "host_output_size_in_bytes": int(raw_memory.host_output_size_in_bytes),
-            "host_alias_size_in_bytes": int(raw_memory.host_alias_size_in_bytes),
-            "host_temp_size_in_bytes": int(raw_memory.host_temp_size_in_bytes),
-        }
-    except Exception:
-        memory_analysis = None
-
-    return {
-        "available": True,
-        "cost_analysis": cost_analysis,
-        "memory_analysis": memory_analysis,
-    }
+    raise RuntimeError("Failed to get HLO text from lowered compiler IR.")
 
 
 # 責務: HLO を 1 レコードの JSONL として追記保存します。
@@ -158,15 +87,12 @@ def dump_hlo_jsonl(
     if not get_bool_env("JAX_UTIL_ENABLE_HLO_DUMP", False):
         return
 
-    lowered = jax.jit(func).lower(*args, **kwargs)
-    preferred_dialect, hlo_text, size = _collect_ir_metadata(lowered)
+    hlo_text = _get_hlo_text(func, *args, **kwargs)
     record: dict[str, object] = {
         "case": "hlo",
         "tag": tag,
-        "dialect": preferred_dialect,
+        "dialect": "stablehlo_or_hlo",
         "hlo": hlo_text,
-        "size": size,
-        "compiled": _collect_compiled_metadata(lowered),
     }
 
     out_file = Path(out_path)

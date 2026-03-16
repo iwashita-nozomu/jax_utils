@@ -10,18 +10,14 @@
 
 - 次元レンジとレベルレンジからケース列を生成します。
 - 各ケースは fresh な subprocess で実行します。
-- GPU 実行では物理 GPU ごとに `workers_per_gpu` 本の logical worker を立てて並列に流します。
+- GPU 実行では物理 GPU ごとに 1 worker を立てて並列に流します。
 - 同じ GPU では、前ケースのプロセス終了後に次ケースを開始します。
 - 各ケースは fresh process で実行し、積分器は CPU で初期化し、その後に対象デバイスへ転送します。
 - 同じ積分問題を `fori_loop` で `100` 回解いて、平均積分時間を計測します。
 - `SmolyakIntegrator(dtype=...)` を切り替えて複数の float 精度を比較できます。
 - 各ケースについて、誤差平均、誤差分散、点数、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、転送時間、実行時間を JSON に保存します。
 - 各ケースは終了時に JSONL へ 1 行ずつ追記されるので、途中停止しても部分結果を回収できます。
-- ホストプロセスはケース列と GPU 空き slot だけを管理し、各ケースはサブプロセスへ `case + run_config + GPU slot` を渡して実行します。
-- サブプロセスは JSONL へ結果を追記してから、stdout の completion message でホストへ明示的に終了を返します。
 - GPU 実験では `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
-- worker ごとに CPU affinity を自動分割し、空いている CPU core を使いやすくします。
-- worker 内では `OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `NUMEXPR_NUM_THREADS=1` を設定して、隠れた thread oversubscription を避けます。
 - 実験全体について、`git_branch`、`git_commit`、`results_branch`、`worktree_path`、`script_path`、実行条件レンジをトップレベル JSON に保存します。
 - 実験後は `render_smolyak_scaling_report.py` で SVG/HTML のレポートを生成できます。
 
@@ -29,14 +25,8 @@
 
 - `run_smolyak_scaling.py`
   - レンジ指定ベースのベンチマーク実行スクリプトです。
-  - ホスト scheduler と child mode の両方を持ちます。
 - `render_smolyak_scaling_report.py`
   - 結果 JSON から、誤差・時間・メモリ・failure kind・frontier をまとめた可視化レポートを生成するスクリプトです。
-- `python/jax_util/experiment_runner/`
-  - host/child 実行、JSONL 追記、worker slot 管理の共通部品です。
-- `python/tests/experiment_runner/test_subprocess_scheduler.py`
-  - 2 GPU を使う high-load scheduler smoke test です。
-  - child は数秒間 matmul を回すので、`nvidia-smi` でも観測しやすい負荷になります。
 - `results/`
   - 実行結果を保存するディレクトリです。
   - `<run>.jsonl` は case 単位の逐次保存結果です。
@@ -60,7 +50,6 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
 PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_scaling/run_smolyak_scaling.py \
   --platform gpu \
   --gpu-indices 0,1,2 \
-  --workers-per-gpu 2 \
   --dimensions 8:48:4 \
   --levels 4:8 \
   --dtypes float16,bfloat16,float32,float64 \
@@ -73,7 +62,6 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
 PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_scaling/run_smolyak_scaling.py \
   --platform gpu \
   --gpu-indices 0,1,2 \
-  --workers-per-gpu 2 \
   --dimensions 8:64:4 \
   --levels 4:10 \
   --num-repeats 100 \
@@ -81,16 +69,6 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
   --coeff-start -0.55 \
   --coeff-stop 0.65
 ```
-
-## OS-Side Tuning
-
-- `--workers-per-gpu`
-  - GPU 台数より多い host worker を立てて、CPU 側初期化が支配的なケースでも CPU の空きを使いやすくします。
-- `cpu_affinity`
-  - 各 logical worker に disjoint な CPU index 群を自動割り当てします。
-  - 割り当て結果は case JSON に `cpu_affinity` として残ります。
-- `gpu_slot`
-  - 同じ GPU 内の logical worker 番号です。`gpu-0-w0`, `gpu-0-w1` のようにログへ出ます。
 
 実験後に結果レポートを作る例です。
 

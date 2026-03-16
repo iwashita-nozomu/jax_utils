@@ -6,11 +6,12 @@ from .monte_carlo import (
 )
 from .smolyak import (
     SmolyakIntegrator,
-    clenshaw_curtis_node_ids,
     clenshaw_curtis_rule,
     difference_rule,
-    initialize_smolyak_integrator,
     multi_indices,
+    smolyak_grid,
+    smolyak_integral,
+    trapezoidal_rule,
 )
 from .protocols import Func, Function, Functional, Integrator
 
@@ -23,10 +24,11 @@ __all__ = [
     "uniform_cube_samples",
     "monte_carlo_integral",
     "SmolyakIntegrator",
-    "clenshaw_curtis_node_ids",
     "clenshaw_curtis_rule",
+    "trapezoidal_rule",
     "difference_rule",
-    "initialize_smolyak_integrator",
     "multi_indices",
+    "smolyak_grid",
+    "smolyak_integral",
     "integrate",
 ]
