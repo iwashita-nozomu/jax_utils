@@ -7,8 +7,9 @@ import equinox as eqx
 import jax
 from jax import flatten_util
 from jax import numpy as jnp
+from jax.typing import DTypeLike
 
-from ..base import Matrix, Scalar, Vector
+from ..base import DEFAULT_DTYPE, Matrix, Scalar, Vector
 from .protocols import Params, Static
 
 
@@ -35,10 +36,12 @@ def standard_nn_layer_factory(
     output_dim: int,
     activation: Callable[[Matrix], Matrix],
     random_key: Scalar,
+    dtype: DTypeLike = DEFAULT_DTYPE,
 ) -> tuple[StandardNNLayer, Scalar]:
     k1, k2 = jax.random.split(random_key, 2)
-    W = jax.random.normal(k1, (output_dim, input_dim)) * jnp.sqrt(2.0 / input_dim)
-    b = jnp.zeros((output_dim,))
+    weight_scale = _he_scale(denominator_dim=input_dim, dtype=dtype)
+    W = jax.random.normal(k1, (output_dim, input_dim), dtype=dtype) * weight_scale
+    b = jnp.zeros((output_dim,), dtype=dtype)
     return StandardNNLayer(W=W, b=b, activation=activation), k2
 
 
@@ -67,11 +70,14 @@ def icnn_layer_factory(
     x_dim: int,
     activation: Callable[[Matrix], Matrix],
     random_key: Scalar,
+    dtype: DTypeLike = DEFAULT_DTYPE,
 ) -> tuple[ICNNLayer, Scalar]:
     k1, k2, k3 = jax.random.split(random_key, 3)
-    W = jnp.abs(jax.random.normal(k1, (output_dim, input_dim))) * jnp.sqrt(2.0 / output_dim)
-    W_x = jax.random.normal(k2, (output_dim, x_dim)) * jnp.sqrt(2.0 / x_dim)
-    b = jnp.zeros((output_dim,))
+    hidden_scale = _he_scale(denominator_dim=output_dim, dtype=dtype)
+    input_scale = _he_scale(denominator_dim=x_dim, dtype=dtype)
+    W = jnp.abs(jax.random.normal(k1, (output_dim, input_dim), dtype=dtype)) * hidden_scale
+    W_x = jax.random.normal(k2, (output_dim, x_dim), dtype=dtype) * input_scale
+    b = jnp.zeros((output_dim,), dtype=dtype)
     return ICNNLayer(W=W, W_x=W_x, b=b, activation=activation), k3
 
 
@@ -82,6 +88,10 @@ M = TypeVar("M", bound=eqx.Module)
 class RebuildState(Generic[M]):
     unravel_fn: Callable[[Vector], Params]
     static: Static
+
+
+def _he_scale(denominator_dim: int, dtype: DTypeLike) -> Scalar:
+    return jnp.sqrt(jnp.asarray(2.0 / denominator_dim, dtype=dtype))
 
 
 def module_to_vector(module: M) -> tuple[Vector, RebuildState[M]]:

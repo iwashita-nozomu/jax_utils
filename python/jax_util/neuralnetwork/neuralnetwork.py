@@ -5,8 +5,9 @@ from typing import Tuple
 import equinox as eqx
 import jax
 from jax import numpy as jnp
+from jax.typing import DTypeLike
 
-from ..base import Matrix, Scalar
+from ..base import DEFAULT_DTYPE, Matrix, Scalar
 from .layer_utils import (
     ICNNCarry,
     ICNNCtx,
@@ -56,6 +57,7 @@ def build_neural_network(
     layer_sizes: Tuple[int, ...],
     activation: str,
     random_key: Scalar,
+    dtype: DTypeLike = DEFAULT_DTYPE,
 ) -> NeuralNetwork:
     """標準的な NN または ICNN を構築するファクトリ関数。"""
 
@@ -83,6 +85,7 @@ def build_neural_network(
                 output_dim=output_dim,
                 activation=activation_fn,
                 random_key=key,
+                dtype=dtype,
             )
             layers.append(layer)
     elif network_type == "icnn":
@@ -94,6 +97,7 @@ def build_neural_network(
                 x_dim=x_dim,
                 activation=activation_fn,
                 random_key=key,
+                dtype=dtype,
             )
             layers.append(layer)
     else:
