@@ -17,6 +17,8 @@
 - `SmolyakIntegrator(dtype=...)` を切り替えて複数の float 精度を比較できます。
 - 各ケースについて、誤差平均、誤差分散、点数、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、転送時間、実行時間を JSON に保存します。
 - 各ケースは終了時に JSONL へ 1 行ずつ追記されるので、途中停止しても部分結果を回収できます。
+- ホストプロセスはケース列と GPU 空き slot だけを管理し、各ケースはサブプロセスへ `case + run_config + GPU slot` を渡して実行します。
+- サブプロセスは JSONL へ結果を追記してから、stdout の completion message でホストへ明示的に終了を返します。
 - GPU 実験では `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
 - 実験全体について、`git_branch`、`git_commit`、`results_branch`、`worktree_path`、`script_path`、実行条件レンジをトップレベル JSON に保存します。
 - 実験後は `render_smolyak_scaling_report.py` で SVG/HTML のレポートを生成できます。
@@ -25,8 +27,14 @@
 
 - `run_smolyak_scaling.py`
   - レンジ指定ベースのベンチマーク実行スクリプトです。
+  - ホスト scheduler と child mode の両方を持ちます。
 - `render_smolyak_scaling_report.py`
   - 結果 JSON から、誤差・時間・メモリ・failure kind・frontier をまとめた可視化レポートを生成するスクリプトです。
+- `python/jax_util/experiment_runner/`
+  - host/child 実行、JSONL 追記、worker slot 管理の共通部品です。
+- `python/tests/experiment_runner/test_subprocess_scheduler.py`
+  - 2 GPU を使う high-load scheduler smoke test です。
+  - child は数秒間 matmul を回すので、`nvidia-smi` でも観測しやすい負荷になります。
 - `results/`
   - 実行結果を保存するディレクトリです。
   - `<run>.jsonl` は case 単位の逐次保存結果です。
