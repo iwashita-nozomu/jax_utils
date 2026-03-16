@@ -41,6 +41,64 @@ def _sorted_unique_ints(values: Sequence[object], /) -> list[int]:
     return ints
 
 
+# 責務: トップレベル結果に宣言された整数軸を優先し、なければケース列から復元する。
+def _result_axis_values(
+    results: Mapping[str, object],
+    cases: Sequence[Mapping[str, object]],
+    key: str,
+    /,
+) -> list[int]:
+    raw_values = results.get(key)
+    if isinstance(raw_values, list):
+        values = _sorted_unique_ints(raw_values)
+        if values:
+            return values
+    return _sorted_unique_ints([case.get(key[:-1] if key.endswith("s") else key) for case in cases])
+
+
+# 責務: frontier 情報から可視化で使う実行可能領域の軸範囲を絞り込む。
+def _focused_axes_from_frontier(
+    results: Mapping[str, object],
+    dimensions: Sequence[int],
+    levels: Sequence[int],
+    /,
+) -> tuple[list[int], list[int]]:
+    focused_dimensions = list(dimensions)
+    focused_levels = list(levels)
+
+    raw_level_frontier = results.get("frontier_by_dtype_and_level")
+    if isinstance(raw_level_frontier, list):
+        success_dimensions = [
+            int(value)
+            for item in raw_level_frontier
+            if isinstance(item, Mapping)
+            for value in [item.get("max_success_dimension")]
+            if isinstance(value, int)
+        ]
+        if success_dimensions:
+            max_success_dimension = max(success_dimensions)
+            cropped_dimensions = [dimension for dimension in dimensions if dimension <= max_success_dimension]
+            if cropped_dimensions:
+                focused_dimensions = cropped_dimensions
+
+    raw_dimension_frontier = results.get("frontier_by_dtype_and_dimension")
+    if isinstance(raw_dimension_frontier, list):
+        success_levels = [
+            int(value)
+            for item in raw_dimension_frontier
+            if isinstance(item, Mapping)
+            for value in [item.get("max_success_level")]
+            if isinstance(value, int)
+        ]
+        if success_levels:
+            max_success_level = max(success_levels)
+            cropped_levels = [level for level in levels if level <= max_success_level]
+            if cropped_levels:
+                focused_levels = cropped_levels
+
+    return focused_dimensions, focused_levels
+
+
 # 責務: 結果 JSON からケース辞書列を安全に取り出す。
 def _cases(results: Mapping[str, object], /) -> list[Mapping[str, object]]:
     raw_cases = results.get("cases")
@@ -666,8 +724,9 @@ def generate_report(input_path: Path, output_dir: Path, /) -> None:
     results = load_results(input_path)
     cases = _cases(results)
     dtype_names = _dtype_names(results, cases)
-    dimensions = _sorted_unique_ints([case.get("dimension") for case in cases])
-    levels = _sorted_unique_ints([case.get("level") for case in cases])
+    dimensions = _result_axis_values(results, cases, "dimensions")
+    levels = _result_axis_values(results, cases, "levels")
+    dimensions, levels = _focused_axes_from_frontier(results, dimensions, levels)
 
     output_dir.mkdir(parents=True, exist_ok=True)
     figures: list[tuple[str, str]] = []

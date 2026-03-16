@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="360" viewBox="0 0 760 360">
+<rect width="760" height="360" fill="#f7f2e8" />
+<text x="18" y="22" font-size="18" font-family="monospace" fill="#2b2926">success frontier by dtype</text>
+<rect x="72" y="28" width="664" height="284" fill="#fffdfa" stroke="#cabfae" />
+<line x1="72.0" y1="28" x2="72.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="72.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">0</text>
+<line x1="155.0" y1="28" x2="155.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="155.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">1</text>
+<line x1="238.0" y1="28" x2="238.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="238.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">2</text>
+<line x1="321.0" y1="28" x2="321.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="321.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">3</text>
+<line x1="404.0" y1="28" x2="404.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="404.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">4</text>
+<line x1="487.0" y1="28" x2="487.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="487.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">5</text>
+<line x1="570.0" y1="28" x2="570.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="570.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">6</text>
+<line x1="653.0" y1="28" x2="653.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="653.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">7</text>
+<line x1="736.0" y1="28" x2="736.0" y2="312" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="736.0" y="342" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">8</text>
+<line x1="72" y1="321.2" x2="736" y2="321.2" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="325.2" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">0</text>
+<line x1="72" y1="312.0" x2="736" y2="312.0" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="316.0" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">1</text>
+<line x1="72" y1="302.8" x2="736" y2="302.8" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="306.8" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">2</text>
+<line x1="72" y1="293.7" x2="736" y2="293.7" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="297.7" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">3</text>
+<line x1="72" y1="284.5" x2="736" y2="284.5" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="288.5" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">4</text>
+<line x1="72" y1="275.4" x2="736" y2="275.4" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="279.4" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">5</text>
+<line x1="72" y1="266.2" x2="736" y2="266.2" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="270.2" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">6</text>
+<line x1="72" y1="257.0" x2="736" y2="257.0" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="261.0" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">7</text>
+<line x1="72" y1="247.9" x2="736" y2="247.9" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="251.9" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">8</text>
+<line x1="72" y1="238.7" x2="736" y2="238.7" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="242.7" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">9</text>
+<line x1="72" y1="229.5" x2="736" y2="229.5" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="233.5" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">10</text>
+<line x1="72" y1="220.4" x2="736" y2="220.4" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="224.4" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">11</text>
+<line x1="72" y1="211.2" x2="736" y2="211.2" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="215.2" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">12</text>
+<line x1="72" y1="202.1" x2="736" y2="202.1" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="206.1" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">13</text>
+<line x1="72" y1="192.9" x2="736" y2="192.9" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="196.9" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">14</text>
+<line x1="72" y1="183.7" x2="736" y2="183.7" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="187.7" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">15</text>
+<line x1="72" y1="174.6" x2="736" y2="174.6" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="178.6" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">16</text>
+<line x1="72" y1="165.4" x2="736" y2="165.4" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="169.4" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">17</text>
+<line x1="72" y1="156.3" x2="736" y2="156.3" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="160.3" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">18</text>
+<line x1="72" y1="147.1" x2="736" y2="147.1" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="151.1" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">19</text>
+<line x1="72" y1="137.9" x2="736" y2="137.9" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="141.9" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">20</text>
+<line x1="72" y1="128.8" x2="736" y2="128.8" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="132.8" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">21</text>
+<line x1="72" y1="119.6" x2="736" y2="119.6" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="123.6" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">22</text>
+<line x1="72" y1="110.5" x2="736" y2="110.5" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="114.5" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">23</text>
+<line x1="72" y1="101.3" x2="736" y2="101.3" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="105.3" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">24</text>
+<line x1="72" y1="92.1" x2="736" y2="92.1" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="96.1" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">25</text>
+<line x1="72" y1="83.0" x2="736" y2="83.0" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="87.0" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">26</text>
+<line x1="72" y1="73.8" x2="736" y2="73.8" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="77.8" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">27</text>
+<line x1="72" y1="64.6" x2="736" y2="64.6" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="68.6" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">28</text>
+<line x1="72" y1="55.5" x2="736" y2="55.5" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="59.5" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">29</text>
+<line x1="72" y1="46.3" x2="736" y2="46.3" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="50.3" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">30</text>
+<line x1="72" y1="37.2" x2="736" y2="37.2" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="41.2" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">31</text>
+<line x1="72" y1="28.0" x2="736" y2="28.0" stroke="#cabfae" stroke-dasharray="3 4" />
+<text x="60" y="32.0" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">32</text>
+<text x="404.0" y="356" text-anchor="middle" font-size="12" font-family="monospace" fill="#2b2926">level</text>
+<text x="20" y="170.0" transform="rotate(-90 20 170.0)" text-anchor="middle" font-size="12" font-family="monospace" fill="#2b2926">max success dimension</text>
+<polyline fill="none" stroke="#1f5f7a" stroke-width="3" points="155.0,28.0 238.0,28.0 321.0,28.0 404.0,28.0 487.0,28.0 570.0,64.6 653.0,156.3 736.0,202.1" />
+<circle cx="155.0" cy="28.0" r="4" fill="#1f5f7a" />
+<circle cx="238.0" cy="28.0" r="4" fill="#1f5f7a" />
+<circle cx="321.0" cy="28.0" r="4" fill="#1f5f7a" />
+<circle cx="404.0" cy="28.0" r="4" fill="#1f5f7a" />
+<circle cx="487.0" cy="28.0" r="4" fill="#1f5f7a" />
+<circle cx="570.0" cy="64.6" r="4" fill="#1f5f7a" />
+<circle cx="653.0" cy="156.3" r="4" fill="#1f5f7a" />
+<circle cx="736.0" cy="202.1" r="4" fill="#1f5f7a" />
+<line x1="600" y1="26" x2="620" y2="26" stroke="#1f5f7a" stroke-width="3" />
+<text x="628" y="30" font-size="11" font-family="monospace" fill="#2b2926">float16</text>
+</svg>

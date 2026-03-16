@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smolyak Scaling Report</title>
+  <style>
+    body { font-family: "Iosevka", "Menlo", monospace; margin: 24px; color: #2b2926; background: #f7f2e8; }
+    table { border-collapse: collapse; margin-bottom: 24px; background: #fffdfa; }
+    th, td { border: 1px solid #cabfae; padding: 8px 12px; text-align: left; }
+    h1, h2 { margin: 0 0 12px 0; }
+    section { margin-bottom: 24px; }
+    img { max-width: 100%; height: auto; border: 1px solid #cabfae; background: #fffdfa; }
+  </style>
+</head>
+<body>
+  <h1>Smolyak Scaling Report</h1>
+  <table>
+    <tr><th>experiment</th><td>smolyak_scaling_benchmark</td></tr>
+<tr><th>started_at_utc</th><td>2026-03-15T13:45:10.863215+00:00</td></tr>
+<tr><th>finished_at_utc</th><td>-</td></tr>
+<tr><th>run_wall_seconds</th><td>-</td></tr>
+<tr><th>platform</th><td>gpu</td></tr>
+<tr><th>gpu_indices</th><td>0:2</td></tr>
+<tr><th>dimensions</th><td>8:24:4</td></tr>
+<tr><th>levels</th><td>4:6</td></tr>
+<tr><th>num_cases</th><td>60</td></tr>
+<tr><th>num_repeats</th><td>100</td></tr>
+<tr><th>num_accuracy_problems</th><td>9</td></tr>
+<tr><th>timeout_seconds</th><td>180</td></tr>
+<tr><th>coeff_range</th><td>-0.55 .. 0.65</td></tr>
+<tr><th>dtypes</th><td>float16, bfloat16, float32, float64</td></tr>
+<tr><th>results_branch</th><td>-</td></tr>
+<tr><th>git_branch</th><td>-</td></tr>
+<tr><th>git_commit</th><td>-</td></tr>
+<tr><th>worktree_path</th><td>-</td></tr>
+<tr><th>script_path</th><td>-</td></tr>
+  </table>
+  <section>
+    <h2>Summary By Dtype</h2>
+    <table>
+      <tr>
+        <th>dtype</th><th>cases</th><th>success</th><th>failure</th>
+        <th>mean abs err</th><th>max abs err</th><th>mean avg time</th><th>max avg time</th>
+      </tr>
+      <tr><td>float16</td><td>15</td><td>15</td><td>0</td><td>0.193</td><td>1.727</td><td>102.0 us</td><td>537.6 us</td></tr><tr><td>bfloat16</td><td>15</td><td>15</td><td>0</td><td>0.615</td><td>4.046</td><td>93.5 us</td><td>409.8 us</td></tr><tr><td>float32</td><td>15</td><td>15</td><td>0</td><td>0.114</td><td>1.428</td><td>167.1 us</td><td>817.4 us</td></tr><tr><td>float64</td><td>15</td><td>15</td><td>0</td><td>1.69e-07</td><td>1.57e-06</td><td>287.5 us</td><td>1.6 ms</td></tr>
+    </table>
+  </section>
+  <section>
+    <h2>Failure Summary</h2>
+    <table>
+      <tr>
+        <th>dtype</th><th>ok</th><th>oom</th><th>host_oom</th><th>worker_terminated</th><th>error</th><th>timeout</th>
+      </tr>
+      <tr><td>float16</td><td>15</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>bfloat16</td><td>15</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>float32</td><td>15</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr><tr><td>float64</td><td>15</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+    </table>
+  </section>
+  <section><h2>legend</h2><img src="legend.svg" alt="legend" /></section>
+<section><h2>status heatmap</h2><img src="status.svg" alt="status heatmap" /></section>
+<section><h2>failure kind heatmap</h2><img src="failure_kind.svg" alt="failure kind heatmap" /></section>
+<section><h2>mean absolute error heatmap</h2><img src="mean_abs_err.svg" alt="mean absolute error heatmap" /></section>
+<section><h2>absolute error variance heatmap</h2><img src="var_abs_err.svg" alt="absolute error variance heatmap" /></section>
+<section><h2>integrator init time heatmap</h2><img src="integrator_init_seconds.svg" alt="integrator init time heatmap" /></section>
+<section><h2>device transfer time heatmap</h2><img src="device_transfer_seconds.svg" alt="device transfer time heatmap" /></section>
+<section><h2>average time heatmap</h2><img src="avg_integral_seconds.svg" alt="average time heatmap" /></section>
+<section><h2>num points heatmap</h2><img src="num_points.svg" alt="num points heatmap" /></section>
+<section><h2>storage heatmap</h2><img src="storage_bytes.svg" alt="storage heatmap" /></section>
+<section><h2>process rss heatmap</h2><img src="process_rss_mb.svg" alt="process rss heatmap" /></section>
+<section><h2>peak device bytes heatmap</h2><img src="device_peak_bytes_in_use.svg" alt="peak device bytes heatmap" /></section>
+<section><h2>success frontier</h2><img src="frontier.svg" alt="success frontier" /></section>
+</body>
+</html>

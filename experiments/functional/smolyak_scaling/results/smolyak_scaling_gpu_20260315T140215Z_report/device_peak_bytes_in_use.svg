@@ -1,0 +1,165 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="572" height="822" viewBox="0 0 572 822">
+<rect width="572" height="822" fill="#f7f2e8" />
+<text x="18" y="24" font-size="18" font-family="monospace" fill="#2b2926">peak device bytes in use</text>
+<text x="554" y="24" text-anchor="end" font-size="12" font-family="monospace" fill="#1f5f7a">log10=7.53 -> log10=8.84</text>
+<rect x="10" y="34" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="54" font-size="14" font-family="monospace" fill="#2b2926">dtype=float16</text>
+<text x="134.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="72" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="108" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="86" width="88" height="30" fill="#f5edde" stroke="#cabfae" rx="6" />
+<text x="132.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">32.06 MiB</text>
+<rect x="180" y="86" width="88" height="30" fill="#f5edde" stroke="#cabfae" rx="6" />
+<text x="224.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">32.24 MiB</text>
+<rect x="272" y="86" width="88" height="30" fill="#f5ecdd" stroke="#cabfae" rx="6" />
+<text x="316.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">32.67 MiB</text>
+<rect x="364" y="86" width="88" height="30" fill="#f4ebdc" stroke="#cabfae" rx="6" />
+<text x="408.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">33.55 MiB</text>
+<rect x="456" y="86" width="88" height="30" fill="#f3e9da" stroke="#cabfae" rx="6" />
+<text x="500.0" y="106" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">35.08 MiB</text>
+<text x="74" y="142" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="120" width="88" height="30" fill="#f5ecdd" stroke="#cabfae" rx="6" />
+<text x="132.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">32.67 MiB</text>
+<rect x="180" y="120" width="88" height="30" fill="#f4ebdc" stroke="#cabfae" rx="6" />
+<text x="224.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">33.55 MiB</text>
+<rect x="272" y="120" width="88" height="30" fill="#f2e5d7" stroke="#cabfae" rx="6" />
+<text x="316.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">37.66 MiB</text>
+<rect x="364" y="120" width="88" height="30" fill="#eddacd" stroke="#cabfae" rx="6" />
+<text x="408.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">47.49 MiB</text>
+<rect x="456" y="120" width="88" height="30" fill="#e6ccc0" stroke="#cabfae" rx="6" />
+<text x="500.0" y="140" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">63.19 MiB</text>
+<text x="74" y="176" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="154" width="88" height="30" fill="#f2e5d7" stroke="#cabfae" rx="6" />
+<text x="132.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">37.66 MiB</text>
+<rect x="180" y="154" width="88" height="30" fill="#eddacd" stroke="#cabfae" rx="6" />
+<text x="224.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">47.49 MiB</text>
+<rect x="272" y="154" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="316.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="364" y="154" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="408.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="456" y="154" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="500.0" y="174" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="10" y="240" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="260" font-size="14" font-family="monospace" fill="#2b2926">dtype=bfloat16</text>
+<text x="134.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="278" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="314" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="292" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="132.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="180" y="292" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="224.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="272" y="292" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="316.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="364" y="292" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="408.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="456" y="292" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="500.0" y="312" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<text x="74" y="348" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="326" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="132.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="180" y="326" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="224.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="272" y="326" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="316.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="364" y="326" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="408.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="456" y="326" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="500.0" y="346" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<text x="74" y="382" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="360" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="132.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="180" y="360" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="224.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="272" y="360" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="316.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="364" y="360" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="408.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="456" y="360" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="500.0" y="380" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="10" y="446" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="466" font-size="14" font-family="monospace" fill="#2b2926">dtype=float32</text>
+<text x="134.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="484" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="520" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="498" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="132.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="180" y="498" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="224.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="272" y="498" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="316.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="364" y="498" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="408.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="456" y="498" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="500.0" y="518" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<text x="74" y="554" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="532" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="132.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="180" y="532" width="88" height="30" fill="#e5cabe" stroke="#cabfae" rx="6" />
+<text x="224.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">66.41 MiB</text>
+<rect x="272" y="532" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="316.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="364" y="532" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="408.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="456" y="532" width="88" height="30" fill="#deb9ae" stroke="#cabfae" rx="6" />
+<text x="500.0" y="552" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">94.37 MiB</text>
+<text x="74" y="588" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="566" width="88" height="30" fill="#d4a49b" stroke="#cabfae" rx="6" />
+<text x="132.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">146.58 MiB</text>
+<rect x="180" y="566" width="88" height="30" fill="#c27b75" stroke="#cabfae" rx="6" />
+<text x="224.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">344.27 MiB</text>
+<rect x="272" y="566" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="316.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">100.82 MiB</text>
+<rect x="364" y="566" width="88" height="30" fill="#c88881" stroke="#cabfae" rx="6" />
+<text x="408.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">261.15 MiB</text>
+<rect x="456" y="566" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="500.0" y="586" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">656.54 MiB</text>
+<rect x="10" y="652" width="552" height="172" rx="14" fill="#fffdfa" stroke="#cabfae" />
+<text x="22" y="672" font-size="14" font-family="monospace" fill="#2b2926">dtype=float64</text>
+<text x="134.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=8</text>
+<text x="226.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=12</text>
+<text x="318.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=16</text>
+<text x="410.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=20</text>
+<text x="502.0" y="690" text-anchor="middle" font-size="11" font-family="monospace" fill="#2b2926">d=24</text>
+<text x="74" y="726" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=4</text>
+<rect x="88" y="704" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="132.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">100.82 MiB</text>
+<rect x="180" y="704" width="88" height="30" fill="#c88881" stroke="#cabfae" rx="6" />
+<text x="224.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">261.15 MiB</text>
+<rect x="272" y="704" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="316.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">656.54 MiB</text>
+<rect x="364" y="704" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="408.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">100.82 MiB</text>
+<rect x="456" y="704" width="88" height="30" fill="#c88881" stroke="#cabfae" rx="6" />
+<text x="500.0" y="724" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">261.15 MiB</text>
+<text x="74" y="760" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=5</text>
+<rect x="88" y="738" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="132.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">656.54 MiB</text>
+<rect x="180" y="738" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="224.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">100.82 MiB</text>
+<rect x="272" y="738" width="88" height="30" fill="#c88881" stroke="#cabfae" rx="6" />
+<text x="316.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">261.15 MiB</text>
+<rect x="364" y="738" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="408.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">656.54 MiB</text>
+<rect x="456" y="738" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="500.0" y="758" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">100.82 MiB</text>
+<text x="74" y="794" text-anchor="end" font-size="11" font-family="monospace" fill="#2b2926">l=6</text>
+<rect x="88" y="772" width="88" height="30" fill="#c88881" stroke="#cabfae" rx="6" />
+<text x="132.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">261.15 MiB</text>
+<rect x="180" y="772" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="224.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">656.54 MiB</text>
+<rect x="272" y="772" width="88" height="30" fill="#dcb6ab" stroke="#cabfae" rx="6" />
+<text x="316.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">100.82 MiB</text>
+<rect x="364" y="772" width="88" height="30" fill="#c88881" stroke="#cabfae" rx="6" />
+<text x="408.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">261.15 MiB</text>
+<rect x="456" y="772" width="88" height="30" fill="#b45c58" stroke="#cabfae" rx="6" />
+<text x="500.0" y="792" text-anchor="middle" font-size="9" font-family="monospace" fill="#2b2926">656.54 MiB</text>
+</svg>
