@@ -1,3 +1,16 @@
+"""最小残差法（MINRES）ソルバの実装。
+
+References
+----------
+- Choi, S., & Saunders, M. A. (1992).
+  "Solution of sparse indefinite systems of linear equations."
+  SIAM journal on numerical analysis, 29(4), 1146-1173.
+  https://epubs.siam.org/doi/abs/10.1137/0729071
+  
+  このモジュールは Choi–Saunders の unnormalized 形式を採用し、
+  対称不定値線形系（Ax = b, A ∈ R^{n×n} symmetric）を直接求解します。
+  前処理行列 M ≻ 0 を投入可能で、不安定性が生じやすい系にも対応しています。
+"""
 from __future__ import annotations
 from typing import Any, Dict, Tuple
 from pathlib import Path

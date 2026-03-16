@@ -1,3 +1,17 @@
+"""ブロック局所最適化固有値法（LOBPCG）の実装。
+
+References
+----------
+- Knyazev, A. V. (2001).
+  "Toward the optimal preconditioned eigensolver: Locally optimal block preconditioned conjugate gradient method."
+  SIAM journal on scientific computing, 23(2), 517-541.
+  https://epubs.siam.org/doi/abs/10.1137/S1064827500366124
+  
+  このモジュールは block preconditioned Rayleigh–Ritz固有値法を JAX で実装し、
+  大規模疎行列の最小固有値・固有ベクトル計算に最適化しています。
+  スペクトル前処理（spectral preconditioner）機能により、悪条件問題でも
+  高速収束を実現します。
+"""
 from __future__ import annotations
 
 from typing import Any, Dict, Tuple
