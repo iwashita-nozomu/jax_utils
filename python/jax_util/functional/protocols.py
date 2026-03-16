@@ -42,7 +42,7 @@ class Functional(Protocol):
 
 
 class Integrator(Protocol):
-    def __call__(self, f: Function, /) -> Vector: ...
+    def integrate(self, f: Function, /) -> Vector: ...
 
 
 __all__ = [

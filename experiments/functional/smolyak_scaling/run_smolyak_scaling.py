@@ -257,13 +257,33 @@ def _jsonl_path_for_output(output_path: Path, /) -> Path:
     return output_path.with_suffix(".jsonl")
 
 
+# 責務: JAX / NumPy を含む値を JSON 互換の組へ正規化する。
+def _json_compatible(value: object, /) -> object:
+    if isinstance(value, dict):
+        return {str(key): _json_compatible(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_compatible(item) for item in value]
+    if isinstance(value, np.generic):
+        return value.item()
+    if isinstance(value, np.ndarray):
+        if value.ndim == 0:
+            return value.item()
+        return value.tolist()
+    if hasattr(value, "shape") and hasattr(value, "dtype"):
+        array_value = np.asarray(value)
+        if array_value.ndim == 0:
+            return array_value.item()
+        return array_value.tolist()
+    return value
+
+
 # 責務: 競合を避けながら JSONL へ 1 レコード追記する。
 def _append_jsonl_record(output_path: Path, record: Mapping[str, object], /) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with output_path.open("a", encoding="utf-8") as handle:
         fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
         try:
-            handle.write(json.dumps(dict(record), ensure_ascii=True) + "\n")
+            handle.write(json.dumps(_json_compatible(dict(record)), ensure_ascii=True) + "\n")
             handle.flush()
             os.fsync(handle.fileno())
         finally:
@@ -324,7 +344,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
     import jax.numpy as jnp
     from jax import lax
 
-    from jax_util.functional import SmolyakIntegrator
+    from jax_util.functional import initialize_smolyak_integrator
 
     class ExponentialIntegrand(eqx.Module):
         coeffs: jax.Array
@@ -345,27 +365,35 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
 
     t0 = time.perf_counter()
     with jax.default_device(cpu_device):
-        integrator = SmolyakIntegrator(
+        integrator = initialize_smolyak_integrator(
             dimension=_case_int(case, "dimension"),
             level=_case_int(case, "level"),
             dtype=runtime_dtype,
         )
-    jax.block_until_ready(integrator.points)
-    jax.block_until_ready(integrator.weights)
+    jax.block_until_ready(integrator.rule_nodes)
+    jax.block_until_ready(integrator.rule_weights)
+    jax.block_until_ready(integrator.rule_offsets)
+    jax.block_until_ready(integrator.rule_lengths)
+    jax.block_until_ready(integrator.term_levels)
+    jax.block_until_ready(integrator.term_num_points)
     t1 = time.perf_counter()
 
-    storage_bytes = int((integrator.points.size + integrator.weights.size) * integrator.points.dtype.itemsize)
+    storage_bytes = integrator.storage_bytes
     integrator = jax.device_put(integrator, target_device)
     coeffs = jax.device_put(jnp.asarray(accuracy_coefficients[-1], dtype=runtime_dtype), target_device)
     accuracy_coeffs = jax.device_put(jnp.asarray(accuracy_coefficients, dtype=runtime_dtype), target_device)
-    jax.block_until_ready(integrator.points)
-    jax.block_until_ready(integrator.weights)
+    jax.block_until_ready(integrator.rule_nodes)
+    jax.block_until_ready(integrator.rule_weights)
+    jax.block_until_ready(integrator.rule_offsets)
+    jax.block_until_ready(integrator.rule_lengths)
+    jax.block_until_ready(integrator.term_levels)
+    jax.block_until_ready(integrator.term_num_points)
     jax.block_until_ready(coeffs)
     jax.block_until_ready(accuracy_coeffs)
     t2 = time.perf_counter()
 
     def single_integral(current_integrator: Any, current_coeffs: jax.Array) -> jax.Array:
-        return current_integrator(ExponentialIntegrand(current_coeffs))[0]
+        return current_integrator.integrate(ExponentialIntegrand(current_coeffs))[0]
 
     def batched_accuracy_integrals(current_integrator: Any, coeff_matrix: jax.Array) -> jax.Array:
         def apply_single(coeff_vector: jax.Array) -> jax.Array:
@@ -383,7 +411,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
             return acc + single_integral(current_integrator, current_coeffs)
 
         num_repeats = _config_int(run_config, "num_repeats")
-        total = lax.fori_loop(0, num_repeats, body, jnp.asarray(0.0, dtype=current_integrator.points.dtype))
+        total = lax.fori_loop(0, num_repeats, body, jnp.asarray(0.0, dtype=current_integrator.rule_nodes.dtype))
         return total / num_repeats
 
     accuracy_values = batched_accuracy_integrals(integrator, accuracy_coeffs)
@@ -411,10 +439,13 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
         "device_kind": target_device.device_kind,
         "visible_device_id": int(target_device.id),
         "assigned_gpu_index": os.environ.get("SMOLYAK_GPU_INDEX"),
-        "num_points": int(integrator.points.shape[1]),
+        "num_terms": int(integrator.num_terms),
+        "num_points": int(integrator.num_evaluation_points),
+        "num_evaluation_points": int(integrator.num_evaluation_points),
         "storage_bytes": storage_bytes,
-        "points_dtype": str(integrator.points.dtype),
-        "weights_dtype": str(integrator.weights.dtype),
+        "rule_nodes_dtype": str(integrator.rule_nodes.dtype),
+        "rule_weights_dtype": str(integrator.rule_weights.dtype),
+        "chunk_size": integrator.chunk_size,
         "expected": float(expected_values[-1]),
         "actual": float(np.asarray(timed_value)),
         "num_accuracy_problems": _config_int(run_config, "num_accuracy_problems"),
@@ -791,7 +822,7 @@ def run_benchmark(
 # 責務: 実験結果を JSON ファイルへ保存する。
 def save_results(results: dict[str, object], output_path: Path, /) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(results, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    output_path.write_text(json.dumps(_json_compatible(results), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 
 
 def main() -> None:

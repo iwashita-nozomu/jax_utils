@@ -1,0 +1,230 @@
+{
+  "jsonl": "/workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functional/smolyak_hlo/results/smolyak_hlo_20260316T091629Z.jsonl",
+  "total_records": 2,
+  "total_selected": 2,
+  "filter": {
+    "only_case": "hlo"
+  },
+  "tags": [
+    [
+      "smolyak_single_integral",
+      1
+    ],
+    [
+      "smolyak_repeated_integral",
+      1
+    ]
+  ],
+  "dialects": [
+    [
+      "stablehlo_or_hlo",
+      2
+    ]
+  ],
+  "hlo_text": {
+    "total_lines": 446,
+    "total_chars": 39452
+  },
+  "top_ops": [
+    [
+      "stablehlo.constant dense<0> : tensor<i64>",
+      17
+    ],
+    [
+      "stablehlo.constant dense<1> : tensor<i64>",
+      17
+    ],
+    [
+      "func.call @_take_0",
+      12
+    ],
+    [
+      "stablehlo.while",
+      11
+    ],
+    [
+      "stablehlo.constant dense<1> : tensor<i32>",
+      8
+    ],
+    [
+      "\"stablehlo.gather\"",
+      7
+    ],
+    [
+      "func.call @_take_1",
+      6
+    ],
+    [
+      "stablehlo.constant dense<16384> : tensor<i64>",
+      6
+    ],
+    [
+      "func.call @_take",
+      6
+    ],
+    [
+      "stablehlo.broadcast_in_dim %arg1, dims = [] :",
+      5
+    ],
+    [
+      "stablehlo.constant dense<15> : tensor<i64>",
+      4
+    ],
+    [
+      "call @_take",
+      4
+    ],
+    [
+      "stablehlo.broadcast_in_dim %0, dims = [] :",
+      4
+    ],
+    [
+      "stablehlo.constant dense<0.000000e+00> : tensor<f32>",
+      3
+    ],
+    [
+      "stablehlo.broadcast_in_dim %cst, dims = [] :",
+      3
+    ],
+    [
+      "1 : i32, mhlo.num_replicas = 1 : i32} {",
+      2
+    ],
+    [
+      "\"result\"}) {",
+      2
+    ],
+    [
+      "func.call @None",
+      2
+    ],
+    [
+      "stablehlo.add %arg7, %c : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.compare  LT, %arg7, %c_0,  SIGNED :",
+      2
+    ],
+    [
+      "stablehlo.convert %arg7 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.add %2, %c_1 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.select %1, %3, %arg7 : tensor<i1>, tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.dynamic_slice %arg0, %4, %c_0, sizes = [1, 4] :",
+      2
+    ],
+    [
+      "stablehlo.reshape %5 :",
+      2
+    ],
+    [
+      "stablehlo.slice %6 [0:1] :",
+      2
+    ],
+    [
+      "stablehlo.reshape %7 :",
+      2
+    ],
+    [
+      "stablehlo.subtract %8, %c_2 : tensor<i32>",
+      2
+    ],
+    [
+      "stablehlo.constant dense<1.000000e+00> : tensor<f32>",
+      2
+    ],
+    [
+      "stablehlo.compare  LT, %iterArg_11, %iterArg_12,  SIGNED :",
+      2
+    ],
+    [
+      "stablehlo.add %iterArg_11, %c_14 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.convert %iterArg_11 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.add %iterArg, %14 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.reshape %16 :",
+      2
+    ],
+    [
+      "stablehlo.slice %iterArg_5 [0:0] :",
+      2
+    ],
+    [
+      "stablehlo.slice %iterArg_5 [1:4] :",
+      2
+    ],
+    [
+      "stablehlo.concatenate %19, %18, %20, dim = 0 :",
+      2
+    ],
+    [
+      "stablehlo.multiply %iterArg_6, %17 : tensor<f32>",
+      2
+    ],
+    [
+      "stablehlo.slice %iterArg_7 [1:2] :",
+      2
+    ],
+    [
+      "stablehlo.reshape %23 :",
+      2
+    ],
+    [
+      "stablehlo.subtract %24, %c_15 : tensor<i32>",
+      2
+    ],
+    [
+      "stablehlo.compare  LT, %iterArg_26, %iterArg_27,  SIGNED :",
+      2
+    ],
+    [
+      "stablehlo.add %iterArg_26, %c_29 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.convert %iterArg_26 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.add %iterArg_17, %30 : tensor<i64>",
+      2
+    ],
+    [
+      "stablehlo.reshape %32 :",
+      2
+    ],
+    [
+      "stablehlo.slice %iterArg_20 [0:1] :",
+      2
+    ],
+    [
+      "stablehlo.slice %iterArg_20 [2:4] :",
+      2
+    ],
+    [
+      "stablehlo.concatenate %35, %34, %36, dim = 0 :",
+      2
+    ],
+    [
+      "stablehlo.multiply %iterArg_21, %33 : tensor<f32>",
+      2
+    ]
+  ]
+}
