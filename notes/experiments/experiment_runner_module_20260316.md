@@ -64,8 +64,8 @@
 
 ### Decision
 
-- まずは `experiments` 配下の内部モジュールとして切り出す
-- いきなり `python/jax_util/...` へは入れない
+- 最終配置は `python/jax_util/experiment_runner/` にする
+- `smolyak_scaling` から先に使い始めて、runner 共通部として育てる
 - 最初の目標は
   - `smolyak_scaling`
   - 将来の別実験 runner
@@ -81,6 +81,58 @@
   - `workers.py`
   - `results.py`
   - `failures.py`
+
+## Current Implementation
+
+### Decision
+
+- 最終的な切り出し先は `python/jax_util/experiment_runner/` に統一した
+- host は
+  - case queue
+  - free worker slot
+  - timeout
+  - fallback failure record
+  だけを管理する
+- child は
+  - `case + run_config + worker_slot`
+  を受け取り、
+  - 実験実行
+  - JSONL 追記
+  - stdout completion message
+  を担当する
+
+### Source
+
+- 実装先:
+  - `/workspace/.worktrees/work-experiment-runner-20260316/python/jax_util/experiment_runner/subprocess_scheduler.py`
+  - `/workspace/.worktrees/work-experiment-runner-20260316/python/jax_util/experiment_runner/__init__.py`
+  - `/workspace/.worktrees/work-experiment-runner-20260316/experiments/functional/smolyak_scaling/run_smolyak_scaling.py`
+
+### Interpretation
+
+- static な round-robin 割当より、host が free slot を見て都度 dispatch する方が、GPU の空き管理という責務に素直
+- child が completion を明示送信することで、`Popen.wait()` だけに依存せず、異常終了と正常終了を切り分けやすくなる
+- JSONL の owner を child に寄せることで、成功ケースの永続化は child の責務に閉じられる
+
+## Validation
+
+### Source
+
+- `pytest -q python/tests/experiment_runner/test_subprocess_scheduler.py -s`
+- `/bin/python3 python/tests/experiment_runner/test_subprocess_scheduler.py`
+- `pyright python/jax_util/experiment_runner python/tests/experiment_runner experiments/functional/smolyak_scaling/run_smolyak_scaling.py`
+- 出力:
+  - `selected_gpu_indices: [0, 1]`
+  - `worker_labels: ['gpu-0-w0', 'gpu-1-w0']`
+  - `work_seconds: [2.50..., 2.50...]`
+
+### Interpretation
+
+- 2 GPU に対して host scheduler が別 slot へ 1 ケースずつ dispatch できている
+- child 側の GPU 負荷は数秒持続するため、`nvidia-smi` でも観測しやすい
+- `gpu_device_count == 1`, `visible_gpu_ids == [0]` を child が返しているので、各 child は `CUDA_VISIBLE_DEVICES` により 1 GPU だけを見ている
+- 直接実行でも test file 自身が `sys.path` を補うので、`PYTHONPATH` なしで runner test を起動できる
+- `pyright` では対象コードに型エラーが残っていない
 
 ## Current Constraints
 
