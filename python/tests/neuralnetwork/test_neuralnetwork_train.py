@@ -9,7 +9,7 @@ import jax.numpy as jnp
 import optax
 
 from jax_util.base import DEFAULT_DTYPE
-from jax_util.neuralnetwork import build_neuralnetwork, train_step
+from jax_util.neuralnetwork import build_neural_network, train_step
 from jax_util.neuralnetwork.protocols import Params
 
 
@@ -27,7 +27,7 @@ def _log_case(case: str, payload: dict[str, object]) -> None:
 def test_neuralnetwork_train_step() -> None:
     """train_step が 1 回動作することを確認します。"""
     key = jax.random.PRNGKey(2)
-    model = build_neuralnetwork(
+    model = build_neural_network(
         network_type="standard",
         layer_sizes=(2, 2, 1),
         activation="relu",

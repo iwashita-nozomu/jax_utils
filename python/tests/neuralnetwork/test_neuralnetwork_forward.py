@@ -7,7 +7,7 @@ import jax
 import jax.numpy as jnp
 
 from jax_util.base import DEFAULT_DTYPE
-from jax_util.neuralnetwork import build_neuralnetwork
+from jax_util.neuralnetwork import build_neural_network
 
 
 SOURCE_FILE = Path(__file__).name
@@ -24,7 +24,7 @@ def _log_case(case: str, payload: dict[str, object]) -> None:
 def test_neuralnetwork_standard_forward() -> None:
     """標準 NN の forward が実行できることを確認します。"""
     key = jax.random.PRNGKey(0)
-    model = build_neuralnetwork(
+    model = build_neural_network(
         network_type="standard",
         layer_sizes=(2, 3, 1),
         activation="tanh",
@@ -43,7 +43,7 @@ def test_neuralnetwork_standard_forward() -> None:
 def test_neuralnetwork_icnn_forward() -> None:
     """ICNN の forward が実行できることを確認します。"""
     key = jax.random.PRNGKey(1)
-    model = build_neuralnetwork(
+    model = build_neural_network(
         network_type="icnn",
         layer_sizes=(2, 4, 1),
         activation="softplus",
