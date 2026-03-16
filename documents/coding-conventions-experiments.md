@@ -32,6 +32,8 @@
 - 実験固有のコード変更は、まず対応する results ブランチの worktree で行います。
 - 実験ブランチ上で十分に検証した変更だけを、最後に `main` へ merge します。
 - 実験固有ではない共通コード変更を `main` で先に行った場合だけ、results worktree へ `main` を取り込みます。
+- worktree を削除する前に、その worktree にしか残っていない知見を `main` の `./notes/worktrees/` へ吸い出して整理します。
+- 吸い出しでは、少なくとも branch 名、worktree の用途、関連結果、主要な観測、次の `Idea:` を残します。
 
 ## 4. 生成物の扱い
 
@@ -72,4 +74,11 @@
 - `main` には再生成可能な code、文書、最小限の雛形だけを残します。
 - 実験そのものの code は `main` に置いてよいです。
 - 巨大な JSON、画像、ログは `main` へ常設しません。
+- 実験の所在、branch 名、定性的な考察は `main` の `./notes/experiments/` に残してよいです。
+- `./notes/experiments/` のメモは、原則として実験ごとに分け、複数の unrelated な実験を 1 ファイルへ混ぜません。
+- `./notes/experiments/` では、文献由来の内容に対象文献を明示し、`Idea:`、`Interpretation:`、`Consideration:` などで自前の発案や考察を区別します。
+- 削除した worktree の固有メモは `main` の `./notes/worktrees/` へ残し、worktree 自体を消しても判断の流れを追えるようにします。
+- 日付依存の強い実験ログや途中判断は `main` の `./diary/` に残してよいです。
+- `./diary/` は日付ファイルへ逐次追記する運用を基本とし、その日の流れが読めるように保ちます。
+- `./diary/` でも、文献に基づく記述は出典を明示し、未確認の仮説は断定しません。
 - 実験環境の運用ルールを変えた場合は、この文書と `coding-conventions-project.md` を同時に更新します。

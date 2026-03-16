@@ -1,0 +1,12 @@
+# Sparse Grid References
+
+Smolyak 積分、sparse-grid combination technique、adaptive sparse grid の調査で参照した一次資料をまとめています。
+
+- `Hegland_2003_Adaptive_sparse_grids.pdf`
+- `Hupp_2013_Hierarchization_for_the_Sparse_Grid_Combination_Technique.pdf`
+- `Jakeman_Roberts_2011_Local_and_Dimension_Adaptive_Sparse_Grid_Interpolation_and_Quadrature.pdf`
+- `Lastdrager_Koren_1998_Error_analysis_for_function_representation_by_the_sparse_grid_combination_technique.pdf`
+- `Murarasu_2013_PhD_Advanced_Optimization_Techniques_for_Sparse_Grids_on_Modern_Heterogeneous_Systems.pdf`
+- `Seidler_Griebel_2022_A_Dimension_Adaptive_Combination_Technique_for_Uncertainty_Quantification.pdf`
+- `Seidler_Griebel_2023_A_Dimension_Adaptive_Combination_Technique_for_Uncertainty_Quantification.pdf`
+- `Wong_2016_Theory_of_the_Sparse_Grid_Combination_Technique.pdf`

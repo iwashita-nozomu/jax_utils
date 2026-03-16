@@ -7,6 +7,7 @@
 - `while` や `call` が多いか
 - `gather` や `slice` などのデータ移動が支配的か
 - `dot` や `multiply` が主役か
+- HLO text / proto / compiled code size がどれくらい膨らむか
 
 を把握し、Smolyak 積分器のボトルネック候補を洗い出すことです。
 
@@ -28,8 +29,10 @@ python3 /workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functiona
   - `dump_hlo_jsonl` が吐く生の HLO JSONL
 - `<run>_summary.json`
   - `summarize_hlo_jsonl.py` の集計結果
+  - `preferred_text.utf8_bytes`, `hlo_proto_bytes`, `generated_code_size_in_bytes`, `temp_size_in_bytes` などの size 集計を含む
 - `<run>.json`
   - 実験条件、Git 情報、summary、簡易ヒント
+  - `size_digest` として重要な size 指標の最大値も保持する
 - `latest.json`
   - 直近 run の JSON コピー
 - `latest.jsonl`
@@ -42,3 +45,9 @@ python3 /workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functiona
 - まずは `single_integral` と `repeated_integral` の 2 タグを見ます。
 - `repeated_integral` は `fori_loop` を含むため、制御フローがどれくらい支配的かを見やすいです。
 - `single_integral` は 1 回の Smolyak 積分そのものの構造を見るのに向いています。
+- size 指標を見るときは、まず
+  - `preferred_text.utf8_bytes`
+  - `hlo_proto_bytes`
+  - `generated_code_size_in_bytes`
+  - `temp_size_in_bytes`
+  の 4 つを見ると、IR と compile 後の膨らみをざっくり切り分けやすいです。

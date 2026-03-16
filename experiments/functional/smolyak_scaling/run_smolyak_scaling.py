@@ -2,17 +2,14 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
-import multiprocessing as mp
 import os
 import resource
 import shutil
 import subprocess
+import sys
 import time
 import traceback
-from concurrent.futures import Future, ProcessPoolExecutor, ThreadPoolExecutor, TimeoutError, as_completed
-from concurrent.futures.process import BrokenProcessPool
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -23,6 +20,19 @@ from numpy.typing import NDArray
 
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 PYTHON_ROOT = WORKSPACE_ROOT / "python"
+if str(PYTHON_ROOT) not in sys.path:
+    sys.path.insert(0, str(PYTHON_ROOT))
+
+from jax_util.experiment_runner import (
+    CHILD_COMPLETE_PREFIX,
+    WorkerSlot,
+    append_jsonl_record,
+    apply_worker_environment,
+    build_worker_slots,
+    json_compatible,
+    run_cases_with_subprocess_scheduler,
+    worker_slot_from_mapping,
+)
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 DEFAULT_TIMEOUT_SECONDS = 180
 DEFAULT_NUM_REPEATS = 100
@@ -103,37 +113,6 @@ def _discover_gpu_indices() -> list[int]:
 
     lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
     return [int(line) for line in lines]
-
-
-# 責務: 現在のプロセスから利用可能な CPU index 列を返す。
-def _available_cpu_indices() -> list[int]:
-    if hasattr(os, "sched_getaffinity"):
-        return sorted(int(cpu) for cpu in os.sched_getaffinity(0))
-    count = os.cpu_count() or 1
-    return list(range(count))
-
-
-# 責務: worker 数に応じて CPU index 列をなるべく均等に分割する。
-def _partition_cpu_indices(num_workers: int, /) -> list[list[int]]:
-    cpu_indices = _available_cpu_indices()
-    if num_workers < 1:
-        raise ValueError("num_workers must be positive.")
-    if not cpu_indices:
-        return [[] for _ in range(num_workers)]
-
-    base = len(cpu_indices) // num_workers
-    extra = len(cpu_indices) % num_workers
-    groups: list[list[int]] = []
-    start = 0
-    for worker_index in range(num_workers):
-        group_size = base + (1 if worker_index < extra else 0)
-        if group_size <= 0:
-            groups.append([cpu_indices[worker_index % len(cpu_indices)]])
-            continue
-        stop = start + group_size
-        groups.append(cpu_indices[start:stop])
-        start = stop
-    return groups
 
 
 # 責務: Git コマンドの標準出力を取り出せるときだけ返す。
@@ -289,39 +268,6 @@ def _jsonl_path_for_output(output_path: Path, /) -> Path:
     return output_path.with_suffix(".jsonl")
 
 
-# 責務: JAX / NumPy を含む値を JSON 互換の組へ正規化する。
-def _json_compatible(value: object, /) -> object:
-    if isinstance(value, dict):
-        return {str(key): _json_compatible(item) for key, item in value.items()}
-    if isinstance(value, (list, tuple)):
-        return [_json_compatible(item) for item in value]
-    if isinstance(value, np.generic):
-        return value.item()
-    if isinstance(value, np.ndarray):
-        if value.ndim == 0:
-            return value.item()
-        return value.tolist()
-    if hasattr(value, "shape") and hasattr(value, "dtype"):
-        array_value = np.asarray(value)
-        if array_value.ndim == 0:
-            return array_value.item()
-        return array_value.tolist()
-    return value
-
-
-# 責務: 競合を避けながら JSONL へ 1 レコード追記する。
-def _append_jsonl_record(output_path: Path, record: Mapping[str, object], /) -> None:
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with output_path.open("a", encoding="utf-8") as handle:
-        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-        try:
-            handle.write(json.dumps(_json_compatible(dict(record)), ensure_ascii=True) + "\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        finally:
-            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-
-
 # 責務: 例外情報から失敗種別を粗く分類する。
 def _failure_kind_from_exception(exc: BaseException, traceback_text: str, /) -> str:
     lower = traceback_text.lower()
@@ -337,18 +283,12 @@ def _failure_kind_from_exception(exc: BaseException, traceback_text: str, /) -> 
 # 責務: 親側で補完した失敗結果レコードを構築する。
 def _parent_failure_result(
     case: Mapping[str, object],
-    worker_config: Mapping[str, object],
+    worker_slot: WorkerSlot,
     failure_kind: str,
     error: str,
     traceback_text: str,
     /,
 ) -> dict[str, object]:
-    gpu_index_value = worker_config.get("gpu_index")
-    gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
-    gpu_slot_value = worker_config.get("gpu_slot")
-    gpu_slot = gpu_slot_value if isinstance(gpu_slot_value, int) else 0
-    cpu_affinity_value = worker_config.get("cpu_affinity")
-    cpu_affinity = [cpu for cpu in cpu_affinity_value if isinstance(cpu, int)] if isinstance(cpu_affinity_value, list) else []
     return {
         "status": "failed",
         "failure_kind": failure_kind,
@@ -356,10 +296,10 @@ def _parent_failure_result(
         "dimension": _case_int(case, "dimension"),
         "level": _case_int(case, "level"),
         "dtype_name": str(case["dtype_name"]),
-        "assigned_gpu_index": gpu_index,
-        "gpu_slot": gpu_slot,
-        "cpu_affinity": cpu_affinity,
-        "worker_label": _config_str(worker_config, "worker_label"),
+        "assigned_gpu_index": worker_slot.gpu_index,
+        "gpu_slot": worker_slot.gpu_slot,
+        "cpu_affinity": list(worker_slot.cpu_affinity),
+        "worker_label": worker_slot.worker_label,
         "error": error,
         "traceback": traceback_text[-4000:],
     }
@@ -502,102 +442,13 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
     }
 
 
-# 責務: worker プロセス開始時に dtype とデバイス向けの環境を固定する。
-def _initialize_worker(run_config: Mapping[str, object], worker_config: Mapping[str, object], /) -> None:
-    os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-    os.environ["OMP_NUM_THREADS"] = "1"
-    os.environ["OPENBLAS_NUM_THREADS"] = "1"
-    os.environ["MKL_NUM_THREADS"] = "1"
-    os.environ["NUMEXPR_NUM_THREADS"] = "1"
-    platform = _config_str(run_config, "platform")
-    gpu_index_value = worker_config.get("gpu_index")
-    gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
-    cpu_affinity_value = worker_config.get("cpu_affinity")
-    cpu_affinity = [cpu for cpu in cpu_affinity_value if isinstance(cpu, int)] if isinstance(cpu_affinity_value, list) else []
-
-    if cpu_affinity and hasattr(os, "sched_setaffinity"):
-        os.sched_setaffinity(0, set(cpu_affinity))
-
-    if platform == "gpu":
-        os.environ.pop("JAX_PLATFORMS", None)
-        if gpu_index is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(gpu_index)
-            os.environ["SMOLYAK_GPU_INDEX"] = str(gpu_index)
-    else:
-        os.environ["JAX_PLATFORMS"] = "cpu"
-        os.environ.pop("CUDA_VISIBLE_DEVICES", None)
-        os.environ["SMOLYAK_GPU_INDEX"] = "cpu"
-
-
-# 責務: worker 1 本ぶんの設定辞書列を構築する。
-def _build_worker_configs(run_config: Mapping[str, object], /) -> list[dict[str, object]]:
-    platform = _config_str(run_config, "platform")
-    worker_configs: list[dict[str, object]] = []
-    if platform == "gpu":
-        gpu_indices_value = run_config["gpu_indices"]
-        if not isinstance(gpu_indices_value, list):
-            raise TypeError("run_config['gpu_indices'] must be list.")
-        gpu_indices = [gpu_index for gpu_index in gpu_indices_value if isinstance(gpu_index, int)]
-        workers_per_gpu = _config_int(run_config, "workers_per_gpu")
-        if workers_per_gpu < 1:
-            raise ValueError("workers_per_gpu must be positive.")
-        total_workers = len(gpu_indices) * workers_per_gpu
-        cpu_groups = _partition_cpu_indices(total_workers) if total_workers > 0 else []
-        worker_index = 0
-        for gpu_index in gpu_indices:
-            for gpu_slot in range(workers_per_gpu):
-                cpu_affinity = cpu_groups[worker_index] if worker_index < len(cpu_groups) else []
-                worker_configs.append({
-                    "worker_label": f"gpu-{gpu_index}-w{gpu_slot}",
-                    "gpu_index": gpu_index,
-                    "gpu_slot": gpu_slot,
-                    "cpu_affinity": cpu_affinity,
-                })
-                worker_index += 1
-    else:
-        worker_configs.append({
-            "worker_label": "cpu-0",
-            "gpu_index": None,
-            "gpu_slot": 0,
-            "cpu_affinity": _available_cpu_indices(),
-        })
-    return worker_configs
-
-
-# 責務: ケース列を worker へラウンドロビン配分する。
-def _assign_cases_to_workers(
-    cases: list[dict[str, object]],
-    worker_configs: list[dict[str, object]],
-    /,
-) -> dict[str, list[dict[str, object]]]:
-    assignments = {
-        _config_str(worker_config, "worker_label"): []
-        for worker_config in worker_configs
-    }
-    for worker_config in worker_configs:
-        assignments.setdefault(_config_str(worker_config, "worker_label"), [])
-
-    for index, case in enumerate(cases):
-        worker_config = worker_configs[index % len(worker_configs)]
-        assignments[_config_str(worker_config, "worker_label")].append(case)
-    return assignments
-
-
-# 責務: worker プロセスで 1 ケースを実行し、失敗も結果として返す。
-def _run_case_in_worker(
+# 責務: 子プロセスで 1 ケースを実行し、失敗も結果として返す。
+def _run_case_in_child(
     case: Mapping[str, object],
     run_config: Mapping[str, object],
-    worker_config: Mapping[str, object],
+    worker_slot: WorkerSlot,
     /,
 ) -> dict[str, object]:
-    worker_label = _config_str(worker_config, "worker_label")
-    gpu_index_value = worker_config.get("gpu_index")
-    gpu_index = gpu_index_value if isinstance(gpu_index_value, int) else None
-    gpu_slot_value = worker_config.get("gpu_slot")
-    gpu_slot = gpu_slot_value if isinstance(gpu_slot_value, int) else 0
-    cpu_affinity_value = worker_config.get("cpu_affinity")
-    cpu_affinity = [cpu for cpu in cpu_affinity_value if isinstance(cpu, int)] if isinstance(cpu_affinity_value, list) else []
-
     try:
         result = _run_single_case(case, run_config)
     except Exception as exc:
@@ -611,132 +462,105 @@ def _run_case_in_worker(
             "dimension": _case_int(case, "dimension"),
             "level": _case_int(case, "level"),
             "dtype_name": str(case["dtype_name"]),
-            "assigned_gpu_index": gpu_index,
-            "gpu_slot": gpu_slot,
-            "cpu_affinity": cpu_affinity,
+            "assigned_gpu_index": worker_slot.gpu_index,
+            "gpu_slot": worker_slot.gpu_slot,
+            "cpu_affinity": list(worker_slot.cpu_affinity),
             "error": message,
             "traceback": traceback_text[-4000:],
         }
 
-    result["worker_label"] = worker_label
+    result["worker_label"] = worker_slot.worker_label
     if "assigned_gpu_index" not in result:
-        result["assigned_gpu_index"] = gpu_index
-    result["gpu_slot"] = gpu_slot
-    result["cpu_affinity"] = cpu_affinity
-    jsonl_output_path_value = run_config.get("jsonl_output_path")
-    if isinstance(jsonl_output_path_value, str):
-        _append_jsonl_record(Path(jsonl_output_path_value), result)
+        result["assigned_gpu_index"] = worker_slot.gpu_index
+    result["gpu_slot"] = worker_slot.gpu_slot
+    result["cpu_affinity"] = list(worker_slot.cpu_affinity)
     return result
 
 
-# 責務: 単一ケースを fresh process で実行し、親側の失敗補完も含めて返す。
-def _run_case_in_fresh_process(
+def _build_child_command(
     case: Mapping[str, object],
     run_config: Mapping[str, object],
-    worker_config: Mapping[str, object],
+    worker_slot: WorkerSlot,
+    jsonl_output_path: Path,
     /,
-) -> dict[str, object]:
-    timeout_seconds = _config_int(run_config, "timeout_seconds")
-    mp_context = mp.get_context("spawn")
-    executor = ProcessPoolExecutor(
-        max_workers=1,
-        mp_context=mp_context,
-        initializer=_initialize_worker,
-        initargs=(run_config, worker_config),
+) -> list[str]:
+    return [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--child-case-json",
+        json.dumps(json_compatible(case), ensure_ascii=True),
+        "--child-run-config-json",
+        json.dumps(json_compatible(run_config), ensure_ascii=True),
+        "--child-worker-slot-json",
+        json.dumps(json_compatible(worker_slot.to_dict()), ensure_ascii=True),
+        "--child-jsonl-output",
+        str(jsonl_output_path),
+    ]
+
+
+def _log_case_started(case: Mapping[str, object], worker_slot: WorkerSlot, /) -> None:
+    started_at = datetime.now(timezone.utc).isoformat()
+    print(f"[{started_at}] start {worker_slot.worker_label} {_case_label(case)}", flush=True)
+
+
+def _log_case_finished(
+    case: Mapping[str, object],
+    worker_slot: WorkerSlot,
+    result: Mapping[str, object],
+    /,
+) -> None:
+    finished_at = datetime.now(timezone.utc).isoformat()
+    status = str(result.get("status", "unknown"))
+    failure_kind = str(result.get("failure_kind", "-"))
+    print(
+        f"[{finished_at}] done  {worker_slot.worker_label} {_case_label(case)} status={status} failure_kind={failure_kind}",
+        flush=True,
     )
-    shutdown_wait = True
-    try:
-        future = executor.submit(_run_case_in_worker, case, run_config, worker_config)
-        return future.result(timeout=timeout_seconds)
-    except TimeoutError as exc:
-        shutdown_wait = False
-        result = _parent_failure_result(
-            case,
-            worker_config,
-            "timeout",
-            f"TimeoutError: case exceeded timeout_seconds={timeout_seconds}.",
-            "".join(traceback.format_exception_only(type(exc), exc)),
-        )
-    except BrokenProcessPool as exc:
-        result = _parent_failure_result(
-            case,
-            worker_config,
-            "worker_terminated",
-            "BrokenProcessPool: worker terminated abruptly; possible host OOM or SIGKILL.",
-            "".join(traceback.format_exception(type(exc), exc, exc.__traceback__, limit=8)),
-        )
-    except Exception as exc:
-        traceback_text = traceback.format_exc(limit=8)
-        result = _parent_failure_result(
-            case,
-            worker_config,
-            _failure_kind_from_exception(exc, traceback_text),
-            "".join(traceback.format_exception_only(type(exc), exc)).strip(),
-            traceback_text,
-        )
-    finally:
-        executor.shutdown(wait=shutdown_wait, cancel_futures=not shutdown_wait)
-
-    jsonl_output_path_value = run_config.get("jsonl_output_path")
-    if isinstance(jsonl_output_path_value, str):
-        _append_jsonl_record(Path(jsonl_output_path_value), result)
-    return result
 
 
-# 責務: 単一 worker 割当ぶんのケース列を順番に処理し、case 単位で fresh process を作る。
-def _run_worker_cases_serial(
-    worker_cases: list[dict[str, object]],
+def _run_cases_with_host_scheduler(
+    cases: list[dict[str, object]],
     run_config: Mapping[str, object],
-    worker_config: Mapping[str, object],
+    jsonl_output_path: Path,
     /,
 ) -> list[dict[str, object]]:
-    worker_label = _config_str(worker_config, "worker_label")
-    results: list[dict[str, object]] = []
-    for case in worker_cases:
-        started_at = datetime.now(timezone.utc).isoformat()
-        print(f"[{started_at}] start {worker_label} {_case_label(case)}", flush=True)
-        result = _run_case_in_fresh_process(case, run_config, worker_config)
-        finished_at = datetime.now(timezone.utc).isoformat()
-        status = str(result.get("status", "unknown"))
-        failure_kind = str(result.get("failure_kind", "-"))
-        print(
-            f"[{finished_at}] done  {worker_label} {_case_label(case)} status={status} failure_kind={failure_kind}",
-            flush=True,
-        )
-        results.append(result)
+    platform = _config_str(run_config, "platform")
+    gpu_indices_value = run_config.get("gpu_indices")
+    gpu_indices = [int(gpu_index) for gpu_index in gpu_indices_value] if isinstance(gpu_indices_value, list) else []
+    worker_slots = build_worker_slots(platform, gpu_indices, _config_int(run_config, "workers_per_gpu"))
+    results = run_cases_with_subprocess_scheduler(
+        cases,
+        worker_slots,
+        timeout_seconds=_config_int(run_config, "timeout_seconds"),
+        build_child_command=lambda case, worker_slot: _build_child_command(case, run_config, worker_slot, jsonl_output_path),
+        build_parent_failure_result=_parent_failure_result,
+        fallback_jsonl_output_path=jsonl_output_path,
+        cwd=WORKSPACE_ROOT,
+        on_case_started=_log_case_started,
+        on_case_finished=_log_case_finished,
+    )
+    results.sort(key=lambda result: _result_int(result, "case_id"))
     return results
 
 
-# 責務: 並列 worker 群へケース列を配り、GPU ごとに逐次・ケースごとに fresh process で全結果を集約する。
-def _run_cases_in_parallel(
-    cases: list[dict[str, object]],
-    run_config: Mapping[str, object],
+def _child_main(
+    case_json: str,
+    run_config_json: str,
+    worker_slot_json: str,
+    jsonl_output_path: Path,
     /,
-) -> list[dict[str, object]]:
-    worker_configs = _build_worker_configs(run_config)
-    assignments = _assign_cases_to_workers(cases, worker_configs)
-    all_results: list[dict[str, object]] = []
-    future_to_worker: dict[Future[list[dict[str, object]]], str] = {}
-
-    with ThreadPoolExecutor(max_workers=len(worker_configs), thread_name_prefix="smolyak-runner") as executor:
-        for worker_config in worker_configs:
-            worker_label = _config_str(worker_config, "worker_label")
-            worker_cases = assignments.get(worker_label, [])
-            if not worker_cases:
-                continue
-            future = executor.submit(
-                _run_worker_cases_serial,
-                worker_cases,
-                run_config,
-                worker_config,
-            )
-            future_to_worker[future] = worker_label
-
-        for future in as_completed(future_to_worker.keys()):
-            all_results.extend(future.result())
-
-    all_results.sort(key=lambda result: _result_int(result, "case_id"))
-    return all_results
+) -> None:
+    case = json.loads(case_json)
+    run_config = json.loads(run_config_json)
+    worker_slot = worker_slot_from_mapping(json.loads(worker_slot_json))
+    apply_worker_environment(
+        platform=_config_str(run_config, "platform"),
+        worker_slot=worker_slot,
+        disable_gpu_preallocation=GPU_PREALLOCATION_DISABLED,
+    )
+    result = _run_case_in_child(case, run_config, worker_slot)
+    append_jsonl_record(jsonl_output_path, result)
+    print(f"{CHILD_COMPLETE_PREFIX}{json.dumps(json_compatible(result), ensure_ascii=True)}", flush=True)
 
 
 # 責務: dtype ごとの誤差と実行時間を要約する。
@@ -858,11 +682,10 @@ def run_benchmark(
         "num_accuracy_problems": num_accuracy_problems,
         "coeff_start": coeff_start,
         "coeff_stop": coeff_stop,
-        "jsonl_output_path": str(jsonl_output_path),
     }
     metadata = _experiment_metadata()
     cases = _build_cases(dimensions, levels, dtype_names)
-    results = _run_cases_in_parallel(cases, run_config)
+    results = _run_cases_with_host_scheduler(cases, run_config, jsonl_output_path)
     finished_at = datetime.now(timezone.utc)
 
     return {
@@ -894,13 +717,13 @@ def run_benchmark(
 # 責務: 実験結果を JSON ファイルへ保存する。
 def save_results(results: dict[str, object], output_path: Path, /) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(_json_compatible(results), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    output_path.write_text(json.dumps(json_compatible(results), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Benchmark Smolyak scaling on a dimension/level range.")
-    parser.add_argument("--dimensions", required=True, help="Inclusive integer range start:end[:step] for dimensions.")
-    parser.add_argument("--levels", required=True, help="Inclusive integer range start:end[:step] for levels.")
+    parser.add_argument("--dimensions", help="Inclusive integer range start:end[:step] for dimensions.")
+    parser.add_argument("--levels", help="Inclusive integer range start:end[:step] for levels.")
     parser.add_argument("--platform", choices=["cpu", "gpu"], default="gpu")
     parser.add_argument("--gpu-indices", default=None, help="Comma-separated physical GPU indices. Defaults to all visible GPUs.")
     parser.add_argument("--workers-per-gpu", type=int, default=DEFAULT_WORKERS_PER_GPU)
@@ -911,7 +734,28 @@ def main() -> None:
     parser.add_argument("--coeff-start", type=float, default=DEFAULT_COEFF_START)
     parser.add_argument("--coeff-stop", type=float, default=DEFAULT_COEFF_STOP)
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--child-case-json", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--child-run-config-json", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--child-worker-slot-json", default=None, help=argparse.SUPPRESS)
+    parser.add_argument("--child-jsonl-output", type=Path, default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
+
+    if (
+        args.child_case_json is not None
+        and args.child_run_config_json is not None
+        and args.child_worker_slot_json is not None
+        and args.child_jsonl_output is not None
+    ):
+        _child_main(
+            args.child_case_json,
+            args.child_run_config_json,
+            args.child_worker_slot_json,
+            args.child_jsonl_output,
+        )
+        return
+
+    if args.dimensions is None or args.levels is None:
+        raise ValueError("--dimensions and --levels are required outside child mode.")
 
     if args.num_accuracy_problems < 1:
         raise ValueError("--num-accuracy-problems must be positive.")
