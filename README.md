@@ -2,6 +2,11 @@
 
 Common Python module.
 
+## Notes
+
+- 軽量な実験メモや日記は [notes/README.md](/workspace/notes/README.md) に置きます。
+- 規約や設計の一次情報は引き続き [documents/README.md](/workspace/documents/README.md) を参照します。
+
 ## Development
 
 ```bash

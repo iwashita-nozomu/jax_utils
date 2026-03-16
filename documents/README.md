@@ -29,6 +29,7 @@
 - 実験段階: `neuralnetwork`
 - 保管領域: `solvers/archive`
 - レビュー文書: `./reviews/`
+- 補助メモと日記: `./notes/`
 
 ## 追記ルール
 

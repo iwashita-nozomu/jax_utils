@@ -4,7 +4,7 @@
 
 結果 JSON を載せるブランチ名は `results/functional-smolyak-scaling` を想定しています。
 
-結果メモと branch 対応は [notes/README.md](/workspace/experiments/functional/smolyak_scaling/notes/README.md) に残します。
+結果メモと branch 対応は [notes/README.md](/workspace/notes/README.md) に残します。
 
 ## What It Does
 
