@@ -180,4 +180,4 @@ git push GitHub --all  # 全ブランチを GitHub へプッシュ
 
 ## Related Notes
 
-- [Git Mirroring Knowledge](../knowledge/git_mirroring.md)
+- [Git Mirroring Knowledge](knowledge/git_mirroring.md)
