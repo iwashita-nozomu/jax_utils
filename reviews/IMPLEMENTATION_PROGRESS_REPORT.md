@@ -28,7 +28,7 @@
 ### Fix #1: linearoperator.py の AttributeError
 
 **状態:** ✅ FIXED  
-**ファイル:** [python/jax_util/base/linearoperator.py](python/jax_util/base/linearoperator.py)  
+**ファイル:** [python/jax_util/base/linearoperator.py](../python/jax_util/base/linearoperator.py)  
 **問題:** `jax.Array` に `__name__` 属性がない  
 **箇所:** Lines 79, 82, 85, 102, 106
 
@@ -65,7 +65,7 @@ raise NotImplementedError("This module is not yet implemented")
 ### Improvement #1: hstack_linops の定義明確化
 
 **状態:** ✅ IMPROVED  
-**ファイル:** [python/jax_util/base/linearoperator.py](python/jax_util/base/linearoperator.py)  
+**ファイル:** [python/jax_util/base/linearoperator.py](../python/jax_util/base/linearoperator.py)  
 **内容:**
 
 ```python
@@ -94,7 +94,7 @@ def hstack_linops(ops:List[LinearOperator])->LinearOperator:
 **ファイル:** 3 個
 
 #### 📖 MINRES (Choi–Saunders, 1992)
-**ファイル:** [python/jax_util/solvers/_minres.py](python/jax_util/solvers/_minres.py)
+**ファイル:** [python/jax_util/solvers/_minres.py](../python/jax_util/solvers/_minres.py)
 
 ```python
 """最小残差法（MINRES）ソルバの実装。
@@ -109,7 +109,7 @@ References
 ```
 
 #### 📖 LOBPCG (Knyazev, 2001)
-**ファイル:** [python/jax_util/solvers/lobpcg.py](python/jax_util/solvers/lobpcg.py)
+**ファイル:** [python/jax_util/solvers/lobpcg.py](../python/jax_util/solvers/lobpcg.py)
 
 ```python
 """ブロック局所最適化固有値法（LOBPCG）の実装。
@@ -125,7 +125,7 @@ References
 ```
 
 #### 📖 PDIPM (Mehrotra, 1992)
-**ファイル:** [python/jax_util/optimizers/pdipm.py](python/jax_util/optimizers/pdipm.py)
+**ファイル:** [python/jax_util/optimizers/pdipm.py](../python/jax_util/optimizers/pdipm.py)
 
 ```python
 """Mehrotra型内点法（PDIPM）の実装。

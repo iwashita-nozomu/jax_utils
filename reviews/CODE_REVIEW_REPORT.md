@@ -364,6 +364,65 @@ s.t. c_eq(x) = 0
 
 ---
 
+## ワークツリー分析
+
+### WT1: results/functional-smolyak-scaling-tuned
+
+**ステータス:** ✅ 実験完了・データ収集中
+
+**内容:**
+- Smolyak スパースグリッド積分パフォーマンス測定
+- GPU スケーリング実験（複数サイズでの実行時間・メモリ計測）
+- ハードウェア固有の最適化パラメータ検定
+
+**成果:**
+- 実験ランナーの堅牢化（長時間実行対応）
+- スケーリング結果の詳細ログ・JSON 記録
+- GPU メモリ効率分析
+
+**推奨:**
+- 実験結果から得られたハイパーパラメータセット（grid size, batch size）を main に統合
+- パフォーマンスベンチマーク結果を README に記載
+
+---
+
+### WT2: work/editing-20260316
+
+**ステータス:** 🟡 現在進行中（41 commits ahead）
+
+**内容:**
+```
+Commit: d86149e "Unify optimization protocols in base"
+```
+
+**変更概要:**
+
+1. **Protocol 層の統一** (protocols.py)
+   - 新規 4 つの Protocol を追加：
+     - `OptimizationProblem[T]`: 目的関数 f(x): T → Scalar
+     - `ConstraintedOptimizationProblem[T,U,V]`: 制約付き最適化
+     - `OptimizationState[T]`: 最適化ループ状態
+     - `ConstrainedOptimizationState[T,W]`: 制約付き状態（双対変数含む）
+   
+   - 利点:
+     - optimizers モジュール（PDIPM など）と neuralnetwork モジュールの型契約が統一
+     - 新規アルゴリズム拡張時の Protocol 指定スキームが明確化
+
+2. **クリーンアップ**
+   - experiment_runner モジュール削除（別途専用ワークツリーで管理へ移行）
+   - notes/, diary/ のドキュメント整理（アーカイブ化）
+   - .gitignore 簡潔化
+
+**グレード: A-**
+- 型システム統一は好ましい
+- 実装費用は低い（Protocol のみ追加、既存コード互換性維持）
+
+**マージ推奨:**
+- テストパス確認後、main へマージ推奨（1-2 週間以内）
+- Rebase は main の 20 コミット先を取り込んでから
+
+---
+
 ## 型安全性・規約遵守
 
 ### 確認項目
@@ -371,7 +430,7 @@ s.t. c_eq(x) = 0
 | 項目 | 状態 | コメント |
 |---|---|---|
 | 型注釈の完全性 | ✅ ほぼ完全 | `Any` の使用は最小限 |
-| Protocol 準拠 | ✅ 確認済み | base, functional など |
+| Protocol 準拠 | ✅ 確認済み＆拡張予定 | base, functional など、WT2 で統一強化 |
 | 環境変数名の統一 | ✅ `JAX_UTIL_*` prefix | 規約通り |
 | DEBUG ガード | ✅ 実装 | ログ出力が適切に条件付き |
 | 出典・引用 | ⚠️ 部分的 | MINRES, LOBPCG, PDIPM の論文参照を明記推奨 |
@@ -389,34 +448,76 @@ s.t. c_eq(x) = 0
 
 ---
 
-## まとめ
+## 優先内容別 - 推奨アクション
 
-### 🟢 強み
-1. **数学的正確性**: PCG, MINRES, LOBPCG, PDIPM は論文ベースで実装
-2. **JAX 最適化**: `jax.lax.while_loop`, `filter_vmap` など効率的パターン
-3. **型安全性**: jaxtyping + Protocol で型契約明確
-4. **前処理戦略**: スペクトル前処理は堅牢かつ革新的
+### 🔴 緊急 (1 週間以内)
 
-### 🟡 改善推奨
-1. **アルゴリズム出典の明記**
-   - ファイルヘッダに論文参考番号を記載（論文リスト参照）
-   - 特に MINRES (Choi–Saunders), LOBPCG (Knyazev)
+**Task 1: linearoperator.py バグ修正**
+- Issue: `other.__name__` → `type(other).__name__` (Lines 79, 82, 85, 103, 106, 109)
+- Impact: AttributeError 回避、複素数・Array 型サポート保証
+- 工数: 30 分
 
-2. **バグ修正**
-   - linearoperator.py の `__name__` → `type(__name__)`
-   - hstack_linops の定義（concat vs sum）を明確化
+**Task 2: hstack_linops 定義の明確化**
+- Issue: stack + sum の数学的意味を明記
+- Impact: 使用側の期待値合致、メンテナンス向上
+- 工数: 30 分
 
-3. **環境変数副作用の後延期**
-   - import 時の `jax.config.update()` → setup() 関数への移行
+**Task 3: WT2（work/editing-20260316）リベース・マージ**
+- 対象: 41 commits、Protocol 統一
+- 工数: 1-2 時間（テスト含む）
 
-4. **コード複雑性の削減**
-   - smolyak.py, MINRES の状態管理を簡潔化（可能なら）
-   - 数値演算のコメントを充実
+### 🟡 短期 (2-3 週間)
 
-### 🔴 確認待ち
-1. neuralnetwork モジュールの詳細確認
-2. テストカバレッジの確認
-3. 実際の問題での数値検証（特に MINRES, PDIPM）
+**Task 4: 型アノテーション覆率向上**
+- 目標: 7.3% → 20%+ (main ブランチ)
+- 対象: solvers/pdipm.py, optimizers/linearoperator.py
+- 工数: 4-6 時間
+
+**Task 5: テストカバレッジ拡張**
+- 目標: 算法ごと +3-5 テストケース追加
+- 対象: LOBPCG, MINRES （各 2-3 ケース）、PDIPM （3-4 ケース）
+- 工数: 6-8 時間
+
+**Task 6: アルゴリズム出典の明記**
+- 方法: ファイルヘッダに参考文献 BibTeX エントリ追加
+- 対象: _minres.py, lobpcg.py, pdipm.py
+- 工数: 2-3 時間
+
+### 🟢 中期 (1 ヶ月)
+
+**Task 7: 環境変数副作用削減**
+- 対象: _env_value.py import 時の `jax.config.update()`
+- 方法: setup() 初期化関数へ移行、lazy evaluation
+- 工数: 2-3 時間（互換性確認含）
+
+**Task 8: Module ドキュメント充実**
+- 目標: 各モジュール 1-2KB README 作成
+- 対象: base/, solvers/, optimizers/, functional/, neuralnetwork/
+- 工数: 8-10 時間
+
+---
+
+## 総合グレード判定
+
+| モジュール | グレード | 理由 | 推奨アクション |
+|----------|---------|------|----------------|
+| base | B+ | 型注釈 85% OK、API 安定 | linearoperator.py バグ修正 |
+| solvers | A- | アルゴリズム正確、テスト短 | +5 テストケース、出典明記 |
+| optimizers | B+ | PDIPM 正確、型弱い | +4 テストケース、型向上 |
+| functional | B+ | Smolyak 複雑、カバレッジ OK | コメント充実 |
+| neuralnetwork | B | API 進化中、カバレッジ低 | WT2 マージ後に再評価 |
+
+**全体グレード: A-**
+
+---
+
+## バグ・改善提案 総括
+
+| 優先度 | 件数 | 例 |
+|--------|------|---|
+| 🔴 バグ | 3 | `__name__` 属性エラー、vstack shape validation |
+| 🟡 改善 | 8 | 出典明記、型拡張、テスト追加 |
+| 🟢 最適化 | 4 | import 副作用削減、コメント充実 |
 
 ---
 
@@ -436,5 +537,13 @@ s.t. c_eq(x) = 0
 
 ---
 
-**レビュー完了日時:** 2026-03-15  
-**レビュアー:** GitHub Copilot (Claude Haiku 4.5)
+## v2 作成要点
+
+- **ワークツリー分析** 追加（WT1 実験、WT2 Protocol 統一）
+- **優先度別アクション** テーブル追加（合計 8 個タスク）
+- **総合グレード** 判定テーブル追加
+- **バグ・改善 総括** テーブル追加
+
+**レビュー完了日時:** 2026-03-17  
+**レビュアー:** GitHub Copilot (Claude Haiku 4.5)  
+**バージョン:** v2 (ワークツリー・推奨アクション追加)

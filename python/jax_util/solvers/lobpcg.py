@@ -115,6 +115,7 @@ def _block_preconditioned_rayleigh_ritz(
     # ---- 初期 X を直交化し、射影してからもう一度直交化 ----
     X_base, _ = jnp.linalg.qr(state.X)  # 念のため直交化
     X_proj = projection @ X_base
+    # 反復の土台になる基底なので、trial subspace に入る前に直交性を明示的に回復する。
     X = orthonormalize(X_proj)
 
     AX = Mv @ X      # (n, r)
@@ -166,6 +167,8 @@ def _block_preconditioned_rayleigh_ritz(
         # ---- 2. trial subspace S = [X, W, P] を QR で直交化 ----
         S_raw = jnp.concatenate([Xc, W, Pc], axis=1)   # (n, 3r)
         S_raw = projection @ S_raw
+        # Rayleigh-Ritz はこの小さな部分空間に落として解く。
+        # 先に直交化しておくと、一般化固有値問題ではなく通常の固有値問題にできる。
         S = orthonormalize(S_raw)                     # (n, 3r), S^T S = I
 
         # ---- 3. S 上での Rayleigh–Ritz ----
@@ -220,6 +223,7 @@ def _block_preconditioned_rayleigh_ritz(
         else:
             idx2 = jnp.argsort(lam)
 
+        # trial subspace 上の解の並び替えを、最終的な Ritz ベクトルと探索方向にも揃える。
         lam = lam[idx2]                  # (r,)
         V = V[:, idx2]
 

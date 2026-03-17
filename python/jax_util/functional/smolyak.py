@@ -303,6 +303,8 @@ def multi_indices(dimension: int, max_norm: int, /) -> NDArray[np.int_]:
     if max_norm < dimension:
         return np.empty((0, dimension), dtype=np.int_)
 
+    # `k_1 + ... + k_d <= max_norm, k_i >= 1` を
+    # 累積和の組合せとして数え上げると、行数が `comb(max_norm, dimension)` で決まる。
     num_indices = comb(max_norm, dimension)
     cumulative_sums = np.empty((num_indices, dimension), dtype=np.int_)
 
@@ -397,6 +399,7 @@ def smolyak_grid(
                 assert node_ids is not None
                 node_ids_by_axis.append(node_ids)
         if codec is not None:
+            # canonical ID を経由すると、同一点の統合を浮動小数比較ではなく整数比較で行える。
             point_ids_np, weights_np = _tensor_difference_rule_ids_numpy(node_ids_by_axis, weights_by_axis)
             term_ids.append(point_ids_np)
         else:
@@ -408,6 +411,7 @@ def smolyak_grid(
     if codec is not None:
         assert node_decoder is not None
         all_ids = np.concatenate(term_ids, axis=0)
+        # 各 tensor term の寄与を一度まとめ、同一点に落ちる重みをここで相殺する。
         unique_ids, inverse = np.unique(all_ids, axis=0, return_inverse=True)
         unique_weights = np.zeros(unique_ids.shape[0], dtype=all_weights.dtype)
         np.add.at(unique_weights, inverse, all_weights)
@@ -421,6 +425,7 @@ def smolyak_grid(
         )
     else:
         all_points = np.concatenate(term_points, axis=0)
+        # codec がない rule family では、座標そのものを key にして統合する。
         unique_points, inverse = np.unique(all_points, axis=0, return_inverse=True)
         unique_weights = np.zeros(unique_points.shape[0], dtype=all_weights.dtype)
         np.add.at(unique_weights, inverse, all_weights)
