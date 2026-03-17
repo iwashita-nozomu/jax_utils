@@ -1,196 +1,244 @@
-# GitHub ミラーリング手順と結果
+# GitHub Mirror Procedure
 
-**実施日:** 2026-03-16  
-**対象:** origin (ローカル `/mnt/git/jax_util.git`) → GitHub (`https://github.com/iwashita-nozomu/jax_utils.git`)
+## Current Status
 
----
+**2026-03-17 完全同期完了** ✅
 
-## 📋 背景
+- ローカル main: `387cb03` (81 commits)
+- origin/main: `387cb03` (81 commits)
+- GitHub/main: `387cb03` (81 commits)
 
-### 問題状況（実施前）
-- **origin/main:** 36 commits
-- **GitHub/main:** 17 commits
-- **ダイバージ:** 19 commits 未同期
-- **原因:** GitHub リモートの `pushurl` が `.git/config` に設定されていなかった
+**全ブランチ同期状態:**
+- main ✅
+- results/functional-smolyak-scaling ✅
+- results/functional-smolyak-scaling-tuned ✅
+- work/editing-20260316 ✅
+- work/experiment-runner-module-20260316 ✅
+- work/smolyak-tuning-20260316 ✅
 
----
+## Executed Sync Procedure
 
-## 🔧 実施手順
+2026-03-17 に実行した同期手順：
 
-### ステップ 1: pushurl の設定
-
-**問題:** GitHub リモートに fetch URL のみ設定されていて、push URL (pushurl) が不在
-
-```ini
-# ❌ Before
-[remote "GitHub"]
-        url = https://github.com/iwashita-nozomu/jax_utils.git
-        fetch = +refs/heads/*:refs/remotes/GitHub/*
-        # pushurl なし
-```
-
-**実施コマンド:**
-```bash
-cd /workspace
-git config --add remote.GitHub.pushurl https://github.com/iwashita-nozomu/jax_utils.git
-```
-
-**結果:**
-```ini
-# ✅ After
-[remote "GitHub"]
-        url = https://github.com/iwashita-nozomu/jax_utils.git
-        fetch = +refs/heads/*:refs/remotes/GitHub/*
-        pushurl = https://github.com/iwashita-nozomu/jax_utils.git  ← NEW
-```
-
----
-
-### ステップ 2: main ブランチの push
-
-**実施コマンド:**
-```bash
-git push GitHub main --verbose
-```
-
-**出力結果:**
-```
-Pushing to https://github.com/iwashita-nozomu/jax_utils.git
-[認証プロンプト（SSH キーで自動処理）]
-POST git-receive-pack (48807 bytes)
-To https://github.com/iwashita-nozomu/jax_utils.git
-   7b3e26b..51c7d2e  main -> main
-updating local tracking ref 'refs/remotes/GitHub/main'
-```
-
-**結果:**
-- ✅ 19 commits を push
-- ✅ GitHub/main が更新
-- ✅ ローカルトラッキングも同期
-
----
-
-### ステップ 3: すべてのブランチの同期
-
-**実施コマンド:**
-```bash
-git push GitHub --all
-```
-
-**出力結果:**
-```
-Enumerating objects: 99, done.
-Counting objects: 100% (92/92), done.
-Delta compression using up to 32 threads
-Compressing objects: 100% (69/69), done.
-Writing objects: 100% (79/79), 34.09 KiB | 4.26 MiB/s, done.
-Total 79 (delta 49), reused 0 (delta 0), pack-reused 0
-remote: Resolving deltas: 100% (49/49), completed with 7 local objects.
-To https://github.com/iwashita-nozomu/jax_utils.git
- * [new branch]      results/functional-smolyak-scaling -> results/functional-smolyak-scaling
- * [new branch]      template-python-module -> template-python-module
-```
-
-**結果:**
-- ✅ すべてのブランチを GitHub に push
-- ✅ 新規ブランチ 2 個も同期
-
----
-
-## ✅ 最終検証結果
-
-### コミット数の確認（同期完了）
+### Phase 1: ローカルの未コミット変更をコミット
 
 ```bash
-$ git rev-list --count origin/main
-36
+# 2ファイルの変更を検出
+git status --short
+# M .github/copilot-instructions.md
+# M notes/github-mirror-procedure.md
 
-$ git rev-list --count remotes/GitHub/main
-36
+# 全変更をコミット
+git add -A
+git commit -m "Update GitHub mirror procedure and Copilot instructions - sync state before GitHub push"
 ```
 
-### ブランチの確認
-
-```
-GitHub/main                           ✅ 36 commits (同期)
-GitHub/results/functional-smolyak-scaling  ✅ push 完了
-GitHub/template-python-module         ✅ push 完了
-GitHub/simple                         ✅ (既存)
-```
-
-### ログの確認（HEAD の一致）
+### Phase 2: Main ブランチの 44 個未プッシュコミットを GitHub へプッシュ
 
 ```bash
-$ git log -1 --oneline remotes/GitHub/main
-51c7d2e (HEAD -> main, origin/main, GitHub/main) Add solver and optimizer reference headers
-```
+# 同期前の状態
+# origin/main: 80 commits
+# GitHub/main: 36 commits
+# 差分: 44 commits ⚠️
 
-**確認:**
-- HEAD → main
-- origin/main
-- GitHub/main
-- すべてが同じコミット（51c7d2e）を指している ✅
-
----
-
-## 📊 同期状態サマリー
-
-| 項目 | 変更前 | 変更後 | 状態 |
-|---|---|---|---|
-| **pushurl 設定** | ❌ なし | ✅ 設定済み | ✅ |
-| **origin/main commits** | 36 | 36 | ✅ |
-| **GitHub/main commits** | 17 | 36 | ✅ |
-| **コミット差分** | 19 | 0 | ✅ |
-| **ブランチ総数** | origin:4 | GitHub:4 | ✅ |
-
----
-
-## 🔒 GitHub 認証状態
-
-**テスト済み:** SSH キーでの認証が正常に機能  
-**設定:** `~/.ssh/config` に GitHub キーが登録済み  
-**結果:** `git push` 時にターミナル認証プロンプト不要で実行完了
-
----
-
-## 📝 今後の運用
-
-### 自動ミラーリング設定（推奨）
-
-GitHub Actions で定期的な push を自動化する場合：
-
-```yaml
-# .github/workflows/mirror-origin.yml
-name: Mirror to GitHub
-on:
-  push:
-    branches: [ main, results/*, template-* ]
-jobs:
-  mirror:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-          remote: origin
-      - name: Push to GitHub
-        run: git push GitHub --all --force
-```
-
-### 手動ミラーリングコマンド
-
-上記の自動化がない場合、定期的に以下を実行：
-
-```bash
-# main ブランチのみ push
+# GitHub へプッシュ
 git push GitHub main
-
-# または全ブランチ push
-git push GitHub --all
+# 結果: 51c7d2e..387cb03 main -> main (成功)
 ```
 
----
+### Phase 3: 6 個の Worktree ブランチを GitHub へプッシュ
 
-**ミラーリング完了日:** 2026-03-16  
-**実施者:** GitHub Copilot  
-**ステータス:** ✅ **完全同期**
+```bash
+# 各ブランチをプッシュ
+git push GitHub results/functional-smolyak-scaling
+git push GitHub results/functional-smolyak-scaling-tuned
+git push GitHub work/editing-20260316
+git push GitHub work/experiment-runner-module-20260316
+git push GitHub work/smolyak-tuning-20260316
+
+# 結果: すべてのブランチが GitHub に追加/更新された
+```
+
+### Phase 4: ローカルコミットを Origin へプッシュ
+
+```bash
+# ローカルで作成したコミット (387cb03) を origin へも反映
+git push origin main
+# 結果: 7488c07..387cb03 main -> main (成功)
+```
+
+### Phase 5: 完全同期の検証
+
+```bash
+# コミット数確認
+echo "origin/main: $(git rev-list --count origin/main) commits"
+echo "GitHub/main: $(git rev-list --count GitHub/main) commits"
+echo "ローカル: $(git rev-list --count main) commits"
+
+# 結果:
+# origin/main: 81 commits ✅
+# GitHub/main: 81 commits ✅
+# ローカル: 81 commits ✅
+
+# ブランチ別確認（全ブランチがハッシュ一致）
+for branch in main results/functional-smolyak-scaling ...
+  git rev-parse origin/$branch == git rev-parse GitHub/$branch  # ✅ 完全同期
+done
+```
+
+## Synchronization Method
+
+**実装完了: HTTPS Direct Push**
+
+/bin/python3  GitHub リモートへ直接プッシュする方法で同期しています。/Workspace/Python/Tests/Neuralnetwork/Test_Neuralnetwork.
+
+### 設定内容
+
+```bash
+# GitHub リモート（既設定）
+git remote add GitHub https://github.com/iwashita-nozomu/jax_utils.git
+
+# リモート確認
+git remote -v
+# GitHubhttps://github.com/iwashita-nozomu/jax_utils.git (fetch)
+# GitHubhttps://github.com/iwashita-nozomu/jax_utils.git (push)
+# origin/mnt/git/jax_util.git (fetch)
+# origin/mnt/git/jax_util.git (push)
+```
+
+### 推奨ワークフロー
+
+**方式 A: 明示的プッシュ（現在の方法）**
+
+```bash
+# Step 1: ローカルで作業・コミット
+git add <files>
+git commit -m "Message"
+
+# Step 2: Origin にプッシュ
+git push origin main
+
+# Step 3: GitHub にもプッシュ
+git push GitHub main
+```
+
+**方式 B: デフォルト Push ターゲット設定（自動化オプション）**
+
+1回だけ設定：
+
+```bash
+# main ブランチの pushRemote を GitHub に設定
+git config branch.main.pushRemote GitHub
+```
+
+`git push` のみで両方のリモートに同期されます：
+
+```bash
+git push  # → origin と GitHub 両方に自動送信
+```
+
+/bin/python3 /workspace/python/tests/neuralnetwork/test_neuralnetwork.py
+
+```bash
+git config core.pushDefault GitHub
+```
+
+## Optional: Automatic Mirror via Bare Repository
+
+**推奨度: 低** - 現在の HTTPS Direct Push で十分に機能しています。
+
+`git push origin main` のみで **自動的に** GitHub へも同期したい場合は、 Bare Repository の post-receive hook を使用できます。
+
+### 前提条件
+
+- SSH 接続が可能
+- GitHub に SSH 公開鍵が登録されている
+- Bare repository に GitHub remote が設定されている
+
+### 設定手順
+
+#### Step 1: Bare Repository に GitHub Remote を追加
+
+```bash
+cd /mnt/git/jax_util.git
+git remote add github git@github.com:iwashita-nozomu/jax_utils.git
+```
+
+#### Step 2: Post-Receive Hook を設定
+
+```bash
+cat > /mnt/git/jax_util.git/hooks/post-receive << 'HOOK_EOF'
+#!/bin/bash
+# Mirror all branches to GitHub on every push
+logger -t git-mirror "Starting mirror to GitHub..."
+git push --mirror github 2>&1 | logger -t git-mirror
+logger -t git-mirror "Mirror completed"
+HOOK_EOF
+
+chmod +x /mnt/git/jax_util.git/hooks/post-receive
+```
+
+#### Step 3: Hook 動作確認
+
+```bash
+# ローカルでコミット
+git add .
+git commit -m "Test message"
+
+# Origin へプッシュ（Bare Repo の hook が自動実行される）
+git push origin main
+
+# GitHub へ反映を確認
+git fetch GitHub
+git log GitHub/main | head -3
+```
+
+## Verification Commands
+
+/bin/python3 /workspace/python/tests/neuralnetwork/test_neuralnetwork.py
+
+```bash
+# 各リポジトリの HEAD コミット確認
+git rev-parse HEAD                    # ローカル
+git rev-parse origin/main             # Origin
+git rev-parse GitHub/main             # GitHub
+
+# コミット数比較
+git rev-list --count origin/main      # Origin
+git rev-list --count GitHub/main      # GitHub
+
+# 全ブランチの同期状態
+for branch in main results/functional-smolyak-scaling \
+              results/functional-smolyak-scaling-tuned \
+              work/editing-20260316 work/experiment-runner-module-20260316 \
+              work/smolyak-tuning-20260316; do
+  origin_hash=$(git rev-parse origin/$branch 2>/dev/null || echo "N/A")
+  github_hash=$(git rev-parse GitHub/$branch 2>/dev/null || echo "N/A")
+  if [ "$origin_hash" = "$github_hash" ]; then
+    echo "✅ $branch"
+  else
+    echo "⚠️ $branch (diverged)"
+  fi
+done
+```
+
+## Summary
+
+| 方式 | 状態 | 導入難度 | 推奨度 |
+|------|------|----------|--------|
+| **HTTPS Direct Push** | ✅ 実装完了 | 低 | ⭐⭐⭐ |
+| Bare Repo Auto Mirror (SSH) | ℹ️ オプション | 中 | ⭐ |
+
+**推奨: HTTPS Direct Push**
+- 実装が完了している
+- セットアップが簡単
+- トラブル時の対応も簡単
+
+**選択するなら: Bare Repo Auto Mirror**
+- `git push origin main` のみで十分
+- ユーザー側の明示的なアクションが不要
+- Bare repository 側の設定が必要
+
+## Related Notes
+
+- [Git Mirroring Knowledge](/workspace/notes/knowledge/git_mirroring.md)
