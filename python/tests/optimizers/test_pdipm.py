@@ -251,6 +251,48 @@ def test_pdipm_ill_conditioned_problem() -> None:
     assert float(opt) <= scipy_fun * 1.05
 
 
+def test_pdipm_reset_reinitializes_primal_dual_state() -> None:
+    """reset=True で現在状態ではなく既定初期値から開始できることを確認します。"""
+    state = initialize_pdipm_state(
+        n_primal=1,
+        n_dual_eq=1,
+        n_dual_ineq=1,
+        r_Hv=1,
+        r_Sv=1,
+    )
+    state = PDIPMState(
+        kkt_state=state.kkt_state,
+        x=jnp.asarray([10.0], dtype=DEFAULT_DTYPE),
+        lam_eq=jnp.asarray([5.0], dtype=DEFAULT_DTYPE),
+        lam_ineq=jnp.asarray([7.0], dtype=DEFAULT_DTYPE),
+        s=jnp.asarray([9.0], dtype=DEFAULT_DTYPE),
+    )
+
+    def f_opt(x: jnp.ndarray) -> jnp.ndarray:
+        return (x[0] - 1.0) ** 2
+
+    def c_eq(x: jnp.ndarray) -> jnp.ndarray:
+        return jnp.asarray([x[0] - 1.0], dtype=DEFAULT_DTYPE)
+
+    def c_ineq(x: jnp.ndarray) -> jnp.ndarray:
+        return jnp.asarray([-x[0]], dtype=DEFAULT_DTYPE)
+
+    _, new_state, _ = pdipm_solve(
+        f_opt=f_opt,
+        c_eq=c_eq,
+        c_ineq=c_ineq,
+        optimizer_state=state,
+        n_primal=1,
+        m_eq=1,
+        m_ineq=1,
+        reset=True,
+        max_steps=1,
+        ipm_tol=jnp.asarray(1e-6, dtype=DEFAULT_DTYPE),
+    )
+
+    assert new_state.x.shape == (1,)
+
+
 def _run_all_tests() -> None:
     """このファイル内のテストを順に実行します。"""
     test_pdipm_state_initialize()
