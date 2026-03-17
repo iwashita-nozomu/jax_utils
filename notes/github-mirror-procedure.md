@@ -4,10 +4,8 @@
 
 2026-03-17 時点では、`origin` と GitHub は一致していません。
 
-- `HEAD`
-  - `51887059bb89b38e121d2e8b87f9b7c98583d07f`
-- `origin/main`
-  - `51887059bb89b38e121d2e8b87f9b7c98583d07f`
+- `HEAD` と `origin/main`
+  - 検証時点で一致
 - `GitHub/main`
   - `51c7d2e799c75281327c97186475942da40dfc85`
 
