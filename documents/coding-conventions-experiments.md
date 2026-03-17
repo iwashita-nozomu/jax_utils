@@ -22,9 +22,10 @@
 ## 3. worktree とブランチ
 
 - 長時間実験は、必ず専用の git worktree 上で実行します。
+- worktree の作成と削除の共通ルールは `documents/worktree-lifecycle.md` を参照します。
 - `main` の worktree では、コード編集・文書更新・通常テストのみを行います。
 - 実験用 worktree は、VS Code やホスト OS から見える共有パスに置きます。
-- 既定の配置は `/workspace/.worktrees/<name>` とします。
+- 既定の配置は `./.worktrees/<name>` とします。
 - 実験結果を保存するブランチは `results/<topic>` 形式を原則とします。
 - 実験用 worktree は results ブランチに対応づけ、同じ worktree のまま branch を切り替えて使い回しません。
 - 実験開始前に、`main` と対象の results ブランチの両方を `origin` と同期します。
@@ -84,6 +85,8 @@
 - `./notes/experiments/` のタイトルは日付ではなく実験トピックを主にし、日付は副情報として扱います。
 - 削除した worktree の固有メモは `main` の `./notes/worktrees/` へ残し、worktree 自体を消しても判断の流れを追えるようにします。
 - 日付依存の強い実験ログや途中判断は `main` の `./diary/` に残してよいです。
+- `./notes/experiments/` や `./notes/themes/` から final JSON や図へ張るリンクは、できるだけ相対パスで書きます。
+- 実験用 worktree の一時パスを、`main` 側 Markdown の恒久リンクとして使いません。
 - `./diary/` は日付ファイルへ逐次追記する運用を基本とし、その日の流れが読めるように保ちます。
 - `./diary/` でも、文献に基づく記述は出典を明示し、未確認の仮説は断定しません。
 - `./diary/` も過去日の本文は原則として書き換えず、補足や訂正は同じファイル末尾へ追記して残します。

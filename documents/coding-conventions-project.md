@@ -11,11 +11,13 @@
 
 ## 2. 文書構造
 
+- `documents/README.md` を `documents/` 全体の入口とします。
 - general なコーディング方針は `coding-conventions*.md` と `conventions/` に置きます。
-- base の型・Protocol・共通クラスは `design/base_components.md` に置きます。
+- base の型・Protocol・共通クラスは `design/base_components.md` を正本とします。
 - 安定サブモジュールの API 詳細は `design/apis/` にサブモジュール単位で置きます。
-- 補助資料は `type-aliases.md` などの独立文書として置きます。
+- 補助文書が必要な場合でも、正本は 1 つに定めます。
 - レビュー報告と実装進捗報告は `./reviews/` に置きます。
+- 新規のレビュー文書は `./reviews/` に置き、ファイル名に作成エージェント識別子を含めます。
 - 軽量なメモと実験の考察は `./notes/` に置きます。
 - branch ごとの要約と note 入口は `./notes/branches/` に置きます。
 - topic ごとの知識整理は `./notes/themes/` に置きます。
@@ -34,7 +36,7 @@
 - 既定の実行環境は `docker/Dockerfile` を基準にします。
 - 追加パッケージが必要な場合は、**`docker/Dockerfile` と `docker/requirements.txt` を同時に更新**します。
 - 仮想環境の作成は行いません。`venv` / `virtualenv` / `conda` の導入は対象外です。
-- テストやスクリプトは `PYTHONPATH=/workspace/python` を基本とします。
+- テストやスクリプトは、repo root から `PYTHONPATH=./python` を基本とします。
 - import パスは `jax_util.*` で統一します。
 
 ## 4. サブモジュールの位置づけ
@@ -81,9 +83,10 @@
 ## 8. ブランチ運用
 
 - 実装コードと生成物は、必要に応じてブランチを分けます。
+- worktree の作成、`WORKTREE_SCOPE.md`、削除前の吸い出し、削除条件は `documents/worktree-lifecycle.md` を正本とします。
 - 実験を実行するときは、実験専用の worktree を作ってその worktree 上で動かします。
 - `main` の worktree ではコード編集・文書更新・通常テストのみを行い、長時間走る実験は開始しません。
-- worktree は VS Code やホスト OS から見える共有パスに置くことを原則とし、既定では `/workspace/.worktrees/<name>` を使います。
+- worktree は VS Code やホスト OS から見える共有パスに置くことを原則とし、既定では `./.worktrees/<name>` を使います。
 - 実験コードそのものは `main` に載せてもよいですが、生成された実験結果は専用の results ブランチへ分離することを原則とします。
 - results ブランチ名は `results/<topic>` 形式を原則とし、実験ごとに固有の名前を使います。
 - 実験用 worktree は results ブランチに対応づけ、`main` と同じ worktree のまま branch を切り替えて使い回しません。
@@ -93,3 +96,5 @@
 - 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
 - `main` には再生成可能なコード・文書・最小限の雛形だけを置き、大きな JSON・画像・ログを常設しません。
 - 長く使う branch や results branch は、`./notes/branches/README.md` に登録し、関連 note へ main から一段で辿れるようにします。
+- Markdown 文書中の JSON・画像・補助データへのリンクは、できるだけその文書から見た相対パスで書きます。
+- 絶対パスを Markdown の恒久リンクとして使いません。
