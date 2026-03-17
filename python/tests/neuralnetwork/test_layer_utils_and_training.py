@@ -101,3 +101,17 @@ def test_train_loop_updates_parameters_and_sequential_train_step_is_explicitly_u
     assert not bool(jnp.allclose(before, after))
     with pytest.raises(NotImplementedError, match="experimental"):
         sequential_train_step()
+
+
+def _run_all_tests() -> None:
+    """全テストを実行します。
+    
+    補助的なpython file.py実行時に使用されます。
+    pytest -s python/tests/neuralnetwork/test_layer_utils_and_training.py
+    と同等の実行が可能になります。
+    """
+    pytest.main([__file__, "-v"])
+
+
+if __name__ == "__main__":
+    _run_all_tests()

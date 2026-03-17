@@ -105,3 +105,17 @@ def test_linop_add_and_block_combinators_cover_remaining_branches() -> None:
         ]
     )
     assert jnp.allclose(block_op @ x, jnp.array([5.0, 11.0]))
+
+
+def _run_all_tests() -> None:
+    """全テストを実行します。
+    
+    補助的なpython file.py実行時に使用されます。
+    pytest -s python/tests/base/test_linearoperator_branches.py
+    と同等の実行が可能になります。
+    """
+    pytest.main([__file__, "-v"])
+
+
+if __name__ == "__main__":
+    _run_all_tests()

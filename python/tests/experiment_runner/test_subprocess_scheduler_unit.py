@@ -328,3 +328,17 @@ def test_run_cases_with_subprocess_scheduler_handles_empty_slots_failures_and_ti
 
     lines = [line for line in fallback_output.read_text(encoding="utf-8").splitlines() if line.strip()]
     assert len(lines) == 2
+
+
+def _run_all_tests() -> None:
+    """全テストを実行します。
+    
+    補助的なpython file.py実行時に使用されます。
+    pytest -s python/tests/experiment_runner/test_subprocess_scheduler_unit.py
+    と同等の実行が可能になります。
+    """
+    pytest.main([__file__, "-v"])
+
+
+if __name__ == "__main__":
+    _run_all_tests()

@@ -154,3 +154,17 @@ def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
     assert bool(jnp.all(points >= -0.5))
     assert bool(jnp.all(points <= 0.5))
     assert jnp.allclose(jnp.sum(weights), jnp.asarray(1.0))
+
+
+def _run_all_tests() -> None:
+    """全テストを実行します。
+    
+    補助的なpython file.py実行時に使用されます。
+    pytest -s python/tests/functional/test_protocols_and_smolyak_helpers.py
+    と同等の実行が可能になります。
+    """
+    pytest.main([__file__, "-v"])
+
+
+if __name__ == "__main__":
+    _run_all_tests()

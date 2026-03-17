@@ -65,3 +65,17 @@ def test_reload_env_module_applies_dtype_aliases(
 
     monkeypatch.delenv("JAX_UTIL_DEFAULT_DTYPE", raising=False)
     importlib.reload(env_value)
+
+
+def _run_all_tests() -> None:
+    """全テストを実行します。
+    
+    補助的なpython file.py実行時に使用されます。
+    pytest -s python/tests/base/test_env_value_helpers.py
+    と同等の実行が可能になります。
+    """
+    pytest.main([__file__, "-v"])
+
+
+if __name__ == "__main__":
+    _run_all_tests()

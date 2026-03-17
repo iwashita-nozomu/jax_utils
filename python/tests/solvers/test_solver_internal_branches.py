@@ -189,3 +189,17 @@ def test_kkt_solver_invalid_method_branches_raise_clean_errors() -> None:
             dtype=DEFAULT_DTYPE,
             maxiter=2,
         )
+
+
+def _run_all_tests() -> None:
+    """全テストを実行します。
+    
+    補助的なpython file.py実行時に使用されます。
+    pytest -s python/tests/solvers/test_solver_internal_branches.py
+    と同等の実行が可能になります。
+    """
+    pytest.main([__file__, "-v"])
+
+
+if __name__ == "__main__":
+    _run_all_tests()
