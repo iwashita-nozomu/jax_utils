@@ -1,3 +1,4 @@
+```markdown
 # Experiment Operations
 
 ## 保存
@@ -41,3 +42,16 @@
 - 実験を止めたあと partial を作らずに放置する。
 - final JSON を `main` に持ち帰らず、あとで図を再生成できなくなる。
 - case ordering のせいで比較に必要な dtype がほとんど残らない。
+
+## 2026-03-18: 当日の学び
+
+- ワークツリー運用では `.worktrees/` 配下に複数作業を並行保持できるため、実装作業はワークツリー単位で管理する。
+- experiment-runner の変更（`python/jax_util/experiment_runner/*`）はテストとドキュメントを同時に main に統合する必要がある。
+- コンテナ依存の更新は `docker/requirements.txt` と `docker/Dockerfile` の両方を更新する運用が安全。
+
+:
+```
+git push origin main
+```
+
+```

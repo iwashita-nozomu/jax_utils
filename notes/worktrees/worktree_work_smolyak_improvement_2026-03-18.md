@@ -1,3 +1,4 @@
+```markdown
 # Smolyak Improvement Worktree Reset
 
 ## Context
@@ -30,3 +31,10 @@
 ## Next Step
 
 - corrected `main` から `work/smolyak-improvement-20260318` を切り直し、新しい `WORKTREE_SCOPE.md` を置く
+
+## 2026-03-18: 活動要約
+
+- `main` へ experiment-runner 関連のテスト・ドキュメントを統合
+- ワークツリー運用の見直し（`.worktrees/` の管理）を確認
+
+```
