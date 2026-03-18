@@ -22,11 +22,21 @@
 
 ## Required References Before Editing
 
+- [documents/worktree-lifecycle.md](/workspace/documents/worktree-lifecycle.md)
+- [documents/coding-conventions-project.md](/workspace/documents/coding-conventions-project.md)
 - `documents/...`
 - `notes/...`
 - `reviews/...`
+
+## Required Checks Before Commit
+
+- `pyright`
+- `markdownlint`
+- `pytest ...`
 
 ## Additional Rules
 
 - ここに、この worktree 固有の制約を書きます。
 - 例: テストは触らない、結果 JSON は commit しない、runner だけ変更する、など。
+- 例: `pyright python/tests/experiment_runner` を必ず追加で実行する。
+- 例: 変更した Markdown は `.markdownlint.json` を基準に確認する。

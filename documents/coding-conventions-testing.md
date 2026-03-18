@@ -12,10 +12,13 @@
 - テストは `python/tests/` に集約します。
 - 分類は次の通りです。
   - `python/tests/base/`: 単体テスト（高速）。
+  - `python/tests/functional/`: 積分・汎関数まわりの検証（低〜中コスト）。
   - `python/tests/solvers/`: 数値ソルバの検証（中〜高コスト）。
   - `python/tests/optimizers/`: 最適化アルゴリズムの検証（中〜高コスト）。
   - `python/tests/hlo/`: HLO 関連ユーティリティの検証（低〜中コスト）。
+  - `python/tests/experiment_runner/`: 実験実行補助と subprocess scheduler の検証（低〜中コスト）。
   - `python/tests/neuralnetwork/`: 実験段階の NN 系検証。
+  - `python/tests/logs/`: テスト実行ログ、exit code、考察メモなどの補助資料を置きます。
 - 大規模ケースは `case` や `*_large` の名称で明示します。
 
 ## 3. 実行方法

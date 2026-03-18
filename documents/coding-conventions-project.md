@@ -96,5 +96,7 @@
 - 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
 - `main` には再生成可能なコード・文書・最小限の雛形だけを置き、大きな JSON・画像・ログを常設しません。
 - 長く使う branch や results branch は、`./notes/branches/README.md` に登録し、関連 note へ main から一段で辿れるようにします。
-- Markdown 文書中の JSON・画像・補助データへのリンクは、できるだけその文書から見た相対パスで書きます。
+- リポジトリ内の Markdown は `markdownlint` に準拠させ、repo root の `.markdownlint.json` を既定設定として扱います。
+- Markdown の変更時は、`README.md`, `documents/`, `reviews/`, `notes/` など触れた範囲に対して `markdownlint` を実行してから共有します。
+- Markdown 文書中の JSON・画像・補助データへのリンクは、必ずその文書から見た相対パスで書きます。
 - 絶対パスを Markdown の恒久リンクとして使いません。

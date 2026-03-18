@@ -1,11 +1,11 @@
 # Status: Working Note
-# Created: 2026-03-16
-# Note: この文書は実装改善作業時点の進捗整理であり、現在の実装と完全には一致しない可能性があります。
+## Created: 2026-03-16
+## Note: この文書は実装改善作業時点の進捗整理であり、現在の実装と完全には一致しない可能性があります
 
-# 実装改善・統合報告書
+## 実装改善・統合報告書
 
-**作成日:** 2026-03-16  
-**ステージ:** Final Phase (統合・検証完了)  
+**作成日:** 2026-03-16
+**ステージ:** Final Phase (統合・検証完了)
 **プロジェクト:** `python/jax_util` 全体コードレビュー・改善実装
 
 ---
@@ -25,18 +25,18 @@
 
 ## 🔧 Fixes & Improvements Implemented
 
-### Fix #1: linearoperator.py の AttributeError
+## Fix #1: linearoperator.py の AttributeError
 
-**状態:** ✅ FIXED  
-**ファイル:** [python/jax_util/base/linearoperator.py](python/jax_util/base/linearoperator.py)  
-**問題:** `jax.Array` に `__name__` 属性がない  
+**状態:** ✅ FIXED
+**ファイル:** [python/jax_util/base/linearoperator.py](python/jax_util/base/linearoperator.py)
+**問題:** `jax.Array` に `__name__` 属性がない
 **箇所:** Lines 79, 82, 85, 102, 106
 
 ```python
-# ❌ Before (AttributeError)
+## ❌ Before (AttributeError)
 raise ValueError(f"...{other.__name__}...")
 
-# ✅ After (Fixed)
+## ✅ After (Fixed)
 raise ValueError(f"...Got {other.ndim}D array...")
 ```
 
@@ -44,38 +44,38 @@ raise ValueError(f"...Got {other.ndim}D array...")
 
 ---
 
-### Fix #2: custom_train.py の IndentationError
+## Fix #2: custom_train.py の IndentationError
 
-**状態:** ✅ FIXED  
-**ファイル:** `python/jax_util/neuralnetwork/sequential_train.py`  
-**問題:** 未実装関数の構文エラー  
+**状態:** ✅ FIXED
+**ファイル:** `python/jax_util/neuralnetwork/sequential_train.py`
+**問題:** 未実装関数の構文エラー
 **修正:** `NotImplementedError` で明示的に未実装化
 
 ```python
-# ❌ Before (構文エラー)
+## ❌ Before (構文エラー)
 def new_loss(_param:Params)-> Scalar:
     lower_model = eqx.combine(_param, static)
 
-# ✅ After (修正)
+## ✅ After (修正)
 raise NotImplementedError("This module is not yet implemented")
 ```
 
 ---
 
-### Improvement #1: hstack_linops の定義明確化
+## Improvement #1: hstack_linops の定義明確化
 
-**状態:** ✅ IMPROVED  
-**ファイル:** [python/jax_util/base/linearoperator.py](python/jax_util/base/linearoperator.py)  
+**状態:** ✅ IMPROVED
+**ファイル:** [python/jax_util/base/linearoperator.py](python/jax_util/base/linearoperator.py)
 **内容:**
 
 ```python
 def hstack_linops(ops:List[LinearOperator])->LinearOperator:
     """複数の線形作用素を block-row で加算合成します。
-    
+
     入力は block vector [v1; v2; ...; vn] として解釈され、
     各ブロック vi は ops[i] の入力次元になります。
     出力は共通の u_dim になり、A1@v1 + A2@v2 + ... + An@vn で計算されます。
-    
+
     数学的には:
         [ A1 A2 ... An ] @ [v1; v2; ...; vn] = A1@v1 + A2@v2 + ... + An@vn
     """
@@ -88,12 +88,12 @@ def hstack_linops(ops:List[LinearOperator])->LinearOperator:
 
 ---
 
-### Improvement #2: アルゴリズム出典コメント追加
+## Improvement #2: アルゴリズム出典コメント追加
 
-**状態:** ✅ IMPLEMENTED  
+**状態:** ✅ IMPLEMENTED
 **ファイル:** 3 個
 
-#### 📖 MINRES (Choi–Saunders, 1992)
+### # 📖 MINRES (Choi–Saunders, 1992)
 **ファイル:** [python/jax_util/solvers/_minres.py](python/jax_util/solvers/_minres.py)
 
 ```python
@@ -108,7 +108,7 @@ References
 """
 ```
 
-#### 📖 LOBPCG (Knyazev, 2001)
+### # 📖 LOBPCG (Knyazev, 2001)
 **ファイル:** [python/jax_util/solvers/lobpcg.py](python/jax_util/solvers/lobpcg.py)
 
 ```python
@@ -117,14 +117,14 @@ References
 References
 ----------
 - Knyazev, A. V. (2001).
-  "Toward the optimal preconditioned eigensolver: Locally optimal block 
+  "Toward the optimal preconditioned eigensolver: Locally optimal block
   preconditioned conjugate gradient method."
   SIAM journal on scientific computing, 23(2), 517-541.
   https://epubs.siam.org/doi/abs/10.1137/S1064827500366124
 """
 ```
 
-#### 📖 PDIPM (Mehrotra, 1992)
+### # 📖 PDIPM (Mehrotra, 1992)
 **ファイル:** [python/jax_util/optimizers/pdipm.py](python/jax_util/optimizers/pdipm.py)
 
 ```python
@@ -143,7 +143,7 @@ References
 
 ## 📋 Code Review Summary by Module
 
-### base モジュール (基礎層)
+## base モジュール (基礎層)
 
 | ファイル | 行数 | 状態 | コメント |
 |---|---|---|---|
@@ -153,7 +153,7 @@ References
 | nonlinearoperator.py | 90 | ✅ GOOD | linearize/adjoint正確 |
 | **計** | **342** | **⭐ B+** | 基礎は堅牢、細部改善完了 |
 
-### solvers モジュール (線形ソルバ)
+## solvers モジュール (線形ソルバ)
 
 | ファイル | アルゴリズム | 行数 | 状態 | 数学的正確性 |
 |---|---|---|---|---|
@@ -163,14 +163,14 @@ References
 | kkt_solver.py | KKT ソルバ | 180 | ✅ | ⭐⭐⭐⭐⭐ |
 | **計** | **4 algorithms** | **1062** | **✅✅✅** | **All 5/5** |
 
-### optimizers モジュール (最適化・内点法)
+## optimizers モジュール (最適化・内点法)
 
 | ファイル | アルゴリズム | 行数 | 状態 | 評価 |
 |---|---|---|---|---|
 | pdipm.py | Mehrotra PDIPM | 509 | ✅ | 予測補正型・Inexact Newton法対応 |
 | **計** | **1 algorithm** | **509** | **✅** | ⭐⭐⭐⭐⭐ |
 
-### functional モジュール (関数型インターフェース)
+## functional モジュール (関数型インターフェース)
 
 | ファイル | 機能 | 行数 | 状態 | 評価 |
 |---|---|---|---|---|
@@ -179,7 +179,7 @@ References
 | smolyak.py | スパースグリッド | 200 | 🟡 | 高複雑性だが正確 |
 | **計** | **3 components** | **350** | **✅** | ⭐⭐⭐⭐ |
 
-### neuralnetwork モジュール (ニューラルネット層)
+## neuralnetwork モジュール (ニューラルネット層)
 
 | ファイル | 機能 | 行数 | 状態 | 評価 |
 |---|---|---|---|---|
@@ -190,14 +190,14 @@ References
 | sequential_train.py | カスタム学習 | 136 | ⚠️ | 未実装（明示化済み） |
 | **計** | **5 files** | **566** | **✅** | 主要機能 A, 実験機能 TODO |
 
-### hlo モジュール (HLO 解析補助)
+## hlo モジュール (HLO 解析補助)
 
 | ファイル | 機能 | 行数 | 状態 | 評価 |
 |---|---|---|---|---|
 | dump.py | HLO JSONL 出力 | 95 | ✅ | JAX 内部構造解析用 |
 | **計** | **1 file** | **95** | **✅** | ⭐⭐⭐ (niche use) |
 
-### tests モジュール (テストスイート)
+## tests モジュール (テストスイート)
 
 | テストグループ | ファイル数 | ケース数 | 評価 |
 |---|---|---|---|
@@ -213,7 +213,7 @@ References
 
 ## 📈 Metrics & Scoring
 
-### コード品質スコアボード (9/10 ポイント分布)
+## コード品質スコアボード (9/10 ポイント分布)
 
 ```
 ┌─────────────────────────────────────┐
@@ -228,7 +228,7 @@ References
 └─────────────────────────────────────┘
 ```
 
-### バグ・課題一覧
+## バグ・課題一覧
 
 | ID | 型 | 重要度 | タイトル | 状態 |
 |---|---|---|---|---|
@@ -248,43 +248,43 @@ References
 1. **PCG (Preconditioned Conjugate Gradient)**
    - Boyd, S., & Parikh, N. (2014). "Proximal Algorithms." Found. Trends Optim., 1(3), 127–239.
 
-2. **MINRES (Minimum Residual)**
+1. **MINRES (Minimum Residual)**
    - Choi, S., & Saunders, M. A. (1992). "Solution of sparse indefinite systems..." SIAM J. Numer. Anal., 29(4), 1146–1173.
 
-3. **LOBPCG (Locally Optimal Block Preconditioned CG)**
+1. **LOBPCG (Locally Optimal Block Preconditioned CG)**
    - Knyazev, A. V. (2001). "Toward the optimal preconditioned eigensolver..." SIAM J. Sci. Comput., 23(2), 517–541.
 
-4. **PDIPM (Primal-Dual Interior Point Method)**
+1. **PDIPM (Primal-Dual Interior Point Method)**
    - Mehrotra, S. (1992). "On the implementation of a primal-dual interior point method." SIAM J. Optim., 2(4), 575–601.
    - Wright, S. J. (1997). "Primal-Dual Interior-Point Methods." SIAM, Philadelphia.
 
-5. **Smolyak Sparse Grid**
+1. **Smolyak Sparse Grid**
    - Smolyak, S. (1963). "Quadrature and interpolation formulas for tensor products..." Doklady, 14, 240–243.
 
 ---
 
 ## 🎯 Verification Results
 
-### ✅ Syntax Verification (compileall)
+## ✅ Syntax Verification (compileall)
 
 ```bash
 $ python3 -m compileall -q python/jax_util
 ✅ Syntax check: PASSED
 ```
 
-### ✅ Import Verification
+## ✅ Import Verification
 
 - `from jax_util import *` - OK
 - すべてのモジュール import 成功
 - 循環依存関係: なし
 
-### ✅ JAX Configuration
+## ✅ JAX Configuration
 
 - JAX Config 環境変数が適切に設定
 - JIT コンパイル可能性: 確認
 - Tracer チェック: 正常
 
-### ✅ Type Annotations
+## ✅ Type Annotations
 
 - jaxtyping TypeAlias 定義: 一貫性確認
 - Protocol 準拠: すべてのソルバ・最適化器が実装
@@ -294,63 +294,63 @@ $ python3 -m compileall -q python/jax_util
 
 ## 📋 Phase Breakdown
 
-### Phase 1: Theory Validation (完了)
+## Phase 1: Theory Validation (完了)
 - ✅ 8 つのアルゴリズムの数学的正確性確認
 - ✅ 論文出典の記録
 - ✅ 数値安定性チェック
 
-### Phase 2: Implementation Review (完了)
+## Phase 2: Implementation Review (完了)
 - ✅ 全ソースコード読み込み（2500+ 行）
 - ✅ バグ検出・修正（2 critical, 6 defects）
 - ✅ コード品質スコアリング
 
-### Phase 3: Documentation (完了)
+## Phase 3: Documentation (完了)
 - ✅ アルゴリズム出典コメント追加
 - ✅ hstack_linops 定義明確化
 - ✅ エラーメッセージ改善
 
-### Phase 4: Integration & Testing (完了)
+## Phase 4: Integration & Testing (完了)
 - ✅ 全体構文チェック PASSED
 - ✅ 19 テストファイル確認
 - ✅ 計 55+ テストケース確認
 
-### Phase 5: Reporting (完了)
-- ✅ CODE_REVIEW_REPORT.md
-- ✅ DETAILED_CODE_REVIEW.md
-- ✅ CODE_REVIEW_SUMMARY.md
-- ✅ IMPLEMENTATION_PROGRESS_REPORT.md (本ドキュメント)
+## Phase 5: Reporting (完了)
+- ✅ CODE_REVIEW_REPORT__copilot.md
+- ✅ DETAILED_CODE_REVIEW__copilot.md
+- ✅ CODE_REVIEW_SUMMARY__copilot.md
+- ✅ IMPLEMENTATION_PROGRESS_REPORT__copilot.md (本ドキュメント)
 
 ---
 
 ## 🚀 Recommendations for Future Development
 
-### 優先度: 🔴 HIGH
+## 優先度: 🔴 HIGH
 
 1. **Sequential Train モジュールの完成**
    - 現状: NotImplementedError でプレースホルダー
    - 推奨: layer-wise backprop の完全実装
 
-2. **functional モジュールの統合テスト**
+1. **functional モジュールの統合テスト**
    - 現状: smolyak.py に基本テストのみ
    - 推奨:複雑なスパースグリッド問題でのベンチマーク
 
-### 優先度: 🟡 MEDIUM
+## 優先度: 🟡 MEDIUM
 
-3. **import 副作用の改善**
+1. **import 副作用の改善**
    - 現状: `base/_env_value.py` で JAX Config.update()
    - 推奨: lazy initialization または setup() 関数に移行
 
-4. **ドキュメント生成**
+1. **ドキュメント生成**
    - 現状: inline コメント、API ドキュメント未生成
    - 推奨: Sphinx で自動ドキュメント生成パイプライン構築
 
-### 優先度: 🟢 LOW
+## 優先度: 🟢 LOW
 
-5. **パフォーマンス最適化**
+1. **パフォーマンス最適化**
    - ボトルネック分析（jax.profiler）
    - GPU/TPU でのベンチマーク実行
 
-6. **拡張テスト**
+1. **拡張テスト**
    - 実問題ベンチマーク（portfolio optimization, SDP など）
    - 数値安定性テスト（ill-conditioned 問題）
 
@@ -378,7 +378,7 @@ $ python3 -m compileall -q python/jax_util
 
 ---
 
-**実施者:** GitHub Copilot (Claude Haiku 4.5)  
-**実施日:** 2026-03-16  
-**総検査時間:** ~4-5 時間  
+**実施者:** GitHub Copilot (Claude Haiku 4.5)
+**実施日:** 2026-03-16
+**総検査時間:** ~4-5 時間
 **検査範囲:** 約 2500 行のコード + 19 テストファイル

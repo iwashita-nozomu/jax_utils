@@ -1,0 +1,19 @@
+{
+  "default": true,
+  "MD003": {
+    "style": "consistent"
+  },
+  "MD004": {
+    "style": "consistent"
+  },
+  "MD013": false,
+  "MD029": {
+    "style": "one_or_ordered"
+  },
+  "MD030": {
+    "ul_single": 1,
+    "ul_multi": 1,
+    "ol_single": 1,
+    "ol_multi": 1
+  }
+}

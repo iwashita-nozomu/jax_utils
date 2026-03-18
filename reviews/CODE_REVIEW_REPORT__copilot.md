@@ -1,28 +1,28 @@
 # Status: Working Note
-# Created: 2026-03-15
-# Note: この文書はレビュー時点の所見を保存した成果物であり、現在の実装と完全には一致しない可能性があります。
+## Created: 2026-03-15
+## Note: この文書はレビュー時点の所見を保存した成果物であり、現在の実装と完全には一致しない可能性があります
 
-# コードレビュー報告書
+## コードレビュー報告書
 
-**日時:** 2026-03-15  
-**対象:** `python/jax_util/` 配下の全実装  
+**日時:** 2026-03-15
+**対象:** `python/jax_util/` 配下の全実装
 **方針:** 静的解析、アルゴリズム検証、数理的整合性確認
 
 ---
 
 ## 目次
 1. [基盤モジュール (base)](#基盤モジュール)
-2. [ソルバモジュール (solvers)](#ソルバモジュール)
-3. [最適化モジュール (optimizers)](#最適化モジュール)
-4. [汎関数モジュール (functional)](#汎関数モジュール)
-5. [JAX/Equinox 運用](#jaxequinox-運用)
-6. [まとめ](#まとめ)
+1. [ソルバモジュール (solvers)](#ソルバモジュール)
+1. [最適化モジュール (optimizers)](#最適化モジュール)
+1. [汎関数モジュール (functional)](#汎関数モジュール)
+1. [JAX/Equinox 運用](#jaxequinox-運用)
+1. [まとめ](#まとめ)
 
 ---
 
 ## 基盤モジュール
 
-### 1. protocols.py
+## 1. protocols.py
 
 **評価:** ✅ 良好
 
@@ -41,7 +41,7 @@
 
 ---
 
-### 2. _env_value.py
+## 2. _env_value.py
 
 **評価:** ✅ 基本的に良好、⚠️ 注意点あり
 
@@ -57,20 +57,22 @@
 
 **問題点:**
 1. **🔴 Import 副作用**: Line 56-57 で `jax.config.update()` を呼び出している
+
    ```python
    jax.config.update("jax_enable_x64", _get_bool_env("JAX_UTIL_ENABLE_X64", True))
    ```
+
    - import 時に JAX グローバル状態が変更される
    - テスト隔離やその他モジュールロード順序に依存する可能性
    - **推奨:** lazy initialization または setup 関数への移行
 
-2. **dtype 名のアンダースコア統一:** 
+1. **dtype 名のアンダースコア統一:**
    - `"float16"` と `"f16"` の両方をサポートしているが、統一表記がない
    - 規約文書に明記があるか確認が必要
 
 ---
 
-### 3. linearoperator.py
+## 3. linearoperator.py
 
 **評価:** ⚠️ バグ検出、算術設計に疑問
 
@@ -87,34 +89,40 @@
 
 **問題点:**
 
-1. **🔴 バグ: `__mul__` と `__rmul__` 内の `other.__name__`**  
+1. **🔴 バグ: `__mul__` と `__rmul__` 内の `other.__name__`**
    Lines 79, 82, 85, 103, 106, 109 など複数カ所で:
+
    ```python
    raise ValueError(f"...{other.__name__} is vector.")
    ```
+
    - `jax.Array` には `__name__` 属性がない → AttributeError
    - **修正:** `type(other).__name__` または `other.dtype` などに変更
 
-2. **🟡 `hstack_linops` の設計に疑問**  
+1. **🟡 `hstack_linops` の設計に疑問**
    Line 136:
+
    ```python
    return jnp.sum(jnp.stack(results), axis=0)
    ```
+
    - 水平連結（hstack）なら結果を concatenate すべきでは？
    - stack + sum は **加算合成**を意図？
    - **確認:** コメント不足。数学的定義を明記すべき
 
-3. **🟡 vstack の出力次元計算が Index 参照依存**  
+1. **🟡 vstack の出力次元計算が Index 参照依存**
    Line 158:
+
    ```python
    total_u_dim = sum([op.shape[0] for op in ops])
    ```
+
    - shape が None の場合の処理がない
    - **推奨:** shape 検証を init 段階で行う
 
 ---
 
-### 4. nonlinearoperator.py
+## 4. nonlinearoperator.py
 
 **評価:** ✅ 良好
 
@@ -130,7 +138,7 @@
 
 ## ソルバモジュール
 
-### 1. pcg.py
+## 1. pcg.py
 
 **評価:** ✅ 良好
 
@@ -152,7 +160,7 @@
 
 ---
 
-### 2. _minres.py
+## 2. _minres.py
 
 **評価:** ✅ 数学的に正確、複雑
 
@@ -166,19 +174,21 @@
    - Givens 回転を数値安定に実装
    - ケース分岐（b=0, a=0, 一般）で漏れなく処理
 
-2. **Lanczos 3項漸化:**
+1. **Lanczos 3項漸化:**
+
    ```
    z_{k+1} = p/beta - alpha*z/beta - (beta/beta_prev)*z_prev
    ```
+
    - 実装と式の対応を確認 ✓
 
-3. **MINRES フェーズ:**
+1. **MINRES フェーズ:**
    - Givens 回転で QR を ビルドアップ
    - dbar（検索方向係数）の更新が複雑だが正確
 
 **出典:**
 - Choi–Saunders (1992) "MINRES-QLP: A Krylov Subspace Method for Indefinite or Singular Symmetric Systems"
-- 論文との対応を要確認（仕様書またはコメント):  
+- 論文との対応を要確認（仕様書またはコメント):
   **🟡 現状: コメントに出典論文が明記されていない**
 
 **注意:**
@@ -187,16 +197,18 @@
 
 ---
 
-### 3. kkt_solver.py
+## 3. kkt_solver.py
 
 **評価:** ✅ 基本構造は良好、❌ 前処理の限界あり
 
 **内容:**
 - KKT ブロックシステム：
+
   ```
   [ H   B^T ] [ u ]   [ g ]
   [ B    0  ] [ v ] = [ h ]
   ```
+
 - スペクトル前処理（rank-r LOBPCG ベース）
 - Schur 補完を活用
 
@@ -208,16 +220,18 @@
    - ブロック対角前処理: diag(H^{-1}, S^{-1})
    - **限界:** ブロック非対角成分（coupling）を無視
 
-2. **Tracer 対応:**
+1. **Tracer 対応:**
    - JAX JIT トレース外でのみ自己随伴性・SPD チェック
    - `getattr(jax, "core").Tracer` で判定
    - pyright ignore コメント付き
    - **評価:** 実用的
 
-3. **🟡 コードの簡略化:**
+1. **🟡 コードの簡略化:**
+
    ```python
    Sv = Bv * H_inv_approx * BTv
    ```
+
    - `*` 演算で作用素合成。明確だが演算順序のコメント欲しい
 
 **出典:**
@@ -225,7 +239,7 @@
 
 ---
 
-### 4. lobpcg.py
+## 4. lobpcg.py
 
 **評価:** ✅ 実装は正確、複雑さ高
 
@@ -236,22 +250,26 @@
 **確認:**
 
 1. **trial subspace:**
+
    ```
    S = [X, W, P]  (n, 3r)
    ```
+
    - W = M^{-1} (A*X - X*Λ)（前処理残差）
    - P: 探索方向
    - QR 直交化で S_orth を得る
 
-2. **Rayleigh–Ritz:**
+1. **Rayleigh–Ritz:**
    - 小規模 (3r, 3r) 固有値問題をホスト側で解く
    - 最小 r 本の固有ペアを取得
    - **数学的正確性:** ✓
 
-3. **スペクトル補正前処理:**
+1. **スペクトル補正前処理:**
+
    ```
    M^{-1} = Q (Λ+ε)^{-1} Q^T + (I-QQ^T) M_base^{-1} (I-QQ^T)
    ```
+
    - rank-r 補正 + 補空間前処理
    - 正規化の実装に注意あり
 
@@ -262,7 +280,7 @@
 
 ## 最適化モジュール
 
-### optimizers/pdipm.py
+## optimizers/pdipm.py
 
 **評価:** ✅ Mehrotra 型算法は正確、⚠️ 実装複雑
 
@@ -271,6 +289,7 @@
 - Mehrotra predictor-corrector
 
 **問題定式化:**
+
 ```
 min  f(x)
 s.t. c_eq(x) = 0
@@ -280,32 +299,38 @@ s.t. c_eq(x) = 0
 **確認:**
 
 1. **Hessian の effective:**
+
    ```
    H_eff = H_L + J_ineq^T diag(λ/s) J_ineq
    ```
+
    - 内点法の標準形
    - 二次項が λ/s で weighting される
 
-2. **inexact Newton forcing:**
+1. **inexact Newton forcing:**
+
    ```
    KKT_rtol ~ c * IPM_residual^α
    定義域: [rtol_min, rtol_max]
    ```
+
    - 外部から許容誤差を動的に制御 ✓
    - 理論的根拠は Dembo-Eisenstat-Steihaug か Gratton ら
 
-3. **Mehrotra predictor-corrector:**
+1. **Mehrotra predictor-corrector:**
    - (a) affine predictor: μ_aff = 0
    - (b) centering σ = (μ_aff/μ)^3
    - (c) corrector: r_c に高次補正 (ds_aff ∘ dλ_aff)
    - (d) step lengths: fraction-to-boundary
    - **標準実装:** ✓
 
-4. **🟡 step length 計算:**
+1. **🟡 step length 計算:**
+
    ```python
    alpha_pri = frac_to_boundary(s, ds, tau_fb)
    alpha_dual = frac_to_boundary(lam, dlam_dir, tau_fb)
    ```
+
    - primal/dual で分離した step length
    - Mehrotra 原著の形式に従っている
 
@@ -316,7 +341,7 @@ s.t. c_eq(x) = 0
 
 ## 汎関数モジュール
 
-### functional/
+## functional/
 
 **評価:** ✅ 基本は正確、複雑さ中～高
 
@@ -332,7 +357,7 @@ s.t. c_eq(x) = 0
    - vmap で並列評価、平均化
    - **数学:** 正確
 
-2. **smolyak.py:**
+1. **smolyak.py:**
    - dyadic 分数による hierarchical 構築
    - Clenshaw-Curtis nodes の canonical ID
    - **複雑性:** 高
@@ -342,7 +367,7 @@ s.t. c_eq(x) = 0
 
 ## JAX/Equinox 運用
 
-### 使用パターン
+## 使用パターン
 
 | パターン | モジュール | 評価 |
 |---------|---------|------|
@@ -353,12 +378,12 @@ s.t. c_eq(x) = 0
 | `eqx.filter_vjp` | optimizers | ✅ 正しい |
 | `eqx.filter_vmap` | base linearoperator | ✅ 投影対応 |
 
-### 懸念点
+## 懸念点
 
 1. **🟡 import 時の副作用（_env_value.py）**
    - JIT/eager モード切り替え時に問題の可能性
 
-2. **🟡 Tracer チェックの明示性**
+1. **🟡 Tracer チェックの明示性**
    - `isinstance(..., getattr(jax, "core").Tracer)` は脆弱か？
    - `jax.core.Tracer` への直接アクセスが望ましいが、互換性の都合？
 
@@ -366,7 +391,7 @@ s.t. c_eq(x) = 0
 
 ## 型安全性・規約遵守
 
-### 確認項目
+## 確認項目
 
 | 項目 | 状態 | コメント |
 |---|---|---|
@@ -391,50 +416,50 @@ s.t. c_eq(x) = 0
 
 ## まとめ
 
-### 🟢 強み
+## 🟢 強み
 1. **数学的正確性**: PCG, MINRES, LOBPCG, PDIPM は論文ベースで実装
-2. **JAX 最適化**: `jax.lax.while_loop`, `filter_vmap` など効率的パターン
-3. **型安全性**: jaxtyping + Protocol で型契約明確
-4. **前処理戦略**: スペクトル前処理は堅牢かつ革新的
+1. **JAX 最適化**: `jax.lax.while_loop`, `filter_vmap` など効率的パターン
+1. **型安全性**: jaxtyping + Protocol で型契約明確
+1. **前処理戦略**: スペクトル前処理は堅牢かつ革新的
 
-### 🟡 改善推奨
+## 🟡 改善推奨
 1. **アルゴリズム出典の明記**
    - ファイルヘッダに論文参考番号を記載（論文リスト参照）
    - 特に MINRES (Choi–Saunders), LOBPCG (Knyazev)
 
-2. **バグ修正**
+1. **バグ修正**
    - linearoperator.py の `__name__` → `type(__name__)`
    - hstack_linops の定義（concat vs sum）を明確化
 
-3. **環境変数副作用の後延期**
+1. **環境変数副作用の後延期**
    - import 時の `jax.config.update()` → setup() 関数への移行
 
-4. **コード複雑性の削減**
+1. **コード複雑性の削減**
    - smolyak.py, MINRES の状態管理を簡潔化（可能なら）
    - 数値演算のコメントを充実
 
-### 🔴 確認待ち
+## 🔴 確認待ち
 1. neuralnetwork モジュールの詳細確認
-2. テストカバレッジの確認
-3. 実際の問題での数値検証（特に MINRES, PDIPM）
+1. テストカバレッジの確認
+1. 実際の問題での数値検証（特に MINRES, PDIPM）
 
 ---
 
 ## 参考文献（推奨）
 
-### Solvers
+## Solvers
 - Paige, C. C., & Saunders, M. A. (1975). Solution of sparse indefinite systems of linear equations. SIAM J. Numer. Anal.
 - Choi, S. H., & Saunders, M. A. (1992). MINRES-QLP...
 - Knyazev, A. V. (2001). Toward the optimal preconditioned eigensolver.
 
-### Optimizers
+## Optimizers
 - Mehrotra, S. (1992). On the implementation of a primal-dual interior point method.
 - Boyd, S., & Vandenberghe, L. (2004). Convex Optimization.
 
-### JAX
+## JAX
 - JAX 公式ドキュメント: https://jax.readthedocs.io/
 
 ---
 
-**レビュー完了日時:** 2026-03-15  
+**レビュー完了日時:** 2026-03-15
 **レビュアー:** GitHub Copilot (Claude Haiku 4.5)

@@ -1,7 +1,7 @@
 # テスト修正レビューレポート
 
-**日付:** 2026-03-17  
-**対象:** 修正されたテストファイル（7ファイル）  
+**日付:** 2026-03-17
+**対象:** 修正されたテストファイル（7ファイル）
 **実行者:** GitHub Copilot (Claude Haiku 4.5)
 
 ---
@@ -9,18 +9,18 @@
 ## 📋 レビュー対象ファイル
 
 1. ✅ `python/tests/functional/test_protocols_and_smolyak_helpers.py` (新規作成)
-2. ✅ `python/tests/base/test_linearoperator_branches.py` (新規作成)
-3. ✅ `python/tests/experiment_runner/test_subprocess_scheduler_unit.py` (新規作成)
-4. ✅ `python/tests/base/test_env_value_helpers.py` (新規作成)
-5. ✅ `python/tests/hlo/test_hlo_dump_helpers.py` (新規作成)
-6. ✅ `python/tests/neuralnetwork/test_layer_utils_and_training.py` (新規作成)
-7. ✅ `python/tests/solvers/test_solver_internal_branches.py` (新規作成)
+1. ✅ `python/tests/base/test_linearoperator_branches.py` (新規作成)
+1. ✅ `python/tests/experiment_runner/test_subprocess_scheduler_unit.py` (新規作成)
+1. ✅ `python/tests/base/test_env_value_helpers.py` (新規作成)
+1. ✅ `python/tests/hlo/test_hlo_dump_helpers.py` (新規作成)
+1. ✅ `python/tests/neuralnetwork/test_layer_utils_and_training.py` (新規作成)
+1. ✅ `python/tests/solvers/test_solver_internal_branches.py` (新規作成)
 
 ---
 
 ## 🟢 優秀な実装点
 
-### 1. **基本構成が適切**
+## 1. **基本構成が適切**
 - ✅ `from __future__ import annotations` を全て冒頭に配置
 - ✅ pytest ベースの実装
 - ✅ テスト関数は `test_` で始まる命名（pytest convention）
@@ -28,12 +28,13 @@
 - ✅ 型注釈が充実している
 
 **例）**
+
 ```python
 def test_func_supports_composition_and_pointwise_products() -> None:
 def _custom_nested_rule(level: int) -> tuple[jnp.ndarray, jnp.ndarray]:
 ```
 
-### 2. **構造的カバレッジが充実**
+## 2. **構造的カバレッジが充実**
 各テストファイルは複数の分岐・エッジケースをカバー：
 
 | テスト | カバレッジ内容 | 評価 |
@@ -46,7 +47,8 @@ def _custom_nested_rule(level: int) -> tuple[jnp.ndarray, jnp.ndarray]:
 | `test_solver_internal_branches.py` | ソルバー初期化、投影 | ✅ 充実 |
 | `test_layer_utils_and_training.py` | NN 層、モジュール変換 | ✅ 適切 |
 
-### 3. **エラー処理のテストが充実**
+## 3. **エラー処理のテストが充実**
+
 ```python
 with pytest.raises(ValueError, match="positive"):
     clenshaw_curtis_node_ids(0)
@@ -56,7 +58,8 @@ with pytest.raises(ValueError, match="positive"):
 
 ✅ エラーメッセージの正規表現マッチも検証
 
-### 4. **parametrize の適切な使用**
+## 4. **parametrize の適切な使用**
+
 ```python
 @pytest.mark.parametrize(
     ("raw_value", "default", "expected"),
@@ -72,7 +75,8 @@ def test_get_bool_env_parses_common_spellings(...) -> None:
 
 ✅ 複数のケースを効率的にテスト
 
-### 5. **monkeypatch を活用した隔離**
+## 5. **monkeypatch を活用した隔離**
+
 ```python
 def test_partition_cpu_indices_and_build_worker_slots_cover_edge_cases(
     monkeypatch: pytest.MonkeyPatch,
@@ -87,9 +91,9 @@ def test_partition_cpu_indices_and_build_worker_slots_cover_edge_cases(
 
 ## 🟡 改善が必要な点
 
-### **Critical (即座に対応): `_run_all_tests()` と `if __name__ == "__main__":` 不足**
+## **Critical (即座に対応): `_run_all_tests()` と `if __name__ == "__main__":` 不足**
 
-**テスト規約 Section 3.2 違反：**  
+**テスト規約 Section 3.2 違反：**
 [documents/coding-conventions-testing.md](../documents/coding-conventions-testing.md#32-python-fileによる補助実行)
 
 > 各テストファイルは `_run_all_tests()` を定義し、`if __name__ == "__main__": _run_all_tests()` の形で単体実行できるようにします。
@@ -97,47 +101,46 @@ def test_partition_cpu_indices_and_build_worker_slots_cover_edge_cases(
 **現状：7ファイル全て不実装**
 
 ```python
-# ❌ 現在の状態
+## ❌ 現在の状態
 def test_func_supports_composition_and_pointwise_products() -> None:
     ...
 
-# 最後が定義なし → 単体実行不可
+## 最後が定義なし → 単体実行不可
 ```
 
 **改善案（各ファイルの末尾に追加）：**
 
 ```python
-# ✅ 改善後
+## ✅ 改善後
 
 def _run_all_tests() -> None:
     """全テストを実行します（補助的なpython file.pyでの実行用）。"""
     pytest.main([__file__, "-v"])
 
-
 if __name__ == "__main__":
     _run_all_tests()
 ```
 
-#### 影響を受けるファイル一覧
+### # 影響を受けるファイル一覧
 
 1. `test_protocols_and_smolyak_helpers.py`
-2. `test_linearoperator_branches.py`
-3. `test_subprocess_scheduler_unit.py`
-4. `test_env_value_helpers.py`
-5. `test_hlo_dump_helpers.py`
-6. `test_layer_utils_and_training.py`
-7. `test_solver_internal_branches.py`
+1. `test_linearoperator_branches.py`
+1. `test_subprocess_scheduler_unit.py`
+1. `test_env_value_helpers.py`
+1. `test_hlo_dump_helpers.py`
+1. `test_layer_utils_and_training.py`
+1. `test_solver_internal_branches.py`
 
 **修正優先度:** 🔴 **High** - 規約要件
 
 ---
 
-### **Medium (推奨): テスト標準出力ログの形式化**
+## **Medium (推奨): テスト標準出力ログの形式化**
 
-**テスト規約 Section 4.1 推奨：**  
+**テスト規約 Section 4.1 推奨：**
 大規模テスト・数値検証テストは、結果を JSON で標準出力に出力
 
-**現状：**  
+**現状：**
 ほとんどのテストで標準出力ログなし（`pytest.main()` の `-s` フラグ使用時に出力なし）
 
 **改善案：**
@@ -149,7 +152,7 @@ import json
 
 def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
     points, weights = smolyak_grid(2, 2, rule=_custom_nested_rule)
-    
+
     # JSON ログ出力
     log_entry = {
         "case": "smolyak_grid_2d_level2",
@@ -160,7 +163,7 @@ def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
         "rel_err": float(jnp.abs(jnp.sum(weights) - 1.0)),
     }
     print(json.dumps(log_entry), flush=True)
-    
+
     assert jnp.allclose(jnp.sum(weights), jnp.asarray(1.0))
 ```
 
@@ -172,7 +175,7 @@ def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
 
 ---
 
-### **Low (検討): fixture 設定の検証**
+## **Low (検討): fixture 設定の検証**
 
 **現状：** 複数ファイルで `monkeypatch` fixture を使用
 
@@ -181,7 +184,7 @@ def test_...(monkeypatch: pytest.MonkeyPatch) -> None:
 ```
 
 **確認項目：**
-- ✅ `pytest` がインストール済みか  
+- ✅ `pytest` がインストール済みか
 - ✅ `conftest.py` で fixture が定義されているか（確認不要 - pytest 標準提供）
 
 **評価:** ✅ 問題なし
@@ -208,26 +211,25 @@ def test_...(monkeypatch: pytest.MonkeyPatch) -> None:
 
 ## 🔧 修正方法
 
-### 修正 1: `_run_all_tests()` と主ブロック追加（全7ファイル）
+## 修正 1: `_run_all_tests()` と主ブロック追加（全7ファイル）
 
 各ファイルの末尾に以下を追加：
 
 ```python
 def _run_all_tests() -> None:
     """全テストを実行します。
-    
+
     補助的なpython file.py実行時に使用されます。
     pytest -s python/tests/functional/test_protocols_and_smolyak_helpers.py
     と同等の実行が可能になります。
     """
     pytest.main([__file__, "-v"])
 
-
 if __name__ == "__main__":
     _run_all_tests()
 ```
 
-**影響:** 
+**影響:**
 - `python python/tests/functional/test_protocols_and_smolyak_helpers.py` が実行可能に
 - pytest 標準の一括実行 `pytest -s` は変わらず
 
@@ -248,7 +250,7 @@ if __name__ == "__main__":
 
 ## ✅ 次のステップ
 
-### Phase 1（即座・Critical）
+## Phase 1（即座・Critical）
 - [x] 全7ファイルに `_run_all_tests()` と `if __name__ == "__main__":` を追加 **完了**
 - [x] 各ファイルで `python file.py` での実行を確認 **完了**
   - ✅ `test_protocols_and_smolyak_helpers.py` - 6 passed
@@ -257,11 +259,11 @@ if __name__ == "__main__":
   - ✅ `test_hlo_dump_helpers.py` - 2 passed
   - ✅ すべて単体実行可能
 
-### Phase 2（推奨・Medium）
+## Phase 2（推奨・Medium）
 - [ ] 数値検証テストに JSON ログ出力を追加
 - [ ] `pytest -q -s` で実行し、標準出力を確認
 
-### Phase 3（オプション・Low）
+## Phase 3（オプション・Low）
 - [ ] 既存テストとの並行実行に不具合がないことを確認
 - [ ] CI/CD パイプラインで自動実行を検証
 
@@ -269,24 +271,24 @@ if __name__ == "__main__":
 
 ## 📝 指摘サマリー
 
-### 良好な点（Strengths）
+## 良好な点（Strengths）
 1. ✅ 構造的に堅固で読みやすい
-2. ✅ 複数の分岐・エッジケースをカバー
-3. ✅ エラーメッセージの検証も含む
-4. ✅ fixture とパラメータ化を活用
+1. ✅ 複数の分岐・エッジケースをカバー
+1. ✅ エラーメッセージの検証も含む
+1. ✅ fixture とパラメータ化を活用
 
-### 改善が必要な点（Gaps）
+## 改善が必要な点（Gaps）
 1. 🟡 `_run_all_tests()` と `if __name__ == "__main__":` 欠落 **（規約違反）**
-2. 🟡 JSON 標準出力ログが不足（大規模テスト向け）
-3. 🟡 テスト実行の操作性が低い（python file.py 実行不可）
+1. 🟡 JSON 標準出力ログが不足（大規模テスト向け）
+1. 🟡 テスト実行の操作性が低い（python file.py 実行不可）
 
-### 修正による効果
+## 修正による効果
 - 規約完全準拠
 - 開発時にテストを単体実行可能
 - CI オートメーション準備完了
 
 ---
 
-**レビュー完了:** 2026-03-17 18:00  
+**レビュー完了:** 2026-03-17 18:00
 **推奨対応:** `_run_all_tests()` 追加を優先してください（15 分）
 
