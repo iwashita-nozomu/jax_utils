@@ -20,6 +20,12 @@ from .gpu_runner import (
     StandardGPUScheduler,
     visible_gpu_ids_from_environment,
 )
+from .subprocess_scheduler import (
+    WorkerSlot,
+    build_worker_slots,
+    json_compatible,
+    run_cases_with_subprocess_scheduler,
+)
 
 __all__ = [
     "ResourceCapacity",
@@ -38,4 +44,8 @@ __all__ = [
     "visible_gpu_ids_from_environment",
     "WORKER_PROTOCOL_ERROR_EXIT_CODE",
     "Worker",
+    "WorkerSlot",
+    "build_worker_slots",
+    "json_compatible",
+    "run_cases_with_subprocess_scheduler",
 ]
