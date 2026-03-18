@@ -28,6 +28,11 @@
 - `notes/...`
 - `reviews/...`
 
+## Main Carry-Over Targets
+
+- `notes/...`
+- `notes/worktrees/...`
+
 ## Required Checks Before Commit
 
 - `pyright`

@@ -17,6 +17,12 @@
 
 設計や規約の一次情報は引き続き `documents/` に置き、`notes/` は補助的な記録として使います。
 
+## Main Carry-Over Rule
+
+- `main` に残したい要約・観測・判断のうち、規約・レビュー・実コードに属さないものは `notes/` に置きます。
+- worktree を削除する前に、残すべき `notes/` は `main` に commit 済み、または `main` に merge 済みでなければなりません。
+- `results/*` branch に raw 結果を残す場合でも、`main` から辿るための report や extraction note は `notes/` 側へ持ち帰ります。
+
 ## Format
 
 - `notes/` の文書は Markdown で書きます。

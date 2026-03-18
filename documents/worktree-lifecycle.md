@@ -35,6 +35,7 @@
   - 変更してよいディレクトリ
   - 原則変更しないディレクトリ
   - 参照必須の文書
+  - `main` に持ち帰る予定の `notes/` の置き場
   - その worktree 固有の追加ルール
 - テンプレートは [WORKTREE_SCOPE_TEMPLATE.md](/workspace/documents/WORKTREE_SCOPE_TEMPLATE.md) を使う
 
@@ -52,15 +53,18 @@
 - 日付依存の作業ログは `main` の `diary/` へ残す
 - 実験ごとの考察は `notes/experiments/` に置く
 - worktree 固有の判断は `notes/worktrees/` に置く
+- `main` に残したい要約・観測・判断のうち、規約・レビュー・実コードに属さないものは `notes/` に置く
 - 複数 branch から得た一般化知見は `notes/themes/` に整理する
 - 後から図や集計を再生成したい実験は、最低限の final JSON を `notes/experiments/results/` に持ち帰る
 - 巨大な raw JSONL、HTML、SVG、ログは原則として results branch に残し、`main` へ常設しない
 - `main` の note から raw 結果を参照するときは、本文の核心をリンク先へ逃がさず、必要最小限の JSON と要約を `main` 側にも残す
 - 最新の結果は必ずmainに持ち帰る。ファイルサイズは気にしない
+- worktree を削除する前に、残すべき `notes/` は `main` 側へ commit 済み、または `main` に merge 済みでなければならない
 
 ## 7. worktree を閉じる前のチェック
 
 - その worktree で得た知見を `notes/` のどこへ残すか決めたか
+- `main` に残すべき要約・観測・判断を `notes/` へ反映したか
 - `diary/` に残すべき日付依存ログを分けたか
 - `notes/experiments/results/` に持ち帰る final JSON を選んだか
 - raw 結果を results branch に残すか、不要として捨てるかを決めたか
@@ -70,6 +74,7 @@
 
 - worktree を消す前に、その worktree に残っている知見を `main` へ吸い出す
 - 吸い出し先は `notes/worktrees/` を原則とする
+- 吸い出した `notes/` は、worktree 側だけで終わらせず `main` に commit または merge してから削除へ進む
 - 最低限、次を残す
   - branch 名
   - worktree の用途
@@ -85,6 +90,7 @@
 - 変更が branch に残っている
   - commit / push 済み、または残さないと判断済み
 - `main` 側に残すべき note や最小限の JSON が整理済み
+- `main` に残すべき `notes/` が `main` から実際に参照できる
 - その worktree 固有の制約や判断が `notes/worktrees/` などから追える
 
 ## 10. 削除後
