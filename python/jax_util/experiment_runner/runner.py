@@ -63,6 +63,11 @@ class StandardScheduler(Generic[T]):
     def resource_capacity(self) -> StandardResourceCapacity:
         return self._resource_capacity
 
+    def _build_context(self, case: T) -> TaskContext:
+        if self._context_builder is None:
+            return {}
+        return dict(self._context_builder(case))
+
     def next_case(self) -> tuple[T, TaskContext] | None:
         # 待機中のケースから FIFO 順で次のケースを取り出します。
         # context_builder が指定されている場合は context を生成し、
@@ -70,9 +75,7 @@ class StandardScheduler(Generic[T]):
         # 待機中のケースがなくなったときだけ None を返します。
         if self._pending_cases:
             case = self._pending_cases.pop(0)
-            if self._context_builder is None:
-                return case, {}
-            return case, self._context_builder(case)
+            return case, self._build_context(case)
         return None
 
     def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:

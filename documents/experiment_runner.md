@@ -65,4 +65,5 @@
 
 - resource-aware な順序最適化は scheduler 側へ追加します。
 - GPU 固有差分が必要になっても、runner を増やすのではなく scheduler と resource 表現で吸収する方針です。
+- [gpu_runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/gpu_runner.py) には、環境から GPU 一覧を読み取り、1 プロセス 1 GPU を仮定する `GPUResourceCapacity` と `StandardGPUScheduler` を置きます。
 - `ResourceEstimate` を本格利用する scheduler は別ファイルで追加してよいです。
