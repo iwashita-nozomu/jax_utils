@@ -35,3 +35,15 @@
 - raw 結果と実験スクリプトも `main` に取り込み、results branch 側にも保持する
 - `python/jax_util/functional/smolyak.py` は merge conflict を解消し、実験 branch の plan 実装と `main` の helper API を統合した
 - 上記を確認したうえで、`/workspace/.worktrees/results-functional-smolyak-scaling-tuned` は削除してよい
+
+## Correction
+
+Correction (2026-03-18):
+
+- 上の「helper API を統合した」という判断は誤りだった
+- `main` に載せるべきだったのは、`results/functional-smolyak-scaling-tuned` branch の Smolyak module そのものだった
+- そのため、後続の修正で `python/jax_util/functional/smolyak.py` と `python/jax_util/functional/__init__.py` は results branch の内容へ戻し、統合時にだけ増えた helper test は `main` から外した
+
+Interpretation:
+
+- Smolyak 本体は experiment branch で確認された単位で `main` に持ち帰り、その後の改造は新しい worktree で改めて行う方が履歴も責務も明確だった

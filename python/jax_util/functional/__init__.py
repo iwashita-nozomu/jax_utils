@@ -11,9 +11,6 @@ from .smolyak import (
     difference_rule,
     initialize_smolyak_integrator,
     multi_indices,
-    smolyak_grid,
-    smolyak_integral,
-    trapezoidal_rule,
 )
 from .protocols import Func, Function, Functional, Integrator
 
@@ -31,8 +28,5 @@ __all__ = [
     "difference_rule",
     "initialize_smolyak_integrator",
     "multi_indices",
-    "smolyak_grid",
-    "smolyak_integral",
-    "trapezoidal_rule",
     "integrate",
 ]
