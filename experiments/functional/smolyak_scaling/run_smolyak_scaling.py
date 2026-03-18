@@ -156,9 +156,9 @@ def _build_cases(
 ) -> list[dict[str, object]]:
     cases: list[dict[str, object]] = []
     case_id = 0
-    for dtype_name in dtype_names:
+    for dimension in dimensions:
         for level in levels:
-            for dimension in dimensions:
+            for dtype_name in dtype_names:
                 cases.append({
                     "case_id": case_id,
                     "dimension": dimension,
