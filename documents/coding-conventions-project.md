@@ -7,13 +7,14 @@
 
 - 対象は `/workspace` 配下の全体構成です。
 - 安定サブモジュールは `base` / `solvers` / `optimizers` / `hlo` とします。
-- `neuralnetwork` は実験段階、`solvers/archive` は保管領域として扱います。
+- `neuralnetwork` と `experiment_runner` は実験段階、`solvers/archive` は保管領域として扱います。
 
 ## 2. 文書構造
 
 - general なコーディング方針は `coding-conventions*.md` と `conventions/` に置きます。
 - base の型・Protocol・共通クラスは `design/base_components.md` に置きます。
 - 安定サブモジュールの API 詳細は `design/apis/` にサブモジュール単位で置きます。
+- 実験段階モジュールの設計補足は `documents/<module>.md` の独立文書として置きます。
 - 補助資料は `type-aliases.md` などの独立文書として置きます。
 - レビュー報告と実装進捗報告は `./reviews/` に置きます。
 - 軽量なメモと実験の考察は `./notes/` に置きます。
@@ -40,6 +41,7 @@
 | `python/jax_util/optimizers` | 安定 | `solvers` を利用する最適化アルゴリズム。 |
 | `python/jax_util/hlo` | 安定 | HLO ダンプと解析補助。 |
 | `python/jax_util/neuralnetwork` | 実験段階 | forward / train の整理中。 |
+| `python/jax_util/experiment_runner` | 実験段階 | host/child 実行、worker slot 管理、途中結果保存の共通部。 |
 | `python/jax_util/solvers/archive` | 保管 | 現在使わないアルゴリズムの退避先。 |
 | `python/tests` | 安定 | 検証とログ出力。 |
 | `scripts` | 安定 | テスト・ログ・依存解析の補助。 |

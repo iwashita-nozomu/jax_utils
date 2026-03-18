@@ -26,7 +26,9 @@
 ## 現在の扱い
 
 - 安定サブモジュール: `base` / `solvers` / `optimizers` / `hlo`
-- 実験段階: `neuralnetwork`
+- 実験段階: `neuralnetwork` / `experiment_runner`
+- 実験段階の設計補足: `experiment_runner.md`
+- 実験段階の補助文書: `experiment_runner_exit_codes.md`
 - 保管領域: `solvers/archive`
 - レビュー文書: `./reviews/`
 - 補助メモ: `./notes/`
@@ -37,5 +39,5 @@
 - general な規約を足すときは `documents/conventions/common/` または `documents/conventions/python/` に追記します。
 - base の型・クラス・Protocol を整理するときは `documents/design/base_components.md` を更新します。
 - 安定 API の設計を足すときは `documents/design/apis/` にサブモジュール単位で追記します。
-- 実験段階の設計は、安定 API 文書へ混ぜず、独立した補足として扱います。
+- 実験段階の設計は、安定 API 文書へ混ぜず、`documents/<module>.md` の独立文書として扱います。
 - 文書は参照の連鎖で読ませず、できるだけそのファイル単体で読めるように保ちます。
