@@ -36,6 +36,7 @@
 ## Notes
 
 - [worktree_results_smolyak_scaling_tuned_2026-03-18.md](/workspace/notes/worktrees/worktree_results_smolyak_scaling_tuned_2026-03-18.md)
+- [worktree_work_editing_2026-03-18.md](/workspace/notes/worktrees/worktree_work_editing_2026-03-18.md)
 
 ## Source And Idea Marking
 
