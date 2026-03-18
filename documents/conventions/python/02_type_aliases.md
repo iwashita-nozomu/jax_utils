@@ -23,3 +23,7 @@
 - バッチ軸（`axis=-1`）などの共通定義は `documents/coding-conventions-project.md` の **5.2** に集約します。
 - `neuralnetwork` 固有の型（例: `Params`）は `python/jax_util/neuralnetwork/protocols.py` に置きます。
 - `LinOp` はバッチ対応を明示するため、`Matrix` へ作用できる設計とします。
+- 最適化の契約は、型エイリアスだけで閉じず、対応する `Protocol` 名にも空間を明示します。
+  - `Vector` を変数に持つ契約: `VectorOptimizationProblem`
+  - `PyTree[Array]` を変数に持つ契約: `PyTreeOptimizationProblem`
+  - `Function` を変数に持つ契約: `FunctionalOptimizationProblem`

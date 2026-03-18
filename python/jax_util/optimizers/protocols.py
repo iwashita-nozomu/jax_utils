@@ -1,40 +1,44 @@
 from __future__ import annotations
 
 from ..base import (
-    ScalarFn,
-    VectorFn,
+    ConstrainedOptimizationProblem,
+    ConstrainedOptimizationState,
     Vector,
+    OptimizationProblem,
+    OptimizationState,
 )
 from typing import Protocol
 
-class OptimizeProblem(Protocol):
-    objective:ScalarFn #min f
+
+class VectorOptimizationProblem(OptimizationProblem[Vector], Protocol):
     variable_dim: int
+    ...
 
-class OptimizeProblemWithConstraint(OptimizeProblem, Protocol):
-    # objective:ScalarFn #min f
-    constraint_eq : VectorFn #c_eq==0
-    constraint_ineq : VectorFn #c_ineq<=0
 
-    # variable_dim: int
+class ConstrainedVectorOptimizationProblem(
+    ConstrainedOptimizationProblem[Vector, Vector, Vector],
+    VectorOptimizationProblem,
+    Protocol,
+):
     constraint_eq_dim: int
     constraint_ineq_dim: int
+    ...
 
 
-class OptimizeProblemState(Protocol):
-    x : Vector
+class VectorOptimizationState(OptimizationState[Vector], Protocol):
+    ...
 
-class OptimizeProblemStateWithConstraint(OptimizeProblemState, Protocol):
-    # x : Vector
 
-    lam_eq : Vector
-    lam_ineq : Vector
-    slack : Vector
+class ConstrainedVectorOptimizationState(
+    ConstrainedOptimizationState[Vector, Vector],
+    VectorOptimizationState,
+    Protocol,
+):
+    ...
 
 __all__ = [
-    "OptimizeProblem",
-    "OptimizeProblemState",
-    "OptimizeProblemWithConstraint",
-    "OptimizeProblemStateWithConstraint",
-    
+    "VectorOptimizationProblem",
+    "VectorOptimizationState",
+    "ConstrainedVectorOptimizationProblem",
+    "ConstrainedVectorOptimizationState",
 ]

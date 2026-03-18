@@ -62,6 +62,8 @@
 - `Scalar` / `Vector` / `Matrix` を優先します。
 - `Matrix` は `(n, batch)` を原則とします。
 - 線形作用素の適用は `@`、合成は `*` を原則とします。
+- 最適化の `Protocol` 名は、汎用契約を `OptimizationProblem` / `ConstrainedOptimizationProblem` に置き、空間特殊化は `VectorOptimizationProblem` / `PyTreeOptimizationProblem` / `FunctionalOptimizationProblem` 系で統一します。
+- `WithConstraint` 系や `OptimizeProblem` 系の旧命名を新規導入しません。
 - 反復は `jax.lax.scan` / `jax.lax.while_loop` / `jax.lax.fori_loop` を優先します。
 - ログ出力は `DEBUG` ガードの内側でのみ行います。
 

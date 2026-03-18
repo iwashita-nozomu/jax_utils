@@ -17,6 +17,8 @@
 ### 2. 最低限の設計方針
 
 - `protocols.py` は契約だけを定義します。
+- 最適化関連の契約名は `PyTreeOptimizationProblem` / `PyTreeOptimizationState` / `ConstrainedPyTreeOptimizationProblem` 系で統一します。
+- `OptimizeProblemPytree` のような旧名や綴りゆれを新規導入しません。
 - `neuralnetwork.py` は forward とファクトリをまとめます。
 - `train.py` は最小の学習ループに限定します。
 - 実験コードは公開 API と分離します。

@@ -99,8 +99,22 @@ def test_train_loop_updates_parameters_and_sequential_train_step_is_explicitly_u
     after = jnp.concatenate([leaf.reshape(-1) for leaf in jax.tree_util.tree_leaves(new_params)])
 
     assert not bool(jnp.allclose(before, after))
-    with pytest.raises(NotImplementedError, match="experimental"):
-        sequential_train_step()
+
+    class DummyObjective(eqx.Module):
+        objective: object = eqx.field(static=True)
+
+    def squared_tree_norm(value: object) -> jnp.ndarray:
+        leaves = jax.tree_util.tree_leaves(value)
+        return sum(jnp.sum(jnp.square(leaf)) for leaf in leaves)
+
+    objective = DummyObjective(objective=squared_tree_norm)
+    with pytest.raises(NotImplementedError, match="experimental sequential training path is not implemented"):
+        sequential_train_step(
+            model=model,
+            trainers=(),
+            x=x,
+            optim=objective,
+        )
 
 
 def _run_all_tests() -> None:

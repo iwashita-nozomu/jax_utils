@@ -11,6 +11,7 @@ Reviewed date: 2026-03-18
 Reviewed main commit: `41d3a53`
 
 Reviewed worktrees:
+
 - `/workspace` (`main`)
 - `/workspace/.worktrees/results-functional-smolyak-scaling-tuned`
 - `/workspace/.worktrees/work-editing-20260316`
@@ -18,6 +19,7 @@ Reviewed worktrees:
 - `/workspace/.worktrees/work-jaxutil-test-expansion-20260317`
 
 Scope:
+
 - コードは変更せず、文書だけを先に整える
 - 規約文書、レビュー文書、テスト文書の整合性を確認する
 - 意思決定が必要な点は authoritative な規約へ反映せず、保留事項として書き出す

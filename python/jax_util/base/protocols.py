@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 from typing import (
-    Protocol,
-    runtime_checkable,
-    TypeAlias,
-    overload,
-    Tuple,
     Any,
+    Callable,
     Dict,
+    Protocol,
+    Tuple,
+    TypeAlias,
+    TypeVar,
+    overload,
+    runtime_checkable,
 )
 
 from jaxtyping import Array, Float,  Bool, Int
@@ -73,6 +75,41 @@ class VectorFn(Protocol):
     ...
 
 
+VariableT = TypeVar("VariableT")
+EqualityResidualT = TypeVar("EqualityResidualT")
+InequalityResidualT = TypeVar("InequalityResidualT")
+DualT = TypeVar("DualT")
+
+
+class OptimizationProblem(Protocol[VariableT]):
+    objective: Callable[[VariableT], Scalar]
+    ...
+
+
+class ConstrainedOptimizationProblem(
+    OptimizationProblem[VariableT],
+    Protocol[VariableT, EqualityResidualT, InequalityResidualT],
+):
+    constraint_eq: Callable[[VariableT], EqualityResidualT]
+    constraint_ineq: Callable[[VariableT], InequalityResidualT]
+    ...
+
+
+class OptimizationState(Protocol[VariableT]):
+    x: VariableT
+    ...
+
+
+class ConstrainedOptimizationState(
+    OptimizationState[VariableT],
+    Protocol[VariableT, DualT],
+):
+    lam_eq: DualT
+    lam_ineq: DualT
+    slack: VariableT
+    ...
+
+
 
 __all__ = [
     "Operator",
@@ -85,4 +122,8 @@ __all__ = [
     "SolverLike",
     "ScalarFn",
     "VectorFn",
+    "OptimizationProblem",
+    "ConstrainedOptimizationProblem",
+    "OptimizationState",
+    "ConstrainedOptimizationState",
 ]

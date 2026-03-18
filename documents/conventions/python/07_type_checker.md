@@ -18,6 +18,9 @@
 - 実験段階やテストで `pyright` エラーが残る場合は、黙って放置せず `task.md`、`reviews/`、または関連 note に未解消として残します。
 - cast 等のプログラマによる型安全性の確保は避け、pyright による型安全性の確保を優先します。
 - 型の境界は `python/jax_util/base/protocols.py` と `python/jax_util/base/linearoperator.py` に集約し、単一の基準で整合を保ちます。
+- 最適化 `Protocol` を改名するときは、`base` の汎用契約と `optimizers` / `functional` / `neuralnetwork` の特殊化を同じ naming family で同時に更新します。
+- `OptimizeProblem` のような旧命名と `VectorOptimizationProblem` のような新命名を併存させません。
+- 互換 alias を置いて一時しのぎにせず、参照箇所をまとめて更新して型境界を 1 系統に保ちます。
 - `pyright: ignore` / `# type: ignore` の使用は避け、型注釈や設計側で解消します。
 
 ## 実行例

@@ -4,7 +4,12 @@ from typing import Callable, Protocol
 
 import equinox as eqx
 
-from ..base import Scalar, Vector
+from ..base import (
+    ConstrainedOptimizationProblem,
+    Scalar,
+    Vector,
+    OptimizationProblem,
+)
 
 
 class Function(Protocol):
@@ -45,9 +50,28 @@ class Integrator(Protocol):
     def integrate(self, f: Function, /) -> Vector: ...
 
 
+class DifferentialOperator(Protocol):
+    def __call__(self, f: Function, /) -> Function: ...
+
+
+class FunctionalOptimizationProblem(OptimizationProblem[Function], Protocol):
+    ...
+
+
+class ConstrainedFunctionalOptimizationProblem(
+    ConstrainedOptimizationProblem[Function, Function, Function],
+    FunctionalOptimizationProblem,
+    Protocol,
+):
+    ...
+
+
 __all__ = [
     "Integrator",
     "Function",
     "Func",
     "Functional",
+    "DifferentialOperator",
+    "FunctionalOptimizationProblem",
+    "ConstrainedFunctionalOptimizationProblem",
 ]

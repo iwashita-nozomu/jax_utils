@@ -1,10 +1,18 @@
-from typing import Protocol, TypeAlias,Any, Tuple , Callable
+from typing import Any, Protocol, Tuple, TypeAlias
 
 import abc
 
 from jaxtyping import PyTree, Array
 
-from ..base import Matrix, Scalar
+from ..base import (
+    ConstrainedOptimizationProblem,
+    ConstrainedOptimizationState,
+    Matrix,
+    OptimizationProblem,
+    OptimizationState,
+    Scalar,
+    Vector,
+)
 
 
 import equinox as eqx
@@ -40,63 +48,69 @@ class BackpropState(Protocol):#上位レイヤーからの伝搬情報を格納�
     ...
 
 
-class OptimizeProblemPytree(Protocol):#パラメータ更新用の最適化問題
-    objective: Callable[[Params], Scalar]
-    # static: Static
-
-    # variable_dim: int
-    # def __call__(self, x: Params)-> Scalar: ...
-    ...
-
-class OptimizeProblemStatePytree(Protocol):
-    x: Params
+class PyTreeOptimizationProblem(OptimizationProblem[Params], Protocol):
     ...
 
 
-# RebuildState: TypeAlias = Tuple[Callable[[Vector], Params], Static]
+class ConstrainedPyTreeOptimizationProblem(
+    ConstrainedOptimizationProblem[Params, Vector, Vector],
+    PyTreeOptimizationProblem,
+    Protocol,
+):
+    ...
 
-class LayerUpdate(Protocol): #パラメータのベクトル化＋新しいTreeを作成
+
+class PyTreeOptimizationState(OptimizationState[Params], Protocol):
+    ...
+
+
+class ConstrainedPyTreeOptimizationState(
+    ConstrainedOptimizationState[Params, Vector],
+    PyTreeOptimizationState,
+    Protocol,
+):
+    ...
+
+class LayerUpdate(Protocol):
     def __call__(
             self,
             layer_param: Params,
-            optim: OptimizeProblemPytree #
-    ) -> Tuple[Params, OptimizeProblemStatePytree, Aux]: ...
+            optim: PyTreeOptimizationProblem,
+    ) -> Tuple[Params, PyTreeOptimizationState, Aux]: ...
     ...
 
-class BuildLayerOptim(Protocol):# 当該レイヤーの最適化問題を構成する
+class BuildLayerOptim(Protocol):
     def __call__(
             self,
             layer: NeuralNetworkLayer,
-            obj: OptimizeProblemPytree,
+            obj: PyTreeOptimizationProblem,
             train_params: Tuple[Carry,Ctx],
-    ) -> Tuple[Params,Static, OptimizeProblemPytree]:
+    ) -> Tuple[Params,Static, PyTreeOptimizationProblem]:
         ...
     ...
 
 class SingleLayerBackprop(Protocol):
-    # buildoptim: BuildLayerOptim
-    # update: LayerUpdate
-    optstate: OptimizeProblemStatePytree
+    optstate: PyTreeOptimizationState
     def __call__(
             self,
             layer: NeuralNetworkLayer,
             cache: Tuple[Carry, Ctx],
-            obj: OptimizeProblemPytree,
-    ) -> Tuple["SingleLayerBackprop",NeuralNetworkLayer, OptimizeProblemPytree,Aux]:
+            obj: PyTreeOptimizationProblem,
+    ) -> Tuple["SingleLayerBackprop",NeuralNetworkLayer, PyTreeOptimizationProblem,Aux]:
         ...
     def buildoptim(
             self,
             layer: NeuralNetworkLayer,
-            obj: OptimizeProblemPytree,
+            obj: PyTreeOptimizationProblem,
             train_params: Tuple[Carry,Ctx],
-    ) -> Tuple[Params,Static, OptimizeProblemPytree]:
+    ) -> Tuple[Params,Static, PyTreeOptimizationProblem]:
         ...
 
     def update(
             self,
             layer_param: Params,
-            optim: OptimizeProblemPytree #
-    ) -> Tuple[Params, OptimizeProblemStatePytree, Aux]: 
+            optim: PyTreeOptimizationProblem,
+    ) -> Tuple[Params, PyTreeOptimizationState, Aux]:
         ...
     ...
 
@@ -117,6 +131,8 @@ __all__ = [
     "BuildLayerOptim",
     "SingleLayerBackprop",
     "BackpropState",
-    "OptimizeProblemPytree",
-    "OptimizeProblemStatePytree",
+    "PyTreeOptimizationProblem",
+    "ConstrainedPyTreeOptimizationProblem",
+    "PyTreeOptimizationState",
+    "ConstrainedPyTreeOptimizationState",
 ]

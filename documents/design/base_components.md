@@ -48,6 +48,27 @@
 - `SolverLike`: ソルバーの共通呼び出し契約
 - `ScalarFn` / `VectorFn`: 最適化や制約で使う関数契約
 
+## 3.1 最適化 Protocol
+
+- `OptimizationProblem[T]`
+  - 変数 `T` を取りスカラー値を返す目的関数を持つ最小契約です。
+- `ConstrainedOptimizationProblem[T, EqT, IneqT]`
+  - 等式制約と不等式制約を追加した汎用契約です。
+- `OptimizationState[T]`
+  - 現在の変数 `x` を保持する状態契約です。
+- `ConstrainedOptimizationState[T, DualT]`
+  - 双対変数と slack を追加した状態契約です。
+
+### 3.2 命名の分担
+
+- 汎用契約は `base/protocols.py` に置き、空間名を付けません。
+- 空間ごとの特殊化は、各サブモジュールの `protocols.py` で `Vector` / `PyTree` / `Functional` を先頭に付けて命名します。
+  - `VectorOptimizationProblem`
+  - `PyTreeOptimizationProblem`
+  - `FunctionalOptimizationProblem`
+- 制約付きも同様に `Constrained*` を先頭に付けます。
+- `WithConstraint` や `OptimizeProblem` のような旧系命名は、可読性と検索性を損なうため使いません。
+
 ## 4. `LinOp`
 
 - 単一ベクトル向けの `mv: Vector -> Vector` を受け取り、内部で `Vector` / `Matrix` の両方に対応します。

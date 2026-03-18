@@ -29,4 +29,8 @@ __all__ = [
     "linearize",
     "ScalarFn",
     "VectorFn",
+    "OptimizationProblem",
+    "ConstrainedOptimizationProblem",
+    "OptimizationState",
+    "ConstrainedOptimizationState",
 ]
