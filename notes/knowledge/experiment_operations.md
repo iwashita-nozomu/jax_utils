@@ -65,10 +65,43 @@ bash scripts/setup_worktree.sh experiment-runner-generalization "GPU scheduler w
 # メインへ取り込む（例: cherry-pick）
 git fetch origin main
 git checkout main
-git cherry-pick <commit-hash>
-```
+# Experiment Operations
 
-### メモ（今日の具体例）
+## 保存
 
-- スコープテンプレート運用変更: `scripts/setup_worktree.sh` を heredoc 生成から `documents/WORKTREE_SCOPE_TEMPLATE.md` のコピー方式に変更（commit: `514b2f6`）。
-- experiment-runner の統合では `8fc94e1` を cherry-pick → コンフリクトを手動で解消し、関連テストとドキュメントを `main` に追加（最終的に `1fe605c` 系で反映）。
+- 長時間実行は JSONL を逐次保存する。
+- final JSON のみへ依存しない。
+- 実行ごとに完了レコードを作成し、failure_kind を分類する。
+
+## ケース設計
+
+- case ordering は実験設計の一部として意図的に決める。
+- 途中停止でも有用な出力が得られる順序を優先する。
+
+## main への持ち帰り
+
+- raw JSONL は results ブランチで保管し、main には再集計可能な final JSON を持ち帰る。
+- 出力図や公開資料は `notes/assets/` に格納する。
+- ドキュメントとテストは同時に統合する。
+
+## worktree の後始末
+
+- 削除前に `notes/worktrees/` に要約（目的・主要結果・次案）を残す。
+- 過去ノートは上書きせず追記で補う。
+
+## 監視指標
+
+- GPU・プロセス・メモリ（`nvidia-smi`, `ps`/`pgrep`, RSS）
+- JSONL 行数、failure_kind、初期化時間など
+
+## よくある失敗
+
+- partial を残して放置する
+- final を main に持ち帰らない
+- 比較に必要な構成が失われる
+
+## 運用チェックリスト
+
+- ワークツリー作成前に最新の main を取得する
+- ワークツリー内でユニットテストを実行する
+- 依存が増える変更はコンテナ定義を同時に更新する

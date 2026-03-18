@@ -1,0 +1,33 @@
+name: Agent Coordination (simulated)
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  coordinator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Announce
+        run: echo "Agent coordinator: prepare tasks and notify reviewers"
+
+  reviewer:
+    needs: coordinator
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Run quick checks
+        run: |
+          echo "Reviewer: lint docs and list changed files"
+          git --no-pager diff --name-only origin/main..HEAD || true
+
+  integrator:
+    needs: [coordinator, reviewer]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Simulate integration
+        run: echo "Integrator: prepare merge plan (manual execution recommended)"
