@@ -67,82 +67,114 @@ git worktree add "$WORKTREE_DIR" "$BRANCH_NAME"
 echo "   ✅ ワークツリー作成: $WORKTREE_DIR"
 echo ""
 
-# スコープファイルを作成
+# スコープファイルを作成（規約: worktree-lifecycle.md に従う）
 echo "3️⃣  スコープファイルを作成中..."
 create_scope_file() {
-    local scope_file="$1/.scope.md"
+    local scope_file="$1/WORKTREE_SCOPE.md"
     
     cat > "$scope_file" << EOF
-# 作業スコープ: $DESCRIPTION
+# WORKTREE_SCOPE
 
-**ブランチ:** \`$BRANCH_NAME\`  
-**ワークツリー:** \`$WORKTREE_DIR\`  
-**作成日:** $(date '+%Y-%m-%d %H:%M:%S')
+このファイルは、worktree の目的、変更範囲、参照必須文書をまとめたものです。
+詳細は [documents/worktree-lifecycle.md](#) を参照。
 
----
+## Worktree Summary
 
-## 📋 作業概要
+- **Branch:** \`$BRANCH_NAME\`
+- **Worktree path:** \`$WORKTREE_DIR\`
+- **Purpose:** $DESCRIPTION
+- **Owner or agent:** （作業者名）
 
-$DESCRIPTION
+## Editable Directories
 
----
+以下のディレクトリで変更を行って問題ありません。
 
-## 🎯 目標
+- \`python/jax_util/\`
+- \`python/tests/\`
+- \`documents/\`
+- \`notes/\`
 
-1. [ ] 目標1
-2. [ ] 目標2
-3. [ ] 目標3
+## Read-Only Or Avoid Directories
 
----
+以下のディレクトリは参照のみで、原則として変更しないでください。
 
-## 📝 実装詳細
+- \`Archive/\`
+- \`references/\`
+- \`.worktrees/\` （他の worktree）
+- \`experiments/\` （実験結果、状況による）
 
-### 修正対象ファイル
+## Required References Before Editing
 
-- [ ] ファイル1
-- [ ] ファイル2
+**必ず確認してください：**
 
-### 確認項目
+1. [documents/worktree-lifecycle.md](/workspace/documents/worktree-lifecycle.md)
+   - worktree の作成・削除・吸い出し規約
+2. [documents/coding-conventions-project.md](/workspace/documents/coding-conventions-project.md)
+   - プロジェクト全体の方針
+3. [documents/conventions/python/04_type_annotations.md](/workspace/documents/conventions/python/04_type_annotations.md)
+   - 型アノテーション（全実装必須）
+4. [documents/conventions/python/09_file_roles.md](/workspace/documents/conventions/python/09_file_roles.md)
+   - 責務分離・ファイル配置
+5. [documents/conventions/common/05_docs.md](/workspace/documents/conventions/common/05_docs.md)
+   - ドキュメント形式（Markdown 等）
 
-- [ ] 規約確認（\`bash ../scripts/view_conventions.sh\`）
-- [ ] テスト実行（\`make test\`）
-- [ ] 型チェック（\`pyright\`）
-- [ ] Linting（\`pylint\`）
+## Main Carry-Over Targets
 
----
+このワークツリーを削除する前に、以下を \`main\` へ持ち帰ってください：
 
-## 🔍 確認チェックリスト
+- \`notes/\` に関する判断・結果は \`main\` へ commit または merge
+- 重要な観測・考察は \`notes/worktrees/\` に記録
+- 参照必須の文書は worktree 選定時に整理
 
-### コード品質
-- [ ] 型注釈が完全（Protocol/関数引数等）
-- [ ] エラーメッセージが明確
-- [ ] ドキュメント文字列が充実
-- [ ] テストカバレッジ ≥ 80%
+## Required Checks Before Commit
 
-### 規約確認
-- [ ] Python規約 (04_type_annotations.md)
-- [ ] 責務分離 (09_file_roles.md)
-- [ ] 命名規則 (11_naming.md)
-- [ ] ドキュメント (common/05_docs.md)
+確認・テスト実行：
 
-### Git・コミット
-- [ ] コミットメッセージが規約準拠
-- [ ] 関連ファイルをすべてコミット
-- [ ] 不要なログ・デバッグコード削除
+- [ ] \`pyright python/\` （型チェック全体）
+- [ ] \`pytest python/tests/\` （ユニットテスト）
+- [ ] \`markdownlint\` （Markdown 形式）
+- [ ] 規約に従った記述か（.scope.md 削除前に確認）
 
----
+## Additional Rules
 
-## 📚 参考資料
+### 規約確認スクリプト
 
-- 規約一覧: \`bash ../scripts/view_conventions.sh\`
-- ガイド: \`bash ../scripts/guide.sh\`
-- クイックスタート: \`less ../QUICK_START.md\`
+このワークツリー内で利用可能：
 
----
+\`\`\`bash
+# 規約表示
+bash ../scripts/view_conventions.sh
 
-## 💬 メモ
+# ガイド表示
+bash ../scripts/guide.sh
 
-（進捗・判明したことなどを記録）
+# クイックスタート
+less ../QUICK_START.md
+\`\`\`
+
+### コミット規約
+
+コミットメッセージは以下の形式に従ってください：
+
+\`\`\`
+<category>: <説明>
+
+<詳細（必要に応じて）>
+\`\`\`
+
+**category の種類:**
+- \`feat:\` 新機能追加
+- \`fix:\` バグ修正
+- \`docs:\` ドキュメント更新
+- \`refactor:\` コード改善（機能変更なし）
+- \`test:\` テスト追加・修正
+- \`chore:\` 設定変更
+
+### 削除時のチェックリスト
+
+ワークツリーを削除する前に、このファイルの "Carry-Over Targets" を確認し、
+[documents/worktree-lifecycle.md#7-worktree-を閉じる前のチェック](worktree-lifecycle.md) 
+に記載のチェックリストを完了してください。
 
 EOF
     echo "   ✅ スコープファイル: $scope_file"
@@ -166,20 +198,24 @@ echo ""
 echo "  1. ワークツリーに移動:"
 echo "     cd $WORKTREE_DIR"
 echo ""
-echo "  2. スコープファイルを確認・編集:"
-echo "     less .scope.md"
+echo "  2. スコープファイルを確認・編集（重要）:"
+echo "     less WORKTREE_SCOPE.md"
 echo ""
 echo "  3. 規約を確認:"
 echo "     bash ../scripts/view_conventions.sh"
 echo ""
-echo "  4. 作業実施"
+echo "  4. チェックリストを実行:"
+echo "     pyright python/"
+echo "     pytest python/tests/"
 echo ""
-echo "  5. コミット・プッシュ:"
+echo "  5. 作業実施"
+echo ""
+echo "  6. コミット・プッシュ:"
 echo "     git add -A"
 echo "     git commit -m 'category: 説明'"
 echo "     git push origin $BRANCH_NAME"
 echo ""
-echo "  6. ワークツリーを削除（完了後）:"
+echo "  7. ワークツリーを削除（完了後、carry-over の確認後）:"
 echo "     git worktree remove $WORKTREE_DIR"
 echo "     git branch -d $BRANCH_NAME"
 echo ""
