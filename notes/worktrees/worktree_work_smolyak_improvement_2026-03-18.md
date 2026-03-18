@@ -1,4 +1,3 @@
-```markdown
 # Smolyak Improvement Worktree Reset
 
 ## Context
@@ -12,14 +11,14 @@
 
 ## Decision
 
-- `python/jax_util/functional/smolyak.py` は `results/functional-smolyak-scaling-tuned` branch の module をそのまま `main` に戻す
-- その統合前提で始めた旧 worktree の未コミット差分は破棄する
-- Smolyak の次の改造作業は、修正後 `main` を起点に worktree を作り直して再開する
+- `python/jax_util/functional/smolyak.py` は `results/functional-smolyak-scaling-tuned` branch の module をそのまま `main` に戻す。
+- その統合前提で始めた旧 worktree の未コミット差分は破棄する。
+- Smolyak の次の改造作業は、修正後 `main` を起点に worktree を作り直して再開する。
 
 ## Scope Difference
 
-- 旧 worktree は `smolyak_grid` や追加 helper API を前提にしていた
-- 新しい worktree では、その前提を持ち込まず、experiment branch から main に戻した module を起点に改造する
+- 旧 worktree は `smolyak_grid` や追加 helper API を前提にしていた。
+- 新しい worktree では、その前提を持ち込まず、experiment branch から main に戻した module を起点に改造する。
 
 ## Carry-Over
 
@@ -30,11 +29,10 @@
 
 ## Next Step
 
-- corrected `main` から `work/smolyak-improvement-20260318` を切り直し、新しい `WORKTREE_SCOPE.md` を置く
+- corrected `main` から `work/smolyak-improvement-20260318` を切り直し、新しい `WORKTREE_SCOPE.md` を置く。
 
 ## 2026-03-18: 活動要約
 
-- `main` へ experiment-runner 関連のテスト・ドキュメントを統合
-- ワークツリー運用の見直し（`.worktrees/` の管理）を確認
+- `main` へ experiment-runner 関連のテスト・ドキュメントを統合した。
+- ワークツリー運用の見直し（`.worktrees/` の管理）を確認した。
 
-```

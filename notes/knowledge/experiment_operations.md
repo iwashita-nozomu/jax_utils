@@ -1,4 +1,3 @@
-```markdown
 # Experiment Operations
 
 ## 保存
@@ -49,9 +48,27 @@
 - experiment-runner の変更（`python/jax_util/experiment_runner/*`）はテストとドキュメントを同時に main に統合する必要がある。
 - コンテナ依存の更新は `docker/requirements.txt` と `docker/Dockerfile` の両方を更新する運用が安全。
 
-:
-```
-git push origin main
-```
+### 運用の具体化（チェックリスト）
+
+- ワークツリーで作業開始前に `git fetch origin main` を実行し、`scripts/setup_worktree.sh` で作成される `WORKTREE_SCOPE.md` に必須参照を埋める。
+- 実験・実装を main に取り込む際は以下を行う：
+  - ユニットテストをワークツリーで実行（`python/tests/*`）
+  - ドキュメント（`documents/`）の更新を同時に main へ統合
+  - コンテナ依存が増える場合は `docker/requirements.txt` と `docker/Dockerfile` を同時に更新し、CIでビルド確認
+
+### 参考コマンド
 
 ```
+# ワークツリー作成（例）
+bash scripts/setup_worktree.sh experiment-runner-generalization "GPU scheduler work"
+
+# メインへ取り込む（例: cherry-pick）
+git fetch origin main
+git checkout main
+git cherry-pick <commit-hash>
+```
+
+### メモ（今日の具体例）
+
+- スコープテンプレート運用変更: `scripts/setup_worktree.sh` を heredoc 生成から `documents/WORKTREE_SCOPE_TEMPLATE.md` のコピー方式に変更（commit: `514b2f6`）。
+- experiment-runner の統合では `8fc94e1` を cherry-pick → コンフリクトを手動で解消し、関連テストとドキュメントを `main` に追加（最終的に `1fe605c` 系で反映）。
