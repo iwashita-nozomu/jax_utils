@@ -105,6 +105,7 @@ class SingleLayerBackprop(Protocol):
 
 __all__ = [
     "Params",
+    "Static",
     "Ctx",
     "Carry",
     "NeuralNetworkLayer",

@@ -37,13 +37,14 @@ typeCheckingMode = "strict"
 # 既定の baseline は通常運用する実装モジュールに限定します。
 include = ["./python/jax_util"]
 exclude = [
+  "**/.*",
   "**/node_modules",
   "**/__pycache__",
   "**/build",
   "**/dist",
-  "./python/jax_util/neuralnetwork",
   "./python/jax_util/solvers/archive",
 ]
+ignore = ["./python/tests"]
 
 # ローカルパッケージ解決のため、python を追加します。
 extraPaths = ["./python", "./python/jax_util"]

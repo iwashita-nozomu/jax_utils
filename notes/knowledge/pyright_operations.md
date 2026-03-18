@@ -3,8 +3,9 @@
 ## Config
 
 - `pyright` の正本設定は `pyproject.toml` の `[tool.pyright]` に置く。
-- `pyrightconfig.json` は重複や設定ずれの原因になるので置かない。
-- baseline の対象は `python/jax_util/` のうち `neuralnetwork` と `solvers/archive` を除く実装とする。
+- repo root の `pyrightconfig.json` は editor / tool 互換のための shim とし、`extends = "./pyproject.toml"` だけを持たせる。
+- baseline の対象は `python/jax_util/` 全体とし、`solvers/archive` は `exclude`、`python/tests/` は `ignore` とする。
+- VSCode / Pylance で third-party import が missing になるときは、まず workspace の selected interpreter を疑う。repo では `.vscode/settings.json` の `python.defaultInterpreterPath` を `/usr/bin/python3` に合わせる。
 
 ## Baseline Run
 
@@ -14,7 +15,6 @@
 
 ## Targeted Run
 
-- `neuralnetwork` を触ったときは `pyright python/jax_util/neuralnetwork` を追加で回す。
 - test を触ったときは `pyright python/tests/<subdir-or-file>` を追加で回す。
 - 大きな変更では、baseline と touched path の両方を残す。
 
@@ -26,6 +26,7 @@
 
 ## Common Failures
 
-- `pyproject.toml` と別設定ファイルが食い違って、どちらが効いているか分からなくなる。
+- `pyproject.toml` と `pyrightconfig.json` に別々の設定を書いてしまい、どちらが効いているか分からなくなる。
 - repo root 以外で実行して import 解決がぶれる。
-- experimental module のエラーを baseline へ混ぜて、通常開発の確認が回らなくなる。
+- `exclude` で作業中モジュールを外してしまい、editor 上で loose file 扱いになって import 解決が不安定になる。
+- CLI の `pyright` は通るのに Pylance だけ `reportMissingImports` を出す。これは config より interpreter 不一致のことが多い。

@@ -15,7 +15,7 @@ from .layer_utils import (
     icnn_layer_factory,
     standardNN_layer_factory,
 )
-from .protocols import Carry, Ctx, NeuralNetworkLayer, Params,Static
+from .protocols import Carry, Ctx, NeuralNetworkLayer
 
 
 

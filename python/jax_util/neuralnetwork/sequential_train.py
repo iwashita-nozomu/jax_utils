@@ -52,7 +52,7 @@ class NormalBP(eqx.Module):
         #     return obj.objective(new_layer(_param, ctx).z)
         
         def new_loss(_param:Params)-> Scalar:
-            lower_model = eqx.combine(_param, static)
+            raise NotImplementedError("experimental sequential training path is not implemented")
 
         new_obj = PytrreeOptim(
             objective=new_loss,

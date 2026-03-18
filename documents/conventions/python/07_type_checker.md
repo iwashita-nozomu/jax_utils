@@ -9,10 +9,12 @@
 
 ## 規約
 
-- `pyright` の設定は `pyproject.toml` の `[tool.pyright]` を正本とし、並行した `pyrightconfig.json` は持ちません。
+- `pyright` の設定は `pyproject.toml` の `[tool.pyright]` を正本とします。
+- repo root の `pyrightconfig.json` は editor / tool 互換のための薄いラッパーに限り、`extends = "./pyproject.toml"` だけを持たせます。独自設定は足しません。
 - 既定の `pyright` 実行は repo root で行い、`pyproject.toml` に含めた対象だけを baseline として常時 clean に保ちます。
-- 現在の baseline は `python/jax_util/` のうち `neuralnetwork` と `solvers/archive` を除く実装です。
-- `python/tests/` や `python/jax_util/neuralnetwork/` を触った場合は、既定実行とは別に対象 path を明示して `pyright` を追加実行します。
+- 現在の baseline は `python/jax_util/` 全体で、`solvers/archive` は `exclude`、`python/tests/` は `ignore` とします。
+- VSCode / Pylance で third-party import を解決するときは、workspace で選ばれた Python interpreter が使われます。repo 側では `.vscode/settings.json` の `python.defaultInterpreterPath` を基準にし、必要なら `Python: Select Interpreter` で合わせます。
+- `python/tests/` を触った場合は、既定実行とは別に対象 path を明示して `pyright` を追加実行します。
 - 実験段階やテストで `pyright` エラーが残る場合は、黙って放置せず `task.md`、`reviews/`、または関連 note に未解消として残します。
 - cast 等のプログラマによる型安全性の確保は避け、pyright による型安全性の確保を優先します。
 - 型の境界は `python/jax_util/base/protocols.py` と `python/jax_util/base/linearoperator.py` に集約し、単一の基準で整合を保ちます。
@@ -21,7 +23,6 @@
 ## 実行例
 
 - baseline 全体: `pyright`
-- 実験段階の NN を触ったとき: `pyright python/jax_util/neuralnetwork`
 - テストを触ったとき: `pyright python/tests/<subdir-or-file>`
 - 特定モジュールだけを確認したいとき: `pyright python/jax_util/<module>`
 
