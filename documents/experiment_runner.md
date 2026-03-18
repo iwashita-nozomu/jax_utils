@@ -41,9 +41,11 @@
 
 ## 2. 標準実装
 
-- [runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/runner.py) には `StandardWorker`、`StandardResourceCapacity`、`StandardScheduler`、`StandardRunner` を置きます。
+- [runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/runner.py) には `StandardWorker`、`StandardResourceCapacity`、`StandardCompletion`、`StandardScheduler`、`StandardRunner` を置きます。
 - `StandardWorker` は `task(case, context)` を呼び、成功時は `0`、例外時は `1` を返します。
 - `StandardScheduler` は FIFO で case を返す最小 scheduler です。
+- `StandardScheduler` は optional な `context_builder` を受け取り、`TaskContext` の組み立てを標準機能として持ちます。
+- `StandardScheduler` は `on_finish(...)` で `StandardCompletion` を記録します。
 - `StandardRunner` は `max_workers` 本の child process を使ってケースを並列実行します。
 
 ## 3. task 切り替えのルール

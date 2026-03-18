@@ -9,6 +9,7 @@ from .protocols import (
     Worker,
 )
 from .runner import (
+    StandardCompletion,
     StandardResourceCapacity,
     StandardRunner,
     StandardScheduler,
@@ -20,6 +21,7 @@ __all__ = [
     "ResourceEstimate",
     "Runner",
     "Scheduler",
+    "StandardCompletion",
     "StandardResourceCapacity",
     "StandardRunner",
     "StandardScheduler",

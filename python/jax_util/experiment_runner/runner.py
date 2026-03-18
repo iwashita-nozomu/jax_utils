@@ -35,31 +35,59 @@ class StandardWorker(Generic[T, U]):
 class StandardResourceCapacity:
     max_workers: int
 
+    def __post_init__(self) -> None:
+        if self.max_workers < 1:
+            raise ValueError("max_workers must be positive.")
+
+
+@dataclass(frozen=True)
+class StandardCompletion(Generic[T]):
+    case: T
+    context: TaskContext
+    exit_code: int
+
 
 class StandardScheduler(Generic[T]):
     def __init__(
         self,
         resource_capacity: StandardResourceCapacity,
         cases: list[T],
+        context_builder: Callable[[T], TaskContext] | None = None,
     ) -> None:
         self._resource_capacity = resource_capacity
-        self.cases = cases
+        self._pending_cases = list(cases)
+        self._context_builder = context_builder
+        self.completions: list[StandardCompletion[T]] = []
 
     @property
     def resource_capacity(self) -> StandardResourceCapacity:
         return self._resource_capacity
 
     def next_case(self) -> tuple[T, TaskContext] | None:
-        if self.cases:
-            case = self.cases.pop(0)
-            return case, {}
+        # 待機中のケースから FIFO 順で次のケースを取り出します。
+        # context_builder が指定されている場合は context を生成し、
+        # 指定がなければ空の context を返します。
+        # 待機中のケースがなくなったときだけ None を返します。
+        if self._pending_cases:
+            case = self._pending_cases.pop(0)
+            if self._context_builder is None:
+                return case, {}
+            return case, self._context_builder(case)
         return None
 
     def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:
-        del case, context, exit_code
+        # ケース完了時に結果を completions リストへ記録します。
+        # context の不変性を確保するため、dict() で複製してから保存します。
+        self.completions.append(
+            StandardCompletion(
+                case=case,
+                context=dict(context),
+                exit_code=exit_code,
+            )
+        )
 
     def is_completed(self) -> bool:
-        return not self.cases
+        return not self._pending_cases
 
 
 class StandardRunner(Generic[T, U]):
@@ -67,6 +95,9 @@ class StandardRunner(Generic[T, U]):
         self.scheduler = scheduler
 
     def run(self, worker: Worker[T, U]) -> None:
+        # ProcessPoolExecutor で max_workers 本のプロセスを起動し、ケースを並列実行します。
+        # scheduler から次のケースを取得し、完了時に on_finish を呼び出して状態を更新します。
+        # FIRST_COMPLETED で done future を順次処理し、新しいケースを投入します。
         with ProcessPoolExecutor(
             max_workers=self.scheduler.resource_capacity.max_workers
         ) as ex:

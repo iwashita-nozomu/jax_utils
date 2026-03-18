@@ -116,34 +116,11 @@ class RecordingTask:
         return record
 
 
-class RecordingScheduler(StandardScheduler[dict[str, object]]):
-    def __init__(
-        self,
-        resource_capacity: StandardResourceCapacity,
-        cases: list[dict[str, object]],
-    ) -> None:
-        super().__init__(resource_capacity=resource_capacity, cases=cases)
-        self.completions: list[tuple[int, int]] = []
-
-    def next_case(self) -> tuple[dict[str, object], TaskContext] | None:
-        job = super().next_case()
-        if job is None:
-            return None
-        case, context = job
-        task_key = case.get("task_key")
-        if isinstance(task_key, str):
-            context = dict(context)
-            context["task_key"] = task_key
-        return case, context
-
-    def on_finish(
-        self,
-        case: dict[str, object],
-        context: TaskContext,
-        exit_code: int,
-    ) -> None:
-        del context
-        self.completions.append((_case_id(case), exit_code))
+def _context_from_case(case: dict[str, object], /) -> TaskContext:
+    task_key = case.get("task_key")
+    if isinstance(task_key, str):
+        return {"task_key": task_key}
+    return {}
 
 
 def _run_standard_runner_parallel_processes(tmp_path: Path) -> None:
@@ -241,9 +218,10 @@ def _run_standard_runner_context_switch_and_failure(tmp_path: Path) -> None:
         {"case_id": 1, "sleep_seconds": 0.05, "value": 7, "task_key": "fail"},
         {"case_id": 2, "sleep_seconds": 0.05, "value": 5, "task_key": "increment"},
     ]
-    scheduler = RecordingScheduler(
+    scheduler = StandardScheduler(
         resource_capacity=StandardResourceCapacity(max_workers=2),
         cases=list(cases),
+        context_builder=_context_from_case,
     )
     runner = StandardRunner(scheduler)
     worker = StandardWorker(RecordingTask(records_dir))
@@ -251,7 +229,10 @@ def _run_standard_runner_context_switch_and_failure(tmp_path: Path) -> None:
     runner.run(worker)
     records = _read_json_records(records_dir)
     records_by_case_id = {_case_id(record): record for record in records}
-    completions_by_case_id = dict(sorted(scheduler.completions))
+    completions_by_case_id = {
+        _case_id(completion.case): completion.exit_code
+        for completion in scheduler.completions
+    }
 
     assert records_by_case_id[0]["task_key"] == "double"
     assert records_by_case_id[0]["result_value"] == 6
