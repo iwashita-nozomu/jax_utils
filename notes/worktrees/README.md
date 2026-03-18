@@ -33,6 +33,10 @@
 - worktree note はリンク集だけで終わらせず、その file 単体で branch の役割、主要変更、重要結果、最終判断が読めるようにします。
 - 詳細ログや raw 結果へのリンクは補助として置きますが、核心の結論は本文に残します。
 
+## Notes
+
+- [worktree_results_smolyak_scaling_tuned_2026-03-18.md](/workspace/notes/worktrees/worktree_results_smolyak_scaling_tuned_2026-03-18.md)
+
 ## Source And Idea Marking
 
 - 文献や既存結果から得た内容は、対象の文献や結果ファイルを明示します。

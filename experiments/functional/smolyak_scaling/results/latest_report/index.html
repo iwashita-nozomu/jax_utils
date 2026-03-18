@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Smolyak Scaling Report</title>
+  <style>
+    body { font-family: "Iosevka", "Menlo", monospace; margin: 24px; color: #2b2926; background: #f7f2e8; }
+    table { border-collapse: collapse; margin-bottom: 24px; background: #fffdfa; }
+    th, td { border: 1px solid #cabfae; padding: 8px 12px; text-align: left; }
+    h1, h2 { margin: 0 0 12px 0; }
+    section { margin-bottom: 24px; }
+    img { max-width: 100%; height: auto; border: 1px solid #cabfae; background: #fffdfa; }
+  </style>
+</head>
+<body>
+  <h1>Smolyak Scaling Report</h1>
+  <table>
+    <tr><th>experiment</th><td>smolyak_scaling_benchmark</td></tr>
+<tr><th>started_at_utc</th><td>2026-03-15T14:23:47.581267+00:00</td></tr>
+<tr><th>platform</th><td>gpu</td></tr>
+<tr><th>num_cases</th><td>16</td></tr>
+<tr><th>num_repeats</th><td>1</td></tr>
+<tr><th>num_accuracy_problems</th><td>1</td></tr>
+<tr><th>dtypes</th><td>float16, bfloat16, float32, float64</td></tr>
+  </table>
+  <section><h2>legend</h2><img src="legend.svg" alt="legend" /></section>
+<section><h2>status heatmap</h2><img src="status.svg" alt="status heatmap" /></section>
+<section><h2>mean absolute error heatmap</h2><img src="mean_abs_err.svg" alt="mean absolute error heatmap" /></section>
+<section><h2>absolute error variance heatmap</h2><img src="var_abs_err.svg" alt="absolute error variance heatmap" /></section>
+<section><h2>average time heatmap</h2><img src="avg_integral_seconds.svg" alt="average time heatmap" /></section>
+<section><h2>storage heatmap</h2><img src="storage_bytes.svg" alt="storage heatmap" /></section>
+<section><h2>success frontier</h2><img src="frontier.svg" alt="success frontier" /></section>
+</body>
+</html>

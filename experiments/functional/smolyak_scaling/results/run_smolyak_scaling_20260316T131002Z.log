@@ -1,0 +1,288 @@
+[2026-03-16T13:10:02.895549+00:00] start gpu-0-w0 case=0 d=0 l=0 dtype=float16
+[2026-03-16T13:10:02.896062+00:00] start gpu-0-w1 case=1 d=1 l=0 dtype=float16
+[2026-03-16T13:10:02.896461+00:00] start gpu-1-w0 case=2 d=2 l=0 dtype=float16
+[2026-03-16T13:10:02.896846+00:00] start gpu-1-w1 case=3 d=3 l=0 dtype=float16
+[2026-03-16T13:10:02.897361+00:00] start gpu-2-w0 case=4 d=4 l=0 dtype=float16
+[2026-03-16T13:10:02.897739+00:00] start gpu-2-w1 case=5 d=5 l=0 dtype=float16
+[2026-03-16T13:10:04.852872+00:00] done  gpu-2-w1 case=5 d=5 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:04.852914+00:00] start gpu-2-w1 case=6 d=6 l=0 dtype=float16
+[2026-03-16T13:10:04.904244+00:00] done  gpu-1-w0 case=2 d=2 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:04.904388+00:00] done  gpu-1-w1 case=3 d=3 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:04.904423+00:00] start gpu-1-w0 case=7 d=7 l=0 dtype=float16
+[2026-03-16T13:10:04.920876+00:00] start gpu-1-w1 case=8 d=8 l=0 dtype=float16
+[2026-03-16T13:10:04.981193+00:00] done  gpu-0-w1 case=1 d=1 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:04.981386+00:00] done  gpu-2-w0 case=4 d=4 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:04.981436+00:00] start gpu-0-w1 case=9 d=9 l=0 dtype=float16
+[2026-03-16T13:10:04.983604+00:00] start gpu-2-w0 case=10 d=10 l=0 dtype=float16
+[2026-03-16T13:10:05.034418+00:00] done  gpu-0-w0 case=0 d=0 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:05.034497+00:00] start gpu-0-w0 case=11 d=11 l=0 dtype=float16
+[2026-03-16T13:10:06.293732+00:00] done  gpu-2-w1 case=6 d=6 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:06.293805+00:00] start gpu-2-w1 case=12 d=12 l=0 dtype=float16
+[2026-03-16T13:10:06.646049+00:00] done  gpu-2-w0 case=10 d=10 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:06.646105+00:00] start gpu-2-w0 case=13 d=13 l=0 dtype=float16
+[2026-03-16T13:10:06.697043+00:00] done  gpu-1-w0 case=7 d=7 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:06.697123+00:00] start gpu-1-w0 case=14 d=14 l=0 dtype=float16
+[2026-03-16T13:10:06.802095+00:00] done  gpu-0-w1 case=9 d=9 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:06.802163+00:00] start gpu-0-w1 case=15 d=15 l=0 dtype=float16
+[2026-03-16T13:10:06.921422+00:00] done  gpu-0-w0 case=11 d=11 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:06.921483+00:00] start gpu-0-w0 case=16 d=16 l=0 dtype=float16
+[2026-03-16T13:10:06.992256+00:00] done  gpu-1-w1 case=8 d=8 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:06.992306+00:00] start gpu-1-w1 case=17 d=17 l=0 dtype=float16
+[2026-03-16T13:10:07.844890+00:00] done  gpu-2-w1 case=12 d=12 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:07.844963+00:00] start gpu-2-w1 case=18 d=18 l=0 dtype=float16
+[2026-03-16T13:10:08.398660+00:00] done  gpu-1-w0 case=14 d=14 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:08.398731+00:00] start gpu-1-w0 case=19 d=19 l=0 dtype=float16
+[2026-03-16T13:10:08.449586+00:00] done  gpu-0-w1 case=15 d=15 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:08.449627+00:00] start gpu-0-w1 case=20 d=20 l=0 dtype=float16
+[2026-03-16T13:10:08.571367+00:00] done  gpu-2-w0 case=13 d=13 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:08.571540+00:00] done  gpu-0-w0 case=16 d=16 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:08.571658+00:00] done  gpu-1-w1 case=17 d=17 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:08.571694+00:00] start gpu-2-w0 case=21 d=21 l=0 dtype=float16
+[2026-03-16T13:10:08.572750+00:00] start gpu-0-w0 case=22 d=22 l=0 dtype=float16
+[2026-03-16T13:10:08.577465+00:00] start gpu-1-w1 case=23 d=23 l=0 dtype=float16
+[2026-03-16T13:10:09.492965+00:00] done  gpu-2-w1 case=18 d=18 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:09.493029+00:00] start gpu-2-w1 case=24 d=24 l=0 dtype=float16
+[2026-03-16T13:10:09.744861+00:00] done  gpu-1-w0 case=19 d=19 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:09.744927+00:00] start gpu-1-w0 case=25 d=25 l=0 dtype=float16
+[2026-03-16T13:10:09.996299+00:00] done  gpu-0-w1 case=20 d=20 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:09.996371+00:00] start gpu-0-w1 case=26 d=26 l=0 dtype=float16
+[2026-03-16T13:10:10.347961+00:00] done  gpu-1-w1 case=23 d=23 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:10.348028+00:00] start gpu-1-w1 case=27 d=27 l=0 dtype=float16
+[2026-03-16T13:10:10.398998+00:00] done  gpu-2-w0 case=21 d=21 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:10.399161+00:00] done  gpu-0-w0 case=22 d=22 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:10.399203+00:00] start gpu-2-w0 case=28 d=28 l=0 dtype=float16
+[2026-03-16T13:10:10.400158+00:00] start gpu-0-w0 case=29 d=29 l=0 dtype=float16
+[2026-03-16T13:10:11.107451+00:00] done  gpu-2-w1 case=24 d=24 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:11.107536+00:00] start gpu-2-w1 case=30 d=30 l=0 dtype=float16
+[2026-03-16T13:10:11.321000+00:00] done  gpu-1-w0 case=25 d=25 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:11.321062+00:00] start gpu-1-w0 case=31 d=31 l=0 dtype=float16
+[2026-03-16T13:10:11.722609+00:00] done  gpu-0-w1 case=26 d=26 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:11.722672+00:00] start gpu-0-w1 case=32 d=32 l=0 dtype=float16
+[2026-03-16T13:10:12.024947+00:00] done  gpu-1-w1 case=27 d=27 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:12.025034+00:00] start gpu-1-w1 case=33 d=33 l=0 dtype=float16
+[2026-03-16T13:10:12.276423+00:00] done  gpu-2-w0 case=28 d=28 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:12.276588+00:00] done  gpu-0-w0 case=29 d=29 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:12.276634+00:00] start gpu-2-w0 case=34 d=34 l=0 dtype=float16
+[2026-03-16T13:10:12.277229+00:00] start gpu-0-w0 case=35 d=35 l=0 dtype=float16
+[2026-03-16T13:10:12.578582+00:00] done  gpu-2-w1 case=30 d=30 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:12.578653+00:00] start gpu-2-w1 case=36 d=36 l=0 dtype=float16
+[2026-03-16T13:10:12.629513+00:00] done  gpu-1-w0 case=31 d=31 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:12.629558+00:00] start gpu-1-w0 case=37 d=37 l=0 dtype=float16
+[2026-03-16T13:10:13.453164+00:00] done  gpu-0-w1 case=32 d=32 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:13.453233+00:00] start gpu-0-w1 case=38 d=38 l=0 dtype=float16
+[2026-03-16T13:10:13.754800+00:00] done  gpu-1-w1 case=33 d=33 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:13.754877+00:00] start gpu-1-w1 case=39 d=39 l=0 dtype=float16
+[2026-03-16T13:10:13.956230+00:00] done  gpu-2-w0 case=34 d=34 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:13.956409+00:00] done  gpu-0-w0 case=35 d=35 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:13.956452+00:00] start gpu-2-w0 case=40 d=40 l=0 dtype=float16
+[2026-03-16T13:10:13.957108+00:00] start gpu-0-w0 case=41 d=41 l=0 dtype=float16
+[2026-03-16T13:10:14.007905+00:00] done  gpu-1-w0 case=37 d=37 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:14.007957+00:00] start gpu-1-w0 case=42 d=42 l=0 dtype=float16
+[2026-03-16T13:10:14.082017+00:00] done  gpu-2-w1 case=36 d=36 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:14.082086+00:00] start gpu-2-w1 case=43 d=43 l=0 dtype=float16
+[2026-03-16T13:10:15.253821+00:00] done  gpu-0-w1 case=38 d=38 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:15.253962+00:00] done  gpu-1-w1 case=39 d=39 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:15.254002+00:00] start gpu-0-w1 case=44 d=44 l=0 dtype=float16
+[2026-03-16T13:10:15.254578+00:00] start gpu-1-w1 case=45 d=45 l=0 dtype=float16
+[2026-03-16T13:10:15.455731+00:00] done  gpu-1-w0 case=42 d=42 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:15.455797+00:00] start gpu-1-w0 case=46 d=46 l=0 dtype=float16
+[2026-03-16T13:10:15.508319+00:00] done  gpu-0-w0 case=41 d=41 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:15.508387+00:00] start gpu-0-w0 case=47 d=47 l=0 dtype=float16
+[2026-03-16T13:10:15.881869+00:00] done  gpu-2-w0 case=40 d=40 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:15.882052+00:00] done  gpu-2-w1 case=43 d=43 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:15.882101+00:00] start gpu-2-w0 case=48 d=48 l=0 dtype=float16
+[2026-03-16T13:10:15.882710+00:00] start gpu-2-w1 case=49 d=49 l=0 dtype=float16
+[2026-03-16T13:10:16.686188+00:00] done  gpu-0-w1 case=44 d=44 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:16.686329+00:00] start gpu-0-w1 case=50 d=50 l=0 dtype=float16
+[2026-03-16T13:10:16.738736+00:00] done  gpu-1-w1 case=45 d=45 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:16.738812+00:00] start gpu-1-w1 case=51 d=51 l=0 dtype=float16
+[2026-03-16T13:10:16.839968+00:00] done  gpu-1-w0 case=46 d=46 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:16.840043+00:00] start gpu-1-w0 case=52 d=52 l=0 dtype=float16
+[2026-03-16T13:10:17.241893+00:00] done  gpu-0-w0 case=47 d=47 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:17.241987+00:00] start gpu-0-w0 case=53 d=53 l=0 dtype=float16
+[2026-03-16T13:10:17.293158+00:00] done  gpu-2-w0 case=48 d=48 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:17.293245+00:00] start gpu-2-w0 case=54 d=54 l=0 dtype=float16
+[2026-03-16T13:10:17.344515+00:00] done  gpu-2-w1 case=49 d=49 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:17.344587+00:00] start gpu-2-w1 case=55 d=55 l=0 dtype=float16
+[2026-03-16T13:10:18.263167+00:00] done  gpu-0-w1 case=50 d=50 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:18.263354+00:00] done  gpu-1-w1 case=51 d=51 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:18.263543+00:00] done  gpu-1-w0 case=52 d=52 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:18.263603+00:00] start gpu-0-w1 case=56 d=56 l=0 dtype=float16
+[2026-03-16T13:10:18.264936+00:00] start gpu-1-w1 case=57 d=57 l=0 dtype=float16
+[2026-03-16T13:10:18.265440+00:00] start gpu-1-w0 case=58 d=58 l=0 dtype=float16
+[2026-03-16T13:10:18.619530+00:00] done  gpu-0-w0 case=53 d=53 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:18.619606+00:00] start gpu-0-w0 case=59 d=59 l=0 dtype=float16
+[2026-03-16T13:10:18.670591+00:00] done  gpu-2-w0 case=54 d=54 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:18.670672+00:00] start gpu-2-w0 case=60 d=60 l=0 dtype=float16
+[2026-03-16T13:10:19.082681+00:00] done  gpu-2-w1 case=55 d=55 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:19.082742+00:00] start gpu-2-w1 case=61 d=61 l=0 dtype=float16
+[2026-03-16T13:10:19.584596+00:00] done  gpu-0-w1 case=56 d=56 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:19.584655+00:00] start gpu-0-w1 case=62 d=62 l=0 dtype=float16
+[2026-03-16T13:10:19.636541+00:00] done  gpu-1-w1 case=57 d=57 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:19.636610+00:00] start gpu-1-w1 case=63 d=63 l=0 dtype=float16
+[2026-03-16T13:10:20.042607+00:00] done  gpu-1-w0 case=58 d=58 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:20.042677+00:00] start gpu-1-w0 case=64 d=64 l=0 dtype=float16
+[2026-03-16T13:10:20.094070+00:00] done  gpu-0-w0 case=59 d=59 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:20.094233+00:00] done  gpu-2-w0 case=60 d=60 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:20.094272+00:00] start gpu-0-w0 case=65 d=65 l=0 dtype=float16
+[2026-03-16T13:10:20.107710+00:00] start gpu-2-w0 case=66 d=66 l=0 dtype=float16
+[2026-03-16T13:10:20.772617+00:00] done  gpu-2-w1 case=61 d=61 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:20.772690+00:00] start gpu-2-w1 case=67 d=67 l=0 dtype=float16
+[2026-03-16T13:10:20.924578+00:00] done  gpu-0-w1 case=62 d=62 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:20.924642+00:00] start gpu-0-w1 case=68 d=68 l=0 dtype=float16
+[2026-03-16T13:10:21.028097+00:00] done  gpu-1-w1 case=63 d=63 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:21.028154+00:00] start gpu-1-w1 case=69 d=69 l=0 dtype=float16
+[2026-03-16T13:10:21.442108+00:00] done  gpu-1-w0 case=64 d=64 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:21.442173+00:00] start gpu-1-w0 case=70 d=70 l=0 dtype=float16
+[2026-03-16T13:10:21.944018+00:00] done  gpu-0-w0 case=65 d=65 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:21.944080+00:00] start gpu-0-w0 case=71 d=71 l=0 dtype=float16
+[2026-03-16T13:10:21.995801+00:00] done  gpu-2-w0 case=66 d=66 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:21.995872+00:00] start gpu-2-w0 case=72 d=72 l=0 dtype=float16
+[2026-03-16T13:10:22.247470+00:00] done  gpu-2-w1 case=67 d=67 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:22.247549+00:00] start gpu-2-w1 case=73 d=73 l=0 dtype=float16
+[2026-03-16T13:10:22.298539+00:00] done  gpu-0-w1 case=68 d=68 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:22.298616+00:00] start gpu-0-w1 case=74 d=74 l=0 dtype=float16
+[2026-03-16T13:10:22.772540+00:00] done  gpu-1-w1 case=69 d=69 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:22.772686+00:00] done  gpu-1-w0 case=70 d=70 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:22.772720+00:00] start gpu-1-w1 case=75 d=75 l=0 dtype=float16
+[2026-03-16T13:10:22.773269+00:00] start gpu-1-w0 case=76 d=76 l=0 dtype=float16
+[2026-03-16T13:10:23.575594+00:00] done  gpu-2-w0 case=72 d=72 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:23.575654+00:00] start gpu-2-w0 case=77 d=77 l=0 dtype=float16
+[2026-03-16T13:10:23.678509+00:00] done  gpu-0-w0 case=71 d=71 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:23.678599+00:00] start gpu-0-w0 case=78 d=78 l=0 dtype=float16
+[2026-03-16T13:10:24.054493+00:00] done  gpu-2-w1 case=73 d=73 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:24.054552+00:00] start gpu-2-w1 case=79 d=79 l=0 dtype=float16
+[2026-03-16T13:10:24.105422+00:00] done  gpu-0-w1 case=74 d=74 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:24.105584+00:00] done  gpu-1-w1 case=75 d=75 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:24.105628+00:00] start gpu-0-w1 case=80 d=80 l=0 dtype=float16
+[2026-03-16T13:10:24.106358+00:00] start gpu-1-w1 case=81 d=81 l=0 dtype=float16
+[2026-03-16T13:10:24.458249+00:00] done  gpu-1-w0 case=76 d=76 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:24.458319+00:00] start gpu-1-w0 case=82 d=82 l=0 dtype=float16
+[2026-03-16T13:10:24.910356+00:00] done  gpu-2-w0 case=77 d=77 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:24.910426+00:00] start gpu-2-w0 case=83 d=83 l=0 dtype=float16
+[2026-03-16T13:10:25.463312+00:00] done  gpu-0-w0 case=78 d=78 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:25.463378+00:00] start gpu-0-w0 case=84 d=84 l=0 dtype=float16
+[2026-03-16T13:10:25.814981+00:00] done  gpu-0-w1 case=80 d=80 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:25.815047+00:00] start gpu-0-w1 case=85 d=85 l=0 dtype=float16
+[2026-03-16T13:10:25.916064+00:00] done  gpu-1-w1 case=81 d=81 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:25.916126+00:00] start gpu-1-w1 case=86 d=86 l=0 dtype=float16
+[2026-03-16T13:10:25.945995+00:00] done  gpu-2-w1 case=79 d=79 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:25.946055+00:00] start gpu-2-w1 case=87 d=87 l=0 dtype=float16
+[2026-03-16T13:10:26.197355+00:00] done  gpu-1-w0 case=82 d=82 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:26.197492+00:00] done  gpu-2-w0 case=83 d=83 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:26.197547+00:00] start gpu-1-w0 case=88 d=88 l=0 dtype=float16
+[2026-03-16T13:10:26.198115+00:00] start gpu-2-w0 case=89 d=89 l=0 dtype=float16
+[2026-03-16T13:10:27.302089+00:00] done  gpu-0-w0 case=84 d=84 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:27.302161+00:00] start gpu-0-w0 case=90 d=90 l=0 dtype=float16
+[2026-03-16T13:10:27.604393+00:00] done  gpu-1-w1 case=86 d=86 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:27.604463+00:00] start gpu-1-w1 case=91 d=91 l=0 dtype=float16
+[2026-03-16T13:10:27.656145+00:00] done  gpu-0-w1 case=85 d=85 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:27.656293+00:00] start gpu-0-w1 case=92 d=92 l=0 dtype=float16
+[2026-03-16T13:10:27.708588+00:00] done  gpu-1-w0 case=88 d=88 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:27.708931+00:00] start gpu-1-w0 case=93 d=93 l=0 dtype=float16
+[2026-03-16T13:10:28.098265+00:00] done  gpu-2-w0 case=89 d=89 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:28.098326+00:00] start gpu-2-w0 case=94 d=94 l=0 dtype=float16
+[2026-03-16T13:10:28.150825+00:00] done  gpu-2-w1 case=87 d=87 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:28.150966+00:00] start gpu-2-w1 case=95 d=95 l=0 dtype=float16
+[2026-03-16T13:10:29.057294+00:00] done  gpu-0-w0 case=90 d=90 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:29.057376+00:00] start gpu-0-w0 case=96 d=96 l=0 dtype=float16
+[2026-03-16T13:10:29.461917+00:00] done  gpu-1-w0 case=93 d=93 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:29.461976+00:00] start gpu-1-w0 case=97 d=97 l=0 dtype=float16
+[2026-03-16T13:10:29.512986+00:00] done  gpu-1-w1 case=91 d=91 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:29.513055+00:00] start gpu-1-w1 case=98 d=98 l=0 dtype=float16
+[2026-03-16T13:10:29.531184+00:00] done  gpu-0-w1 case=92 d=92 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:29.531265+00:00] start gpu-0-w1 case=99 d=99 l=0 dtype=float16
+[2026-03-16T13:10:29.597027+00:00] done  gpu-2-w0 case=94 d=94 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:29.597107+00:00] start gpu-2-w0 case=100 d=100 l=0 dtype=float16
+[2026-03-16T13:10:29.949390+00:00] done  gpu-2-w1 case=95 d=95 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:29.949465+00:00] start gpu-2-w1 case=101 d=0 l=1 dtype=float16
+[2026-03-16T13:10:30.451454+00:00] done  gpu-0-w0 case=96 d=96 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:30.451520+00:00] start gpu-0-w0 case=102 d=1 l=1 dtype=float16
+[2026-03-16T13:10:31.103747+00:00] done  gpu-1-w0 case=97 d=97 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:31.103853+00:00] start gpu-1-w0 case=103 d=2 l=1 dtype=float16
+[2026-03-16T13:10:31.305182+00:00] done  gpu-0-w1 case=99 d=99 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:31.305245+00:00] start gpu-0-w1 case=104 d=3 l=1 dtype=float16
+[2026-03-16T13:10:31.356171+00:00] done  gpu-1-w1 case=98 d=98 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:31.356245+00:00] start gpu-1-w1 case=105 d=4 l=1 dtype=float16
+[2026-03-16T13:10:31.471312+00:00] done  gpu-2-w0 case=100 d=100 l=0 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:31.471384+00:00] start gpu-2-w0 case=106 d=5 l=1 dtype=float16
+[2026-03-16T13:10:31.672767+00:00] done  gpu-2-w1 case=101 d=0 l=1 dtype=float16 status=failed failure_kind=error
+[2026-03-16T13:10:31.672832+00:00] start gpu-2-w1 case=107 d=6 l=1 dtype=float16
+[2026-03-16T13:10:32.776424+00:00] done  gpu-0-w0 case=102 d=1 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:32.776491+00:00] start gpu-0-w0 case=108 d=7 l=1 dtype=float16
+[2026-03-16T13:10:34.331351+00:00] done  gpu-1-w0 case=103 d=2 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:34.331440+00:00] start gpu-1-w0 case=109 d=8 l=1 dtype=float16
+[2026-03-16T13:10:34.784131+00:00] done  gpu-0-w1 case=104 d=3 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:34.784215+00:00] start gpu-0-w1 case=110 d=9 l=1 dtype=float16
+[2026-03-16T13:10:34.835283+00:00] done  gpu-1-w1 case=105 d=4 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:34.835363+00:00] start gpu-1-w1 case=111 d=10 l=1 dtype=float16
+[2026-03-16T13:10:35.211887+00:00] done  gpu-2-w0 case=106 d=5 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:35.211954+00:00] start gpu-2-w0 case=112 d=11 l=1 dtype=float16
+[2026-03-16T13:10:35.262888+00:00] done  gpu-2-w1 case=107 d=6 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:35.262964+00:00] start gpu-2-w1 case=113 d=12 l=1 dtype=float16
+[2026-03-16T13:10:35.782164+00:00] done  gpu-0-w0 case=108 d=7 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:35.782239+00:00] start gpu-0-w0 case=114 d=13 l=1 dtype=float16
+[2026-03-16T13:10:37.739789+00:00] done  gpu-1-w0 case=109 d=8 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:37.739857+00:00] start gpu-1-w0 case=115 d=14 l=1 dtype=float16
+[2026-03-16T13:10:37.991842+00:00] done  gpu-0-w1 case=110 d=9 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:37.991914+00:00] start gpu-0-w1 case=116 d=15 l=1 dtype=float16
+[2026-03-16T13:10:38.393706+00:00] done  gpu-1-w1 case=111 d=10 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:38.393776+00:00] start gpu-1-w1 case=117 d=16 l=1 dtype=float16
+[2026-03-16T13:10:39.096224+00:00] done  gpu-2-w0 case=112 d=11 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:39.096311+00:00] start gpu-2-w0 case=118 d=17 l=1 dtype=float16
+[2026-03-16T13:10:39.348300+00:00] done  gpu-2-w1 case=113 d=12 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:39.348373+00:00] start gpu-2-w1 case=119 d=18 l=1 dtype=float16
+[2026-03-16T13:10:39.499584+00:00] done  gpu-0-w0 case=114 d=13 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:39.499654+00:00] start gpu-0-w0 case=120 d=19 l=1 dtype=float16
+[2026-03-16T13:10:41.705702+00:00] done  gpu-1-w0 case=115 d=14 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:41.705794+00:00] start gpu-1-w0 case=121 d=20 l=1 dtype=float16
+[2026-03-16T13:10:42.007550+00:00] done  gpu-0-w1 case=116 d=15 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:42.007623+00:00] start gpu-0-w1 case=122 d=21 l=1 dtype=float16
+[2026-03-16T13:10:42.259036+00:00] done  gpu-1-w1 case=117 d=16 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:42.259107+00:00] start gpu-1-w1 case=123 d=22 l=1 dtype=float16
+[2026-03-16T13:10:44.114078+00:00] done  gpu-0-w0 case=120 d=19 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:44.114139+00:00] start gpu-0-w0 case=124 d=23 l=1 dtype=float16
+[2026-03-16T13:10:44.416473+00:00] done  gpu-2-w0 case=118 d=17 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:44.416548+00:00] start gpu-2-w0 case=125 d=24 l=1 dtype=float16
+[2026-03-16T13:10:44.467559+00:00] done  gpu-2-w1 case=119 d=18 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:44.467754+00:00] start gpu-2-w1 case=126 d=25 l=1 dtype=float16
+[2026-03-16T13:10:46.825247+00:00] done  gpu-1-w0 case=121 d=20 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:46.825319+00:00] start gpu-1-w0 case=127 d=26 l=1 dtype=float16
+[2026-03-16T13:10:47.378864+00:00] done  gpu-0-w1 case=122 d=21 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:47.378993+00:00] start gpu-0-w1 case=128 d=27 l=1 dtype=float16
+[2026-03-16T13:10:48.482818+00:00] done  gpu-1-w1 case=123 d=22 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:48.482888+00:00] start gpu-1-w1 case=129 d=28 l=1 dtype=float16
+[2026-03-16T13:10:52.644087+00:00] done  gpu-0-w0 case=124 d=23 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:52.644149+00:00] start gpu-0-w0 case=130 d=29 l=1 dtype=float16
+[2026-03-16T13:10:57.910868+00:00] done  gpu-2-w0 case=125 d=24 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:10:57.910991+00:00] start gpu-2-w0 case=131 d=30 l=1 dtype=float16
+[2026-03-16T13:11:07.194609+00:00] done  gpu-2-w1 case=126 d=25 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:11:07.194719+00:00] start gpu-2-w1 case=132 d=31 l=1 dtype=float16
+[2026-03-16T13:11:28.270297+00:00] done  gpu-1-w0 case=127 d=26 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:11:28.270388+00:00] start gpu-1-w0 case=133 d=32 l=1 dtype=float16
+[2026-03-16T13:12:11.993660+00:00] done  gpu-0-w1 case=128 d=27 l=1 dtype=float16 status=ok failure_kind=-
+[2026-03-16T13:12:12.000420+00:00] start gpu-0-w1 case=134 d=33 l=1 dtype=float16
+[2026-03-16T13:12:55.630165+00:00] done  gpu-0-w0 case=130 d=29 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:12:55.631330+00:00] start gpu-0-w0 case=135 d=34 l=1 dtype=float16
+[2026-03-16T13:13:18.736085+00:00] done  gpu-2-w0 case=131 d=30 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:13:18.737132+00:00] start gpu-2-w0 case=136 d=35 l=1 dtype=float16
+[2026-03-16T13:14:05.882961+00:00] done  gpu-1-w1 case=129 d=28 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:14:05.883442+00:00] start gpu-1-w1 case=137 d=36 l=1 dtype=float16
+[2026-03-16T13:15:02.151098+00:00] done  gpu-1-w0 case=133 d=32 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:15:02.151547+00:00] start gpu-1-w0 case=138 d=37 l=1 dtype=float16
+[2026-03-16T13:15:21.348063+00:00] done  gpu-2-w1 case=132 d=31 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:15:21.348692+00:00] start gpu-2-w1 case=139 d=38 l=1 dtype=float16
+[2026-03-16T13:16:26.678517+00:00] done  gpu-0-w1 case=134 d=33 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:16:26.679181+00:00] start gpu-0-w1 case=140 d=39 l=1 dtype=float16
+[2026-03-16T13:17:04.345913+00:00] done  gpu-0-w0 case=135 d=34 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:17:04.346958+00:00] start gpu-0-w0 case=141 d=40 l=1 dtype=float16
+[2026-03-16T13:17:38.092430+00:00] done  gpu-2-w0 case=136 d=35 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:17:38.092880+00:00] start gpu-2-w0 case=142 d=41 l=1 dtype=float16
+[2026-03-16T13:18:47.620554+00:00] done  gpu-2-w1 case=139 d=38 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:18:47.621117+00:00] start gpu-2-w1 case=143 d=42 l=1 dtype=float16
+[2026-03-16T13:19:10.702446+00:00] done  gpu-1-w1 case=137 d=36 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:19:10.702823+00:00] start gpu-1-w1 case=144 d=43 l=1 dtype=float16
+[2026-03-16T13:20:16.981111+00:00] done  gpu-0-w1 case=140 d=39 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:20:16.981349+00:00] start gpu-0-w1 case=145 d=44 l=1 dtype=float16
+[2026-03-16T13:20:30.466656+00:00] done  gpu-1-w0 case=138 d=37 l=1 dtype=float16 status=failed failure_kind=worker_terminated
+[2026-03-16T13:20:30.467160+00:00] start gpu-1-w0 case=146 d=45 l=1 dtype=float16

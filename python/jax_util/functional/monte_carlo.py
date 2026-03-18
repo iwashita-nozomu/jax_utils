@@ -59,7 +59,7 @@ class MonteCarloIntegrator(eqx.Module):
         self.key, self.samples = sampler(key, dimension, num_samples)
 
 
-    def __call__(self, f: Function, /) -> Vector:
+    def integrate(self, f: Function, /) -> Vector:
         return monte_carlo_integral(f, self.samples)
 
     # 責務: 次の乱数状態で新しいサンプル列を持つ積分器を返す。

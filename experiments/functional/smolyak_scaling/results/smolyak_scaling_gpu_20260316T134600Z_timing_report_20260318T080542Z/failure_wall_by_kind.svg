@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 840 460" width="840" height="460">
+<rect x="0" y="0" width="840" height="460" fill="#fffdf8" />
+<text x="420.0" y="28" text-anchor="middle" font-size="20" font-family="monospace" fill="#2d2418">Median Wall Time By Failure Kind</text>
+<text x="420.0" y="48" text-anchor="middle" font-size="12" font-family="monospace" fill="#7f6b53">valid cases only; timeout is measured over the whole child process</text>
+<rect x="90" y="60" width="710" height="320" fill="#f7f0e3" stroke="#d8c8b0" />
+<line x1="90" y1="380.0" x2="800" y2="380.0" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="384.0" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">0</text>
+<line x1="90" y1="375.2" x2="800" y2="375.2" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="379.2" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">60</text>
+<line x1="90" y1="356.2" x2="800" y2="356.2" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="360.2" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">300</text>
+<line x1="90" y1="308.6" x2="800" y2="308.6" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="312.6" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">900</text>
+<line x1="90" y1="237.1" x2="800" y2="237.1" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="241.1" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">1800</text>
+<line x1="90" y1="94.3" x2="800" y2="94.3" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="98.3" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">3600</text>
+<rect x="138.8" y="379.9" width="79.9" height="0.1" fill="#6a9fb5" />
+<text x="178.8" y="371.9" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">1.7s</text>
+<text x="178.8" y="418" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">error</text>
+<text x="178.8" y="436" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">n=4</text>
+<rect x="316.3" y="374.4" width="79.9" height="5.6" fill="#d98f2b" />
+<text x="356.2" y="366.4" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">70.8s</text>
+<text x="356.2" y="418" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">oom</text>
+<text x="356.2" y="436" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">n=10</text>
+<rect x="493.8" y="360.1" width="79.9" height="19.9" fill="#8e7dbe" />
+<text x="533.8" y="352.1" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">251.0s</text>
+<text x="533.8" y="418" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">worker_terminated</text>
+<text x="533.8" y="436" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">n=872</text>
+<rect x="671.3" y="94.3" width="79.9" height="285.7" fill="#c0392b" />
+<text x="711.2" y="86.3" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">3600.2s</text>
+<text x="711.2" y="418" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">timeout</text>
+<text x="711.2" y="436" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">n=172</text>
+</svg>

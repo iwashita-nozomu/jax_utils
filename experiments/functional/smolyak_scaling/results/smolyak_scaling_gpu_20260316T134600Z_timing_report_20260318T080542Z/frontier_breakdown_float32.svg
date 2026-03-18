@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 560" width="980" height="560">
+<rect x="0" y="0" width="980" height="560" fill="#fffdf8" />
+<text x="490.0" y="28" text-anchor="middle" font-size="20" font-family="monospace" fill="#2d2418">Frontier Float32 Cases: Wall-Time Breakdown</text>
+<text x="490.0" y="48" text-anchor="middle" font-size="12" font-family="monospace" fill="#7f6b53">init + transfer + warmup + timed batch + unmeasured overhead</text>
+<rect x="90" y="60" width="840" height="410" fill="#f7f0e3" stroke="#d8c8b0" />
+<line x1="90" y1="470.0" x2="930" y2="470.0" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="474.0" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">0</text>
+<line x1="90" y1="401.7" x2="930" y2="401.7" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="405.7" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">600</text>
+<line x1="90" y1="333.3" x2="930" y2="333.3" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="337.3" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">1200</text>
+<line x1="90" y1="265.0" x2="930" y2="265.0" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="269.0" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">1800</text>
+<line x1="90" y1="196.7" x2="930" y2="196.7" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="200.7" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">2400</text>
+<line x1="90" y1="128.3" x2="930" y2="128.3" stroke="#d8c8b0" stroke-width="1" />
+<text x="80" y="132.3" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">3000</text>
+<line x1="90" y1="60.0" x2="930" y2="60.0" stroke="#b4552d" stroke-width="1" stroke-dasharray="6 4" />
+<text x="80" y="64.0" text-anchor="end" font-size="11" font-family="monospace" fill="#7f6b53">timeout=3600s</text>
+<rect x="142.5" y="455.4" width="105.0" height="14.6" fill="#6a9fb5" />
+<text x="195.0" y="466.7" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">init</text>
+<rect x="142.5" y="455.3" width="105.0" height="0.1" fill="#c1666b" />
+<rect x="142.5" y="423.1" width="105.0" height="32.2" fill="#e4b363" />
+<text x="195.0" y="443.2" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">warmup</text>
+<rect x="142.5" y="393.5" width="105.0" height="29.6" fill="#4c956c" />
+<text x="195.0" y="412.3" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">batched</text>
+<rect x="142.5" y="393.0" width="105.0" height="0.5" fill="#8e7dbe" />
+<text x="195.0" y="383.0" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">675.9s</text>
+<text x="195.0" y="516" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">d=1 l=28</text>
+<text x="195.0" y="534" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">terms=28, points=268435472</text>
+<rect x="352.5" y="470.0" width="105.0" height="0.0" fill="#6a9fb5" />
+<rect x="352.5" y="470.0" width="105.0" height="0.0" fill="#c1666b" />
+<rect x="352.5" y="362.8" width="105.0" height="107.2" fill="#e4b363" />
+<text x="405.0" y="420.4" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">warmup</text>
+<rect x="352.5" y="256.7" width="105.0" height="106.1" fill="#4c956c" />
+<text x="405.0" y="313.8" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">batched</text>
+<rect x="352.5" y="256.6" width="105.0" height="0.2" fill="#8e7dbe" />
+<text x="405.0" y="246.6" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">1874.0s</text>
+<text x="405.0" y="516" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">d=2 l=13</text>
+<text x="405.0" y="534" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">terms=91, points=114727</text>
+<rect x="562.5" y="470.0" width="105.0" height="0.0" fill="#6a9fb5" />
+<rect x="562.5" y="470.0" width="105.0" height="0.0" fill="#c1666b" />
+<rect x="562.5" y="319.9" width="105.0" height="150.1" fill="#e4b363" />
+<text x="615.0" y="399.0" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">warmup</text>
+<rect x="562.5" y="171.3" width="105.0" height="148.6" fill="#4c956c" />
+<text x="615.0" y="249.6" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">batched</text>
+<rect x="562.5" y="171.2" width="105.0" height="0.2" fill="#8e7dbe" />
+<text x="615.0" y="161.2" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">2624.0s</text>
+<text x="615.0" y="516" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">d=3 l=10</text>
+<text x="615.0" y="534" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">terms=220, points=71634</text>
+<rect x="772.5" y="470.0" width="105.0" height="0.0" fill="#6a9fb5" />
+<rect x="772.5" y="470.0" width="105.0" height="0.0" fill="#c1666b" />
+<rect x="772.5" y="304.6" width="105.0" height="165.4" fill="#e4b363" />
+<text x="825.0" y="391.3" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">warmup</text>
+<rect x="772.5" y="141.2" width="105.0" height="163.4" fill="#4c956c" />
+<text x="825.0" y="226.9" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">batched</text>
+<rect x="772.5" y="141.1" width="105.0" height="0.2" fill="#8e7dbe" />
+<text x="825.0" y="131.1" text-anchor="middle" font-size="11" font-family="monospace" fill="#2d2418">2888.1s</text>
+<text x="825.0" y="516" text-anchor="middle" font-size="12" font-family="monospace" fill="#2d2418">d=4 l=8</text>
+<text x="825.0" y="534" text-anchor="middle" font-size="11" font-family="monospace" fill="#7f6b53">terms=330, points=46290</text>
+<rect x="760" y="80" width="12" height="12" fill="#6a9fb5" />
+<text x="778" y="90" font-size="12" font-family="monospace" fill="#2d2418">init</text>
+<rect x="760" y="100" width="12" height="12" fill="#c1666b" />
+<text x="778" y="110" font-size="12" font-family="monospace" fill="#2d2418">transfer</text>
+<rect x="760" y="120" width="12" height="12" fill="#e4b363" />
+<text x="778" y="130" font-size="12" font-family="monospace" fill="#2d2418">warmup</text>
+<rect x="760" y="140" width="12" height="12" fill="#4c956c" />
+<text x="778" y="150" font-size="12" font-family="monospace" fill="#2d2418">batched</text>
+<rect x="760" y="160" width="12" height="12" fill="#8e7dbe" />
+<text x="778" y="170" font-size="12" font-family="monospace" fill="#2d2418">extra</text>
+</svg>

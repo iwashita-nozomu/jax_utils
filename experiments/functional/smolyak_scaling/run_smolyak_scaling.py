@@ -39,6 +39,7 @@ DEFAULT_NUM_REPEATS = 100
 DEFAULT_NUM_ACCURACY_PROBLEMS = 9
 DEFAULT_COEFF_START = -0.55
 DEFAULT_COEFF_STOP = 0.65
+DEFAULT_WORKERS_PER_GPU = 2
 SUPPORTED_FLOAT_DTYPES = ("float16", "bfloat16", "float32", "float64")
 RESULTS_BRANCH_NAME = "results/functional-smolyak-scaling"
 GPU_PREALLOCATION_DISABLED = True
@@ -155,9 +156,9 @@ def _build_cases(
 ) -> list[dict[str, object]]:
     cases: list[dict[str, object]] = []
     case_id = 0
-    for dtype_name in dtype_names:
+    for dimension in dimensions:
         for level in levels:
-            for dimension in dimensions:
+            for dtype_name in dtype_names:
                 cases.append({
                     "case_id": case_id,
                     "dimension": dimension,
@@ -321,7 +322,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
     import jax.numpy as jnp
     from jax import lax
 
-    from jax_util.functional import SmolyakIntegrator
+    from jax_util.functional import initialize_smolyak_integrator
 
     class ExponentialIntegrand(eqx.Module):
         coeffs: jax.Array
@@ -342,27 +343,35 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
 
     t0 = time.perf_counter()
     with jax.default_device(cpu_device):
-        integrator = SmolyakIntegrator(
+        integrator = initialize_smolyak_integrator(
             dimension=_case_int(case, "dimension"),
             level=_case_int(case, "level"),
             dtype=runtime_dtype,
         )
-    jax.block_until_ready(integrator.points)
-    jax.block_until_ready(integrator.weights)
+    jax.block_until_ready(integrator.rule_nodes)
+    jax.block_until_ready(integrator.rule_weights)
+    jax.block_until_ready(integrator.rule_offsets)
+    jax.block_until_ready(integrator.rule_lengths)
+    jax.block_until_ready(integrator.term_levels)
+    jax.block_until_ready(integrator.term_num_points)
     t1 = time.perf_counter()
 
-    storage_bytes = int((integrator.points.size + integrator.weights.size) * integrator.points.dtype.itemsize)
+    storage_bytes = integrator.storage_bytes
     integrator = jax.device_put(integrator, target_device)
     coeffs = jax.device_put(jnp.asarray(accuracy_coefficients[-1], dtype=runtime_dtype), target_device)
     accuracy_coeffs = jax.device_put(jnp.asarray(accuracy_coefficients, dtype=runtime_dtype), target_device)
-    jax.block_until_ready(integrator.points)
-    jax.block_until_ready(integrator.weights)
+    jax.block_until_ready(integrator.rule_nodes)
+    jax.block_until_ready(integrator.rule_weights)
+    jax.block_until_ready(integrator.rule_offsets)
+    jax.block_until_ready(integrator.rule_lengths)
+    jax.block_until_ready(integrator.term_levels)
+    jax.block_until_ready(integrator.term_num_points)
     jax.block_until_ready(coeffs)
     jax.block_until_ready(accuracy_coeffs)
     t2 = time.perf_counter()
 
     def single_integral(current_integrator: Any, current_coeffs: jax.Array) -> jax.Array:
-        return current_integrator(ExponentialIntegrand(current_coeffs))[0]
+        return current_integrator.integrate(ExponentialIntegrand(current_coeffs))[0]
 
     def batched_accuracy_integrals(current_integrator: Any, coeff_matrix: jax.Array) -> jax.Array:
         def apply_single(coeff_vector: jax.Array) -> jax.Array:
@@ -380,7 +389,7 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
             return acc + single_integral(current_integrator, current_coeffs)
 
         num_repeats = _config_int(run_config, "num_repeats")
-        total = lax.fori_loop(0, num_repeats, body, jnp.asarray(0.0, dtype=current_integrator.points.dtype))
+        total = lax.fori_loop(0, num_repeats, body, jnp.asarray(0.0, dtype=current_integrator.rule_nodes.dtype))
         return total / num_repeats
 
     accuracy_values = batched_accuracy_integrals(integrator, accuracy_coeffs)
@@ -408,10 +417,14 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
         "device_kind": target_device.device_kind,
         "visible_device_id": int(target_device.id),
         "assigned_gpu_index": os.environ.get("SMOLYAK_GPU_INDEX"),
-        "num_points": int(integrator.points.shape[1]),
+        "cpu_affinity": sorted(int(cpu) for cpu in os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+        "num_terms": int(integrator.num_terms),
+        "num_points": int(integrator.num_evaluation_points),
+        "num_evaluation_points": int(integrator.num_evaluation_points),
         "storage_bytes": storage_bytes,
-        "points_dtype": str(integrator.points.dtype),
-        "weights_dtype": str(integrator.weights.dtype),
+        "rule_nodes_dtype": str(integrator.rule_nodes.dtype),
+        "rule_weights_dtype": str(integrator.rule_weights.dtype),
+        "chunk_size": integrator.chunk_size,
         "expected": float(expected_values[-1]),
         "actual": float(np.asarray(timed_value)),
         "num_accuracy_problems": _config_int(run_config, "num_accuracy_problems"),
@@ -649,6 +662,7 @@ def run_benchmark(
     output_path: Path,
     platform: str,
     gpu_indices: list[int],
+    workers_per_gpu: int,
     timeout_seconds: int,
     num_repeats: int,
     num_accuracy_problems: int,
@@ -662,6 +676,7 @@ def run_benchmark(
     run_config: dict[str, object] = {
         "platform": platform,
         "gpu_indices": gpu_indices,
+        "workers_per_gpu": workers_per_gpu,
         "timeout_seconds": timeout_seconds,
         "num_repeats": num_repeats,
         "num_accuracy_problems": num_accuracy_problems,
@@ -680,6 +695,7 @@ def run_benchmark(
         "run_wall_seconds": (finished_at - started_at).total_seconds(),
         "platform": platform,
         "gpu_indices": gpu_indices if platform == "gpu" else [],
+        "workers_per_gpu": workers_per_gpu if platform == "gpu" else 1,
         "dimensions": dimensions,
         "levels": levels,
         "dtype_names": dtype_names,
@@ -710,6 +726,7 @@ def main() -> None:
     parser.add_argument("--levels", help="Inclusive integer range start:end[:step] for levels.")
     parser.add_argument("--platform", choices=["cpu", "gpu"], default="gpu")
     parser.add_argument("--gpu-indices", default=None, help="Comma-separated physical GPU indices. Defaults to all visible GPUs.")
+    parser.add_argument("--workers-per-gpu", type=int, default=DEFAULT_WORKERS_PER_GPU)
     parser.add_argument("--dtypes", default="all", help="Comma-separated dtype names or 'all'.")
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
     parser.add_argument("--num-repeats", type=int, default=DEFAULT_NUM_REPEATS)
@@ -763,6 +780,7 @@ def main() -> None:
         output_path=output_path,
         platform=args.platform,
         gpu_indices=gpu_indices,
+        workers_per_gpu=args.workers_per_gpu,
         timeout_seconds=args.timeout_seconds,
         num_repeats=args.num_repeats,
         num_accuracy_problems=args.num_accuracy_problems,
