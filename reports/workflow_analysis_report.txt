@@ -1,0 +1,24 @@
+Workflow analysis report
+
+Summary:
+- Detected several scripts and partial automations (see `documents/WORKFLOW_INVENTORY.md`).
+- Missing automations of highest priority: branch-scope PR warning and worktree scope enforcement/notification.
+
+Workflows scanned:
+- run_static_checks.sh
+- safe_file_extractor.py
+- safe_fix.sh
+- organize_designs.py
+- create_design_template.py
+- find_redundant_designs.py
+
+Not automated (examples):
+- PR-time branch-scope check (warn if PR touches multiple submodules).
+- Automated owner notification when a worktree lacks `WORKTREE_SCOPE.md`.
+- Similarity-based duplicate detection (presently exact-match only).
+- Automated promotion of design index `documents/design/README.md`.
+
+Recommendations:
+1. Implement `.github/workflows/branch-scope-check.yml` that runs on PR and fails/annotates if modified files touch >1 top-level submodule.
+2. Implement a scheduled job to run `scripts/tools/organize_designs.py --dry-run` weekly and open issues/PRs for manual review.
+3. Add a small Action to run `scripts/tools/check_worktree_scopes.sh` and post summary to a designated issue/owner.
