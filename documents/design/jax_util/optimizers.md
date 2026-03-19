@@ -20,5 +20,4 @@
 
 ## 4. 依存関係
 
-- `optimizers` は `base` と `solvers` に依存します。
-- 現在の安定 API は `pdipm.py` を中心に整理します。
+- このサブモジュールの依存関係は概ね `base` と `solvers` です。詳細な方針は [documents/design/jax_util/README.md](README.md) を参照してください。
