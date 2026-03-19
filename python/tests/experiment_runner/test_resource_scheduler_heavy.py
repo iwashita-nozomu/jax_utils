@@ -16,15 +16,17 @@ if str(PYTHON_ROOT) not in __import__('sys').path:
 
 import pytest
 
-from jax_util.experiment_runner import (
+from jax_util.experiment_runner.resource_scheduler import (
     FullResourceCapacity,
     FullResourceEstimate,
     GPUDeviceCapacity,
     StandardFullResourceScheduler,
+)
+from jax_util.experiment_runner.runner import (
     StandardRunner,
     StandardWorker,
-    TaskContext,
 )
+from jax_util.experiment_runner.protocols import TaskContext
 
 
 if os.environ.get("RUN_HEAVY_TESTS") not in {"1", "true", "True"}:
