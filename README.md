@@ -2,6 +2,34 @@
 
 Common Python module.
 
+## Tools & Workflows
+
+**ツール・スクリプト一覧と使用方法：**
+- [documents/tools/TOOLS_DIRECTORY.md](/workspace/documents/tools/TOOLS_DIRECTORY.md) — ツール詳細目録（20個のスクリプト・ツール対応）
+- [documents/FILE_CHECKLIST_OPERATIONS.md](/workspace/documents/FILE_CHECKLIST_OPERATIONS.md) — **作業別チェックリスト・実行手順書（8個フロー対応）**
+
+**推奨される作業開始フロー：**
+```bash
+# 1. 新規ブランチ作成
+bash scripts/tools/create_worktree.sh my-feature-name
+
+# 2. スコープ編集＆コミット
+cd .worktrees/my-feature-name
+vim WORKTREE_SCOPE.md
+git add WORKTREE_SCOPE.md && git commit -m "chore(worktree): initialize scope"
+
+# 3. 実装＆テスト
+# ... code changes ...
+bash ../scripts/run_pytest_with_logs.sh
+pyright python/
+
+# 4. ドキュメント更新
+python ../scripts/tools/format_markdown.py
+python ../scripts/tools/audit_and_fix_links.py
+```
+
+詳細は [FILE_CHECKLIST_OPERATIONS.md](./documents/FILE_CHECKLIST_OPERATIONS.md) の**チェックリスト1～8**を参照してください。
+
 ## Notes
 
 - 軽量な実験メモは [notes/README.md](/workspace/notes/README.md) に置きます。
