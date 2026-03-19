@@ -133,3 +133,55 @@ def test_high_load_resource_scheduler(tmp_path: Path) -> None:
         assert len(scheduler.completions) == count
         # 実行時間は過度に長くないこと（マシンやCIで差があるため緩めに設定）
         assert elapsed < 10.0
+
+
+def _run_all_tests() -> None:
+    # 単体実行用ラッパー: テストを実行して 1 行 JSON サマリを出力する。
+    count = 200
+    with TemporaryDirectory() as tmpdir:
+        records_dir = Path(tmpdir) / "records"
+        try:
+            cases: list[dict[str, object]] = []
+            for i in range(count):
+                has_gpu = (i % 3) == 0
+                cases.append({
+                    "case_id": i,
+                    "sleep_seconds": 0.005,
+                    "host_memory_bytes": 1,
+                    "gpu_count": 1 if has_gpu else 0,
+                    "gpu_memory_bytes": 1 if has_gpu else 0,
+                })
+
+            scheduler = StandardFullResourceScheduler(
+                resource_capacity=FullResourceCapacity(
+                    max_workers=8,
+                    host_memory_bytes=16,
+                    gpu_devices=(
+                        GPUDeviceCapacity(gpu_id=0, memory_bytes=8, max_slots=1),
+                        GPUDeviceCapacity(gpu_id=1, memory_bytes=8, max_slots=1),
+                    ),
+                ),
+                cases=cases,
+                estimate_builder=_resource_estimate,
+            )
+
+            runner = StandardRunner(scheduler)
+            worker = StandardWorker(FullResourceRecordingTask(records_dir))
+
+            start = time.perf_counter()
+            runner.run(worker)
+            elapsed = time.perf_counter() - start
+
+            result = {
+                "case": "high_load_resource_scheduler",
+                "expected": {"count": count, "elapsed_lt_seconds": 10.0},
+                "actual": {"count": len(scheduler.completions), "elapsed_seconds": elapsed},
+            }
+            print(json.dumps(result, ensure_ascii=True, sort_keys=True))
+        except Exception as exc:  # pragma: no cover - manual runs
+            print(json.dumps({"case": "high_load_resource_scheduler", "error": str(exc)}))
+            raise
+
+
+if __name__ == "__main__":
+    _run_all_tests()
