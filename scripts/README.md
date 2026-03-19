@@ -4,52 +4,53 @@
 
 **最後に更新:** 2026-03-19
 
----
+______________________________________________________________________
 
 ## 📋 全ツール一覧（23個）
 
-| # | カテゴリ | スクリプト | パス | 用途 |
-| --- | --- | --- | --- | --- |
-| **初期化** | | | | |
-| 1 | 初期化 | git_config.sh | [./git_config.sh](./git_config.sh) | Git ユーザー設定（user.name, email） |
-| 2 | 初期化 | git_init.sh | [./git_init.sh](./git_init.sh) | リポジトリ初期化（git_config.sh 呼び出し） |
-| 3 | 初期化 | git_repo_init.sh | [./git_repo_init.sh](./git_repo_init.sh) | 新規 Python パッケージディレクトリ作成 |
-| 4 | 初期化 | create_toml.sh | [./create_toml.sh](./create_toml.sh) | pyproject.toml テンプレート作成 |
-| **ワークツリー・ブランチ** | | | | |
-| 5 | ワークツリー | setup_worktree.sh | [./setup_worktree.sh](./setup_worktree.sh) | ワークツリー・ブランチ作成（★推奨） |
-| 6 | ワークツリー | create_worktree.sh | [./tools/create_worktree.sh](./tools/create_worktree.sh) | ワークツリー・ブランチ作成（代替）|
-| 7 | 情報表示 | guide.sh | [./guide.sh](./guide.sh) | 作業ガイド＆ワークツリー状況表示 |
-| 8 | 情報表示 | view_conventions.sh | [./view_conventions.sh](./view_conventions.sh) | 規約ファイルを検索・表示 |
-| 9 | 情報表示 | read_conventions.sh | [./read_conventions.sh](./read_conventions.sh) | 規約ファイル一覧を表形式で表示 |
-| **CI・テスト** | | | | |
-| 10 | CI | run_all_checks.sh | [./ci/run_all_checks.sh](./ci/run_all_checks.sh) | pytest + pyright + ruff 一括実行（★推奨） |
-| 11 | テスト | run_pytest_with_logs.sh | [./run_pytest_with_logs.sh](./run_pytest_with_logs.sh) | pytest 実行＆ログを時系列保存 |
-| **ドキュメント処理** | | | | |
-| 12 | ドキュメント | format_markdown.py | [./tools/format_markdown.py](./tools/format_markdown.py) | Markdown ファイル正規化（改行・空白等） |
-| 13 | ドキュメント | fix_markdown_docs.py | [./tools/fix_markdown_docs.py](./tools/fix_markdown_docs.py) | Markdown ドキュメント品質修正 |
-| 14 | ドキュメント | audit_and_fix_links.py | [./tools/audit_and_fix_links.py](./tools/audit_and_fix_links.py) | リンク監査・修正（相対パス統一） |
-| **設計ファイル管理** | | | | |
-| 15 | 設計 | organize_designs.py | [./tools/organize_designs.py](./tools/organize_designs.py) | 設計ファイルをサブモジュール別に整理 |
-| 16 | 設計 | create_design_template.py | [./tools/create_design_template.py](./tools/create_design_template.py) | サブモジュール用設計テンプレート生成 |
-| 17 | 設計 | find_redundant_designs.py | [./tools/find_redundant_designs.py](./tools/find_redundant_designs.py) | 完全一致の重複設計ファイル検出 |
-| 18 | 設計 | find_similar_designs.py | [./tools/find_similar_designs.py](./tools/find_similar_designs.py) | 内容類似の設計ファイル検出（TF-IDF) |
-| 19 | 設計 | find_similar_documents.py | [./tools/find_similar_documents.py](./tools/find_similar_documents.py) | ドキュメント全般の類似度検出 |
-| 20 | 設計 | tfidf_similar_docs.py | [./tools/tfidf_similar_docs.py](./tools/tfidf_similar_docs.py) | 高度な類似度分析（TF-IDF） |
-| **ワークツリー管理** | | | | |
-| 21 | 管理 | check_worktree_scopes.sh | [./tools/check_worktree_scopes.sh](./tools/check_worktree_scopes.sh) | 全ワークツリーが WORKTREE_SCOPE.md を持つか検査 |
-| **その他ユーティリティ** | | | | |
-| 22 | ユーティリティ | jsonl_to_md.sh | [./jsonl_to_md.sh](./jsonl_to_md.sh) | JSONL ファイルを Markdown に変換 |
-| 23 | ユーティリティ | extract_deps_from_svg.sh | [./extract_deps_from_svg.sh](./extract_deps_from_svg.sh) | Graphviz SVG から依存関係抽出 |
-| **HLO 分析** | | | | |
-| 24 | HLO | summarize_hlo_jsonl.py | [./hlo/summarize_hlo_jsonl.py](./hlo/summarize_hlo_jsonl.py) | HLO JSONL ログの集計・分析 |
+| #                          | カテゴリ       | スクリプト                | パス                                                                   | 用途                                            |
+| -------------------------- | -------------- | ------------------------- | ---------------------------------------------------------------------- | ----------------------------------------------- |
+| **初期化**                 |                |                           |                                                                        |                                                 |
+| 1                          | 初期化         | git_config.sh             | [./git_config.sh](./git_config.sh)                                     | Git ユーザー設定（user.name, email）            |
+| 2                          | 初期化         | git_init.sh               | [./git_init.sh](./git_init.sh)                                         | リポジトリ初期化（git_config.sh 呼び出し）      |
+| 3                          | 初期化         | git_repo_init.sh          | [./git_repo_init.sh](./git_repo_init.sh)                               | 新規 Python パッケージディレクトリ作成          |
+| 4                          | 初期化         | create_toml.sh            | [./create_toml.sh](./create_toml.sh)                                   | pyproject.toml テンプレート作成                 |
+| **ワークツリー・ブランチ** |                |                           |                                                                        |                                                 |
+| 5                          | ワークツリー   | setup_worktree.sh         | [./setup_worktree.sh](./setup_worktree.sh)                             | ワークツリー・ブランチ作成（★推奨）             |
+| 6                          | ワークツリー   | create_worktree.sh        | [./tools/create_worktree.sh](./tools/create_worktree.sh)               | ワークツリー・ブランチ作成（代替）              |
+| 7                          | 情報表示       | guide.sh                  | [./guide.sh](./guide.sh)                                               | 作業ガイド＆ワークツリー状況表示                |
+| 8                          | 情報表示       | view_conventions.sh       | [./view_conventions.sh](./view_conventions.sh)                         | 規約ファイルを検索・表示                        |
+| 9                          | 情報表示       | read_conventions.sh       | [./read_conventions.sh](./read_conventions.sh)                         | 規約ファイル一覧を表形式で表示                  |
+| **CI・テスト**             |                |                           |                                                                        |                                                 |
+| 10                         | CI             | run_all_checks.sh         | [./ci/run_all_checks.sh](./ci/run_all_checks.sh)                       | pytest + pyright + ruff 一括実行（★推奨）       |
+| 11                         | テスト         | run_pytest_with_logs.sh   | [./run_pytest_with_logs.sh](./run_pytest_with_logs.sh)                 | pytest 実行＆ログを時系列保存                   |
+| **ドキュメント処理**       |                |                           |                                                                        |                                                 |
+| 12                         | ドキュメント   | format_markdown.py        | [./tools/format_markdown.py](./tools/format_markdown.py)               | Markdown ファイル正規化（改行・空白等）         |
+| 13                         | ドキュメント   | fix_markdown_docs.py      | [./tools/fix_markdown_docs.py](./tools/fix_markdown_docs.py)           | Markdown ドキュメント品質修正                   |
+| 14                         | ドキュメント   | audit_and_fix_links.py    | [./tools/audit_and_fix_links.py](./tools/audit_and_fix_links.py)       | リンク監査・修正（相対パス統一）                |
+| **設計ファイル管理**       |                |                           |                                                                        |                                                 |
+| 15                         | 設計           | organize_designs.py       | [./tools/organize_designs.py](./tools/organize_designs.py)             | 設計ファイルをサブモジュール別に整理            |
+| 16                         | 設計           | create_design_template.py | [./tools/create_design_template.py](./tools/create_design_template.py) | サブモジュール用設計テンプレート生成            |
+| 17                         | 設計           | find_redundant_designs.py | [./tools/find_redundant_designs.py](./tools/find_redundant_designs.py) | 完全一致の重複設計ファイル検出                  |
+| 18                         | 設計           | find_similar_designs.py   | [./tools/find_similar_designs.py](./tools/find_similar_designs.py)     | 内容類似の設計ファイル検出（TF-IDF)             |
+| 19                         | 設計           | find_similar_documents.py | [./tools/find_similar_documents.py](./tools/find_similar_documents.py) | ドキュメント全般の類似度検出                    |
+| 20                         | 設計           | tfidf_similar_docs.py     | [./tools/tfidf_similar_docs.py](./tools/tfidf_similar_docs.py)         | 高度な類似度分析（TF-IDF）                      |
+| **ワークツリー管理**       |                |                           |                                                                        |                                                 |
+| 21                         | 管理           | check_worktree_scopes.sh  | [./tools/check_worktree_scopes.sh](./tools/check_worktree_scopes.sh)   | 全ワークツリーが WORKTREE_SCOPE.md を持つか検査 |
+| **その他ユーティリティ**   |                |                           |                                                                        |                                                 |
+| 22                         | ユーティリティ | jsonl_to_md.sh            | [./jsonl_to_md.sh](./jsonl_to_md.sh)                                   | JSONL ファイルを Markdown に変換                |
+| 23                         | ユーティリティ | extract_deps_from_svg.sh  | [./extract_deps_from_svg.sh](./extract_deps_from_svg.sh)               | Graphviz SVG から依存関係抽出                   |
+| **HLO 分析**               |                |                           |                                                                        |                                                 |
+| 24                         | HLO            | summarize_hlo_jsonl.py    | [./hlo/summarize_hlo_jsonl.py](./hlo/summarize_hlo_jsonl.py)           | HLO JSONL ログの集計・分析                      |
 
 **合計:** 24個のツール・スクリプト
 
----
+______________________________________________________________________
 
 ## 🚀 クイックスタート
 
 ### 新規ブランチ開始（最初の1回）
+
 ```bash
 # 1. 規約確認（推奨）
 bash scripts/view_conventions.sh naming
@@ -66,6 +67,7 @@ git push -u origin work/my-feature-YYYYMMDD
 ```
 
 ### テスト＆静的解析実行
+
 ```bash
 # ★推奨: 統合テスト（pytest + pyright + ruff）
 bash scripts/ci/run_all_checks.sh
@@ -75,6 +77,7 @@ bash scripts/run_pytest_with_logs.sh
 ```
 
 ### ドキュメント整形
+
 ```bash
 # Markdown 正規化
 python scripts/tools/format_markdown.py
@@ -84,6 +87,7 @@ python scripts/tools/audit_and_fix_links.py
 ```
 
 ### 設計ファイル整理
+
 ```bash
 # 重複ファイル検出
 python scripts/tools/find_redundant_designs.py
@@ -92,32 +96,35 @@ python scripts/tools/find_redundant_designs.py
 python scripts/tools/tfidf_similar_docs.py
 ```
 
----
+______________________________________________________________________
 
 ## 📖 詳細ドキュメント
 
 ### 全体学習・オンボーディング
-| 対象 | ドキュメント | 概要 |
-| --- | --- | --- |
-| **新規参画者** | [../documents/tools/README.md](../documents/tools/README.md) | ツール整理ハブ・推奨読み順 |
-| **全体理解** | [../documents/tools/TOOLS_DIRECTORY.md](../documents/tools/TOOLS_DIRECTORY.md) | 全ツール詳細目録 (470行以上) |
-| **作業別手順** | [../documents/FILE_CHECKLIST_OPERATIONS.md](../documents/FILE_CHECKLIST_OPERATIONS.md) | 8つのチェックリスト＋手順 |
+
+| 対象           | ドキュメント                                                                           | 概要                         |
+| -------------- | -------------------------------------------------------------------------------------- | ---------------------------- |
+| **新規参画者** | [../documents/tools/README.md](../documents/tools/README.md)                           | ツール整理ハブ・推奨読み順   |
+| **全体理解**   | [../documents/tools/TOOLS_DIRECTORY.md](../documents/tools/TOOLS_DIRECTORY.md)         | 全ツール詳細目録 (470行以上) |
+| **作業別手順** | [../documents/FILE_CHECKLIST_OPERATIONS.md](../documents/FILE_CHECKLIST_OPERATIONS.md) | 8つのチェックリスト＋手順    |
 
 ### カテゴリ別詳細ドキュメント
-| カテゴリ | ドキュメント | 概要 |
-| --- | --- | --- |
-| **CI・テスト** | [./ci/README.md](./ci/README.md) | ローカル CI 実行ガイド |
-| **ツール詳細** | [./tools/README.md](./tools/README.md) | ツール配下のスクリプト説明 |
+
+| カテゴリ             | ドキュメント                                                                                       | 概要                                             |
+| -------------------- | -------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| **CI・テスト**       | [./ci/README.md](./ci/README.md)                                                                   | ローカル CI 実行ガイド                           |
+| **ツール詳細**       | [./tools/README.md](./tools/README.md)                                                             | ツール配下のスクリプト説明                       |
 | **ワークツリー統一** | [../documents/tools/WORKTREE_TOOL_UNIFICATION.md](../documents/tools/WORKTREE_TOOL_UNIFICATION.md) | setup_worktree.sh vs create_worktree.sh 統一提案 |
 
 ### 規約・運用方針
-| ドキュメント | 概要 |
-| --- | --- |
-| [../documents/coding-conventions-project.md](../documents/coding-conventions-project.md) | プロジェクト全体の運用規約 |
-| [../documents/worktree-lifecycle.md](../documents/worktree-lifecycle.md) | ワークツリー管理規約 |
-| [../documents/WORKFLOW_INVENTORY.md](../documents/WORKFLOW_INVENTORY.md) | 自動化ワークフロー現状・未自動化項目 |
 
----
+| ドキュメント                                                                             | 概要                                 |
+| ---------------------------------------------------------------------------------------- | ------------------------------------ |
+| [../documents/coding-conventions-project.md](../documents/coding-conventions-project.md) | プロジェクト全体の運用規約           |
+| [../documents/worktree-lifecycle.md](../documents/worktree-lifecycle.md)                 | ワークツリー管理規約                 |
+| [../documents/WORKFLOW_INVENTORY.md](../documents/WORKFLOW_INVENTORY.md)                 | 自動化ワークフロー現状・未自動化項目 |
+
+______________________________________________________________________
 
 ## 🛠 カテゴリ別操作ガイド
 
@@ -126,6 +133,7 @@ python scripts/tools/tfidf_similar_docs.py
 **対象:** [git_config.sh](./git_config.sh), [git_init.sh](./git_init.sh), [git_repo_init.sh](./git_repo_init.sh), [create_toml.sh](./create_toml.sh)
 
 **用途:**
+
 ```bash
 # Git 初期設定（初回のみ）
 bash scripts/git_init.sh
@@ -140,11 +148,12 @@ bash scripts/create_toml.sh <package-name>
 
 **詳細:** [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト2](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
----
+______________________________________________________________________
 
 ### ワークツリー関連（開発フロー中心）
 
 **推奨:**
+
 ```bash
 # ★ このコマンドを使用してください
 bash scripts/setup_worktree.sh my-feature
@@ -154,6 +163,7 @@ bash scripts/tools/create_worktree.sh my-feature
 ```
 
 **補助:**
+
 ```bash
 # 作業ガイド＆ワークツリー状況確認
 bash scripts/guide.sh
@@ -162,15 +172,17 @@ bash scripts/guide.sh
 bash scripts/tools/check_worktree_scopes.sh
 ```
 
-**詳細:** 
+**詳細:**
+
 - [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト1](../documents/FILE_CHECKLIST_OPERATIONS.md) — 新規ブランチ開始
 - [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト6](../documents/FILE_CHECKLIST_OPERATIONS.md) — ワークツリー完了＆クリーンアップ
 
----
+______________________________________________________________________
 
 ### テスト・CI 関連（品質保証）
 
 **推奨フロー:**
+
 ```bash
 # 1. ★統合テスト（pytest + pyright + ruff）
 bash scripts/ci/run_all_checks.sh
@@ -182,15 +194,17 @@ bash scripts/ci/run_all_checks.sh --quick
 bash scripts/run_pytest_with_logs.sh
 ```
 
-**詳細:** 
+**詳細:**
+
 - [./ci/README.md](./ci/README.md) — CI スクリプトガイド
 - [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト3](../documents/FILE_CHECKLIST_OPERATIONS.md) — コード実装＆テスト
 
----
+______________________________________________________________________
 
 ### ドキュメント処理（品質改善）
 
 **推奨フロー:**
+
 ```bash
 # 1. Markdown 正規化（改行・空白・EOF 統一）
 python scripts/tools/format_markdown.py
@@ -208,11 +222,12 @@ git commit -m "docs: apply formatting and link fixes"
 
 **詳細:** [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト4](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
----
+______________________________________________________________________
 
 ### 設計ファイル管理（整理・統合）
 
 **推奨フロー:**
+
 ```bash
 # 1. 重複検出（完全一致）
 python scripts/tools/find_redundant_designs.py
@@ -233,11 +248,12 @@ python scripts/tools/create_design_template.py python/jax_util/<module>/
 
 **詳細:** [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト5](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
----
+______________________________________________________________________
 
 ## 🔗 GitHub Actions との連携
 
 ### CI ワークフロー
+
 `.github/workflows/ci.yml` は以下を実行します：
 
 ```yaml
@@ -250,11 +266,12 @@ python scripts/tools/create_design_template.py python/jax_util/<module>/
 詳細: [../.github/workflows/ci.yml](../.github/workflows/ci.yml)
 
 ### エージェント調整ワークフロー
+
 `.github/workflows/agent-coordination.yml` — 自動化エージェント間の協調
 
 詳細: [../.github/AGENTS.md](../.github/AGENTS.md)
 
----
+______________________________________________________________________
 
 ## ⚙️ Makefile ターゲット
 
@@ -270,7 +287,7 @@ make test          # 未実装（scripts/ci/run_all_checks.sh で代替）
 
 詳細: [../Makefile](../Makefile)
 
----
+______________________________________________________________________
 
 ## 📊 ツール使用フロー図
 
@@ -308,14 +325,16 @@ make test          # 未実装（scripts/ci/run_all_checks.sh で代替）
   └→ git worktree remove
 ```
 
----
+______________________________________________________________________
 
 ## 🆘 トラブルシューティング
 
 ### ci/run_all_checks.sh が失敗
+
 → [./ci/README.md#トラブルシューティング](./ci/README.md)
 
 ### ワークツリー作成が失敗
+
 → [../documents/FILE_CHECKLIST_OPERATIONS.md#トラブルシューティング](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
 ### pytest 失敗
@@ -352,11 +371,12 @@ python -c "import pytest; import pyright; import ruff; print('OK')"
 pip install -r docker/requirements.txt
 ```
 
----
+______________________________________________________________________
 
 ## 🔐 配置規則・設計方針
 
 ### ディレクトリ構成
+
 ```
 scripts/
 ├── README.md                    ← このファイル（統合窓口）
@@ -378,7 +398,9 @@ scripts/
 **今後:** Phase 2 で細分化（setup/, dev/, ci/, guide/ へ段階移行）
 
 ### 相対パス規則
+
 すべてのドキュメント内参照は **相対パス** で記述：
+
 ```markdown
 # scripts/README.md から ../documents/... への参照
 [TOOLS_DIRECTORY.md](../documents/tools/TOOLS_DIRECTORY.md)
@@ -387,7 +409,7 @@ scripts/
 [FILE_CHECKLIST_OPERATIONS.md](../../documents/FILE_CHECKLIST_OPERATIONS.md)
 ```
 
----
+______________________________________________________________________
 
 ## 🔄 スクリプト更新・整備予定（Phase 2）
 
@@ -398,37 +420,42 @@ scripts/
 - [ ] `scripts/ci/` — CI スクリプト（既に작成）
 - [ ] `scripts/guide/` — 情報表示スクリプト
 
----
+______________________________________________________________________
 
 ## 🤝 貢献・改善
 
 ### 新規ツール追加
+
 1. 実装: このディレクトリに追加
-2. 軽文書: `## カテゴリ別操作ガイド` に 1 行追加
-3. 正式化: [../documents/WORKFLOW_INVENTORY.md](../documents/WORKFLOW_INVENTORY.md) に登録
+1. 軽文書: `## カテゴリ別操作ガイド` に 1 行追加
+1. 正式化: [../documents/WORKFLOW_INVENTORY.md](../documents/WORKFLOW_INVENTORY.md) に登録
 
 ### ドキュメント修正・改善
+
 - GitHub Issues で報告
 - [../documents/tools/README.md](../documents/tools/README.md) から導線の改善
 
----
+______________________________________________________________________
 
 ## 📞 サポート
 
 ### ツール使用方法
+
 - このファイル（scripts/README.md）の該当セクション参照
 - 各ツール先頭のコメント (`# 用途:` など）参照
 - `--help` オプション試行（対応ツール）
 
 ### 規約・運用ルール
+
 - [../documents/README.md](../documents/README.md) — ドキュメント体系
 - [../documents/coding-conventions-project.md](../documents/coding-conventions-project.md) — プロジェクト運用規約
 
 ### 動作トラブル
+
 - [./ci/README.md#トラブルシューティング](./ci/README.md) — CI 関連
 - [../documents/FILE_CHECKLIST_OPERATIONS.md#トラブルシューティング](../documents/FILE_CHECKLIST_OPERATIONS.md) — 作業関連
 
----
+______________________________________________________________________
 
-**最終更新:** 2026-03-19  
+**最終更新:** 2026-03-19\
 **管理:** GitHub Copilot & Development Team

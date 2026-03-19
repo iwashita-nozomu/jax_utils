@@ -2,12 +2,13 @@
 
 このディレクトリは、GitHub Actions で実行する CI チェックをローカルで実行できるスクリプトを置きます。
 
-**目的:** 
+**目的:**
+
 - 開発中に CI が失敗することを防ぐ
 - リモート CI 実行前にバグを検出
 - CI と開発環境の一貫性確保
 
----
+______________________________________________________________________
 
 ## スクリプト一覧
 
@@ -16,6 +17,7 @@
 **用途:** pytest + pyright + ruff を一括実行
 
 **実行方法:**
+
 ```bash
 # 標準実行（全チェック）
 bash scripts/ci/run_all_checks.sh
@@ -28,17 +30,19 @@ bash scripts/ci/run_all_checks.sh --verbose
 ```
 
 **実行内容:**
+
 1. `pytest python/tests/` — ユニット・統合テスト
-2. `pyright python/` — Python 型チェック
-3. `ruff check python/` — リント・スタイルチェック
+1. `pyright python/` — Python 型チェック
+1. `ruff check python/` — リント・スタイルチェック
 
 **戻り値:**
+
 - `0`: すべて成功
 - `1`: テスト失敗 または致命的エラー
 
 **所要時間:** 30秒～2分（マシン依存）
 
----
+______________________________________________________________________
 
 ## 開発ワークフロー
 
@@ -70,7 +74,7 @@ git push origin branch-name
 
 **つまり:** ローカルで成功 = リモート CI でも成功（高確率）
 
----
+______________________________________________________________________
 
 ## トラブルシューティング
 
@@ -120,13 +124,14 @@ docker build -t jax-util -f docker/Dockerfile .
 docker run --rm -v $(pwd):/workspace -w /workspace jax-util bash scripts/ci/run_all_checks.sh
 ```
 
----
+______________________________________________________________________
 
 ## 環境変数・カスタマイズ
 
 ### PYTHONPATH（自動設定）
 
 スクリプスは自動的に以下を設定します：
+
 ```bash
 export PYTHONPATH="/workspace/python:${PYTHONPATH:-}"
 ```
@@ -136,11 +141,12 @@ export PYTHONPATH="/workspace/python:${PYTHONPATH:-}"
 ### ログ出力（未実装）
 
 将来は以下のようにログ保存にも対応予定：
+
 ```bash
 bash scripts/ci/run_all_checks.sh 2>&1 | tee logs/ci_$(date +%Y%m%d_%H%M%S).txt
 ```
 
----
+______________________________________________________________________
 
 ## 参考リンク
 
@@ -149,6 +155,6 @@ bash scripts/ci/run_all_checks.sh 2>&1 | tee logs/ci_$(date +%Y%m%d_%H%M%S).txt
 - [../../documents/FILE_CHECKLIST_OPERATIONS.md](../../documents/FILE_CHECKLIST_OPERATIONS.md) — 作業別チェックリスト
 - [../../.github/workflows/ci.yml](../../.github/workflows/ci.yml) — GitHub Actions ワークフロー
 
----
+______________________________________________________________________
 
 **最終更新:** 2026-03-19
