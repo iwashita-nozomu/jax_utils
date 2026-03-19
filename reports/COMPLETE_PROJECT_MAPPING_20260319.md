@@ -138,11 +138,11 @@ ______________________________________________________________________
 ジョブチェーン:
   1. coordinator
      → タスク準備・通知（未実装）
-  
+
   2. reviewer (needs: coordinator)
      → pyright / pytest 実行
      → 変更ファイル列挙
-  
+
   3. integrator (needs: coordinator, reviewer)
      → 統合テスト実行
      → レポートアップロード（future）
@@ -190,7 +190,7 @@ ______________________________________________________________________
   git_init:
     実行: ./scripts/git_init.sh
     機能: Git 初期化（ユーザー・ブランチ設定）
-    
+
 概観:
   - ターゲット数: 1個（最小限）
   - 拡張予定: CI ターゲット、テスト実行ターゲット、ドキュメント生成等
@@ -275,7 +275,7 @@ Stubs/Type:
   MD004: 一貫した箇条書きスタイル
   MD029: 順序付きリスト番号（1 or ordered）
   MD030: リスト周辺空白（single/multi）
-  
+
 無効化:
   MD013: 行長制限（無効化）
 ```
@@ -732,7 +732,7 @@ scripts/
 Make targets:
   make setup              ← scripts/setup/*.sh
   make test               ← scripts/dev/run_tests.sh
-  make lint               ← scripts/dev/check_formats.sh  
+  make lint               ← scripts/dev/check_formats.sh
   make ci                 ← scripts/ci/run_all_checks.sh
   make clean-design       ← scripts/integration/clean_designs.sh
   make validate           ← scripts/integration/full_validation.sh

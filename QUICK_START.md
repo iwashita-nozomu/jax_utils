@@ -47,7 +47,7 @@ bash scripts/setup_worktree.sh <branch-name> [description]
 bash scripts/setup_worktree.sh protocol-improvements "Protocol型アノテーション改善"
 
 # train.pyのAPI改善
-bash scripts/setup_worktree.sh train-api-refactor "train.pyのAPI改善" 
+bash scripts/setup_worktree.sh train-api-refactor "train.pyのAPI改善"
 
 # テスト追加
 bash scripts/setup_worktree.sh neuralnetwork-tests "ニューラルネットテスト拡充"

@@ -123,7 +123,7 @@ for branch in main results/functional-smolyak-scaling \
   origin_hash=$(git rev-parse origin/$branch 2>/dev/null || echo "N/A")
   github_hash=$(git rev-parse GitHub/$branch 2>/dev/null || echo "N/A")
   local_hash=$(git rev-parse $branch 2>/dev/null || echo "N/A")
-  
+
   if [ "$origin_hash" = "$github_hash" ] && [ "$origin_hash" = "$local_hash" ]; then
     echo "✅ $branch"
   else
