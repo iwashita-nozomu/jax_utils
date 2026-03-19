@@ -1,6 +1,7 @@
 from .protocols import (
     ResourceCapacity,
     ResourceEstimate,
+    ResourceEstimatingWorker,
     Runner,
     Scheduler,
     SUCCESS_EXIT_CODE,
@@ -20,14 +21,34 @@ from .gpu_runner import (
     StandardGPUScheduler,
     visible_gpu_ids_from_environment,
 )
+from .resource_scheduler import (
+    detect_gpu_devices,
+    detect_host_memory_bytes,
+    detect_max_workers,
+    FullResourceWorker,
+    FullResourceCapacity,
+    FullResourceEstimate,
+    GPUDeviceCapacity,
+    StandardFullResourceScheduler,
+    ResourceTotals,
+)
 
 __all__ = [
     "ResourceCapacity",
     "ResourceEstimate",
+    "ResourceEstimatingWorker",
     "Runner",
     "Scheduler",
+    "FullResourceWorker",
     "GPUResourceCapacity",
+    "GPUDeviceCapacity",
+    "detect_gpu_devices",
+    "detect_host_memory_bytes",
+    "detect_max_workers",
+    "FullResourceCapacity",
+    "FullResourceEstimate",
     "StandardCompletion",
+    "StandardFullResourceScheduler",
     "StandardGPUScheduler",
     "StandardResourceCapacity",
     "StandardRunner",
