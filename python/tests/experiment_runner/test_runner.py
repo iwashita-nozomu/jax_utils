@@ -23,7 +23,6 @@ from jax_util.experiment_runner import (
     WORKER_PROTOCOL_ERROR_EXIT_CODE,
 )
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -170,8 +169,7 @@ def test_standard_runner_parallel_processes(tmp_path: Path) -> None:
 def _run_standard_runner_bulk_parallel_processes(tmp_path: Path) -> None:
     records_dir = tmp_path / "bulk_parallel_records"
     cases: list[dict[str, object]] = [
-        {"case_id": index, "sleep_seconds": 0.08, "value": index}
-        for index in range(24)
+        {"case_id": index, "sleep_seconds": 0.08, "value": index} for index in range(24)
     ]
     scheduler = StandardScheduler(
         resource_capacity=StandardResourceCapacity(max_workers=4),
@@ -230,8 +228,7 @@ def _run_standard_runner_context_switch_and_failure(tmp_path: Path) -> None:
     records = _read_json_records(records_dir)
     records_by_case_id = {_case_id(record): record for record in records}
     completions_by_case_id = {
-        _case_id(completion.case): completion.exit_code
-        for completion in scheduler.completions
+        _case_id(completion.case): completion.exit_code for completion in scheduler.completions
     }
 
     assert records_by_case_id[0]["task_key"] == "double"

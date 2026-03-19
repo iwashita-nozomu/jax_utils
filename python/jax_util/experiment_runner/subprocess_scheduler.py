@@ -12,7 +12,6 @@ from typing import Callable, Mapping, Sequence
 
 import numpy as np
 
-
 CHILD_COMPLETE_PREFIX = "EXPERIMENT_RUNNER_COMPLETE "
 
 
@@ -52,7 +51,11 @@ def _mapping_str(payload: Mapping[str, object], key: str, /) -> str:
 def worker_slot_from_mapping(payload: Mapping[str, object], /) -> WorkerSlot:
     gpu_index_value = payload.get("gpu_index")
     cpu_affinity_value = payload.get("cpu_affinity")
-    cpu_affinity = tuple(int(cpu) for cpu in cpu_affinity_value) if isinstance(cpu_affinity_value, list) else ()
+    cpu_affinity = (
+        tuple(int(cpu) for cpu in cpu_affinity_value)
+        if isinstance(cpu_affinity_value, list)
+        else ()
+    )
     return WorkerSlot(
         worker_label=_mapping_str(payload, "worker_label"),
         gpu_index=int(gpu_index_value) if isinstance(gpu_index_value, int) else None,
@@ -105,7 +108,9 @@ def build_worker_slots(
         worker_index = 0
         for gpu_index in gpu_indices:
             for gpu_slot in range(workers_per_gpu):
-                cpu_affinity = tuple(cpu_groups[worker_index] if worker_index < len(cpu_groups) else [])
+                cpu_affinity = tuple(
+                    cpu_groups[worker_index] if worker_index < len(cpu_groups) else []
+                )
                 worker_slots.append(
                     WorkerSlot(
                         worker_label=f"gpu-{gpu_index}-w{gpu_slot}",
@@ -185,7 +190,9 @@ def apply_worker_environment(
 
     os.environ["EXPERIMENT_RUNNER_WORKER_LABEL"] = worker_slot.worker_label
     os.environ["EXPERIMENT_RUNNER_GPU_SLOT"] = str(worker_slot.gpu_slot)
-    os.environ["EXPERIMENT_RUNNER_CPU_AFFINITY"] = ",".join(str(cpu) for cpu in worker_slot.cpu_affinity)
+    os.environ["EXPERIMENT_RUNNER_CPU_AFFINITY"] = ",".join(
+        str(cpu) for cpu in worker_slot.cpu_affinity
+    )
 
 
 def _extract_completion_record(stdout: str, /) -> dict[str, object] | None:
@@ -193,7 +200,7 @@ def _extract_completion_record(stdout: str, /) -> dict[str, object] | None:
     for line in stdout.splitlines():
         if not line.startswith(CHILD_COMPLETE_PREFIX):
             continue
-        payload = line[len(CHILD_COMPLETE_PREFIX):]
+        payload = line[len(CHILD_COMPLETE_PREFIX) :]
         parsed = json.loads(payload)
         if isinstance(parsed, dict):
             completion = parsed
@@ -217,11 +224,15 @@ def run_cases_with_subprocess_scheduler(
     *,
     timeout_seconds: int,
     build_child_command: Callable[[Mapping[str, object], WorkerSlot], Sequence[str]],
-    build_parent_failure_result: Callable[[Mapping[str, object], WorkerSlot, str, str, str], dict[str, object]],
+    build_parent_failure_result: Callable[
+        [Mapping[str, object], WorkerSlot, str, str, str], dict[str, object]
+    ],
     fallback_jsonl_output_path: Path | None,
     cwd: Path,
     on_case_started: Callable[[Mapping[str, object], WorkerSlot], None] | None = None,
-    on_case_finished: Callable[[Mapping[str, object], WorkerSlot, Mapping[str, object]], None] | None = None,
+    on_case_finished: (
+        Callable[[Mapping[str, object], WorkerSlot, Mapping[str, object]], None] | None
+    ) = None,
     poll_interval_seconds: float = 0.05,
 ) -> list[dict[str, object]]:
     if not worker_slots:

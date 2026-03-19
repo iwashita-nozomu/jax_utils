@@ -266,7 +266,9 @@ def _difference_rule_storage_numpy(
 
     nodes_storage = np.empty((total_length,), dtype=np.float64)
     weights_storage = np.empty((total_length,), dtype=np.float64)
-    for current_level, (nodes_np, weights_np) in enumerate(zip(nodes_by_level, weights_by_level, strict=True)):
+    for current_level, (nodes_np, weights_np) in enumerate(
+        zip(nodes_by_level, weights_by_level, strict=True)
+    ):
         start = int(offsets[current_level])
         stop = start + int(lengths[current_level])
         nodes_storage[start:stop] = nodes_np
@@ -288,7 +290,9 @@ def _initialize_rule_storage(
     jax.Array,
 ]:
     max_rule_level = _max_difference_rule_level(dimension, prepared_level)
-    rule_nodes_np, rule_weights_np, rule_offsets_np, rule_lengths_np = _difference_rule_storage_numpy(max_rule_level)
+    rule_nodes_np, rule_weights_np, rule_offsets_np, rule_lengths_np = (
+        _difference_rule_storage_numpy(max_rule_level)
+    )
     return (
         jnp.asarray(rule_nodes_np, dtype=dtype),
         jnp.asarray(rule_weights_np, dtype=dtype),

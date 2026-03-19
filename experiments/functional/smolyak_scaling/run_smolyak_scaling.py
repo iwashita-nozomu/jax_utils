@@ -17,7 +17,6 @@ from typing import Any, Mapping
 import numpy as np
 from numpy.typing import NDArray
 
-
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 PYTHON_ROOT = WORKSPACE_ROOT / "python"
 if str(PYTHON_ROOT) not in sys.path:
@@ -33,6 +32,7 @@ from jax_util.experiment_runner import (
     run_cases_with_subprocess_scheduler,
     worker_slot_from_mapping,
 )
+
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 DEFAULT_TIMEOUT_SECONDS = 180
 DEFAULT_NUM_REPEATS = 100
@@ -159,12 +159,14 @@ def _build_cases(
     for dimension in dimensions:
         for level in levels:
             for dtype_name in dtype_names:
-                cases.append({
-                    "case_id": case_id,
-                    "dimension": dimension,
-                    "level": level,
-                    "dtype_name": dtype_name,
-                })
+                cases.append(
+                    {
+                        "case_id": case_id,
+                        "dimension": dimension,
+                        "level": level,
+                        "dtype_name": dtype_name,
+                    }
+                )
                 case_id += 1
     return cases
 
@@ -231,10 +233,14 @@ def _build_accuracy_coefficients(
 
 
 # 責務: exp(a^T x) の解析積分を係数行列ぶんまとめて返す。
-def _analytic_box_exponential_integrals(coefficients: NDArray[np.float64], /) -> NDArray[np.float64]:
+def _analytic_box_exponential_integrals(
+    coefficients: NDArray[np.float64], /
+) -> NDArray[np.float64]:
     factors = np.ones_like(coefficients, dtype=np.float64)
     nonzero_mask = np.abs(coefficients) > 1.0e-14
-    factors[nonzero_mask] = (2.0 * np.sinh(0.5 * coefficients[nonzero_mask])) / coefficients[nonzero_mask]
+    factors[nonzero_mask] = (2.0 * np.sinh(0.5 * coefficients[nonzero_mask])) / coefficients[
+        nonzero_mask
+    ]
     return np.prod(factors, axis=-1)
 
 
@@ -316,7 +322,9 @@ def _case_label(case: Mapping[str, object], /) -> str:
 
 
 # 責務: 単一ケースのベンチマークを実行して JSON 互換結果へまとめる。
-def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object], /) -> dict[str, object]:
+def _run_single_case(
+    case: Mapping[str, object], run_config: Mapping[str, object], /
+) -> dict[str, object]:
     import equinox as eqx
     import jax
     import jax.numpy as jnp
@@ -358,8 +366,12 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
 
     storage_bytes = integrator.storage_bytes
     integrator = jax.device_put(integrator, target_device)
-    coeffs = jax.device_put(jnp.asarray(accuracy_coefficients[-1], dtype=runtime_dtype), target_device)
-    accuracy_coeffs = jax.device_put(jnp.asarray(accuracy_coefficients, dtype=runtime_dtype), target_device)
+    coeffs = jax.device_put(
+        jnp.asarray(accuracy_coefficients[-1], dtype=runtime_dtype), target_device
+    )
+    accuracy_coeffs = jax.device_put(
+        jnp.asarray(accuracy_coefficients, dtype=runtime_dtype), target_device
+    )
     jax.block_until_ready(integrator.rule_nodes)
     jax.block_until_ready(integrator.rule_weights)
     jax.block_until_ready(integrator.rule_offsets)
@@ -389,7 +401,9 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
             return acc + single_integral(current_integrator, current_coeffs)
 
         num_repeats = _config_int(run_config, "num_repeats")
-        total = lax.fori_loop(0, num_repeats, body, jnp.asarray(0.0, dtype=current_integrator.rule_nodes.dtype))
+        total = lax.fori_loop(
+            0, num_repeats, body, jnp.asarray(0.0, dtype=current_integrator.rule_nodes.dtype)
+        )
         return total / num_repeats
 
     accuracy_values = batched_accuracy_integrals(integrator, accuracy_coeffs)
@@ -417,7 +431,11 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
         "device_kind": target_device.device_kind,
         "visible_device_id": int(target_device.id),
         "assigned_gpu_index": os.environ.get("SMOLYAK_GPU_INDEX"),
-        "cpu_affinity": sorted(int(cpu) for cpu in os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
+        "cpu_affinity": (
+            sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+            if hasattr(os, "sched_getaffinity")
+            else None
+        ),
         "num_terms": int(integrator.num_terms),
         "num_points": int(integrator.num_evaluation_points),
         "num_evaluation_points": int(integrator.num_evaluation_points),
@@ -526,13 +544,21 @@ def _run_cases_with_host_scheduler(
 ) -> list[dict[str, object]]:
     platform = _config_str(run_config, "platform")
     gpu_indices_value = run_config.get("gpu_indices")
-    gpu_indices = [int(gpu_index) for gpu_index in gpu_indices_value] if isinstance(gpu_indices_value, list) else []
-    worker_slots = build_worker_slots(platform, gpu_indices, _config_int(run_config, "workers_per_gpu"))
+    gpu_indices = (
+        [int(gpu_index) for gpu_index in gpu_indices_value]
+        if isinstance(gpu_indices_value, list)
+        else []
+    )
+    worker_slots = build_worker_slots(
+        platform, gpu_indices, _config_int(run_config, "workers_per_gpu")
+    )
     results = run_cases_with_subprocess_scheduler(
         cases,
         worker_slots,
         timeout_seconds=_config_int(run_config, "timeout_seconds"),
-        build_child_command=lambda case, worker_slot: _build_child_command(case, run_config, worker_slot, jsonl_output_path),
+        build_child_command=lambda case, worker_slot: _build_child_command(
+            case, run_config, worker_slot, jsonl_output_path
+        ),
         build_parent_failure_result=_parent_failure_result,
         fallback_jsonl_output_path=jsonl_output_path,
         cwd=WORKSPACE_ROOT,
@@ -560,11 +586,16 @@ def _child_main(
     )
     result = _run_case_in_child(case, run_config, worker_slot)
     append_jsonl_record(jsonl_output_path, result)
-    print(f"{CHILD_COMPLETE_PREFIX}{json.dumps(json_compatible(result), ensure_ascii=True)}", flush=True)
+    print(
+        f"{CHILD_COMPLETE_PREFIX}{json.dumps(json_compatible(result), ensure_ascii=True)}",
+        flush=True,
+    )
 
 
 # 責務: dtype ごとの誤差と実行時間を要約する。
-def _summary_by_dtype(results: list[dict[str, object]], dtype_names: list[str], /) -> list[dict[str, object]]:
+def _summary_by_dtype(
+    results: list[dict[str, object]], dtype_names: list[str], /
+) -> list[dict[str, object]]:
     summaries: list[dict[str, object]] = []
     for dtype_name in dtype_names:
         dtype_results = [result for result in results if result.get("dtype_name") == dtype_name]
@@ -586,19 +617,21 @@ def _summary_by_dtype(results: list[dict[str, object]], dtype_names: list[str], 
             for result in ok_results
             if isinstance(result.get("avg_integral_seconds"), (int, float))
         ]
-        summaries.append({
-            "dtype_name": dtype_name,
-            "num_cases": len(dtype_results),
-            "num_success": len(ok_results),
-            "num_failure": len(failed_results),
-            "max_mean_abs_err": max(mean_abs_errs) if mean_abs_errs else None,
-            "mean_mean_abs_err": float(np.mean(mean_abs_errs)) if mean_abs_errs else None,
-            "max_var_abs_err": max(var_abs_errs) if var_abs_errs else None,
-            "mean_var_abs_err": float(np.mean(var_abs_errs)) if var_abs_errs else None,
-            "mean_avg_integral_seconds": float(np.mean(avg_times)) if avg_times else None,
-            "min_avg_integral_seconds": min(avg_times) if avg_times else None,
-            "max_avg_integral_seconds": max(avg_times) if avg_times else None,
-        })
+        summaries.append(
+            {
+                "dtype_name": dtype_name,
+                "num_cases": len(dtype_results),
+                "num_success": len(ok_results),
+                "num_failure": len(failed_results),
+                "max_mean_abs_err": max(mean_abs_errs) if mean_abs_errs else None,
+                "mean_mean_abs_err": float(np.mean(mean_abs_errs)) if mean_abs_errs else None,
+                "max_var_abs_err": max(var_abs_errs) if var_abs_errs else None,
+                "mean_var_abs_err": float(np.mean(var_abs_errs)) if var_abs_errs else None,
+                "mean_avg_integral_seconds": float(np.mean(avg_times)) if avg_times else None,
+                "min_avg_integral_seconds": min(avg_times) if avg_times else None,
+                "max_avg_integral_seconds": max(avg_times) if avg_times else None,
+            }
+        )
     return summaries
 
 
@@ -614,16 +647,30 @@ def _frontier_by_dtype_and_level(
         dtype_results = [result for result in results if result.get("dtype_name") == dtype_name]
         for level in levels:
             level_results = [result for result in dtype_results if result["level"] == level]
-            success_dimensions = [_result_int(result, "dimension") for result in level_results if result["status"] == "ok"]
-            failure_dimensions = [_result_int(result, "dimension") for result in level_results if result["status"] != "ok"]
-            frontier.append({
-                "dtype_name": dtype_name,
-                "level": level,
-                "max_success_dimension": max(success_dimensions) if success_dimensions else None,
-                "min_failure_dimension": min(failure_dimensions) if failure_dimensions else None,
-                "num_success": len(success_dimensions),
-                "num_failure": len(failure_dimensions),
-            })
+            success_dimensions = [
+                _result_int(result, "dimension")
+                for result in level_results
+                if result["status"] == "ok"
+            ]
+            failure_dimensions = [
+                _result_int(result, "dimension")
+                for result in level_results
+                if result["status"] != "ok"
+            ]
+            frontier.append(
+                {
+                    "dtype_name": dtype_name,
+                    "level": level,
+                    "max_success_dimension": (
+                        max(success_dimensions) if success_dimensions else None
+                    ),
+                    "min_failure_dimension": (
+                        min(failure_dimensions) if failure_dimensions else None
+                    ),
+                    "num_success": len(success_dimensions),
+                    "num_failure": len(failure_dimensions),
+                }
+            )
     return frontier
 
 
@@ -638,17 +685,29 @@ def _frontier_by_dtype_and_dimension(
     for dtype_name in dtype_names:
         dtype_results = [result for result in results if result.get("dtype_name") == dtype_name]
         for dimension in dimensions:
-            dimension_results = [result for result in dtype_results if result["dimension"] == dimension]
-            success_levels = [_result_int(result, "level") for result in dimension_results if result["status"] == "ok"]
-            failure_levels = [_result_int(result, "level") for result in dimension_results if result["status"] != "ok"]
-            frontier.append({
-                "dtype_name": dtype_name,
-                "dimension": dimension,
-                "max_success_level": max(success_levels) if success_levels else None,
-                "min_failure_level": min(failure_levels) if failure_levels else None,
-                "num_success": len(success_levels),
-                "num_failure": len(failure_levels),
-            })
+            dimension_results = [
+                result for result in dtype_results if result["dimension"] == dimension
+            ]
+            success_levels = [
+                _result_int(result, "level")
+                for result in dimension_results
+                if result["status"] == "ok"
+            ]
+            failure_levels = [
+                _result_int(result, "level")
+                for result in dimension_results
+                if result["status"] != "ok"
+            ]
+            frontier.append(
+                {
+                    "dtype_name": dtype_name,
+                    "dimension": dimension,
+                    "max_success_level": max(success_levels) if success_levels else None,
+                    "min_failure_level": min(failure_levels) if failure_levels else None,
+                    "num_success": len(success_levels),
+                    "num_failure": len(failure_levels),
+                }
+            )
     return frontier
 
 
@@ -710,22 +769,34 @@ def run_benchmark(
         "cases": results,
         "summary_by_dtype": _summary_by_dtype(results, dtype_names),
         "frontier_by_dtype_and_level": _frontier_by_dtype_and_level(results, dtype_names, levels),
-        "frontier_by_dtype_and_dimension": _frontier_by_dtype_and_dimension(results, dtype_names, dimensions),
+        "frontier_by_dtype_and_dimension": _frontier_by_dtype_and_dimension(
+            results, dtype_names, dimensions
+        ),
     }
 
 
 # 責務: 実験結果を JSON ファイルへ保存する。
 def save_results(results: dict[str, object], output_path: Path, /) -> None:
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(json_compatible(results), indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+    output_path.write_text(
+        json.dumps(json_compatible(results), indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Benchmark Smolyak scaling on a dimension/level range.")
-    parser.add_argument("--dimensions", help="Inclusive integer range start:end[:step] for dimensions.")
+    parser = argparse.ArgumentParser(
+        description="Benchmark Smolyak scaling on a dimension/level range."
+    )
+    parser.add_argument(
+        "--dimensions", help="Inclusive integer range start:end[:step] for dimensions."
+    )
     parser.add_argument("--levels", help="Inclusive integer range start:end[:step] for levels.")
     parser.add_argument("--platform", choices=["cpu", "gpu"], default="gpu")
-    parser.add_argument("--gpu-indices", default=None, help="Comma-separated physical GPU indices. Defaults to all visible GPUs.")
+    parser.add_argument(
+        "--gpu-indices",
+        default=None,
+        help="Comma-separated physical GPU indices. Defaults to all visible GPUs.",
+    )
     parser.add_argument("--workers-per-gpu", type=int, default=DEFAULT_WORKERS_PER_GPU)
     parser.add_argument("--dtypes", default="all", help="Comma-separated dtype names or 'all'.")
     parser.add_argument("--timeout-seconds", type=int, default=DEFAULT_TIMEOUT_SECONDS)
@@ -765,7 +836,11 @@ def main() -> None:
     dtype_names = _parse_dtype_names(args.dtypes)
 
     if args.platform == "gpu":
-        gpu_indices = _parse_gpu_indices(args.gpu_indices) if args.gpu_indices is not None else _discover_gpu_indices()
+        gpu_indices = (
+            _parse_gpu_indices(args.gpu_indices)
+            if args.gpu_indices is not None
+            else _discover_gpu_indices()
+        )
         if not gpu_indices:
             raise RuntimeError("No GPUs were discovered for gpu platform.")
     else:

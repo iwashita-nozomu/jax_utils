@@ -13,9 +13,11 @@ from ..base import LinearOperator
 from ..base import Matrix
 from ..base import Scalar
 from ..base import Vector
+
 # -----------------------------
 # 1) Lanczos: build tridiagonal T (m x m) from matvec only
 # -----------------------------
+
 
 # 責務: matvec のみから Lanczos 三重対角行列を構成します。
 def _lanczos_tridiag_from_v0(
@@ -62,6 +64,7 @@ def _lanczos_tridiag_from_v0(
 # -----------------------------
 # 2) One-probe SLQ quadrature nodes+weights from T
 # -----------------------------
+
 
 # 責務: 三重対角行列から Gauss 求積のノードと重みを取り出します。
 def _nodes_weights_from_T(T: Matrix) -> tuple[Vector, Vector]:
@@ -183,12 +186,14 @@ def slq_spectral_density(
         # Evaluate Gaussian kernels at all grid points: f_lambda(nodes) for each lambda
         # f_lambda(x) = N(lambda | x, sigma^2) == N(x | lambda, sigma^2)
         diff = (grid[:, None] - nodes[None, :]) / sigma
-        coef = jnp.asarray(1.0, dtype=dtype) / (jnp.sqrt(jnp.asarray(2.0, dtype=dtype) * jnp.pi) * sigma)
+        coef = jnp.asarray(1.0, dtype=dtype) / (
+            jnp.sqrt(jnp.asarray(2.0, dtype=dtype) * jnp.pi) * sigma
+        )
         gauss = jnp.exp(jnp.asarray(-0.5, dtype=dtype) * diff**2) * coef  # (G,m)
         return gauss @ w  # (G,)
 
     rhos = jax.vmap(one_probe)(probes.T)  # (s, G)
-    rho = jnp.mean(rhos, axis=0)      # (G,)
+    rho = jnp.mean(rhos, axis=0)  # (G,)
     # This rho is already normalized to integrate to ~1 (subject to grid range and smoothing).
     return rho
 
@@ -225,6 +230,7 @@ def slq_spectral_cdf(
 
     phis = jax.vmap(one_probe)(probes.T)  # (s, G)
     return jnp.mean(phis, axis=0)
+
 
 __all__ = [
     "slq_trace_f",

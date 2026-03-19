@@ -39,6 +39,7 @@ def train_loop(
     num_steps: int,
 ) -> tuple[Params, optax.OptState]:
     """最小の学習ループを提供します。"""
+
     def step(
         carry: tuple[Params, optax.OptState],
         step_index: jnp.ndarray,

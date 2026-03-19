@@ -25,16 +25,15 @@ class ConstrainedVectorOptimizationProblem(
     ...
 
 
-class VectorOptimizationState(OptimizationState[Vector], Protocol):
-    ...
+class VectorOptimizationState(OptimizationState[Vector], Protocol): ...
 
 
 class ConstrainedVectorOptimizationState(
     ConstrainedOptimizationState[Vector, Vector],
     VectorOptimizationState,
     Protocol,
-):
-    ...
+): ...
+
 
 __all__ = [
     "VectorOptimizationProblem",

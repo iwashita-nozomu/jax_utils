@@ -8,7 +8,6 @@ import jax.numpy as jnp
 from jax_util.solvers.lobpcg import init_spectral_precond, update_subspace
 from jax_util.base import LinOp, Vector
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -29,12 +28,16 @@ def test_lobpcg_large_case() -> None:
         old_state=state,
         maxiter=30,
     )
-    print(json.dumps({
-        "case": "lobpcg_large",
-        "source_file": SOURCE_FILE,
-        "test": "test_lobpcg_large_case",
-        "num_iter": int(info["num_iter"]),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "lobpcg_large",
+                "source_file": SOURCE_FILE,
+                "test": "test_lobpcg_large_case",
+                "num_iter": int(info["num_iter"]),
+            }
+        )
+    )
     assert basis.Q.shape[0] == n
     assert new_state.X.shape[0] == n
     assert "num_iter" in info
@@ -58,13 +61,17 @@ def test_lobpcg_eigenvalue_accuracy() -> None:
         maxiter=40,
     )
     lam = basis.eigenvalues[0]
-    print(json.dumps({
-        "case": "lobpcg_eig",
-        "source_file": SOURCE_FILE,
-        "test": "test_lobpcg_eigenvalue_accuracy",
-        "expected_min": 2.0,
-        "lambda_min": float(lam),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "lobpcg_eig",
+                "source_file": SOURCE_FILE,
+                "test": "test_lobpcg_eigenvalue_accuracy",
+                "expected_min": 2.0,
+                "lambda_min": float(lam),
+            }
+        )
+    )
     assert jnp.allclose(lam, 2.0, rtol=1e-2, atol=1e-2)
 
 
@@ -86,13 +93,17 @@ def test_lobpcg_ill_conditioned_spectrum() -> None:
         maxiter=50,
     )
     lam = basis.eigenvalues[0]
-    print(json.dumps({
-        "case": "lobpcg_ill",
-        "source_file": SOURCE_FILE,
-        "test": "test_lobpcg_ill_conditioned_spectrum",
-        "expected_min": 1.0,
-        "lambda_min": float(lam),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "lobpcg_ill",
+                "source_file": SOURCE_FILE,
+                "test": "test_lobpcg_ill_conditioned_spectrum",
+                "expected_min": 1.0,
+                "lambda_min": float(lam),
+            }
+        )
+    )
     assert jnp.allclose(lam, 1.0, rtol=5e-2, atol=5e-2)
 
 

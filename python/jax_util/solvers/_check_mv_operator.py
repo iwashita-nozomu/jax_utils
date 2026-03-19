@@ -18,8 +18,8 @@ from ..base import (
     ZERO,
 )
 
-
 SOURCE_FILE = Path(__file__).name
+
 
 # 責務: 作用素の自己随伴性をランダム試行で簡易検査します。
 def check_self_adjoint(
@@ -98,6 +98,7 @@ def print_Mv_report(
     name: str,
 ) -> None:
     """Mv 検査結果を表示する。"""
+
     # 責務: JAX 配列を JSON 出力できる値へ整形します。
     def _to_jsonable(value: Any) -> Any:
         if isinstance(value, dict):
@@ -110,23 +111,31 @@ def print_Mv_report(
             return value.tolist()
         return value
 
-    print(json.dumps({
-        "case": "mv_report",
-        "source_file": SOURCE_FILE,
-        "func": "print_Mv_report",
-        "event": "self_adjoint",
-        "name": name,
-        "report": _to_jsonable(self_adjoint_report),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "mv_report",
+                "source_file": SOURCE_FILE,
+                "func": "print_Mv_report",
+                "event": "self_adjoint",
+                "name": name,
+                "report": _to_jsonable(self_adjoint_report),
+            }
+        )
+    )
     if spd_report is not None:
-        print(json.dumps({
-            "case": "mv_report",
-            "source_file": SOURCE_FILE,
-            "func": "print_Mv_report",
-            "event": "spd",
-            "name": name,
-            "report": _to_jsonable(spd_report),
-        }))
+        print(
+            json.dumps(
+                {
+                    "case": "mv_report",
+                    "source_file": SOURCE_FILE,
+                    "func": "print_Mv_report",
+                    "event": "spd",
+                    "name": name,
+                    "report": _to_jsonable(spd_report),
+                }
+            )
+        )
 
 
 __all__ = [

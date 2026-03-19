@@ -9,7 +9,6 @@ import pytest
 from jax_util.base import LinOp, Vector
 from jax_util.base.linearoperator import hstack_linops, vstack_linops
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -24,13 +23,17 @@ def test_linearoperator_matmul_vector() -> None:
     x = jnp.array([1.0, 2.0])
     y = op @ x
     expected = A @ x
-    print(json.dumps({
-        "case": "linop_matmul",
-        "source_file": SOURCE_FILE,
-        "test": "test_linearoperator_matmul_vector",
-        "expected": expected.tolist(),
-        "y": y.tolist(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "linop_matmul",
+                "source_file": SOURCE_FILE,
+                "test": "test_linearoperator_matmul_vector",
+                "expected": expected.tolist(),
+                "y": y.tolist(),
+            }
+        )
+    )
     assert jnp.allclose(y, A @ x)
 
 
@@ -52,13 +55,17 @@ def test_linearoperator_composition() -> None:
     x = jnp.array([1.0, 2.0])
     y = op_c @ x
     expected = A @ (B @ x)
-    print(json.dumps({
-        "case": "linop_compose",
-        "source_file": SOURCE_FILE,
-        "test": "test_linearoperator_composition",
-        "expected": expected.tolist(),
-        "y": y.tolist(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "linop_compose",
+                "source_file": SOURCE_FILE,
+                "test": "test_linearoperator_composition",
+                "expected": expected.tolist(),
+                "y": y.tolist(),
+            }
+        )
+    )
     assert jnp.allclose(y, A @ (B @ x))
 
 
@@ -73,13 +80,17 @@ def test_linearoperator_batched_input() -> None:
     X = jnp.array([[1.0, 2.0], [3.0, 4.0]])
     Y = op @ X
     expected = A @ X
-    print(json.dumps({
-        "case": "linop_batch",
-        "source_file": SOURCE_FILE,
-        "test": "test_linearoperator_batched_input",
-        "expected_shape": list(expected.shape),
-        "y_shape": list(Y.shape),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "linop_batch",
+                "source_file": SOURCE_FILE,
+                "test": "test_linearoperator_batched_input",
+                "expected_shape": list(expected.shape),
+                "y_shape": list(Y.shape),
+            }
+        )
+    )
     assert jnp.allclose(Y, A @ X)
 
 
@@ -100,13 +111,17 @@ def test_hstack_linops_block_row_sum() -> None:
     x = jnp.array([4.0, 5.0])
     y = op @ x
     expected = jnp.array([2.0 * 4.0 + 3.0 * 5.0])
-    print(json.dumps({
-        "case": "hstack_block_row_sum",
-        "source_file": SOURCE_FILE,
-        "test": "test_hstack_linops_block_row_sum",
-        "expected": expected.tolist(),
-        "y": y.tolist(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "hstack_block_row_sum",
+                "source_file": SOURCE_FILE,
+                "test": "test_hstack_linops_block_row_sum",
+                "expected": expected.tolist(),
+                "y": y.tolist(),
+            }
+        )
+    )
     assert jnp.allclose(y, expected)
 
 

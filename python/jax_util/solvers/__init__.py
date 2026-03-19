@@ -3,6 +3,7 @@ from __future__ import annotations
 # アルゴリズム実装をまとめたサブパッケージ。
 
 from . import _check_mv_operator
+
 # from . import _fgmres
 from . import _minres
 from . import _test_jax

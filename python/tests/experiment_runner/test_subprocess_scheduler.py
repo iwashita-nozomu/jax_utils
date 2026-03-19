@@ -19,7 +19,6 @@ from jax_util.experiment_runner import (
     run_cases_with_subprocess_scheduler,
 )
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -144,23 +143,31 @@ def test_subprocess_scheduler_dispatches_heavy_cases_to_multiple_gpus(tmp_path: 
     assert len(results) == len(cases)
     _skip_if_gpu_backend_unavailable(results)
     assert all(_result_str(result, "status") == "ok" for result in results)
-    assert {_result_int(result, "assigned_gpu_index") for result in results} == set(selected_gpu_indices)
+    assert {_result_int(result, "assigned_gpu_index") for result in results} == set(
+        selected_gpu_indices
+    )
     assert all(_result_int(result, "gpu_device_count") == 1 for result in results)
     assert all(_result_int_list(result, "visible_gpu_ids") == [0] for result in results)
     assert all(_result_float(result, "work_seconds") >= 2.0 for result in results)
 
-    jsonl_lines = [line for line in jsonl_output_path.read_text(encoding="utf-8").splitlines() if line.strip()]
+    jsonl_lines = [
+        line for line in jsonl_output_path.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     assert len(jsonl_lines) == len(cases)
 
-    print(json.dumps({
-        "case": "experiment_runner_multi_gpu_heavy_scheduler",
-        "source_file": SOURCE_FILE,
-        "test": "test_subprocess_scheduler_dispatches_heavy_cases_to_multiple_gpus",
-        "selected_gpu_indices": selected_gpu_indices,
-        "worker_labels": [_result_str(result, "worker_label") for result in results],
-        "work_seconds": [_result_float(result, "work_seconds") for result in results],
-        "iterations": [_result_int(result, "iterations") for result in results],
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "experiment_runner_multi_gpu_heavy_scheduler",
+                "source_file": SOURCE_FILE,
+                "test": "test_subprocess_scheduler_dispatches_heavy_cases_to_multiple_gpus",
+                "selected_gpu_indices": selected_gpu_indices,
+                "worker_labels": [_result_str(result, "worker_label") for result in results],
+                "work_seconds": [_result_float(result, "work_seconds") for result in results],
+                "iterations": [_result_int(result, "iterations") for result in results],
+            }
+        )
+    )
 
 
 if __name__ == "__main__":

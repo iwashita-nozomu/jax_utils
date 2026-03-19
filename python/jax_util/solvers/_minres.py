@@ -6,11 +6,12 @@ References
   "Solution of sparse indefinite systems of linear equations."
   SIAM journal on numerical analysis, 29(4), 1146-1173.
   https://epubs.siam.org/doi/abs/10.1137/0729071
-  
+
   このモジュールは Choi–Saunders の unnormalized 形式を採用し、
   対称不定値線形系（Ax = b, A ∈ R^{n×n} symmetric）を直接求解します。
   前処理行列 M ≻ 0 を投入可能で、不安定性が生じやすい系にも対応しています。
 """
+
 from __future__ import annotations
 from typing import Any, Dict, Tuple
 from pathlib import Path
@@ -35,7 +36,6 @@ from ..base import (
 
 from jax.typing import DTypeLike
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -47,30 +47,31 @@ class MINRESState(eqx.Module):
     def initialize(x0: Vector) -> "MINRESState":
         return MINRESState(x0=x0)
 
+
 # 責務: MINRES の Givens 回転係数を数値的に安定に計算する。
 def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Scalar, Scalar]:
     """Algorithm 2 SymOrtho(a,b): returns (c,s,r) with r>=0, [c s; s -c][a;b]=[r;0]."""
-    abs_a : Scalar = jnp.abs(a)
-    abs_b : Scalar = jnp.abs(b)
+    abs_a: Scalar = jnp.abs(a)
+    abs_b: Scalar = jnp.abs(b)
 
     # 責務: b が 0 のとき回転を使わず a の符号だけを残す。
-    def case_b0()-> Tuple[Scalar, Scalar, Scalar]:
+    def case_b0() -> Tuple[Scalar, Scalar, Scalar]:
         r = abs_a
         c = jnp.where(a == ZERO, ONE, jnp.sign(a))
         s = ZERO
         return c, s, r
 
     # 責務: a が 0 のとき s 側だけで回転を構成する。
-    def case_a0()-> Tuple[Scalar, Scalar, Scalar]:
+    def case_a0() -> Tuple[Scalar, Scalar, Scalar]:
         r = abs_b
         c = ZERO
         s: Scalar = jnp.where(b == ZERO, ZERO, jnp.sign(b))
         return c, s, r
 
     # 責務: a, b がともに非零の一般ケースを分岐込みで処理する。
-    def general()-> Tuple[Scalar, Scalar, Scalar]:
+    def general() -> Tuple[Scalar, Scalar, Scalar]:
         # 責務: |b| >= |a| のとき b を基準に正規化して回転を作る。
-        def branch1()-> Tuple[Scalar, Scalar, Scalar]:  # |b| >= |a|
+        def branch1() -> Tuple[Scalar, Scalar, Scalar]:  # |b| >= |a|
             tau: Scalar = a / jnp.where(b == ZERO, avoid_zero_div, b)
             s: Scalar = jnp.sign(b) / jnp.sqrt(ONE + tau * tau)
             c: Scalar = s * tau
@@ -78,7 +79,7 @@ def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Sc
             return c, s, jnp.abs(r)
 
         # 責務: |a| > |b| のとき a を基準に正規化して回転を作る。
-        def branch2()-> Tuple[Scalar, Scalar, Scalar]:  # |a| > |b|
+        def branch2() -> Tuple[Scalar, Scalar, Scalar]:  # |a| > |b|
             tau: Scalar = b / jnp.where(a == ZERO, avoid_zero_div, a)
             c: Scalar = jnp.sign(a) / jnp.sqrt(ONE + tau * tau)
             s: Scalar = c * tau
@@ -93,7 +94,7 @@ def _sym_ortho(a: Scalar, b: Scalar, avoid_zero_div: Scalar) -> Tuple[Scalar, Sc
 
     return lax.cond(b == ZERO, case_b0, case_not_b0)
 
-    
+
 # 責務: 前処理付き MINRES の本体反復を実行して近似解と次状態を返す。
 def pminres_solve(
     Mv: LinearOperator,
@@ -137,9 +138,9 @@ def pminres_solve(
 
     if DEBUG:
         jax.debug.print(
-            "{{\"case\":\"minres\",\"source_file\":\"{source_file}\","
-                "\"func\":\"pminres_solve\",\"event\":\"init\","
-            "\"r0_norm\":{r0},\"b_norm\":{bn},\"tol\":{tol},\"maxiter\":{maxiter}}}",
+            '{{"case":"minres","source_file":"{source_file}",'
+            '"func":"pminres_solve","event":"init",'
+            '"r0_norm":{r0},"b_norm":{bn},"tol":{tol},"maxiter":{maxiter}}}',
             source_file=SOURCE_FILE,
             r0=rnorm0,
             bn=bnorm,
@@ -149,7 +150,7 @@ def pminres_solve(
 
     # ---- Choi–Saunders initialization (use z1 = r0) ----
     z_prev = jnp.zeros_like(r0)  # z0
-    z = r0                       # z1
+    z = r0  # z1
 
     q = proj @ (Minv @ z)  # q1 = M^{-1} z1
     beta = jnp.sqrt(jnp.maximum(jnp.dot(q, z), ZERO))  # beta1 = sqrt(q1^T z1)
@@ -169,8 +170,8 @@ def pminres_solve(
     beta_prev = ONE  # dummy; k==0 branch will ignore
 
     # MINRES phase recurrence vectors
-    dbar_old = jnp.zeros_like(q)    # dbar_{k-1}
-    dbar_oold = jnp.zeros_like(q)   # dbar_{k-2}
+    dbar_old = jnp.zeros_like(q)  # dbar_{k-1}
+    dbar_oold = jnp.zeros_like(q)  # dbar_{k-2}
 
     # 責務: 反復継続条件として反復回数と収束フラグを判定する。
     def cond_fun(carry: Tuple[Any, ...]) -> bool:
@@ -180,14 +181,21 @@ def pminres_solve(
     # 責務: Lanczos 1 ステップと MINRES 更新をまとめて進める。
     def body_fun(carry: Tuple[Any, ...]) -> Tuple[Any, ...]:
         (
-            k, x,
-            z_prev, z, q,
-            beta_prev, beta,
-            delta_alg, eps_alg,
-            c_old, s_old,
+            k,
+            x,
+            z_prev,
+            z,
+            q,
+            beta_prev,
+            beta,
+            delta_alg,
+            eps_alg,
+            c_old,
+            s_old,
             phi,
-            dbar_old, dbar_oold,
-            done
+            dbar_old,
+            dbar_oold,
+            done,
         ) = carry
 
         # ---- Algorithm 1 line 8: p_k = A q_k ----
@@ -275,10 +283,10 @@ def pminres_solve(
             return (
                 k + 1,
                 x_new,
-                z,          # z_prev <- z_k
-                z_next,     # z <- z_{k+1}
-                q_next,     # q <- q_{k+1}
-                beta,       # beta_prev <- beta_k
+                z,  # z_prev <- z_k
+                z_next,  # z <- z_{k+1}
+                q_next,  # q <- q_{k+1}
+                beta,  # beta_prev <- beta_k
                 beta_next,  # beta <- beta_{k+1}
                 delta_next,
                 eps_next,
@@ -293,13 +301,20 @@ def pminres_solve(
         return lax.cond(beta_break, branch_break, branch_ok, operand=None)
 
     init = (
-        0, x,
-        z_prev, z, q,
-        beta_prev, beta,
-        delta_alg, eps_alg,
-        c_old, s_old,
+        0,
+        x,
+        z_prev,
+        z,
+        q,
+        beta_prev,
+        beta,
+        delta_alg,
+        eps_alg,
+        c_old,
+        s_old,
         phi,
-        dbar_old, dbar_oold,
+        dbar_old,
+        dbar_oold,
         done0,
     )
 
@@ -318,10 +333,10 @@ def pminres_solve(
     }
     if DEBUG:
         jax.debug.print(
-            "{{\"case\":\"minres\",\"source_file\":\"{source_file}\","
-            "\"func\":\"pminres_solve\",\"event\":\"return\","
-            "\"num_iter\":{num_iter},\"final_norm_r\":{final_norm_r},"
-            "\"final_rel_r\":{final_rel_r},\"converged\":{converged}}}",
+            '{{"case":"minres","source_file":"{source_file}",'
+            '"func":"pminres_solve","event":"return",'
+            '"num_iter":{num_iter},"final_norm_r":{final_norm_r},'
+            '"final_rel_r":{final_rel_r},"converged":{converged}}}',
             source_file=SOURCE_FILE,
             num_iter=info["num_iter"],
             final_norm_r=info["final_norm_r"],

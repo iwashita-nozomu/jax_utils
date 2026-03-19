@@ -8,7 +8,6 @@ from typing import Callable, Generic, Mapping, TypeVar, cast
 from .protocols import TaskContext
 from .runner import StandardResourceCapacity, StandardScheduler
 
-
 T = TypeVar("T")
 
 _GPU_ENV_NAMES = ("CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES")
@@ -35,9 +34,7 @@ def visible_gpu_ids_from_environment(
             if not item:
                 continue
             if not item.isdigit():
-                raise ValueError(
-                    f"{env_name} must contain comma-separated integer GPU ids."
-                )
+                raise ValueError(f"{env_name} must contain comma-separated integer GPU ids.")
             gpu_ids.append(int(item))
         return tuple(gpu_ids)
 

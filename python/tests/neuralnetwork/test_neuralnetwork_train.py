@@ -16,7 +16,10 @@ try:
     from jax_util.neuralnetwork.protocols import Params
 except (ModuleNotFoundError, TypeError) as exc:
     if "NamedTuple" in str(exc) or "optimizers.protocols" in str(exc):
-        pytest.skip(f"neuralnetwork module is not importable in this environment: {exc}", allow_module_level=True)
+        pytest.skip(
+            f"neuralnetwork module is not importable in this environment: {exc}",
+            allow_module_level=True,
+        )
     raise
 
 
@@ -24,11 +27,15 @@ SOURCE_FILE = Path(__file__).name
 
 
 def _log_case(case: str, payload: dict[str, object]) -> None:
-    print(json.dumps({
-        "case": case,
-        "source_file": SOURCE_FILE,
-        **payload,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": case,
+                "source_file": SOURCE_FILE,
+                **payload,
+            }
+        )
+    )
 
 
 def test_neuralnetwork_train_step() -> None:
@@ -63,9 +70,12 @@ def test_neuralnetwork_train_step() -> None:
         opt_state=opt_state,
         loss_fn=loss_fn,
     )
-    _log_case("nn_train_step", {
-        "loss": float(metrics["loss"]),
-    })
+    _log_case(
+        "nn_train_step",
+        {
+            "loss": float(metrics["loss"]),
+        },
+    )
     assert "loss" in metrics
     assert metrics["loss"].shape == ()
 

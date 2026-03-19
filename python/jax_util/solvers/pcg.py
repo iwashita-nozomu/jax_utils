@@ -43,14 +43,14 @@ def pcg_solve(
     dtype: DTypeLike = DEFAULT_DTYPE,
 ) -> Tuple[Vector, PCGState, Dict[str, Any]]:
     """前処理付き PCG で A x = rhs を解く（A は SPD 前提）。"""
-    pMv :LinearOperator = Mv * proj  # 投影付きMv
-    pprecond :LinearOperator = proj * precond * proj  # 投影付き前処理
+    pMv: LinearOperator = Mv * proj  # 投影付きMv
+    pprecond: LinearOperator = proj * precond * proj  # 投影付き前処理
 
-    rhs_p= proj @ rhs
+    rhs_p = proj @ rhs
     if DEBUG:
         jax.debug.print(
-            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
-            "\"func\":\"pcg_solve\",\"event\":\"rhs_norm\",\"value\":{value}}}",
+            '{{"case":"pcg","source_file":"{source_file}",'
+            '"func":"pcg_solve","event":"rhs_norm","value":{value}}}',
             source_file=SOURCE_FILE,
             value=jnp.linalg.norm(rhs_p),
         )
@@ -72,16 +72,16 @@ def pcg_solve(
 
     if DEBUG:
         jax.debug.print(
-            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
-            "\"func\":\"pcg_solve\",\"event\":\"init\","
-            "\"r0_norm\":{r0},\"tol\":{tol},\"maxiter\":{maxiter}}}",
+            '{{"case":"pcg","source_file":"{source_file}",'
+            '"func":"pcg_solve","event":"init",'
+            '"r0_norm":{r0},"tol":{tol},"maxiter":{maxiter}}}',
             source_file=SOURCE_FILE,
             r0=r0_norm,
             tol=tol,
             maxiter=maxiter,
         )
 
-    done0 = (r0_norm <= tol)
+    done0 = r0_norm <= tol
 
     state0 = (jnp.asarray(0, jnp.int32), x0, r0, z0, p0, rs0, done0)
 
@@ -91,7 +91,7 @@ def pcg_solve(
         return (i < maxiter) & (~done)
 
     # 責務: PCG の 1 反復分の更新をまとめて行います。
-    def body_fun(state:Tuple[Any, ...]) -> Tuple[Any, ...]:
+    def body_fun(state: Tuple[Any, ...]) -> Tuple[Any, ...]:
         i, x, r, z, p, rs, done = state
 
         Ap = pMv @ p
@@ -104,7 +104,7 @@ def pcg_solve(
         z_new = pprecond @ r_new
 
         r_norm = jnp.dot(r_new, r_new)
-        done_new = (r_norm <= tol)
+        done_new = r_norm <= tol
 
         rs_new = jnp.dot(r_new, z_new)
         rs_safe = jnp.where(jnp.abs(rs) < AVOID_ZERO_DIV, AVOID_ZERO_DIV, rs)
@@ -124,10 +124,10 @@ def pcg_solve(
     }
     if DEBUG:
         jax.debug.print(
-            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
-            "\"func\":\"pcg_solve\",\"event\":\"summary\","
-            "\"num_iter\":{num_iter},\"final_norm_r\":{final_norm_r},"
-            "\"final_rel_r\":{final_rel_r},\"converged\":{converged}}}",
+            '{{"case":"pcg","source_file":"{source_file}",'
+            '"func":"pcg_solve","event":"summary",'
+            '"num_iter":{num_iter},"final_norm_r":{final_norm_r},'
+            '"final_rel_r":{final_rel_r},"converged":{converged}}}',
             source_file=SOURCE_FILE,
             num_iter=i_f,
             final_norm_r=info["final_norm_r"],
@@ -135,11 +135,8 @@ def pcg_solve(
             converged=info["converged"],
         )
         jax.debug.print(
-            "{{\"case\":\"pcg\",\"source_file\":\"{source_file}\","
-            "\"func\":\"pcg_solve\",\"event\":\"return\"}}"
-            ,
+            '{{"case":"pcg","source_file":"{source_file}",' '"func":"pcg_solve","event":"return"}}',
             source_file=SOURCE_FILE,
         )
         jax.debug.print("")
     return x_f, PCGState(x0=x_f), info
-

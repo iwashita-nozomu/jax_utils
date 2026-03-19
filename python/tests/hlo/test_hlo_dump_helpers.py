@@ -52,7 +52,7 @@ def test_get_hlo_text_falls_back_to_hlo_and_raises_when_both_dialects_fail(
 
 def _run_all_tests() -> None:
     """全テストを実行します。
-    
+
     補助的なpython file.py実行時に使用されます。
     pytest -s python/tests/hlo/test_hlo_dump_helpers.py
     と同等の実行が可能になります。

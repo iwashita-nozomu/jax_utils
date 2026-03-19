@@ -6,19 +6,20 @@ References
   "On the implementation of a primal-dual interior point method."
   SIAM journal on optimization, 2(4), 575-601.
   https://epubs.siam.org/doi/abs/10.1137/0802028
-  
+
 - Wright, S. J. (1997).
   "Primal-Dual Interior-Point Methods."
   SIAM, Philadelphia, PA.
-  
+
   このモジュールは Mehrotra の predictor-corrector スキームを採用し、
   凸最適化問題 (P) minimize c^T x s.t. Ax=b, x≥0 および双対問題 (D) を
   解きます。KKT ブロックソルバと組み合わせることで、大規模稀疎問題でも
   高速収束を実現する inexact Newton 法による求解が可能です。
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict, Tuple , Callable
+from typing import Any, Dict, Tuple, Callable
 from pathlib import Path
 
 import equinox as eqx
@@ -45,8 +46,6 @@ from ..solvers.kkt_solver import KKTState, initialize_kkt_state, kkt_block_solve
 
 from jax.typing import DTypeLike
 
-
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -57,16 +56,17 @@ class PDIPMState(eqx.Module):
     lam_ineq: Vector
     s: Vector
 
+
 # 責務: PDIPM の初期 primal-dual 点と内部 KKT 状態を組み立てる。
 def initialize_pdipm_state(
-    n_primal:int,
-    n_dual_eq:int,
-    n_dual_ineq:int,
-    r_Hv:int=16,
-    r_Sv:int=16,
+    n_primal: int,
+    n_dual_eq: int,
+    n_dual_ineq: int,
+    r_Hv: int = 16,
+    r_Sv: int = 16,
     *,
     dtype: DTypeLike = DEFAULT_DTYPE,
-)->PDIPMState:
+) -> PDIPMState:
     # 責務: 初期 KKT 近似で使う単位 Hessian 作用素を与える。
     def _identity(v: Vector) -> Vector:
         return v
@@ -79,7 +79,7 @@ def initialize_pdipm_state(
     def _zero_primal(_: Vector) -> Vector:
         return jnp.zeros((n_primal,), dtype=dtype)
 
-    kkt_state=initialize_kkt_state(
+    kkt_state = initialize_kkt_state(
         Hv_initial=LinOp(_identity),
         Bv_initial=LinOp(_zero_dual),
         BTv_initial=LinOp(_zero_primal),
@@ -91,11 +91,12 @@ def initialize_pdipm_state(
     )
     return PDIPMState(
         kkt_state=kkt_state,
-        x=jnp.zeros((n_primal,),dtype=dtype),
-        lam_eq=jnp.zeros((n_dual_eq,),dtype=dtype),
-        lam_ineq=jnp.ones((n_dual_ineq,),dtype=dtype),
-        s=jnp.ones((n_dual_ineq,),dtype=dtype),
+        x=jnp.zeros((n_primal,), dtype=dtype),
+        lam_eq=jnp.zeros((n_dual_eq,), dtype=dtype),
+        lam_ineq=jnp.ones((n_dual_ineq,), dtype=dtype),
+        s=jnp.ones((n_dual_ineq,), dtype=dtype),
     )
+
 
 # 責務: Mehrotra 型 PDIPM を 1 問題分まとめて解き切る。
 def _pdipm_solve(
@@ -147,7 +148,7 @@ def _pdipm_solve(
 
     # 責務: 反復回数と IPM 残差に基づいて継続条件を判定する。
     def cond(carry: Tuple[Any, ...]) -> Scalar:
-        step_count, res,*_ = carry
+        step_count, res, *_ = carry
         return jnp.logical_and(step_count < max_steps, res > ipm_tol)
 
     # 責務: 線形化・KKT 求解・Mehrotra 更新を 1 ステップ進める。
@@ -170,9 +171,9 @@ def _pdipm_solve(
         # # J operators at current x (for J*v)
         # _, J_eq_lin = jax.linearize(c_eq, x)
         # _, J_ineq_lin = jax.linearize(c_ineq, x)
-        
-        ce,J_eq = linearize(c_eq, x)
-        ci,J_ineq = linearize(c_ineq, x)
+
+        ce, J_eq = linearize(c_eq, x)
+        ci, J_ineq = linearize(c_ineq, x)
         # J_eq: LinOp = LinOp(J_eq_lin)
         # J_ineq: LinOp = LinOp(J_ineq_lin)
 
@@ -190,7 +191,7 @@ def _pdipm_solve(
 
         # grad f at current x
         g = grad_f(x)
-        
+
         # stationarity residual vector r_x = ∇f + J_eq^T lam_eq + J_ineq^T lam
         r_x = g + J_eq_T @ lam_eq + J_ineq_T @ lam
 
@@ -202,7 +203,7 @@ def _pdipm_solve(
         # diag ops (S_inv uses safe divisor to avoid NaN; positivity should be ensured by step lengths)
         safe_s = jnp.maximum(s, AVOID_ZERO_DIV)
         S_inv_vec = ONE / safe_s
-        diag_S = LinOp(lambda v :s * v)
+        diag_S = LinOp(lambda v: s * v)
         diag_S_inv = LinOp(lambda v: S_inv_vec * v)
         diag_Lam = LinOp(lambda v: lam * v)
 
@@ -215,7 +216,7 @@ def _pdipm_solve(
         grad_L = jax.grad(_L_for_H)
         # _, H_L = jax.linearize(grad_L, x)
 
-        _,H_L = linearize(grad_L, x)
+        _, H_L = linearize(grad_L, x)
 
         # H_eff = H_L + J_ineq^T diag(lam/s) J_ineq
         w = lam * S_inv_vec  # lam/s
@@ -234,13 +235,13 @@ def _pdipm_solve(
         R_x = jnp.linalg.norm(r_x)
         R_eq = jnp.linalg.norm(r_eq)
         R_ineq = jnp.linalg.norm(r_ineq)
-    
+
         g_norm = jnp.linalg.norm(g)
-        jtlam_norm = jnp.linalg.norm(r_x - g)   # = ||J^T λ||
+        jtlam_norm = jnp.linalg.norm(r_x - g)  # = ||J^T λ||
         R_x_rel = R_x / (ONE + g_norm + jtlam_norm)
 
         R_eq_rel = R_eq / (ONE + R_eq)
-        
+
         R_ineq_rel = R_ineq / (ONE + jnp.linalg.norm(ci) + jnp.linalg.norm(s))
 
         comp_vec = s * lam
@@ -250,7 +251,9 @@ def _pdipm_solve(
 
         ipm_res = jnp.maximum(jnp.maximum(R_x_rel, jnp.maximum(R_eq_rel, R_ineq_rel)), R_c_rel)
 
-        kkt_rtol = kkt_forcing_c * jnp.power(jnp.maximum(ipm_res, AVOID_ZERO_DIV), kkt_forcing_alpha)
+        kkt_rtol = kkt_forcing_c * jnp.power(
+            jnp.maximum(ipm_res, AVOID_ZERO_DIV), kkt_forcing_alpha
+        )
         kkt_rtol = jnp.clip(kkt_rtol, kkt_rtol_min, kkt_rtol_max)
 
         # ========= 3) direction solver (Mehrotra form) =========
@@ -270,7 +273,7 @@ def _pdipm_solve(
                 rhs_lam=rhs_bot,
                 kkt_state=kkt_state_in,
                 kkt_tol=kkt_rtol,  # ★ 外部から決めた相対残差
-                maxiter = 5000,
+                maxiter=5000,
                 dtype=dtype,
             )
 
@@ -282,8 +285,10 @@ def _pdipm_solve(
         tau_fb = alpha_max
 
         # (a) affine predictor: target mu_aff = 0
-        r_c_aff = (diag_S @ lam)  # S*lam - 0*1
-        dx_aff, dlam_eq_aff, ds_aff, dlam_aff, kkt_state_mid, rhs_top_aff = solve_direction(r_c_aff, kkt_state)
+        r_c_aff = diag_S @ lam  # S*lam - 0*1
+        dx_aff, dlam_eq_aff, ds_aff, dlam_aff, kkt_state_mid, rhs_top_aff = solve_direction(
+            r_c_aff, kkt_state
+        )
 
         alpha_aff_pri = frac_to_boundary(s, ds_aff, tau_fb)
         alpha_aff_dual = frac_to_boundary(lam, dlam_aff, tau_fb)
@@ -299,7 +304,9 @@ def _pdipm_solve(
         # (c) corrector: r_c = S*lam - sigma*mu*1 + (ds_aff ∘ dlam_aff)
         r_c_corr = (diag_S @ lam) - (sigma * mu) * ones + (ds_aff * dlam_aff)
 
-        dx, dlam_eq_dir, ds, dlam_dir, kkt_state_next, rhs_top_corr = solve_direction(r_c_corr, kkt_state_mid)
+        dx, dlam_eq_dir, ds, dlam_dir, kkt_state_next, rhs_top_corr = solve_direction(
+            r_c_corr, kkt_state_mid
+        )
 
         # (d) final step lengths (primal/dual separate; original Mehrotra style)
         alpha_pri = frac_to_boundary(s, ds, tau_fb)
@@ -326,10 +333,10 @@ def _pdipm_solve(
             # (A) PRE: stopping residuals (MAIN)
             # ============================================================
             jax.debug.print(
-                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
-                "\"func\":\"_pdipm_solve\",\"event\":\"residuals\",\"step\":{step},"
-                "\"ipm_res\":{ipm},\"rx_rel\":{rx},\"req_rel\":{req},\"ri_rel\":{ri},"
-                "\"rc_rel\":{rc},\"mu\":{mu},\"s_min\":{smin},\"lam_min\":{lmin}}}",
+                '{{"case":"pdipm","source_file":"{source_file}",'
+                '"func":"_pdipm_solve","event":"residuals","step":{step},'
+                '"ipm_res":{ipm},"rx_rel":{rx},"req_rel":{req},"ri_rel":{ri},'
+                '"rc_rel":{rc},"mu":{mu},"s_min":{smin},"lam_min":{lmin}}}',
                 source_file=SOURCE_FILE,
                 step=step_count,
                 ipm=ipm_res,
@@ -345,10 +352,10 @@ def _pdipm_solve(
             # (A-2) additional summary
             # ============================================================
             jax.debug.print(
-                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
-                "\"func\":\"_pdipm_solve\",\"event\":\"summary\",\"step\":{step},"
-                "\"obj\":{obj},\"x_norm\":{xn},\"s_norm\":{sn},\"lam_norm\":{ln},"
-                "\"rx_norm\":{rxn},\"req_norm\":{ren},\"ri_norm\":{rin}}}",
+                '{{"case":"pdipm","source_file":"{source_file}",'
+                '"func":"_pdipm_solve","event":"summary","step":{step},'
+                '"obj":{obj},"x_norm":{xn},"s_norm":{sn},"lam_norm":{ln},'
+                '"rx_norm":{rxn},"req_norm":{ren},"ri_norm":{rin}}}',
                 source_file=SOURCE_FILE,
                 step=step_count,
                 obj=f_val,
@@ -364,10 +371,10 @@ def _pdipm_solve(
             # (B) Mehrotra predictor–corrector summary
             # ============================================================
             jax.debug.print(
-                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
-                "\"func\":\"_pdipm_solve\",\"event\":\"mehrotra\",\"step\":{step},"
-                "\"alpha_aff_pri\":{aap},\"alpha_aff_dual\":{aad},\"mu_aff\":{mua},"
-                "\"sigma\":{sg},\"alpha_pri\":{ap},\"alpha_dual\":{ad}}}",
+                '{{"case":"pdipm","source_file":"{source_file}",'
+                '"func":"_pdipm_solve","event":"mehrotra","step":{step},'
+                '"alpha_aff_pri":{aap},"alpha_aff_dual":{aad},"mu_aff":{mua},'
+                '"sigma":{sg},"alpha_pri":{ap},"alpha_dual":{ad}}}',
                 source_file=SOURCE_FILE,
                 step=step_count,
                 aap=alpha_aff_pri,
@@ -382,9 +389,9 @@ def _pdipm_solve(
             # (C) KKT difficulty / forcing
             # ============================================================
             jax.debug.print(
-                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
-                "\"func\":\"_pdipm_solve\",\"event\":\"kkt\",\"step\":{step},"
-                "\"kkt_rtol\":{rt},\"rhs_aff_norm\":{ra},\"rhs_corr_norm\":{rc}}}",
+                '{{"case":"pdipm","source_file":"{source_file}",'
+                '"func":"_pdipm_solve","event":"kkt","step":{step},'
+                '"kkt_rtol":{rt},"rhs_aff_norm":{ra},"rhs_corr_norm":{rc}}}',
                 source_file=SOURCE_FILE,
                 step=step_count,
                 rt=kkt_rtol,
@@ -403,9 +410,9 @@ def _pdipm_solve(
             mu_post = jnp.sum(comp_vec_next) / m
 
             jax.debug.print(
-                "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
-                "\"func\":\"_pdipm_solve\",\"event\":\"post\",\"step\":{step},"
-                "\"prim\":{pr},\"mu\":{mu},\"s_min\":{smin},\"lam_min\":{lmin},\"step_norm\":{sdx}}}",
+                '{{"case":"pdipm","source_file":"{source_file}",'
+                '"func":"_pdipm_solve","event":"post","step":{step},'
+                '"prim":{pr},"mu":{mu},"s_min":{smin},"lam_min":{lmin},"step_norm":{sdx}}}',
                 source_file=SOURCE_FILE,
                 step=step_count,
                 pr=prim_post,
@@ -415,14 +422,13 @@ def _pdipm_solve(
                 sdx=jnp.linalg.norm(alpha_pri * dx),
             )
 
-
-
-
         return (step_count + 1, ipm_res, x_next, lam_eq_next, lam_next, s_next, kkt_state_next)
 
     ipm_res0 = jnp.asarray(jnp.inf, dtype=dtype)
-    carry0 = (0, ipm_res0,x_init, lam_eq_init, lam_ineq_init, s_init, kkt_state_init)
-    step_count, ipm_res_f,x_f, lam_eq_f, lam_f, s_f, kkt_state_f = jax.lax.while_loop(cond, pdipm_step, carry0)
+    carry0 = (0, ipm_res0, x_init, lam_eq_init, lam_ineq_init, s_init, kkt_state_init)
+    step_count, ipm_res_f, x_f, lam_eq_f, lam_f, s_f, kkt_state_f = jax.lax.while_loop(
+        cond, pdipm_step, carry0
+    )
 
     # ---- final info (ここだけは1回だけ微分し直してOK) ----
     ce_f = c_eq(x_f)
@@ -448,9 +454,9 @@ def _pdipm_solve(
 
     if DEBUG:
         jax.debug.print(
-            "{{\"case\":\"pdipm\",\"source_file\":\"{source_file}\","
-            "\"func\":\"_pdipm_solve\",\"event\":\"return\",\"step\":{step},"
-            "\"prim_res_final\":{prim},\"dual_res_final\":{dual},\"mu_final\":{mu}}}",
+            '{{"case":"pdipm","source_file":"{source_file}",'
+            '"func":"_pdipm_solve","event":"return","step":{step},'
+            '"prim_res_final":{prim},"dual_res_final":{dual},"mu_final":{mu}}}',
             source_file=SOURCE_FILE,
             step=step_count,
             prim=info["prim_res_final"],
@@ -513,14 +519,10 @@ def pdipm_solve(
         dtype=dtype,
     )
 
+
 __all__ = [
     "PDIPMState",
     "initialize_pdipm_state",
     "_pdipm_solve",
     "pdipm_solve",
 ]
-
-
-
-
-    

@@ -14,7 +14,6 @@ from jax_util.solvers._check_mv_operator import (
 )
 from jax_util.base import LinOp, Vector
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -36,6 +35,7 @@ def test_check_mv_operator_reports() -> None:
 
     # レポート出力関数が例外なく動作することも確認します。
     print_Mv_report(report1, report2, name="test")
+
     def _to_jsonable(value: Any) -> Any:
         if isinstance(value, dict):
             return {k: _to_jsonable(v) for k, v in value.items()}
@@ -47,14 +47,18 @@ def test_check_mv_operator_reports() -> None:
             return value.tolist()
         return value
 
-    print(json.dumps({
-        "case": "check_mv_operator",
-        "source_file": SOURCE_FILE,
-        "test": "test_check_mv_operator_reports",
-        "expected_ok": True,
-        "self_adjoint": _to_jsonable(report1),
-        "spd": _to_jsonable(report2),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "check_mv_operator",
+                "source_file": SOURCE_FILE,
+                "test": "test_check_mv_operator_reports",
+                "expected_ok": True,
+                "self_adjoint": _to_jsonable(report1),
+                "spd": _to_jsonable(report2),
+            }
+        )
+    )
 
 
 def _run_all_tests() -> None:

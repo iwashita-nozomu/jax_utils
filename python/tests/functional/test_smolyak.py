@@ -18,7 +18,6 @@ from jax_util.functional import (
     multi_indices,
 )
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -44,15 +43,19 @@ def test_clenshaw_curtis_rule_is_nested_and_normalized() -> None:
     coarse_nodes, coarse_weights = clenshaw_curtis_rule(3)
     fine_nodes, fine_weights = clenshaw_curtis_rule(4)
 
-    print(json.dumps({
-        "case": "functional_clenshaw_curtis_nested",
-        "source_file": SOURCE_FILE,
-        "test": "test_clenshaw_curtis_rule_is_nested_and_normalized",
-        "coarse_nodes": _to_host_list(coarse_nodes),
-        "fine_nodes": _to_host_list(fine_nodes),
-        "coarse_weight_sum": float(np.asarray(jnp.sum(coarse_weights))),
-        "fine_weight_sum": float(np.asarray(jnp.sum(fine_weights))),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_clenshaw_curtis_nested",
+                "source_file": SOURCE_FILE,
+                "test": "test_clenshaw_curtis_rule_is_nested_and_normalized",
+                "coarse_nodes": _to_host_list(coarse_nodes),
+                "fine_nodes": _to_host_list(fine_nodes),
+                "coarse_weight_sum": float(np.asarray(jnp.sum(coarse_weights))),
+                "fine_weight_sum": float(np.asarray(jnp.sum(fine_weights))),
+            }
+        )
+    )
     assert jnp.allclose(jnp.sum(coarse_weights), jnp.asarray(1.0))
     assert jnp.allclose(jnp.sum(fine_weights), jnp.asarray(1.0))
     for node in coarse_nodes:
@@ -67,14 +70,18 @@ def test_smolyak_integrator_preserves_constant_integral_on_unit_volume_cube() ->
         integrator,
     )
 
-    print(json.dumps({
-        "case": "functional_smolyak_constant_normalization",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_integrator_preserves_constant_integral_on_unit_volume_cube",
-        "num_terms": integrator.num_terms,
-        "num_evaluation_points": integrator.num_evaluation_points,
-        "value": _to_host_list(value),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_constant_normalization",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_integrator_preserves_constant_integral_on_unit_volume_cube",
+                "num_terms": integrator.num_terms,
+                "num_evaluation_points": integrator.num_evaluation_points,
+                "value": _to_host_list(value),
+            }
+        )
+    )
     assert float(value[0]) == float(jnp.asarray(1.0, dtype=jnp.float64))
 
 
@@ -84,14 +91,18 @@ def test_smolyak_index_helpers_use_compact_integer_dtypes() -> None:
     cc_large = clenshaw_curtis_node_ids(12)
     indices = multi_indices(4, 6)
 
-    print(json.dumps({
-        "case": "functional_smolyak_compact_integer_dtypes",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_index_helpers_use_compact_integer_dtypes",
-        "cc_small_dtype": str(cc_small.dtype),
-        "cc_large_dtype": str(cc_large.dtype),
-        "indices_dtype": str(indices.dtype),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_compact_integer_dtypes",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_index_helpers_use_compact_integer_dtypes",
+                "cc_small_dtype": str(cc_small.dtype),
+                "cc_large_dtype": str(cc_large.dtype),
+                "indices_dtype": str(indices.dtype),
+            }
+        )
+    )
     assert cc_small.dtype == np.uint8
     assert cc_large.dtype == np.uint16
     assert indices.dtype == np.uint8
@@ -116,13 +127,17 @@ def test_smolyak_integrates_symmetric_terms_exactly() -> None:
         integrator,
     )
 
-    print(json.dumps({
-        "case": "functional_smolyak_symmetric_terms",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_integrates_symmetric_terms_exactly",
-        "expected": _to_host_list(expected),
-        "actual": _to_host_list(value),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_symmetric_terms",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_integrates_symmetric_terms_exactly",
+                "expected": _to_host_list(expected),
+                "actual": _to_host_list(value),
+            }
+        )
+    )
     assert jnp.allclose(value, expected, atol=1e-12)
 
 
@@ -146,15 +161,19 @@ def test_smolyak_resolves_analytic_exponential_integral_with_numeric_accuracy() 
     )
     abs_err = jnp.abs(value - expected)
 
-    print(json.dumps({
-        "case": "functional_smolyak_analytic_exponential",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_resolves_analytic_exponential_integral_with_numeric_accuracy",
-        "coefficients": [float(value) for value in coefficients],
-        "expected": _to_host_list(expected),
-        "actual": _to_host_list(value),
-        "abs_err": _to_host_list(abs_err),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_analytic_exponential",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_resolves_analytic_exponential_integral_with_numeric_accuracy",
+                "coefficients": [float(value) for value in coefficients],
+                "expected": _to_host_list(expected),
+                "actual": _to_host_list(value),
+                "abs_err": _to_host_list(abs_err),
+            }
+        )
+    )
     assert float(jnp.max(abs_err)) < 1.0e-10
 
 
@@ -170,7 +189,7 @@ def test_smolyak_resolves_analytic_gaussian_integral_with_numeric_accuracy() -> 
     value = integrate(
         Func(
             lambda x: jnp.asarray(
-                [jnp.exp(-jnp.sum(jnp.asarray(coefficients, dtype=jnp.float64) * (x ** 2)))],
+                [jnp.exp(-jnp.sum(jnp.asarray(coefficients, dtype=jnp.float64) * (x**2)))],
                 dtype=jnp.float64,
             )
         ),
@@ -178,23 +197,31 @@ def test_smolyak_resolves_analytic_gaussian_integral_with_numeric_accuracy() -> 
     )
     abs_err = jnp.abs(value - expected)
 
-    print(json.dumps({
-        "case": "functional_smolyak_analytic_gaussian",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_resolves_analytic_gaussian_integral_with_numeric_accuracy",
-        "coefficients": [float(value) for value in coefficients],
-        "level": integrator.level,
-        "expected": _to_host_list(expected),
-        "actual": _to_host_list(value),
-        "abs_err": _to_host_list(abs_err),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_analytic_gaussian",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_resolves_analytic_gaussian_integral_with_numeric_accuracy",
+                "coefficients": [float(value) for value in coefficients],
+                "level": integrator.level,
+                "expected": _to_host_list(expected),
+                "actual": _to_host_list(value),
+                "abs_err": _to_host_list(abs_err),
+            }
+        )
+    )
     assert float(jnp.max(abs_err)) < 1.0e-8
 
 
 # 責務: chunk 分割を変えても plan ベース積分器の値が不変であることを確認する。
 def test_smolyak_plan_integrator_is_chunk_size_invariant() -> None:
-    coarse_chunks = initialize_smolyak_integrator(dimension=2, level=4, dtype=jnp.float64, chunk_size=32)
-    fine_chunks = initialize_smolyak_integrator(dimension=2, level=4, dtype=jnp.float64, chunk_size=2048)
+    coarse_chunks = initialize_smolyak_integrator(
+        dimension=2, level=4, dtype=jnp.float64, chunk_size=32
+    )
+    fine_chunks = initialize_smolyak_integrator(
+        dimension=2, level=4, dtype=jnp.float64, chunk_size=2048
+    )
     integrand = Func(
         lambda x: jnp.asarray(
             [
@@ -208,15 +235,19 @@ def test_smolyak_plan_integrator_is_chunk_size_invariant() -> None:
     coarse_value = integrate(integrand, coarse_chunks)
     fine_value = integrate(integrand, fine_chunks)
 
-    print(json.dumps({
-        "case": "functional_smolyak_chunk_size_invariance",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_plan_integrator_is_chunk_size_invariant",
-        "coarse_chunk_size": coarse_chunks.chunk_size,
-        "fine_chunk_size": fine_chunks.chunk_size,
-        "coarse_value": _to_host_list(coarse_value),
-        "fine_value": _to_host_list(fine_value),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_chunk_size_invariance",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_plan_integrator_is_chunk_size_invariant",
+                "coarse_chunk_size": coarse_chunks.chunk_size,
+                "fine_chunk_size": fine_chunks.chunk_size,
+                "coarse_value": _to_host_list(coarse_value),
+                "fine_value": _to_host_list(fine_value),
+            }
+        )
+    )
     assert jnp.allclose(coarse_value, fine_value, atol=1.0e-12)
 
 
@@ -224,19 +255,23 @@ def test_smolyak_plan_integrator_is_chunk_size_invariant() -> None:
 def test_initialize_smolyak_integrator_builds_plan_metadata() -> None:
     integrator = initialize_smolyak_integrator(dimension=2, level=3, dtype=jnp.float32)
 
-    print(json.dumps({
-        "case": "functional_smolyak_initialize",
-        "source_file": SOURCE_FILE,
-        "test": "test_initialize_smolyak_integrator_builds_plan_metadata",
-        "num_terms": integrator.num_terms,
-        "num_evaluation_points": integrator.num_evaluation_points,
-        "rule_nodes_shape": list(integrator.rule_nodes.shape),
-        "rule_weights_shape": list(integrator.rule_weights.shape),
-        "rule_offsets_shape": list(integrator.rule_offsets.shape),
-        "term_levels_shape": list(integrator.term_levels.shape),
-        "term_num_points_shape": list(integrator.term_num_points.shape),
-        "dtype": str(integrator.rule_nodes.dtype),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_initialize",
+                "source_file": SOURCE_FILE,
+                "test": "test_initialize_smolyak_integrator_builds_plan_metadata",
+                "num_terms": integrator.num_terms,
+                "num_evaluation_points": integrator.num_evaluation_points,
+                "rule_nodes_shape": list(integrator.rule_nodes.shape),
+                "rule_weights_shape": list(integrator.rule_weights.shape),
+                "rule_offsets_shape": list(integrator.rule_offsets.shape),
+                "term_levels_shape": list(integrator.term_levels.shape),
+                "term_num_points_shape": list(integrator.term_num_points.shape),
+                "dtype": str(integrator.rule_nodes.dtype),
+            }
+        )
+    )
     assert isinstance(integrator, SmolyakIntegrator)
     assert integrator.num_terms > 0
     assert integrator.num_evaluation_points > 0
@@ -253,19 +288,23 @@ def test_smolyak_integrator_refine_increases_resolution() -> None:
     integrator = initialize_smolyak_integrator(dimension=3, level=2, dtype=jnp.float32)
     refined = integrator.refine()
 
-    print(json.dumps({
-        "case": "functional_smolyak_refine",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_integrator_refine_increases_resolution",
-        "level_before": integrator.level,
-        "level_after": refined.level,
-        "terms_before": integrator.num_terms,
-        "terms_after": refined.num_terms,
-        "eval_points_before": integrator.num_evaluation_points,
-        "eval_points_after": refined.num_evaluation_points,
-        "dtype_before": str(integrator.rule_nodes.dtype),
-        "dtype_after": str(refined.rule_nodes.dtype),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_refine",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_integrator_refine_increases_resolution",
+                "level_before": integrator.level,
+                "level_after": refined.level,
+                "terms_before": integrator.num_terms,
+                "terms_after": refined.num_terms,
+                "eval_points_before": integrator.num_evaluation_points,
+                "eval_points_after": refined.num_evaluation_points,
+                "dtype_before": str(integrator.rule_nodes.dtype),
+                "dtype_after": str(refined.rule_nodes.dtype),
+            }
+        )
+    )
     assert refined.level == integrator.level + 1
     assert refined.num_terms > integrator.num_terms
     assert refined.num_evaluation_points > integrator.num_evaluation_points
@@ -283,17 +322,21 @@ def test_smolyak_integrator_reuses_prepared_rules() -> None:
     )
     refined = integrator.refine()
 
-    print(json.dumps({
-        "case": "functional_smolyak_prepared_level",
-        "source_file": SOURCE_FILE,
-        "test": "test_smolyak_integrator_reuses_prepared_rules",
-        "level_before": integrator.level,
-        "level_after": refined.level,
-        "prepared_level_before": integrator.prepared_level,
-        "prepared_level_after": refined.prepared_level,
-        "rule_nodes_shape_before": list(integrator.rule_nodes.shape),
-        "rule_nodes_shape_after": list(refined.rule_nodes.shape),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "functional_smolyak_prepared_level",
+                "source_file": SOURCE_FILE,
+                "test": "test_smolyak_integrator_reuses_prepared_rules",
+                "level_before": integrator.level,
+                "level_after": refined.level,
+                "prepared_level_before": integrator.prepared_level,
+                "prepared_level_after": refined.prepared_level,
+                "rule_nodes_shape_before": list(integrator.rule_nodes.shape),
+                "rule_nodes_shape_after": list(refined.rule_nodes.shape),
+            }
+        )
+    )
     assert integrator.prepared_level == 4
     assert refined.prepared_level == 4
     assert refined.level == 3

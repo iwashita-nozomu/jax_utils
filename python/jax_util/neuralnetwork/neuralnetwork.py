@@ -18,9 +18,8 @@ from .layer_utils import (
 from .protocols import Carry, Ctx, NeuralNetworkLayer
 
 
-
 class NeuralNetwork(eqx.Module):
-    layers: Tuple[NeuralNetworkLayer,...] = eqx.field(static=False)
+    layers: Tuple[NeuralNetworkLayer, ...] = eqx.field(static=False)
     network_type: str = eqx.field(static=True)
     layer_sizes: Tuple[int, ...] = eqx.field(static=True)
 
@@ -33,6 +32,7 @@ class NeuralNetwork(eqx.Module):
         for layer in self.layers:
             carry = layer(carry, ctx)
         return carry.z
+
 
 def state_initializer(
     network_type: str,
@@ -57,12 +57,12 @@ def state_initializer(
 
 def build_neuralnetwork(
     network_type: str,
-    layer_sizes: Tuple[int,...],
+    layer_sizes: Tuple[int, ...],
     activation: str,
-
     random_key: Scalar,
-)->NeuralNetwork:
+) -> NeuralNetwork:
     """標準的な NN または ICNN を構築するファクトリ関数。"""
+
     def identity(x: Matrix) -> Matrix:
         return x
 
@@ -115,8 +115,8 @@ def build_neuralnetwork(
         raise ValueError(f"Unsupported network type: {network_type}")
 
 
-def forward_with_cache(x:Matrix,network: NeuralNetwork) -> Tuple[Matrix,Tuple[Carry],Ctx]:
-    
+def forward_with_cache(x: Matrix, network: NeuralNetwork) -> Tuple[Matrix, Tuple[Carry], Ctx]:
+
     # network:NeuralNetwork = eqx.combine(params,static)
     """中間状態をキャッシュしながら順伝播を行います。"""
     ctx, carry = state_initializer(

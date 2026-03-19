@@ -9,23 +9,27 @@ from jax import numpy as jnp
 
 from ..base import Matrix, Vector, Scalar
 
-from jax import  flatten_util
+from jax import flatten_util
 
-from .protocols import Params,Static
+from .protocols import Params, Static
 
-class StandardCtx(eqx.Module):
-    ...
+
+class StandardCtx(eqx.Module): ...
+
+
 class StandardCarry(eqx.Module):
     z: Matrix
+
 
 class StandardNNLayer(eqx.Module):
     W: "Matrix" = eqx.field(static=False)
     b: "Vector" = eqx.field(static=False)
     activation: Callable[["Matrix"], "Matrix"] = eqx.field(static=True)
-    
+
     def __call__(self, carry: StandardCarry, ctx: StandardCtx) -> StandardCarry:
         z = self.W @ carry.z + self.b[:, None]
         return StandardCarry(z=self.activation(z))
+
 
 def standardNN_layer_factory(
     input_dim: int,
@@ -36,17 +40,16 @@ def standardNN_layer_factory(
     k1, k2 = jax.random.split(random_key, 2)
     W = jax.random.normal(k1, (output_dim, input_dim)) * jnp.sqrt(2.0 / input_dim)
     b = jnp.zeros((output_dim,))
-    return StandardNNLayer(
-        W=W,
-        b=b,
-        activation=activation
-    ), k2
+    return StandardNNLayer(W=W, b=b, activation=activation), k2
+
 
 class IcnnCtx(eqx.Module):
     x: Matrix
 
+
 class IcnnCarry(eqx.Module):
     z: Matrix
+
 
 class IcnnLayer(eqx.Module):
     W: "Matrix" = eqx.field(static=False)  # 重み行列 非負
@@ -57,7 +60,8 @@ class IcnnLayer(eqx.Module):
     def __call__(self, carry: IcnnCarry, ctx: IcnnCtx) -> IcnnCarry:
         z = self.W @ carry.z + self.W_x @ ctx.x + self.b[:, None]
         return IcnnCarry(z=self.activation(z))
-    
+
+
 def icnn_layer_factory(
     input_dim: int,
     output_dim: int,
@@ -69,12 +73,8 @@ def icnn_layer_factory(
     W = jnp.abs(jax.random.normal(k1, (output_dim, input_dim))) * jnp.sqrt(2.0 / output_dim)
     W_x = jax.random.normal(k2, (output_dim, x_dim)) * jnp.sqrt(2.0 / x_dim)
     b = jnp.zeros((output_dim,))
-    return IcnnLayer(
-        W=W,
-        W_x=W_x,
-        b=b,
-        activation=activation
-    ), k3
+    return IcnnLayer(W=W, W_x=W_x, b=b, activation=activation), k3
+
 
 M = TypeVar("M", bound=eqx.Module)
 
@@ -84,14 +84,17 @@ class RebuildState(Generic[M]):
     unravel_fn: Callable[[Vector], Params]
     static: Static
 
+
 def module_to_vector(module: M) -> tuple[Vector, RebuildState[M]]:
     param, static = eqx.partition(module, eqx.is_inexact_array)
     flat_params, unravel_fn = flatten_util.ravel_pytree(param)
     return flat_params, RebuildState(unravel_fn, static)
 
+
 def vector_to_module(vector: Vector, st: RebuildState[M]) -> M:
     param = st.unravel_fn(vector)
     return cast(M, eqx.combine(param, st.static))
+
 
 __all__ = [
     "StandardCtx",

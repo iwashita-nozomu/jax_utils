@@ -54,16 +54,14 @@ class DifferentialOperator(Protocol):
     def __call__(self, f: Function, /) -> Function: ...
 
 
-class FunctionalOptimizationProblem(OptimizationProblem[Function], Protocol):
-    ...
+class FunctionalOptimizationProblem(OptimizationProblem[Function], Protocol): ...
 
 
 class ConstrainedFunctionalOptimizationProblem(
     ConstrainedOptimizationProblem[Function, Function, Function],
     FunctionalOptimizationProblem,
     Protocol,
-):
-    ...
+): ...
 
 
 __all__ = [

@@ -11,7 +11,6 @@ import jax.numpy as jnp
 
 from jax_util.hlo import dump_hlo_jsonl
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -25,12 +24,16 @@ def _run_dump_hlo_jsonl_disabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch
         return x + 1
 
     dump_hlo_jsonl(f, jnp.ones((2, 3)), out_path=out_path, tag="test")
-    print(json.dumps({
-        "case": "hlo_dump_disabled",
-        "source_file": SOURCE_FILE,
-        "test": "test_dump_hlo_jsonl_disabled",
-        "exists": out_path.exists(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "hlo_dump_disabled",
+                "source_file": SOURCE_FILE,
+                "test": "test_dump_hlo_jsonl_disabled",
+                "exists": out_path.exists(),
+            }
+        )
+    )
     assert not out_path.exists()
 
 
@@ -54,13 +57,17 @@ def _run_dump_hlo_jsonl_enabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     assert len(lines) == 1
 
     rec: dict[str, Any] = json.loads(lines[0])
-    print(json.dumps({
-        "case": "hlo_dump_enabled",
-        "source_file": SOURCE_FILE,
-        "test": "test_dump_hlo_jsonl_enabled",
-        "tag": rec["tag"],
-        "line_count": len(lines),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "hlo_dump_enabled",
+                "source_file": SOURCE_FILE,
+                "test": "test_dump_hlo_jsonl_enabled",
+                "tag": rec["tag"],
+                "line_count": len(lines),
+            }
+        )
+    )
     assert rec["case"] == "hlo"
     assert rec["tag"] == "test"
     assert isinstance(rec["hlo"], str)

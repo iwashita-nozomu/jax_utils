@@ -9,7 +9,6 @@ import jax.numpy as jnp
 from jax_util.solvers._minres import MINRESState, pminres_solve
 from jax_util.base import LinOp, Vector
 
-
 SOURCE_FILE = Path(__file__).name
 
 
@@ -37,14 +36,18 @@ def test_minres_known_solution() -> None:
         maxiter=200,
         rtol=jnp.asarray(1e-8),
     )
-    print(json.dumps({
-        "case": "minres_known",
-        "source_file": SOURCE_FILE,
-        "test": "test_minres_known_solution",
-        "expected_head": x_true[:5].tolist(),
-        "expected_norm": float(jnp.linalg.norm(x_true)),
-        "num_iter": int(info["num_iter"]),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "minres_known",
+                "source_file": SOURCE_FILE,
+                "test": "test_minres_known_solution",
+                "expected_head": x_true[:5].tolist(),
+                "expected_norm": float(jnp.linalg.norm(x_true)),
+                "num_iter": int(info["num_iter"]),
+            }
+        )
+    )
     assert jnp.allclose(x, x_true, rtol=1e-6, atol=1e-6)
     assert "num_iter" in info
     assert state.x0.shape == x_true.shape
@@ -74,14 +77,18 @@ def test_minres_indefinite_system() -> None:
         maxiter=300,
         rtol=jnp.asarray(1e-8),
     )
-    print(json.dumps({
-        "case": "minres_indef",
-        "source_file": SOURCE_FILE,
-        "test": "test_minres_indefinite_system",
-        "expected_head": x_true[:5].tolist(),
-        "expected_norm": float(jnp.linalg.norm(x_true)),
-        "x_norm": float(jnp.linalg.norm(x)),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "minres_indef",
+                "source_file": SOURCE_FILE,
+                "test": "test_minres_indefinite_system",
+                "expected_head": x_true[:5].tolist(),
+                "expected_norm": float(jnp.linalg.norm(x_true)),
+                "x_norm": float(jnp.linalg.norm(x)),
+            }
+        )
+    )
     assert jnp.allclose(x, x_true, rtol=1e-6, atol=1e-6)
 
 
@@ -110,15 +117,19 @@ def test_minres_ill_conditioned_system() -> None:
         rtol=jnp.asarray(1e-6),
     )
     final_rel_r = float(jnp.asarray(info["final_rel_r"]))
-    print(json.dumps({
-        "case": "minres_ill",
-        "source_file": SOURCE_FILE,
-        "test": "test_minres_ill_conditioned_system",
-        "expected_head": x_true[:5].tolist(),
-        "expected_norm": float(jnp.linalg.norm(x_true)),
-        "x_norm": float(jnp.linalg.norm(x)),
-        "final_rel_r": final_rel_r,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "minres_ill",
+                "source_file": SOURCE_FILE,
+                "test": "test_minres_ill_conditioned_system",
+                "expected_head": x_true[:5].tolist(),
+                "expected_norm": float(jnp.linalg.norm(x_true)),
+                "x_norm": float(jnp.linalg.norm(x)),
+                "final_rel_r": final_rel_r,
+            }
+        )
+    )
     assert final_rel_r < 1e-3
 
 
@@ -144,14 +155,18 @@ def test_minres_zero_rhs() -> None:
     )
     x_norm = float(jnp.linalg.norm(x))
     num_iter = int(jnp.asarray(info["num_iter"]))
-    print(json.dumps({
-        "case": "minres_zero_rhs",
-        "source_file": SOURCE_FILE,
-        "test": "test_minres_zero_rhs",
-        "expected_norm": 0.0,
-        "x_norm": x_norm,
-        "num_iter": num_iter,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "minres_zero_rhs",
+                "source_file": SOURCE_FILE,
+                "test": "test_minres_zero_rhs",
+                "expected_norm": 0.0,
+                "x_norm": x_norm,
+                "num_iter": num_iter,
+            }
+        )
+    )
     assert x_norm < 1e-12
 
 

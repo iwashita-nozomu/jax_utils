@@ -11,7 +11,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-
 WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 PYTHON_ROOT = WORKSPACE_ROOT / "python"
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
@@ -148,21 +147,37 @@ def _infer_hlo_hints(summary: dict[str, Any], /) -> list[str]:
             temp_size_max = float(temp_size.get("max", 0.0))
 
     if control_flow > 0:
-        hints.append("制御フロー (`while` / `call`) が HLO に含まれています。loop 構造が kernel 分割や launch 回数へ影響している可能性があります。")
+        hints.append(
+            "制御フロー (`while` / `call`) が HLO に含まれています。loop 構造が kernel 分割や launch 回数へ影響している可能性があります。"
+        )
     if data_movement > arithmetic:
-        hints.append("算術演算より gather/slice/reshape などのデータ移動系演算が多く、計算より index 処理が支配的な可能性があります。")
+        hints.append(
+            "算術演算より gather/slice/reshape などのデータ移動系演算が多く、計算より index 処理が支配的な可能性があります。"
+        )
     if scatter_count > 0:
-        hints.append("scatter が現れており、prefix 更新や点構成のための書き戻しが HLO に残っています。点構成の表現が GPU 実行コストを押し上げている可能性があります。")
+        hints.append(
+            "scatter が現れており、prefix 更新や点構成のための書き戻しが HLO に残っています。点構成の表現が GPU 実行コストを押し上げている可能性があります。"
+        )
     if arithmetic > 0 and dot_count == 0:
-        hints.append("主要演算に `dot` 系が見えず、GEMM 主体ではない構造です。GPU の高スループットを引き出しにくい可能性があります。")
+        hints.append(
+            "主要演算に `dot` 系が見えず、GEMM 主体ではない構造です。GPU の高スループットを引き出しにくい可能性があります。"
+        )
     if preferred_text_bytes_max >= 1_000_000:
-        hints.append("preferred HLO テキストが 1MB を超えており、lowering 後の IR 自体がかなり大きい可能性があります。")
+        hints.append(
+            "preferred HLO テキストが 1MB を超えており、lowering 後の IR 自体がかなり大きい可能性があります。"
+        )
     if generated_code_size_max >= 1_000_000:
-        hints.append("generated code size が 1MB を超えており、コンパイル済みコードの肥大化がボトルネック候補です。")
+        hints.append(
+            "generated code size が 1MB を超えており、コンパイル済みコードの肥大化がボトルネック候補です。"
+        )
     if temp_size_max >= 100_000_000:
-        hints.append("compiled temp buffer が 100MB を超えており、一時メモリの確保コストや device memory pressure が疑われます。")
+        hints.append(
+            "compiled temp buffer が 100MB を超えており、一時メモリの確保コストや device memory pressure が疑われます。"
+        )
     if not hints:
-        hints.append("単純な op 数だけでは支配項が明確でありません。HLO 本文と profiler を併用して確認してください。")
+        hints.append(
+            "単純な op 数だけでは支配項が明確でありません。HLO 本文と profiler を併用して確認してください。"
+        )
     return hints
 
 
@@ -239,12 +254,20 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
     )
 
     summary = _summarize_hlo_jsonl(jsonl_path)
-    summary_path.write_text(json.dumps(_json_compatible(summary), ensure_ascii=False, indent=2), encoding="utf-8")
+    summary_path.write_text(
+        json.dumps(_json_compatible(summary), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     size_digest = {
-        "preferred_text_utf8_bytes_max": summary.get("size", {}).get("preferred_text.utf8_bytes", {}).get("max"),
+        "preferred_text_utf8_bytes_max": summary.get("size", {})
+        .get("preferred_text.utf8_bytes", {})
+        .get("max"),
         "hlo_proto_bytes_max": summary.get("size", {}).get("hlo_proto_bytes", {}).get("max"),
-        "generated_code_size_in_bytes_max": summary.get("compiled_memory", {}).get("generated_code_size_in_bytes", {}).get("max"),
-        "temp_size_in_bytes_max": summary.get("compiled_memory", {}).get("temp_size_in_bytes", {}).get("max"),
+        "generated_code_size_in_bytes_max": summary.get("compiled_memory", {})
+        .get("generated_code_size_in_bytes", {})
+        .get("max"),
+        "temp_size_in_bytes_max": summary.get("compiled_memory", {})
+        .get("temp_size_in_bytes", {})
+        .get("max"),
     }
 
     result: dict[str, Any] = {
@@ -271,7 +294,9 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
         "hints": _infer_hlo_hints(summary),
     }
 
-    output_path.write_text(json.dumps(_json_compatible(result), ensure_ascii=False, indent=2), encoding="utf-8")
+    output_path.write_text(
+        json.dumps(_json_compatible(result), ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     shutil.copyfile(output_path, RESULTS_DIR / "latest.json")
     shutil.copyfile(jsonl_path, RESULTS_DIR / "latest.jsonl")
     shutil.copyfile(summary_path, RESULTS_DIR / "latest_summary.json")
@@ -280,12 +305,24 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
 
 # 責務: CLI 引数を組み立てる。
 def _build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description="Dump and summarize HLO for a single Smolyak integration case.")
-    parser.add_argument("--platform", type=str, choices=("cpu", "gpu"), default=os.environ.get("JAX_PLATFORMS", "cpu"))
+    parser = argparse.ArgumentParser(
+        description="Dump and summarize HLO for a single Smolyak integration case."
+    )
+    parser.add_argument(
+        "--platform",
+        type=str,
+        choices=("cpu", "gpu"),
+        default=os.environ.get("JAX_PLATFORMS", "cpu"),
+    )
     parser.add_argument("--dimension", type=int, default=4)
     parser.add_argument("--level", type=int, default=3)
     parser.add_argument("--prepared-level", type=int, default=None)
-    parser.add_argument("--dtype", type=str, default="float32", choices=("float16", "bfloat16", "float32", "float64"))
+    parser.add_argument(
+        "--dtype",
+        type=str,
+        default="float32",
+        choices=("float16", "bfloat16", "float32", "float64"),
+    )
     parser.add_argument("--chunk-size", type=int, default=16384)
     parser.add_argument("--num-repeats", type=int, default=16)
     parser.add_argument("--coeff-start", type=float, default=-0.55)
@@ -299,13 +336,20 @@ def main() -> None:
     args = parser.parse_args()
     output_path = args.output if args.output is not None else _timestamped_output_path()
     result = _run_case(args, output_path)
-    print(json.dumps(_json_compatible({
-        "json": result["json_path"],
-        "jsonl": result["jsonl_path"],
-        "summary": result["summary_path"],
-        "size_digest": result["size_digest"],
-        "hints": result["hints"],
-    }), ensure_ascii=False))
+    print(
+        json.dumps(
+            _json_compatible(
+                {
+                    "json": result["json_path"],
+                    "jsonl": result["jsonl_path"],
+                    "summary": result["summary_path"],
+                    "size_digest": result["size_digest"],
+                    "hints": result["hints"],
+                }
+            ),
+            ensure_ascii=False,
+        )
+    )
 
 
 if __name__ == "__main__":

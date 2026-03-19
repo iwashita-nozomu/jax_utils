@@ -96,9 +96,13 @@ def test_difference_rule_numpy_covers_codec_and_builder_fallback_paths(
     monkeypatch.setattr(
         smolyak_module,
         "_rule_numpy_builder",
-        lambda rule: None if rule is smolyak_module.trapezoidal_rule else original_rule_numpy_builder(rule),
+        lambda rule: (
+            None if rule is smolyak_module.trapezoidal_rule else original_rule_numpy_builder(rule)
+        ),
     )
-    node_ids, _, diff_weights = smolyak_module._difference_rule_numpy(2, smolyak_module.trapezoidal_rule)
+    node_ids, _, diff_weights = smolyak_module._difference_rule_numpy(
+        2, smolyak_module.trapezoidal_rule
+    )
     assert node_ids is not None
     assert np.allclose(diff_weights, np.array([0.25, -0.5, 0.25]))
 
@@ -106,9 +110,13 @@ def test_difference_rule_numpy_covers_codec_and_builder_fallback_paths(
     monkeypatch.setattr(
         smolyak_module,
         "_rule_node_codec",
-        lambda rule: None if rule is smolyak_module.trapezoidal_rule else original_rule_node_codec(rule),
+        lambda rule: (
+            None if rule is smolyak_module.trapezoidal_rule else original_rule_node_codec(rule)
+        ),
     )
-    node_ids, diff_nodes, diff_weights = smolyak_module._difference_rule_numpy(2, smolyak_module.trapezoidal_rule)
+    node_ids, diff_nodes, diff_weights = smolyak_module._difference_rule_numpy(
+        2, smolyak_module.trapezoidal_rule
+    )
     assert node_ids is None
     assert np.allclose(diff_nodes, np.array([-0.5, 0.0, 0.5]))
     assert np.allclose(diff_weights, np.array([0.25, -0.5, 0.25]))
@@ -158,7 +166,7 @@ def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
 
 def _run_all_tests() -> None:
     """全テストを実行します。
-    
+
     補助的なpython file.py実行時に使用されます。
     pytest -s python/tests/functional/test_protocols_and_smolyak_helpers.py
     と同等の実行が可能になります。

@@ -7,7 +7,7 @@ from typing import Callable
 import numpy as np
 from numpy.typing import NDArray
 import jax.numpy as jnp
-from scipy import optimize as sp_opt #pyright: ignore
+from scipy import optimize as sp_opt  # pyright: ignore
 
 from jax_util.optimizers.pdipm import (
     PDIPMState,
@@ -15,7 +15,6 @@ from jax_util.optimizers.pdipm import (
     pdipm_solve,
 )
 from jax_util.base import DEFAULT_DTYPE
-
 
 SOURCE_FILE = Path(__file__).name
 
@@ -27,6 +26,7 @@ def _solve_with_scipy(
     n_primal: int,
 ) -> tuple[NDArray[np.float64], sp_opt.OptimizeResult]:
     """SciPy で基準解を求めます。"""
+
     def fun(x: NDArray[np.float64]) -> float:
         return float(objective(x))
 
@@ -65,15 +65,19 @@ def test_pdipm_state_initialize() -> None:
         r_Hv=1,
         r_Sv=1,
     )
-    print(json.dumps({
-        "case": "pdipm_state",
-        "source_file": SOURCE_FILE,
-        "test": "test_pdipm_state_initialize",
-        "expected_x_dim": 2,
-        "expected_lam_eq_dim": 1,
-        "x_dim": int(state.x.shape[0]),
-        "lam_eq_dim": int(state.lam_eq.shape[0]),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "pdipm_state",
+                "source_file": SOURCE_FILE,
+                "test": "test_pdipm_state_initialize",
+                "expected_x_dim": 2,
+                "expected_lam_eq_dim": 1,
+                "x_dim": int(state.x.shape[0]),
+                "lam_eq_dim": int(state.lam_eq.shape[0]),
+            }
+        )
+    )
     assert isinstance(state, PDIPMState)
     assert state.x.shape == (2,)
     assert state.lam_eq.shape == (1,)
@@ -148,19 +152,23 @@ def test_pdipm_simple_problem() -> None:
     )
 
     scipy_fun = float(scipy_result.fun)
-    print(json.dumps({
-        "case": "pdipm_simple",
-            "source_file": SOURCE_FILE,
-        "test": "test_pdipm_simple_problem",
-        "expected_x": expected_x_np.tolist(),
-        "scipy_success": bool(scipy_result.success),
-        "scipy_status": int(scipy_result.status),
-        "scipy_fun": scipy_fun,
-        "x": new_state.x.tolist(),
-        "opt": float(opt),
-        "prim_res_final": float(info["prim_res_final"]),
-        "mu_final": float(info["mu_final"]),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "pdipm_simple",
+                "source_file": SOURCE_FILE,
+                "test": "test_pdipm_simple_problem",
+                "expected_x": expected_x_np.tolist(),
+                "scipy_success": bool(scipy_result.success),
+                "scipy_status": int(scipy_result.status),
+                "scipy_fun": scipy_fun,
+                "x": new_state.x.tolist(),
+                "opt": float(opt),
+                "prim_res_final": float(info["prim_res_final"]),
+                "mu_final": float(info["mu_final"]),
+            }
+        )
+    )
 
     assert scipy_result.success
     assert float(info["prim_res_final"]) <= 1e-6
@@ -176,10 +184,10 @@ def test_pdipm_ill_conditioned_problem() -> None:
     diag = jnp.logspace(0.0, 8.0, n_primal).astype(DEFAULT_DTYPE)
 
     def f_opt(x: jnp.ndarray) -> jnp.ndarray:
-        return jnp.sum(diag * x ** 4)
+        return jnp.sum(diag * x**4)
 
     def c_eq(x: jnp.ndarray) -> jnp.ndarray:
-        return jnp.array([jnp.sum(x ** 2) - 1.0], dtype=DEFAULT_DTYPE)
+        return jnp.array([jnp.sum(x**2) - 1.0], dtype=DEFAULT_DTYPE)
 
     def c_ineq(x: jnp.ndarray) -> jnp.ndarray:
         return -x
@@ -204,10 +212,10 @@ def test_pdipm_ill_conditioned_problem() -> None:
 
     def scipy_obj(x: NDArray[np.float64]) -> float:
         diag_np = np.logspace(0.0, 8.0, n_primal)
-        return float(np.sum(diag_np * x ** 4))
+        return float(np.sum(diag_np * x**4))
 
     def scipy_eq(x: NDArray[np.float64]) -> float:
-        return float(np.sum(x ** 2) - 1.0)
+        return float(np.sum(x**2) - 1.0)
 
     def scipy_ineq(x: NDArray[np.float64]) -> float:
         return float(-np.min(x))
@@ -232,19 +240,23 @@ def test_pdipm_ill_conditioned_problem() -> None:
     )
 
     scipy_fun = float(scipy_result.fun)
-    print(json.dumps({
-        "case": "pdipm_ill",
-            "source_file": SOURCE_FILE,
-        "test": "test_pdipm_ill_conditioned_problem",
-        "expected_x": expected_x_np.tolist(),
-        "scipy_success": bool(scipy_result.success),
-        "scipy_status": int(scipy_result.status),
-        "scipy_fun": scipy_fun,
-        "x": new_state.x.tolist(),
-        "opt": float(opt),
-        "prim_res_final": float(info["prim_res_final"]),
-        "mu_final": float(info["mu_final"]),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "pdipm_ill",
+                "source_file": SOURCE_FILE,
+                "test": "test_pdipm_ill_conditioned_problem",
+                "expected_x": expected_x_np.tolist(),
+                "scipy_success": bool(scipy_result.success),
+                "scipy_status": int(scipy_result.status),
+                "scipy_fun": scipy_fun,
+                "x": new_state.x.tolist(),
+                "opt": float(opt),
+                "prim_res_final": float(info["prim_res_final"]),
+                "mu_final": float(info["mu_final"]),
+            }
+        )
+    )
 
     assert scipy_result.success
     assert float(info["prim_res_final"]) <= 1e-6

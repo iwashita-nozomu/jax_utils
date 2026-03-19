@@ -6,12 +6,13 @@ References
   "Toward the optimal preconditioned eigensolver: Locally optimal block preconditioned conjugate gradient method."
   SIAM journal on scientific computing, 23(2), 517-541.
   https://epubs.siam.org/doi/abs/10.1137/S1064827500366124
-  
+
   このモジュールは block preconditioned Rayleigh–Ritz固有値法を JAX で実装し、
   大規模疎行列の最小固有値・固有ベクトル計算に最適化しています。
   スペクトル前処理（spectral preconditioner）機能により、悪条件問題でも
   高速収束を実現します。
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Tuple
@@ -36,10 +37,10 @@ from ..base import (
 )
 from .matrix_util import orthonormalize
 
-
 # ================================================================
 #  内部: block preconditioned Rayleigh–Ritz 固有値ソルバ
 # ================================================================
+
 
 class BlockEigenState(eqx.Module):
     """SPD 行列 H に対する block preconditioned Rayleigh–Ritz の状態.
@@ -59,6 +60,7 @@ class BlockEigenState(eqx.Module):
     eigenvalues: Vector
     iteration: Integer
 
+
 # 責務: 初期ブロックとその作用結果から固有値反復の状態を立ち上げる。
 def init_block_eigen_state(Mv: LinearOperator, X0: Matrix) -> BlockEigenState:
     """BlockEigState の 1 回目初期化."""
@@ -74,6 +76,7 @@ def init_block_eigen_state(Mv: LinearOperator, X0: Matrix) -> BlockEigenState:
         eigenvalues=eig0,
         iteration=jnp.asarray(0, dtype=jnp.int32),
     )
+
 
 # 責務: block Rayleigh-Ritz 反復で固有空間近似を更新する。
 def _block_preconditioned_rayleigh_ritz(
@@ -118,17 +121,17 @@ def _block_preconditioned_rayleigh_ritz(
     # 反復の土台になる基底なので、trial subspace に入る前に直交性を明示的に回復する。
     X = orthonormalize(X_proj)
 
-    AX = Mv @ X      # (n, r)
-    P = jnp.zeros_like(X)        # (n, r)
-    AP = jnp.zeros_like(X)      # (n, r)
-    eigvals = jnp.einsum("ir,ir->r", X, AX)   # diag(X^T AX)
+    AX = Mv @ X  # (n, r)
+    P = jnp.zeros_like(X)  # (n, r)
+    AP = jnp.zeros_like(X)  # (n, r)
+    eigvals = jnp.einsum("ir,ir->r", X, AX)  # diag(X^T AX)
     iter0 = state.iteration
 
     n, r = X.shape
     steps0 = jnp.array(0, dtype=jnp.int32)
 
     # 責務: 最大残差が許容値を下回るまで block RR を継続する。
-    def cond_fun(carry:Any):
+    def cond_fun(carry: Any):
         Xc, AXc, Pc, APc, lambdac, steps = carry
 
         R = AXc - Xc * lambdac  # (n, r)
@@ -148,14 +151,14 @@ def _block_preconditioned_rayleigh_ritz(
         return jnp.logical_and(not_converged, not_maxiter)
 
     # 責務: 残差前処理・Rayleigh-Ritz・探索方向更新の 1 反復を行う。
-    def body_fun(carry:Tuple[Any, ...]) -> Tuple[Any, ...]:
+    def body_fun(carry: Tuple[Any, ...]) -> Tuple[Any, ...]:
         Xc, AXc, Pc, APc, lambdac, steps = carry
 
         # ---- 1. 残差 + 前処理 ----
-        R:Matrix = AXc - Xc * lambdac          # (n, r)
+        R: Matrix = AXc - Xc * lambdac  # (n, r)
         R_proj = projection @ R
         R = orthonormalize(R_proj)
-        W:Matrix = T_mv @ R                     # (n, r)
+        W: Matrix = T_mv @ R  # (n, r)
         W = projection @ W
         # W = orthonormalize(W)
 
@@ -165,15 +168,15 @@ def _block_preconditioned_rayleigh_ritz(
         # Pc = orthonormalize(Pc)
 
         # ---- 2. trial subspace S = [X, W, P] を QR で直交化 ----
-        S_raw = jnp.concatenate([Xc, W, Pc], axis=1)   # (n, 3r)
+        S_raw = jnp.concatenate([Xc, W, Pc], axis=1)  # (n, 3r)
         S_raw = projection @ S_raw
         # Rayleigh-Ritz はこの小さな部分空間に落として解く。
         # 先に直交化しておくと、一般化固有値問題ではなく通常の固有値問題にできる。
-        S = orthonormalize(S_raw)                     # (n, 3r), S^T S = I
+        S = orthonormalize(S_raw)  # (n, 3r), S^T S = I
 
         # ---- 3. S 上での Rayleigh–Ritz ----
-        HS = Mv @ S                     # (n, 3r)
-        A_small = S.T @ HS               # (3r, 3r), 対称
+        HS = Mv @ S  # (n, 3r)
+        A_small = S.T @ HS  # (3r, 3r), 対称
         A_small = HALF * (A_small + A_small.T)
 
         theta_all, Y_all = jnp.linalg.eigh(A_small)  # 昇順
@@ -183,39 +186,39 @@ def _block_preconditioned_rayleigh_ritz(
         else:
             idx = jnp.argsort(theta_all)[:r]
 
-        theta = theta_all[idx]           # (r,)
-        Y = Y_all[:, idx]                # (3r, r)
+        theta = theta_all[idx]  # (r,)
+        Y = Y_all[:, idx]  # (3r, r)
 
         # 係数を X / W / P 部分に分割
-        Y_X = Y[0:r, :]          # (r, r)
-        Y_W = Y[r:2*r, :]        # (r, r)
-        Y_P = Y[2*r:3*r, :]      # (r, r)
+        Y_X = Y[0:r, :]  # (r, r)
+        Y_W = Y[r : 2 * r, :]  # (r, r)
+        Y_P = Y[2 * r : 3 * r, :]  # (r, r)
 
         # ---- 4. 新しい Ritz ベクトル X_new ----
-        X_new = S @ Y                    # (n, r)
+        X_new = S @ Y  # (n, r)
         X_new = projection @ X_new
         X_new = orthonormalize(X_new)
-        AX_new = Mv @ X_new             # (n, r)
+        AX_new = Mv @ X_new  # (n, r)
 
         # ---- 4'. 新しい検索方向 P_new ----
         # W と P 部分だけで新しい P を作る (標準的な LOBPCG の取り方の一つ)
         #   P_new = W * Y_W + P * Y_P
         # ただし W, P 自体は S の中に含まれているので、
         #   S[:, r:2r] -> W 成分,  S[:, 2r:3r] -> P 成分
-        S_W = S[:, r:2*r]         # (n, r)
-        S_P = S[:, 2*r:3*r]       # (n, r)
+        S_W = S[:, r : 2 * r]  # (n, r)
+        S_P = S[:, 2 * r : 3 * r]  # (n, r)
 
-        P_new = S_W @ Y_W + S_P @ Y_P   # (n, r)
+        P_new = S_W @ Y_W + S_P @ Y_P  # (n, r)
 
         # X_new に直交化しておく
         P_new = P_new - X_new @ (X_new.T @ P_new)
         P_new = projection @ P_new
         # P_new = P_new - X_new @ (X_new.T @ P_new)
         P_new = orthonormalize(P_new)
-        AP_new = Mv @ P_new            # (n, r)
+        AP_new = Mv @ P_new  # (n, r)
 
         # ---- 5. Rayleigh quotient でもう一度 λ を整える ----
-        RQ = X_new.T @ AX_new            # (r, r)
+        RQ = X_new.T @ AX_new  # (r, r)
         lam, V = jnp.linalg.eigh(RQ)
 
         if which == "largest":
@@ -224,22 +227,20 @@ def _block_preconditioned_rayleigh_ritz(
             idx2 = jnp.argsort(lam)
 
         # trial subspace 上の解の並び替えを、最終的な Ritz ベクトルと探索方向にも揃える。
-        lam = lam[idx2]                  # (r,)
+        lam = lam[idx2]  # (r,)
         V = V[:, idx2]
 
         # Ritz ベクトルの並び替え
-        X_new = X_new @ V                # (n, r)
-        AX_new = AX_new @ V              # (n, r)
-        P_new = P_new @ V                # (n, r)
-        AP_new = AP_new @ V              # (n, r)
+        X_new = X_new @ V  # (n, r)
+        AX_new = AX_new @ V  # (n, r)
+        P_new = P_new @ V  # (n, r)
+        AP_new = AP_new @ V  # (n, r)
 
         steps_new = steps + 1
         return (X_new, AX_new, P_new, AP_new, lam, steps_new)
 
     carry0 = (X, AX, P, AP, eigvals, steps0)
-    X_f, AX_f, P_f, AP_f, lam_f, steps_f = jax.lax.while_loop(
-        cond_fun, body_fun, carry0
-    )
+    X_f, AX_f, P_f, AP_f, lam_f, steps_f = jax.lax.while_loop(cond_fun, body_fun, carry0)
 
     R_f = AX_f - X_f * lam_f  # (n, r)
 
@@ -252,7 +253,6 @@ def _block_preconditioned_rayleigh_ritz(
     )
     rel = r_norm / ax_norm
     rel_f = jnp.max(rel)
-
 
     info = {
         "num_iter": steps_f,
@@ -279,8 +279,9 @@ def _block_preconditioned_rayleigh_ritz(
 class SubspaceBasis(eqx.Module):
     """block preconditioned RR で作る H^{-1} 用 rank-r スペクトル前処理の状態."""
 
-    Q: Matrix         # (n, r)
-    eigenvalues: Vector    # (r,)
+    Q: Matrix  # (n, r)
+    eigenvalues: Vector  # (r,)
+
     # dtype: Any
     @staticmethod
     # 責務: 固有値反復の状態から前処理用の部分空間だけを切り出す。
@@ -333,8 +334,6 @@ def init_spectral_precond(
     X = X @ V
     AX = AX @ V
 
-
-    
     eig_state = BlockEigenState(
         X=X,
         AX=AX,
@@ -345,6 +344,7 @@ def init_spectral_precond(
     )
 
     return eig_state
+
 
 # 責務: 既存部分空間を warm start に使って固有空間近似を更新する。
 def update_subspace(
@@ -357,7 +357,6 @@ def update_subspace(
     which: str = "smallest",
 ) -> Tuple[SubspaceBasis, BlockEigenState, Dict[str, Any]]:
     """block preconditioned RR で Q, λ を更新する。"""
-
 
     Q_new, eigvals_new, eig_state_new, info = _block_preconditioned_rayleigh_ritz(
         Mv=Mv,
@@ -379,7 +378,8 @@ def update_subspace(
         Q=Q_orth,
         eigenvalues=eigvals_new,
     )
-    return subspace_basis, eig_state_new,info
+    return subspace_basis, eig_state_new, info
+
 
 # 責務: 補空間への直交射影を適用して既知基底成分を除く。
 def apply_projection(
@@ -389,14 +389,15 @@ def apply_projection(
     """
     I - Q Q^T による射影を作用させる。
     """
-    Q = state.Q          # (n, r)
+    Q = state.Q  # (n, r)
 
     return v - Q @ (Q.T @ v)
+
 
 # 責務: 低ランク補正付きスペクトル前処理作用素を構成する。
 def make_rank_r_spectral_precond(
     basis: SubspaceBasis,
-    base_precond: LinearOperator = LinOp (lambda x: x),
+    base_precond: LinearOperator = LinOp(lambda x: x),
 ) -> LinearOperator:
     """
     Factory: build a rank-r spectral-correction preconditioner
@@ -416,7 +417,7 @@ def make_rank_r_spectral_precond(
         Returns:
             - precond(v): Matrix with same shape as v.
     """
-    Q : Matrix = basis.Q
+    Q: Matrix = basis.Q
     lam = basis.eigenvalues
 
     # Safe inverse of eigenvalues (rank-r correction uses Λ^{-1})
@@ -426,8 +427,8 @@ def make_rank_r_spectral_precond(
     # 責務: スペクトル補正と補空間前処理を合成して 1 回作用させる。
     def precond(v: Matrix, /) -> Matrix:
         # Spectral (rank-r) piece
-        alpha = Q.T @ v                      # (r,)
-        y_spec = Q @ (inv_lam * alpha)       # (n,)
+        alpha = Q.T @ v  # (r,)
+        y_spec = Q @ (inv_lam * alpha)  # (n,)
 
         # v_perp = apply_projection(v, basis)
         v_perp: Matrix = v - Q @ alpha
@@ -437,9 +438,8 @@ def make_rank_r_spectral_precond(
         y_rest = y_rest - Q @ (Q.T @ y_rest)
 
         return y_spec + y_rest
-    
-    return LinOp(precond)
 
+    return LinOp(precond)
 
 
 __all__ = [

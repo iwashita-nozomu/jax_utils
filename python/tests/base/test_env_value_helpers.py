@@ -69,7 +69,7 @@ def test_reload_env_module_applies_dtype_aliases(
 
 def _run_all_tests() -> None:
     """全テストを実行します。
-    
+
     補助的なpython file.py実行時に使用されます。
     pytest -s python/tests/base/test_env_value_helpers.py
     と同等の実行が可能になります。

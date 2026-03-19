@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import Callable, Protocol, TypeAlias, TypeVar
 
-
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -40,6 +39,7 @@ class Runner(Protocol[T, U]):
 
     # ワーカーへケースを割り当て、全ケースが完了するまで管理します。
     def run(self, worker: Worker[T, U]) -> None: ...
+
 
 SUCCESS_EXIT_CODE = 0
 WORKER_PROTOCOL_ERROR_EXIT_CODE = 1

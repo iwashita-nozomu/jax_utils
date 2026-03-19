@@ -8,7 +8,6 @@ import math
 from pathlib import Path
 from typing import Mapping, Sequence
 
-
 STATUS_COLORS = {
     "ok": "#2f7d4a",
     "failed": "#c9573b",
@@ -54,7 +53,9 @@ def _cases(results: Mapping[str, object], /) -> list[Mapping[str, object]]:
 
 
 # 責務: 実験結果に含まれる dtype 名列を優先順つきで返す。
-def _dtype_names(results: Mapping[str, object], cases: Sequence[Mapping[str, object]], /) -> list[str]:
+def _dtype_names(
+    results: Mapping[str, object], cases: Sequence[Mapping[str, object]], /
+) -> list[str]:
     raw_dtypes = results.get("dtype_names")
     if isinstance(raw_dtypes, list):
         names = [str(value) for value in raw_dtypes]
@@ -135,7 +136,9 @@ def _failure_kind_label(case: Mapping[str, object] | None, /) -> str:
 
 
 # 責務: dtype・level・dimension ごとのケース辞書を引ける表を構築する。
-def _case_lookup(cases: Sequence[Mapping[str, object]], /) -> dict[tuple[str, int, int], Mapping[str, object]]:
+def _case_lookup(
+    cases: Sequence[Mapping[str, object]], /
+) -> dict[tuple[str, int, int], Mapping[str, object]]:
     lookup: dict[tuple[str, int, int], Mapping[str, object]] = {}
     for case in cases:
         dtype_name = str(case.get("dtype_name", "unknown"))
@@ -247,7 +250,14 @@ def _format_metric_label(metric_name: str, value: float | None, /) -> str:
         return "-"
     if metric_name in {"storage_bytes", "device_peak_bytes_in_use"}:
         return _format_mib_label(value)
-    if metric_name in {"avg_integral_seconds", "integrator_init_seconds", "device_transfer_seconds", "warmup_seconds", "batched_integral_seconds", "run_wall_seconds"}:
+    if metric_name in {
+        "avg_integral_seconds",
+        "integrator_init_seconds",
+        "device_transfer_seconds",
+        "warmup_seconds",
+        "batched_integral_seconds",
+        "run_wall_seconds",
+    }:
         return _format_seconds_label(value)
     if metric_name == "num_points":
         return f"{int(round(value)):,}"
@@ -316,11 +326,21 @@ def render_numeric_heatmap(
             for col, dimension in enumerate(dimensions):
                 x = left_margin + col * cell_w
                 case = lookup.get((dtype_name, level, dimension))
-                value = _metric_value(case, metric_name) if case is not None and case.get("status") == "ok" else None
+                value = (
+                    _metric_value(case, metric_name)
+                    if case is not None and case.get("status") == "ok"
+                    else None
+                )
                 if value is None or value <= 0.0:
-                    fill = STATUS_COLORS["missing"] if case is None else STATUS_COLORS.get(str(case.get("status")), STATUS_COLORS["failed"])
+                    fill = (
+                        STATUS_COLORS["missing"]
+                        if case is None
+                        else STATUS_COLORS.get(str(case.get("status")), STATUS_COLORS["failed"])
+                    )
                 else:
-                    fill = _color_from_unit(_normalize_value(value, vmin, vmax, log_scale=log_scale))
+                    fill = _color_from_unit(
+                        _normalize_value(value, vmin, vmax, log_scale=log_scale)
+                    )
                 svg.append(
                     f'<rect x="{x}" y="{y}" width="{cell_w - 4}" height="{cell_h - 4}" fill="{fill}" stroke="{GRID_LINE}" rx="6" />'
                 )
@@ -358,10 +378,21 @@ def render_status_heatmap(
         f'<text x="18" y="24" font-size="18" font-family="monospace" fill="{TEXT_COLOR}">execution status</text>',
     ]
     legend_x = 18
-    for index, (status, color) in enumerate((("ok", STATUS_COLORS["ok"]), ("failed", STATUS_COLORS["failed"]), ("timeout", STATUS_COLORS["timeout"]), ("missing", STATUS_COLORS["missing"]))):
+    for index, (status, color) in enumerate(
+        (
+            ("ok", STATUS_COLORS["ok"]),
+            ("failed", STATUS_COLORS["failed"]),
+            ("timeout", STATUS_COLORS["timeout"]),
+            ("missing", STATUS_COLORS["missing"]),
+        )
+    ):
         x = legend_x + index * 90
-        svg.append(f'<rect x="{x}" y="32" width="14" height="14" fill="{color}" stroke="{GRID_LINE}" rx="3" />')
-        svg.append(f'<text x="{x + 20}" y="43" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{status}</text>')
+        svg.append(
+            f'<rect x="{x}" y="32" width="14" height="14" fill="{color}" stroke="{GRID_LINE}" rx="3" />'
+        )
+        svg.append(
+            f'<text x="{x + 20}" y="43" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{status}</text>'
+        )
 
     for dtype_index, dtype_name in enumerate(dtype_names):
         panel_y = 52 + dtype_index * (panel_h + panel_gap)
@@ -425,8 +456,12 @@ def render_failure_kind_heatmap(
     for index, kind in enumerate(legend_items):
         x = legend_x + index * 90
         color = FAILURE_KIND_COLORS[kind]
-        svg.append(f'<rect x="{x}" y="32" width="14" height="14" fill="{color}" stroke="{GRID_LINE}" rx="3" />')
-        svg.append(f'<text x="{x + 20}" y="43" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{html.escape(kind)}</text>')
+        svg.append(
+            f'<rect x="{x}" y="32" width="14" height="14" fill="{color}" stroke="{GRID_LINE}" rx="3" />'
+        )
+        svg.append(
+            f'<text x="{x + 20}" y="43" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{html.escape(kind)}</text>'
+        )
 
     for dtype_index, dtype_name in enumerate(dtype_names):
         panel_y = 52 + dtype_index * (panel_h + panel_gap)
@@ -504,15 +539,27 @@ def render_frontier_svg(
 
     for level in levels:
         x = x_coord(level)
-        svg.append(f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{top + plot_h}" stroke="{GRID_LINE}" stroke-dasharray="3 4" />')
-        svg.append(f'<text x="{x:.1f}" y="{height - 18}" text-anchor="middle" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{level}</text>')
+        svg.append(
+            f'<line x1="{x:.1f}" y1="{top}" x2="{x:.1f}" y2="{top + plot_h}" stroke="{GRID_LINE}" stroke-dasharray="3 4" />'
+        )
+        svg.append(
+            f'<text x="{x:.1f}" y="{height - 18}" text-anchor="middle" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{level}</text>'
+        )
     for dimension in dimensions:
         y = y_coord(dimension)
-        svg.append(f'<line x1="{left}" y1="{y:.1f}" x2="{left + plot_w}" y2="{y:.1f}" stroke="{GRID_LINE}" stroke-dasharray="3 4" />')
-        svg.append(f'<text x="{left - 12}" y="{y + 4:.1f}" text-anchor="end" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{dimension}</text>')
+        svg.append(
+            f'<line x1="{left}" y1="{y:.1f}" x2="{left + plot_w}" y2="{y:.1f}" stroke="{GRID_LINE}" stroke-dasharray="3 4" />'
+        )
+        svg.append(
+            f'<text x="{left - 12}" y="{y + 4:.1f}" text-anchor="end" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{dimension}</text>'
+        )
 
-    svg.append(f'<text x="{left + plot_w / 2:.1f}" y="{height - 4}" text-anchor="middle" font-size="12" font-family="monospace" fill="{TEXT_COLOR}">level</text>')
-    svg.append(f'<text x="20" y="{top + plot_h / 2:.1f}" transform="rotate(-90 20 {top + plot_h / 2:.1f})" text-anchor="middle" font-size="12" font-family="monospace" fill="{TEXT_COLOR}">max success dimension</text>')
+    svg.append(
+        f'<text x="{left + plot_w / 2:.1f}" y="{height - 4}" text-anchor="middle" font-size="12" font-family="monospace" fill="{TEXT_COLOR}">level</text>'
+    )
+    svg.append(
+        f'<text x="20" y="{top + plot_h / 2:.1f}" transform="rotate(-90 20 {top + plot_h / 2:.1f})" text-anchor="middle" font-size="12" font-family="monospace" fill="{TEXT_COLOR}">max success dimension</text>'
+    )
 
     for dtype_index, dtype_name in enumerate(dtype_names):
         color = palette[dtype_index % len(palette)]
@@ -522,20 +569,32 @@ def render_frontier_svg(
                 dimension
                 for case in ok_cases
                 for dimension in [_maybe_int(case, "dimension")]
-                if case.get("dtype_name") == dtype_name and case.get("level") == level and dimension is not None
+                if case.get("dtype_name") == dtype_name
+                and case.get("level") == level
+                and dimension is not None
             ]
             if success_dimensions:
                 frontier_points.append((level, max(success_dimensions)))
         if not frontier_points:
             continue
-        point_string = " ".join(f"{x_coord(level):.1f},{y_coord(dimension):.1f}" for level, dimension in frontier_points)
-        svg.append(f'<polyline fill="none" stroke="{color}" stroke-width="3" points="{point_string}" />')
+        point_string = " ".join(
+            f"{x_coord(level):.1f},{y_coord(dimension):.1f}" for level, dimension in frontier_points
+        )
+        svg.append(
+            f'<polyline fill="none" stroke="{color}" stroke-width="3" points="{point_string}" />'
+        )
         for level, dimension in frontier_points:
-            svg.append(f'<circle cx="{x_coord(level):.1f}" cy="{y_coord(dimension):.1f}" r="4" fill="{color}" />')
+            svg.append(
+                f'<circle cx="{x_coord(level):.1f}" cy="{y_coord(dimension):.1f}" r="4" fill="{color}" />'
+            )
         legend_y = 26 + dtype_index * 18
         legend_x = width - 160
-        svg.append(f'<line x1="{legend_x}" y1="{legend_y}" x2="{legend_x + 20}" y2="{legend_y}" stroke="{color}" stroke-width="3" />')
-        svg.append(f'<text x="{legend_x + 28}" y="{legend_y + 4}" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{html.escape(dtype_name)}</text>')
+        svg.append(
+            f'<line x1="{legend_x}" y1="{legend_y}" x2="{legend_x + 20}" y2="{legend_y}" stroke="{color}" stroke-width="3" />'
+        )
+        svg.append(
+            f'<text x="{legend_x + 28}" y="{legend_y + 4}" font-size="11" font-family="monospace" fill="{TEXT_COLOR}">{html.escape(dtype_name)}</text>'
+        )
 
     svg.append("</svg>")
     return "\n".join(svg)
@@ -554,9 +613,30 @@ def render_index_html(
         ("finished_at_utc", str(results.get("finished_at_utc", "-"))),
         ("run_wall_seconds", _format_seconds_label(_maybe_float(results, "run_wall_seconds"))),
         ("platform", str(results.get("platform", "-"))),
-        ("gpu_indices", _format_int_sequence(results.get("gpu_indices", [])) if isinstance(results.get("gpu_indices"), list) else "-"),
-        ("dimensions", _format_int_sequence(results.get("dimensions", [])) if isinstance(results.get("dimensions"), list) else "-"),
-        ("levels", _format_int_sequence(results.get("levels", [])) if isinstance(results.get("levels"), list) else "-"),
+        (
+            "gpu_indices",
+            (
+                _format_int_sequence(results.get("gpu_indices", []))
+                if isinstance(results.get("gpu_indices"), list)
+                else "-"
+            ),
+        ),
+        (
+            "dimensions",
+            (
+                _format_int_sequence(results.get("dimensions", []))
+                if isinstance(results.get("dimensions"), list)
+                else "-"
+            ),
+        ),
+        (
+            "levels",
+            (
+                _format_int_sequence(results.get("levels", []))
+                if isinstance(results.get("levels"), list)
+                else "-"
+            ),
+        ),
         ("num_cases", str(results.get("num_cases", "-"))),
         ("num_repeats", str(results.get("num_repeats", "-"))),
         ("num_accuracy_problems", str(results.get("num_accuracy_problems", "-"))),
@@ -596,7 +676,9 @@ def render_index_html(
     failure_labels = ["ok", "oom", "host_oom", "worker_terminated", "error", "timeout"]
     failure_summary_rows: list[str] = []
     for dtype_name in dtype_names:
-        dtype_cases = [case for case in raw_cases if str(case.get("dtype_name", "unknown")) == dtype_name]
+        dtype_cases = [
+            case for case in raw_cases if str(case.get("dtype_name", "unknown")) == dtype_name
+        ]
         counts = {label: 0 for label in failure_labels}
         for case in dtype_cases:
             label = _failure_kind_label(case)
@@ -673,25 +755,153 @@ def generate_report(input_path: Path, output_dir: Path, /) -> None:
     figures: list[tuple[str, str]] = []
 
     figure_specs = [
-        ("status heatmap", "status.svg", render_status_heatmap(cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels)),
-        ("failure kind heatmap", "failure_kind.svg", render_failure_kind_heatmap(cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels)),
-        ("mean absolute error heatmap", "mean_abs_err.svg", render_numeric_heatmap(title="mean absolute error", metric_name="mean_abs_err", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("absolute error variance heatmap", "var_abs_err.svg", render_numeric_heatmap(title="absolute error variance", metric_name="var_abs_err", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("integrator init time heatmap", "integrator_init_seconds.svg", render_numeric_heatmap(title="integrator init time", metric_name="integrator_init_seconds", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("device transfer time heatmap", "device_transfer_seconds.svg", render_numeric_heatmap(title="device transfer time", metric_name="device_transfer_seconds", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("average time heatmap", "avg_integral_seconds.svg", render_numeric_heatmap(title="average integral time", metric_name="avg_integral_seconds", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("num points heatmap", "num_points.svg", render_numeric_heatmap(title="num points", metric_name="num_points", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("storage heatmap", "storage_bytes.svg", render_numeric_heatmap(title="storage bytes", metric_name="storage_bytes", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("process rss heatmap", "process_rss_mb.svg", render_numeric_heatmap(title="process rss", metric_name="process_rss_mb", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("peak device bytes heatmap", "device_peak_bytes_in_use.svg", render_numeric_heatmap(title="peak device bytes in use", metric_name="device_peak_bytes_in_use", cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels, log_scale=True)),
-        ("success frontier", "frontier.svg", render_frontier_svg(cases=cases, dtype_names=dtype_names, levels=levels, dimensions=dimensions)),
+        (
+            "status heatmap",
+            "status.svg",
+            render_status_heatmap(
+                cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels
+            ),
+        ),
+        (
+            "failure kind heatmap",
+            "failure_kind.svg",
+            render_failure_kind_heatmap(
+                cases=cases, dtype_names=dtype_names, dimensions=dimensions, levels=levels
+            ),
+        ),
+        (
+            "mean absolute error heatmap",
+            "mean_abs_err.svg",
+            render_numeric_heatmap(
+                title="mean absolute error",
+                metric_name="mean_abs_err",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "absolute error variance heatmap",
+            "var_abs_err.svg",
+            render_numeric_heatmap(
+                title="absolute error variance",
+                metric_name="var_abs_err",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "integrator init time heatmap",
+            "integrator_init_seconds.svg",
+            render_numeric_heatmap(
+                title="integrator init time",
+                metric_name="integrator_init_seconds",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "device transfer time heatmap",
+            "device_transfer_seconds.svg",
+            render_numeric_heatmap(
+                title="device transfer time",
+                metric_name="device_transfer_seconds",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "average time heatmap",
+            "avg_integral_seconds.svg",
+            render_numeric_heatmap(
+                title="average integral time",
+                metric_name="avg_integral_seconds",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "num points heatmap",
+            "num_points.svg",
+            render_numeric_heatmap(
+                title="num points",
+                metric_name="num_points",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "storage heatmap",
+            "storage_bytes.svg",
+            render_numeric_heatmap(
+                title="storage bytes",
+                metric_name="storage_bytes",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "process rss heatmap",
+            "process_rss_mb.svg",
+            render_numeric_heatmap(
+                title="process rss",
+                metric_name="process_rss_mb",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "peak device bytes heatmap",
+            "device_peak_bytes_in_use.svg",
+            render_numeric_heatmap(
+                title="peak device bytes in use",
+                metric_name="device_peak_bytes_in_use",
+                cases=cases,
+                dtype_names=dtype_names,
+                dimensions=dimensions,
+                levels=levels,
+                log_scale=True,
+            ),
+        ),
+        (
+            "success frontier",
+            "frontier.svg",
+            render_frontier_svg(
+                cases=cases, dtype_names=dtype_names, levels=levels, dimensions=dimensions
+            ),
+        ),
     ]
 
     for title, filename, content in figure_specs:
         (output_dir / filename).write_text(content, encoding="utf-8")
         figures.append((title, filename))
 
-    colorbar_svg = _render_colorbar_svg(title="numeric heatmaps", min_label="lighter = smaller", max_label="darker = larger")
+    colorbar_svg = _render_colorbar_svg(
+        title="numeric heatmaps", min_label="lighter = smaller", max_label="darker = larger"
+    )
     (output_dir / "legend.svg").write_text(colorbar_svg, encoding="utf-8")
     figures.insert(0, ("legend", "legend.svg"))
 
@@ -700,9 +910,13 @@ def generate_report(input_path: Path, output_dir: Path, /) -> None:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Render SVG/HTML figures from a Smolyak scaling JSON result.")
+    parser = argparse.ArgumentParser(
+        description="Render SVG/HTML figures from a Smolyak scaling JSON result."
+    )
     parser.add_argument("--input", type=Path, required=True, help="Path to a result JSON file.")
-    parser.add_argument("--output-dir", type=Path, default=None, help="Directory to place the generated report.")
+    parser.add_argument(
+        "--output-dir", type=Path, default=None, help="Directory to place the generated report."
+    )
     args = parser.parse_args()
 
     input_path = args.input.resolve()

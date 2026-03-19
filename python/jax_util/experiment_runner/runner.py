@@ -13,7 +13,6 @@ from .protocols import (
     Worker,
 )
 
-
 T = TypeVar("T")
 U = TypeVar("U")
 
@@ -101,9 +100,7 @@ class StandardRunner(Generic[T, U]):
         # ProcessPoolExecutor で max_workers 本のプロセスを起動し、ケースを並列実行します。
         # scheduler から次のケースを取得し、完了時に on_finish を呼び出して状態を更新します。
         # FIRST_COMPLETED で done future を順次処理し、新しいケースを投入します。
-        with ProcessPoolExecutor(
-            max_workers=self.scheduler.resource_capacity.max_workers
-        ) as ex:
+        with ProcessPoolExecutor(max_workers=self.scheduler.resource_capacity.max_workers) as ex:
             running: dict[Future[int], tuple[T, TaskContext]] = {}
             while not self.scheduler.is_completed() or running:
                 while True:

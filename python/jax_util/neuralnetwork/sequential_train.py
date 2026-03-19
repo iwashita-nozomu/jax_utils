@@ -45,20 +45,29 @@ class GradientBackprop(eqx.Module):
             param,
             layer_optim,
         )
-        new_layer: NeuralNetworkLayer = eqx.combine(new_param, static)  # pyright: ignore[reportAssignmentType]
+        new_layer: NeuralNetworkLayer = eqx.combine(
+            new_param, static
+        )  # pyright: ignore[reportAssignmentType]
         input_carry, ctx = cache
 
         def new_loss(param: Params) -> Scalar:
-            lower_layer: NeuralNetworkLayer = eqx.combine(param, static)  # pyright: ignore[reportAssignmentType]
+            lower_layer: NeuralNetworkLayer = eqx.combine(
+                param, static
+            )  # pyright: ignore[reportAssignmentType]
             return obj.objective(lower_layer(input_carry, ctx).z)
 
         new_obj = PyTreeOptim(
             objective=new_loss,
         )
 
-        return GradientBackprop(
-            optstate=new_state,
-        ), new_layer, new_obj, aux
+        return (
+            GradientBackprop(
+                optstate=new_state,
+            ),
+            new_layer,
+            new_obj,
+            aux,
+        )
 
     def buildoptim(
         self,
@@ -69,7 +78,9 @@ class GradientBackprop(eqx.Module):
         param, static = eqx.partition(layer, eqx.is_inexact_array)
 
         def layer_objective(param: Params) -> Scalar:
-            new_layer: NeuralNetworkLayer = eqx.combine(param, static)  # pyright: ignore[reportAssignmentType]
+            new_layer: NeuralNetworkLayer = eqx.combine(
+                param, static
+            )  # pyright: ignore[reportAssignmentType]
             carry, ctx = train_params
             new_carry = new_layer(carry, ctx)
             return obj.objective(new_carry.z)

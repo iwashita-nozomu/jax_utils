@@ -13,12 +13,12 @@ from jax_util.solvers.kkt_solver import (
 )
 from jax_util.base import LinOp, Vector
 
-
 SOURCE_FILE = Path(__file__).name
 
 
 def test_kkt_state_initialize() -> None:
     """KKT 状態が初期化できることを確認します。"""
+
     def hv(v: Vector) -> Vector:
         return v
 
@@ -38,13 +38,17 @@ def test_kkt_state_initialize() -> None:
         r_Sv_min=1,
         method="minres",
     )
-    print(json.dumps({
-        "case": "kkt_state_init",
-        "source_file": SOURCE_FILE,
-        "test": "test_kkt_state_initialize",
-        "expected_method": "minres",
-        "method": state.method,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "kkt_state_init",
+                "source_file": SOURCE_FILE,
+                "test": "test_kkt_state_initialize",
+                "expected_method": "minres",
+                "method": state.method,
+            }
+        )
+    )
     assert isinstance(state, KKTState)
     assert state.method == "minres"
 
@@ -92,22 +96,24 @@ def test_kkt_block_solver_large_system() -> None:
         maxiter=800,
     )
 
-    kkt_mat = jnp.block(
-        [[A, B.T], [B, jnp.zeros((n_dual, n_dual))]]
-    )
+    kkt_mat = jnp.block([[A, B.T], [B, jnp.zeros((n_dual, n_dual))]])
     rhs = jnp.concatenate([rhs_x, rhs_lam], axis=0)
     sol = jnp.linalg.solve(kkt_mat, rhs)
 
     res_norm = float(jnp.asarray(info["res_norm"]))
     rel_res = float(jnp.asarray(info["rel_res"]))
-    print(json.dumps({
-        "case": "kkt_large",
-        "source_file": SOURCE_FILE,
-        "test": "test_kkt_block_solver_large_system",
-        "expected_head": sol[:5].tolist(),
-        "res_norm": res_norm,
-        "rel_res": rel_res,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "kkt_large",
+                "source_file": SOURCE_FILE,
+                "test": "test_kkt_block_solver_large_system",
+                "expected_head": sol[:5].tolist(),
+                "res_norm": res_norm,
+                "rel_res": rel_res,
+            }
+        )
+    )
     assert jnp.allclose(x, sol[:n_primal], rtol=1e-5, atol=1e-5)
     assert jnp.allclose(lam, sol[n_primal:], rtol=1e-5, atol=1e-5)
 
@@ -155,22 +161,24 @@ def test_kkt_block_solver_ill_conditioned() -> None:
         maxiter=1200,
     )
 
-    kkt_mat = jnp.block(
-        [[A, B.T], [B, jnp.zeros((n_dual, n_dual))]]
-    )
+    kkt_mat = jnp.block([[A, B.T], [B, jnp.zeros((n_dual, n_dual))]])
     rhs = jnp.concatenate([rhs_x, rhs_lam], axis=0)
     sol = jnp.linalg.solve(kkt_mat, rhs)
 
     res_norm = float(jnp.asarray(info["res_norm"]))
     rel_res = float(jnp.asarray(info["rel_res"]))
-    print(json.dumps({
-        "case": "kkt_ill_conditioned",
-        "source_file": SOURCE_FILE,
-        "test": "test_kkt_block_solver_ill_conditioned",
-        "expected_head": sol[:5].tolist(),
-        "res_norm": res_norm,
-        "rel_res": rel_res,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "kkt_ill_conditioned",
+                "source_file": SOURCE_FILE,
+                "test": "test_kkt_block_solver_ill_conditioned",
+                "expected_head": sol[:5].tolist(),
+                "res_norm": res_norm,
+                "rel_res": rel_res,
+            }
+        )
+    )
     assert rel_res < 5e-1
 
 

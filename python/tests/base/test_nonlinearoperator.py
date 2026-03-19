@@ -25,43 +25,56 @@ def test_linearize_and_adjoint() -> None:
     v = jnp.array([3.0, 4.0])
     y = linop @ v
     expected = A @ v
-    print(json.dumps({
-        "case": "linearize",
-            "source_file": SOURCE_FILE,
-        "test": "test_linearize_and_adjoint",
-        "expected": expected.tolist(),
-        "y": y.tolist(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "linearize",
+                "source_file": SOURCE_FILE,
+                "test": "test_linearize_and_adjoint",
+                "expected": expected.tolist(),
+                "y": y.tolist(),
+            }
+        )
+    )
     assert jnp.allclose(y, A @ v)
 
     _, adj = adjoint(f, x0)
     adj_y = adj @ v
     expected_adj = A.T @ v
-    print(json.dumps({
-        "case": "adjoint",
-            "source_file": SOURCE_FILE,
-        "test": "test_linearize_and_adjoint",
-        "expected": expected_adj.tolist(),
-        "adj_y": adj_y.tolist(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "adjoint",
+                "source_file": SOURCE_FILE,
+                "test": "test_linearize_and_adjoint",
+                "expected": expected_adj.tolist(),
+                "adj_y": adj_y.tolist(),
+            }
+        )
+    )
     assert jnp.allclose(adj_y, A.T @ v)
 
 
 def test_nonlinear_linop_roundtrip() -> None:
     """LinOp が作れることを確認します。"""
+
     def mv(v: Vector) -> Vector:
         return v
 
     op = LinOp(mv)
     x = jnp.array([1.0, 0.0])
     y = op @ x
-    print(json.dumps({
-        "case": "nonlinear_linop",
-            "source_file": SOURCE_FILE,
-        "test": "test_nonlinear_linop_roundtrip",
-        "expected": x.tolist(),
-        "y": y.tolist(),
-    }))
+    print(
+        json.dumps(
+            {
+                "case": "nonlinear_linop",
+                "source_file": SOURCE_FILE,
+                "test": "test_nonlinear_linop_roundtrip",
+                "expected": x.tolist(),
+                "y": y.tolist(),
+            }
+        )
+    )
     assert jnp.allclose(y, x)
 
 

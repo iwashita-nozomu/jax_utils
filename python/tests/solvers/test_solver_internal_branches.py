@@ -33,7 +33,9 @@ def _diag_op(diagonal: jnp.ndarray) -> LinOp:
     return LinOp(lambda v: diagonal * v, shape=(diagonal.shape[0], diagonal.shape[0]))
 
 
-def test_check_mv_operator_validation_and_reporting_cover_scalar_and_vector_json(capsys: pytest.CaptureFixture[str]) -> None:
+def test_check_mv_operator_validation_and_reporting_cover_scalar_and_vector_json(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     with pytest.raises(ValueError, match="positive size"):
         check_self_adjoint(_diag_op(jnp.ones((1,))), (0,))
     with pytest.raises(ValueError, match="positive size"):
@@ -56,19 +58,25 @@ def test_check_mv_operator_validation_and_reporting_cover_scalar_and_vector_json
     assert lines[-1]["event"] == "spd"
 
 
-def test_archived_solver_and_internal_jax_helpers_are_executable(capsys: pytest.CaptureFixture[str]) -> None:
+def test_archived_solver_and_internal_jax_helpers_are_executable(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     with pytest.raises(AssertionError, match="archived"):
         gmres_solve()
 
     test_jax_module._print_jax_env()
     test_jax_module._smoke_test()
-    direct_lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
+    direct_lines = [
+        json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()
+    ]
     assert [line["event"] for line in direct_lines] == ["version", "devices"]
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         runpy.run_module("jax_util.solvers._test_jax", run_name="__main__")
-    module_lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
+    module_lines = [
+        json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()
+    ]
     assert [line["event"] for line in module_lines] == ["version", "devices"]
 
 
@@ -118,7 +126,9 @@ def test_lobpcg_branch_helpers_cover_initialization_projection_and_largest_order
         Q=jnp.array([[1.0], [0.0], [0.0]], dtype=DEFAULT_DTYPE),
         eigenvalues=jnp.array([1.0], dtype=DEFAULT_DTYPE),
     )
-    projected = apply_projection(jnp.array([[3.0], [4.0], [5.0]], dtype=DEFAULT_DTYPE), projection_basis)
+    projected = apply_projection(
+        jnp.array([[3.0], [4.0], [5.0]], dtype=DEFAULT_DTYPE), projection_basis
+    )
     assert jnp.allclose(projected, jnp.array([[0.0], [4.0], [5.0]], dtype=DEFAULT_DTYPE))
 
     _, updated_state, info = update_subspace(
@@ -193,7 +203,7 @@ def test_kkt_solver_invalid_method_branches_raise_clean_errors() -> None:
 
 def _run_all_tests() -> None:
     """全テストを実行します。
-    
+
     補助的なpython file.py実行時に使用されます。
     pytest -s python/tests/solvers/test_solver_internal_branches.py
     と同等の実行が可能になります。

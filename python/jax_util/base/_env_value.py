@@ -21,15 +21,15 @@ def _get_bool_env(name: str, default: bool) -> bool:
 
 # 責務: 真偽値の環境変数を公開 API として都度評価します。
 def get_bool_env(name: str, default: bool) -> bool:
-        """環境変数を bool として取得します（公開API）。
+    """環境変数を bool として取得します（公開API）。
 
-        Notes
-        -----
-        - `_get_bool_env` は基底モジュール内部用です。
-        - テストや対話環境で環境変数を書き換えるケースでは、モジュール定数ではなく
-            この関数で都度評価することを推奨します。
-        """
-        return _get_bool_env(name, default)
+    Notes
+    -----
+    - `_get_bool_env` は基底モジュール内部用です。
+    - テストや対話環境で環境変数を書き換えるケースでは、モジュール定数ではなく
+        この関数で都度評価することを推奨します。
+    """
+    return _get_bool_env(name, default)
 
 
 # 責務: 浮動小数の環境変数を内部向けに解釈します。
@@ -78,9 +78,7 @@ DEBUG: bool = _get_bool_env("JAX_UTIL_DEBUG", True)
 ENABLE_HLO_DUMP: bool = _get_bool_env("JAX_UTIL_ENABLE_HLO_DUMP", False)
 
 
-
 __all__ = [
-    
     "DEFAULT_DTYPE",
     "ZERO",
     "ONE",

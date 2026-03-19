@@ -143,24 +143,34 @@ def test_append_jsonl_record_and_apply_worker_environment_set_expected_values(
     assert output_path.read_text(encoding="utf-8").strip() == json.dumps({"value": 3})
 
     affinity_calls: list[tuple[int, set[int]]] = []
-    monkeypatch.setattr(os, "sched_setaffinity", lambda pid, cpus: affinity_calls.append((pid, set(cpus))))
+    monkeypatch.setattr(
+        os, "sched_setaffinity", lambda pid, cpus: affinity_calls.append((pid, set(cpus)))
+    )
     monkeypatch.delenv("JAX_PLATFORMS", raising=False)
     monkeypatch.delenv("CUDA_VISIBLE_DEVICES", raising=False)
 
-    apply_worker_environment(platform="gpu", worker_slot=_slot(gpu_index=4), disable_gpu_preallocation=True)
+    apply_worker_environment(
+        platform="gpu", worker_slot=_slot(gpu_index=4), disable_gpu_preallocation=True
+    )
     assert os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
     assert os.environ["CUDA_VISIBLE_DEVICES"] == "4"
     assert os.environ["SMOLYAK_GPU_INDEX"] == "4"
     assert os.environ["EXPERIMENT_RUNNER_WORKER_LABEL"] == "gpu-0-w0"
     assert affinity_calls[-1] == (0, {0, 1})
 
-    apply_worker_environment(platform="cpu", worker_slot=_slot(label="cpu-0", gpu_index=None), disable_gpu_preallocation=False)
+    apply_worker_environment(
+        platform="cpu",
+        worker_slot=_slot(label="cpu-0", gpu_index=None),
+        disable_gpu_preallocation=False,
+    )
     assert os.environ["JAX_PLATFORMS"] == "cpu"
     assert "CUDA_VISIBLE_DEVICES" not in os.environ
     assert os.environ["SMOLYAK_GPU_INDEX"] == "cpu"
 
 
-def test_completion_record_extraction_and_process_termination_cover_all_paths(tmp_path: Path) -> None:
+def test_completion_record_extraction_and_process_termination_cover_all_paths(
+    tmp_path: Path,
+) -> None:
     assert _extract_completion_record("plain output") is None
     record = _extract_completion_record(
         "\n".join(
@@ -250,7 +260,9 @@ def test_run_cases_with_subprocess_scheduler_reports_success_and_callbacks(tmp_p
         build_parent_failure_result=_failure_result,
         fallback_jsonl_output_path=None,
         cwd=tmp_path,
-        on_case_started=lambda case, worker_slot: started.append((int(case["case_id"]), worker_slot.worker_label)),
+        on_case_started=lambda case, worker_slot: started.append(
+            (int(case["case_id"]), worker_slot.worker_label)
+        ),
         on_case_finished=lambda case, worker_slot, result: finished.append(
             (int(case["case_id"]), worker_slot.worker_label, str(result["status"]))
         ),
@@ -326,13 +338,15 @@ def test_run_cases_with_subprocess_scheduler_handles_empty_slots_failures_and_ti
     assert "TimeoutError" in str(timeout_results[0]["error"])
     assert timeout_finished == [(2, "timeout")]
 
-    lines = [line for line in fallback_output.read_text(encoding="utf-8").splitlines() if line.strip()]
+    lines = [
+        line for line in fallback_output.read_text(encoding="utf-8").splitlines() if line.strip()
+    ]
     assert len(lines) == 2
 
 
 def _run_all_tests() -> None:
     """全テストを実行します。
-    
+
     補助的なpython file.py実行時に使用されます。
     pytest -s python/tests/experiment_runner/test_subprocess_scheduler_unit.py
     と同等の実行が可能になります。

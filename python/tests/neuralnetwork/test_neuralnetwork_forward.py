@@ -13,7 +13,10 @@ try:
     from jax_util.neuralnetwork import build_neuralnetwork
 except (ModuleNotFoundError, TypeError) as exc:
     if "NamedTuple" in str(exc) or "optimizers.protocols" in str(exc):
-        pytest.skip(f"neuralnetwork module is not importable in this environment: {exc}", allow_module_level=True)
+        pytest.skip(
+            f"neuralnetwork module is not importable in this environment: {exc}",
+            allow_module_level=True,
+        )
     raise
 
 
@@ -21,11 +24,15 @@ SOURCE_FILE = Path(__file__).name
 
 
 def _log_case(case: str, payload: dict[str, object]) -> None:
-    print(json.dumps({
-        "case": case,
-        "source_file": SOURCE_FILE,
-        **payload,
-    }))
+    print(
+        json.dumps(
+            {
+                "case": case,
+                "source_file": SOURCE_FILE,
+                **payload,
+            }
+        )
+    )
 
 
 def test_neuralnetwork_standard_forward() -> None:
@@ -39,11 +46,14 @@ def test_neuralnetwork_standard_forward() -> None:
     )
     x = jnp.ones((2, 4), dtype=DEFAULT_DTYPE)
     y = model(x)
-    _log_case("nn_forward_standard", {
-        "x_shape": x.shape,
-        "y_shape": y.shape,
-        "y_dtype": str(y.dtype),
-    })
+    _log_case(
+        "nn_forward_standard",
+        {
+            "x_shape": x.shape,
+            "y_shape": y.shape,
+            "y_dtype": str(y.dtype),
+        },
+    )
     assert y.shape == (1, 4)
 
 
@@ -58,11 +68,14 @@ def test_neuralnetwork_icnn_forward() -> None:
     )
     x = jnp.ones((2, 3), dtype=DEFAULT_DTYPE)
     y = model(x)
-    _log_case("nn_forward_icnn", {
-        "x_shape": x.shape,
-        "y_shape": y.shape,
-        "y_dtype": str(y.dtype),
-    })
+    _log_case(
+        "nn_forward_icnn",
+        {
+            "x_shape": x.shape,
+            "y_shape": y.shape,
+            "y_dtype": str(y.dtype),
+        },
+    )
     assert y.shape == (1, 3)
 
 

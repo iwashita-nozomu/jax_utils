@@ -81,7 +81,10 @@ def main() -> None:
     }
 
     append_jsonl_record(args.jsonl_output, result)
-    print(f"{CHILD_COMPLETE_PREFIX}{json.dumps(json_compatible(result), ensure_ascii=True)}", flush=True)
+    print(
+        f"{CHILD_COMPLETE_PREFIX}{json.dumps(json_compatible(result), ensure_ascii=True)}",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":

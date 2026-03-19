@@ -9,6 +9,7 @@ from jax import numpy as jnp
 from ..base import Matrix, Vector
 from .protocols import Function
 
+
 def _integrator_key(integrator: "MonteCarloIntegrator") -> jax.Array:
     return integrator.key
 
@@ -57,7 +58,6 @@ class MonteCarloIntegrator(eqx.Module):
         self.num_samples = num_samples
         self.sampler = sampler
         self.key, self.samples = sampler(key, dimension, num_samples)
-
 
     def integrate(self, f: Function, /) -> Vector:
         return monte_carlo_integral(f, self.samples)
