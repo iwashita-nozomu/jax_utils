@@ -11,6 +11,7 @@
 - `base` の型・Protocol・共通クラスの設計は `documents/design/base_components.md` に置きます。
 - 安定サブモジュールの API 詳細は `documents/design/apis/` に置きます。
 - worktree の運用は `documents/worktree-lifecycle.md` に置きます。
+- 開発コマンドは `documents/COMMANDS.md` にまとめます。
 
 ## 2. 正本の対応表
 
