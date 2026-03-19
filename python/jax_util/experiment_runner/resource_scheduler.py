@@ -162,11 +162,14 @@ def detect_max_workers(cpu_count: int | None = None, /) -> int:
     - 引数 `cpu_count` が与えられていればそれを使い、なければ `os.cpu_count()` を利用する。
     - 返り値は 1 以上の正の整数であることを保証する。
     """
-    # 引数が None のときはシステムの値を使い、それを即座に正規化して返す。
-    return _validate_positive_int(
-        os.cpu_count() if cpu_count is None else cpu_count,
-        "cpu_count",
-    )
+    # 引数が None のときはシステムの値を使う。システムの判定不能（None）の場合は
+    # スケジューラは動作できないため明示的に例外を投げる。
+    if cpu_count is None:
+        sys_count = os.cpu_count()
+        if sys_count is None:
+            raise RuntimeError("unable to determine CPU count from os.cpu_count()")
+        return _validate_positive_int(sys_count, "cpu_count")
+    return _validate_positive_int(cpu_count, "cpu_count")
 
 
 def detect_host_memory_bytes(
