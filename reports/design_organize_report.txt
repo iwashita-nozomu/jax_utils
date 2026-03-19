@@ -1,0 +1,10 @@
+COPIED /workspace/documents/design/PROJECT_DESIGN.md -> /workspace/documents/design/documents/PROJECT_DESIGN.md
+COPIED /workspace/documents/design/base_components.md -> /workspace/documents/design/jax_util/base_components.md
+SKIP (in-subdir): /workspace/documents/design/jax_util/solvers.md
+SKIP (in-subdir): /workspace/documents/design/jax_util/optimizers.md
+SKIP (in-subdir): /workspace/documents/design/jax_util/README.md
+SKIP (in-subdir): /workspace/documents/design/jax_util/hlo.md
+
+Detected submodules:
+ - documents
+ - jax_util
