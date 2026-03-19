@@ -8,8 +8,8 @@
 - 高レベルの規約は top-level の `documents/*.md` に置きます。
 - 共通コーディング規約は `documents/conventions/common/` に置きます。
 - Python 実装向けの詳細規約は `documents/conventions/python/` に置きます。
-- `base` の型・Protocol・共通クラスの設計は `documents/design/base_components.md` に置きます。
-- 安定サブモジュールの API 詳細は `documents/design/apis/` に置きます。
+- `base` の型・Protocol・共通クラスの設計は `documents/design/jax_util/base_components.md` に置きます。
+- 安定サブモジュールの API 詳細は `documents/design/jax_util/` に置きます。
 - worktree の運用は `documents/worktree-lifecycle.md` に置きます。
 
 ## 2. 正本の対応表
@@ -26,8 +26,8 @@
 | ログ | [coding-conventions-logging.md](./coding-conventions-logging.md) | なし |
 | ソルバー共通ルール | [coding-conventions-solvers.md](./coding-conventions-solvers.md) | なし |
 | C++ 実装の最低限ルール | [coding-conventions-cpp.md](./coding-conventions-cpp.md) | なし |
-| `base` の型・Protocol・共通クラス | [base_components.md](./design/base_components.md) | なし |
-| stable API 設計 | [README.md](./README.md) | `design/apis/*.md` |
+| `base` の型・Protocol・共通クラス | [base_components.md](./design/jax_util/base_components.md) | なし |
+| stable API 設計 | [README.md](./README.md) | `design/jax_util/*.md` |
 | worktree の作成・削除・吸い出し | [worktree-lifecycle.md](./worktree-lifecycle.md) | [WORKTREE_SCOPE_TEMPLATE.md](./WORKTREE_SCOPE_TEMPLATE.md) |
 
 ## 3. 共通規約の章
@@ -89,13 +89,13 @@
 
 ## 6. 設計書
 
-- [base_components.md](./design/base_components.md)
+- [base_components.md](./design/jax_util/base_components.md)
   - `base` の型エイリアス、作用素 Protocol、`LinOp`、微分作用素、環境設定の正本です。
-- [apis/solvers.md](./design/apis/solvers.md)
+- [solvers.md](./design/jax_util/solvers.md)
   - `solvers` の stable API 設計
-- [apis/optimizers.md](./design/apis/optimizers.md)
+- [optimizers.md](./design/jax_util/optimizers.md)
   - `optimizers` の stable API 設計
-- [apis/hlo.md](./design/apis/hlo.md)
+- [hlo.md](./design/jax_util/hlo.md)
   - `hlo` の stable API 設計
 
 ## 7. 整理方針
@@ -119,7 +119,7 @@
 - 規約を増やすときは、まずこの表で既存の正本を確認します。
 - 共通規約なら `documents/conventions/common/` に追記します。
 - Python 実装規約なら `documents/conventions/python/` に追記します。
-- `base` の型や Protocol を変えるときは `documents/design/base_components.md` を更新します。
-- stable API を変えるときは `documents/design/apis/` の対応文書を更新します。
+- `base` の型や Protocol を変えるときは `documents/design/jax_util/base_components.md` を更新します。
+- stable API を変えるときは `documents/design/jax_util/` の対応文書を更新します。
 - worktree 運用を変えるときは `documents/worktree-lifecycle.md` を更新します。
 - 実験や notes の運用ルールを変えるときも、まず `documents/` の正本を更新します。
