@@ -1,4 +1,4 @@
-from typing import Any, Protocol, Tuple, TypeAlias
+from typing import Any, Protocol, TypeAlias
 
 import abc
 
@@ -10,9 +10,11 @@ from ..base import (
     Matrix,
     OptimizationProblem,
     OptimizationState,
-    Scalar,
+    # Scalar,
     Vector,
 )
+
+# from ..functional import Function
 
 
 import equinox as eqx
@@ -34,9 +36,6 @@ class Carry(Protocol):
 class NeuralNetworkLayer(eqx.Module):
     @abc.abstractmethod
     def __call__(self, carry: Carry, ctx: Ctx, /) -> Carry: ...
-
-class LossFn(Protocol):
-    def __call__(self, params: Params, x: Matrix, /) -> Scalar: ...
 
 
 class Aux(Protocol):
@@ -71,50 +70,6 @@ class ConstrainedPyTreeOptimizationState(
 ):
     ...
 
-class LayerUpdate(Protocol):
-    def __call__(
-            self,
-            layer_param: Params,
-            optim: PyTreeOptimizationProblem,
-    ) -> Tuple[Params, PyTreeOptimizationState, Aux]: ...
-    ...
-
-class BuildLayerOptim(Protocol):
-    def __call__(
-            self,
-            layer: NeuralNetworkLayer,
-            obj: PyTreeOptimizationProblem,
-            train_params: Tuple[Carry,Ctx],
-    ) -> Tuple[Params,Static, PyTreeOptimizationProblem]:
-        ...
-    ...
-
-class SingleLayerBackprop(Protocol):
-    optstate: PyTreeOptimizationState
-    def __call__(
-            self,
-            layer: NeuralNetworkLayer,
-            cache: Tuple[Carry, Ctx],
-            obj: PyTreeOptimizationProblem,
-    ) -> Tuple["SingleLayerBackprop",NeuralNetworkLayer, PyTreeOptimizationProblem,Aux]:
-        ...
-    def buildoptim(
-            self,
-            layer: NeuralNetworkLayer,
-            obj: PyTreeOptimizationProblem,
-            train_params: Tuple[Carry,Ctx],
-    ) -> Tuple[Params,Static, PyTreeOptimizationProblem]:
-        ...
-
-    def update(
-            self,
-            layer_param: Params,
-            optim: PyTreeOptimizationProblem,
-    ) -> Tuple[Params, PyTreeOptimizationState, Aux]:
-        ...
-    ...
-
-
 
 
 __all__ = [
@@ -123,13 +78,9 @@ __all__ = [
     "Ctx",
     "Carry",
     "NeuralNetworkLayer",
-    "LossFn",
     "Aux",
     # "State",
     # "UpdateFunc",
-    "LayerUpdate",
-    "BuildLayerOptim",
-    "SingleLayerBackprop",
     "BackpropState",
     "PyTreeOptimizationProblem",
     "ConstrainedPyTreeOptimizationProblem",

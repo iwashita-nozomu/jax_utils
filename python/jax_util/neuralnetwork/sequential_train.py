@@ -23,13 +23,14 @@ from .protocols import (
     Params,
     PyTreeOptimizationProblem,
     PyTreeOptimizationState,
-    SingleLayerBackprop,
 )
 
 
-class PyTreeOptim(eqx.Module):
-    objective: Callable[[Params], Scalar] = eqx.field(static=True)
+from .. functional import OptimizationProblem 
 
+from .nn_trainer_protocols import (SingleLayerBackprop, IncrementalTrainer)
+
+from jax import lax
 
 class GradientBackprop(eqx.Module):
     optstate: PyTreeOptimizationState
@@ -92,21 +93,35 @@ class GradientBackprop(eqx.Module):
         return new_param, self.optstate, None
 
 
-def sequential_train_step(
-    model: NeuralNetwork,
-    trainers: Tuple[SingleLayerBackprop, ...],
-    x: Matrix,
-    optim: PyTreeOptimizationProblem,
-) -> Tuple[NeuralNetwork, Tuple[SingleLayerBackprop, ...]]:
-    _ = model
-    _ = trainers
-    _ = x
-    _ = optim
-    raise NotImplementedError("experimental sequential training path is not implemented")
+class GradientTrainer(eqx.Module):
+    layer_trainers: Tuple[SingleLayerBackprop, ...]
 
+    def __call__(
+        self,
+        model: NeuralNetwork,
+        optim: OptimizationProblem[NeuralNetwork],
+        aux: Aux,
+    ) -> Tuple[NeuralNetwork, Aux]:
+        carry0 = None
+        ctx0 = None
+        cache = (carry0, ctx0)
+
+        new_model, aux = lax.scan(
+            lambda carry, layer_trainer: layer_trainer(layer=model.layer, cache=carry, obj=optim),
+            cache,
+            self.layer_trainers,
+        )
+        return new_model, aux
+
+    def train_step(
+        self,
+        model: NeuralNetwork,
+        optim: PyTreeOptimizationProblem,
+        aux: Aux,
+    ) -> Tuple[NeuralNetwork, PyTreeOptimizationProblem, Aux]:
+        return self(model, optim, aux)
 
 __all__ = [
-    "PyTreeOptim",
     "GradientBackprop",
-    "sequential_train_step",
+    "GradientTrainer",
 ]
