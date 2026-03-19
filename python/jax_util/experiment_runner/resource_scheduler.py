@@ -15,35 +15,42 @@ U = TypeVar("U")
 
 # 環境変数名の候補。ユーザーがGPUの可視性を制御するために使う。
 _GPU_ENV_NAMES = ("CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES")
-
-
 def _validate_non_negative_int(value: int, field_name: str, /) -> int:
     """
-    非負整数を検証するヘルパー。
+    値を正規化して非負整数を返すヘルパー。
 
-    - bool は int のサブタイプだが、ここでは許可しないため除外する。
-    - 負の値は許容されない。
-    - 検証に失敗した場合は TypeError / ValueError を投げる。
+    - 可能なら int に変換して返す（OS 由来の値や外部入力を正規化する目的）。
+    - bool は意図しない混入を避けるため拒否する。
+    - 変換できない場合は TypeError、負なら ValueError を投げる。
     """
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise TypeError(f"{field_name} must be int.")
-    if value < 0:
+    if isinstance(value, bool):
+        raise TypeError(f"{field_name} must be int, bool is not allowed.")
+    try:
+        iv = int(value)
+    except Exception as exc:  # pragma: no cover - defensive
+        raise TypeError(f"{field_name} must be int-convertible.") from exc
+    if iv < 0:
         raise ValueError(f"{field_name} must be non-negative.")
-    return value
+    return iv
 
 
 def _validate_positive_int(value: int, field_name: str, /) -> int:
     """
-    正の整数を検証するヘルパー。
+    値を正規化して正の整数（>=1）を返すヘルパー。
 
-    - 1 以上の整数のみ許容する。
-    - bool は除外する。
+    - int に変換可能な値は int に変換して返す。
+    - bool は拒否する。
+    - 変換不能や 1 未満の値は例外となる。
     """
-    if isinstance(value, bool) or not isinstance(value, int):
-        raise TypeError(f"{field_name} must be int.")
-    if value < 1:
+    if isinstance(value, bool):
+        raise TypeError(f"{field_name} must be int, bool is not allowed.")
+    try:
+        iv = int(value)
+    except Exception as exc:  # pragma: no cover - defensive
+        raise TypeError(f"{field_name} must be int-convertible.") from exc
+    if iv < 1:
         raise ValueError(f"{field_name} must be positive.")
-    return value
+    return iv
 
 
 @dataclass(frozen=True)
@@ -173,6 +180,13 @@ def detect_host_memory_bytes(
         "phys_pages",
     )
 
+'''
+review:
+_visible_gpu_ids_from_environment と _query_gpu_rows_from_system は、環境変数の解釈とシステムからの GPU 情報取得を分担して行う関数で、detect_gpu_devices 内で呼び出される。
+この分割は責務の分離という観点で適切に見える。
+この段階で正規化すれば、のちの検証は不要
+'''
+
 
 def _visible_gpu_ids_from_environment(
     environ: Mapping[str, str] | None = None,
@@ -282,8 +296,9 @@ def detect_gpu_devices(
     # GPU 行情報を辞書にしてインデックスで参照できるようにする
     rows_by_gpu_id: dict[int, int] = {}
     for gpu_id, memory_bytes in resolved_rows:
-        _validate_non_negative_int(gpu_id, "gpu_id")
-        _validate_non_negative_int(memory_bytes, "memory_bytes")
+        # 正規化して int を得る（外部注入値や sysconf 由来の値を安全に扱う）
+        gpu_id = _validate_non_negative_int(gpu_id, "gpu_id")
+        memory_bytes = _validate_non_negative_int(memory_bytes, "memory_bytes")
         rows_by_gpu_id[gpu_id] = memory_bytes
 
     if visible_gpu_ids is None:
