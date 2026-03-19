@@ -13,6 +13,16 @@ from .runner import StandardResourceCapacity, StandardScheduler
 T = TypeVar("T")
 U = TypeVar("U")
 
+__all__ = [
+    "GPUDeviceCapacity",
+    "FullResourceCapacity",
+    "FullResourceEstimate",
+    "detect_max_workers",
+    "detect_host_memory_bytes",
+    "detect_gpu_devices",
+    "StandardFullResourceScheduler",
+]
+
 # 環境変数名の候補。ユーザーがGPUの可視性を制御するために使う。
 _GPU_ENV_NAMES = ("CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES")
 

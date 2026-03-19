@@ -21,6 +21,12 @@ T = TypeVar("T")
 
 _GPU_ENV_NAMES = ("CUDA_VISIBLE_DEVICES", "NVIDIA_VISIBLE_DEVICES")
 
+__all__ = [
+    "visible_gpu_ids_from_environment",
+    "GPUResourceCapacity",
+    "StandardGPUScheduler",
+]
+
 
 def visible_gpu_ids_from_environment(
     environ: Mapping[str, str] | None = None,
