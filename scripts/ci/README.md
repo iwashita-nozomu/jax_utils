@@ -63,7 +63,7 @@ git commit -m "feat: new feature"
 git push origin branch-name
 ```
 
-### GitHub Actions CI との関係
+## GitHub Actions CI との関係
 
 `.github/workflows/ci.yml` はこのスクリプトを呼び出します：
 
@@ -90,7 +90,7 @@ pytest python/tests/ -v --tb=long
 
 詳細: [../../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト3](../../documents/FILE_CHECKLIST_OPERATIONS.md)
 
-### pyright 警告が多い場合
+## pyright 警告が多い場合
 
 ```bash
 # 警告ファイルをフィルタ表示
@@ -100,7 +100,7 @@ pyright python/ 2>&1 | grep "error"
 pyright python/jax_util/solvers/
 ```
 
-### ruff エラー修正
+## ruff エラー修正
 
 ```bash
 # 自動修正
@@ -110,7 +110,7 @@ ruff check --fix python/
 git diff python/
 ```
 
-### 依存パッケージが不足の場合
+## 依存パッケージが不足の場合
 
 ```bash
 # 環境確認

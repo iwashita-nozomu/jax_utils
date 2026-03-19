@@ -45,7 +45,7 @@ git push --mirror github 2>&1 | sed 's/^/[git-mirror] /'
 - 相対パスで記述（移植性確保）
 - エラーログは `[git-mirror]` プレフィックス付きで表示
 
-### Bare Repository Remote Configuration
+## Bare Repository Remote Configuration
 
 ```bash
 # Bare repo の GitHub remote
@@ -88,7 +88,7 @@ ssh -T git@github.com
 # 期待される出力: Hi <username>! You've successfully authenticated...
 ```
 
-### Step 3: Hook が動作することを確認
+## Step 3: Hook が動作することを確認
 
 ```bash
 # ローカルでコミット
@@ -157,7 +157,7 @@ cd /mnt/git/jax_util.git
 git push --mirror github
 ```
 
-### Manual Force Sync（緊急時）
+## Manual Force Sync（緊急時）
 
 origin と GitHub を手動で同期：
 

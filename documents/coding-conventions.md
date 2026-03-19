@@ -6,10 +6,10 @@
 ## 共通規約（章ごとの要約）
 
 1. [基本方針](./conventions/common/01_principles.md) — 読みやすさ・保守性・依存最小を最優先にします。
-1. [命名](./conventions/common/02_naming.md) — 役割が伝わる名前を使い、省略を最小限にします。
-1. [コメント](./conventions/common/03_comments.md) — 意図と前提を明確にし、数式や安定性の注意を優先します。
-1. [演算子記法（共通）](./conventions/common/04_operators.md) — 適用は `@`、合成は `*` を基本にします。
-1. [ドキュメント運用](./conventions/common/05_docs.md) — 実装変更に合わせて文書も更新します。
+2. [命名](./conventions/common/02_naming.md) — 役割が伝わる名前を使い、省略を最小限にします。
+3. [コメント](./conventions/common/03_comments.md) — 意図と前提を明確にし、数式や安定性の注意を優先します。
+4. [演算子記法（共通）](./conventions/common/04_operators.md) — 適用は `@`、合成は `*` を基本にします。
+5. [ドキュメント運用](./conventions/common/05_docs.md) — 実装変更に合わせて文書も更新します。
 
 ## Markdown 書式修正ルール
 
@@ -28,7 +28,7 @@ mdformat path/to/docs/ scripts/
 mdformat --check path/to/file.md
 ```
 
-### 対象ファイル
+## 対象ファイル
 
 - `documents/` 配下の全 `.md` ファイル
 - `scripts/` 配下の全 `.md` ファイル

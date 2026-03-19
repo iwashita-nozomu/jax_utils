@@ -40,7 +40,7 @@ cat documents/coding-conventions-project.md
 - [ ] テスト実行方法確認
 - [ ] コミット規則確認（feat: / fix: / docs: など）
 
-#### ステップ2: ワークツリー作成（3分）
+## ステップ2: ワークツリー作成（3分）
 
 ```bash
 # 2-1. 推奨: create_worktree.sh を使用
@@ -59,7 +59,7 @@ cd .worktrees/my-feature-name
 - [ ] `WORKTREE_SCOPE.md` が存在
 - [ ] `git branch -v` で新ブランチが表示される
 
-#### ステップ3: スコープ設定（5分）
+## ステップ3: スコープ設定（5分）
 
 ```bash
 # 3-1. WORKTREE_SCOPE.md を編集
@@ -80,7 +80,7 @@ vim WORKTREE_SCOPE.md
 - [ ] `Editable Directories` が具体的
 - [ ] `Required Checks` にテスト・チェック項目を記載
 
-#### ステップ4: 最初のコミット（3分）
+## ステップ4: 最初のコミット（3分）
 
 ```bash
 # 4-1. スコープ設定をコミット
@@ -99,7 +99,7 @@ git branch -vv
 - [ ] origin に push 成功
 - [ ] ブランチが origin を tracking している
 
-### 完了チェック
+## 完了チェック
 
 - [ ] 新ワークツリーが `.worktrees/` に存在
 - [ ] `WORKTREE_SCOPE.md` が記入済み
@@ -139,7 +139,7 @@ touch python/jax_util/<my-module>/__init__.py
 - [ ] `python/jax_util/<my-module>/` ディレクトリ存在
 - [ ] `__init__.py` ファイル存在
 
-#### ステップ2: pyproject.toml 確認
+## ステップ2: pyproject.toml 確認
 
 ```bash
 # 2-1. トップレベルの pyproject.toml 確認
@@ -154,7 +154,7 @@ grep -A 5 "tool.pyright" pyproject.toml
 - [ ] インクルードパスに「python/jax_util/<my-module>」が含まれている
 - [ ] 分析対象に含まれている
 
-#### ステップ3: pyright・pytest 実行
+## ステップ3: pyright・pytest 実行
 
 ```bash
 # 3-1. 型チェック
@@ -169,7 +169,7 @@ pytest python/tests/<my-module>/
 - [ ] pyright でエラーなし
 - [ ] pytest で既存テストパス
 
-### 完了チェック
+## 完了チェック
 
 - [ ] ディレクトリ・`__init__.py` 作成完了
 - [ ] pyproject.toml に登録
@@ -210,7 +210,7 @@ black python/
 - [ ] ruff エラー数 = 0
 - [ ] black フォーマット可能
 
-#### ステップ2: テスト実行（10分～）
+## ステップ2: テスト実行（10分～）
 
 ```bash
 # 2-1. 全テスト実行（ログ保存）
@@ -231,7 +231,7 @@ pytest python/tests/<module>/test_<name>.py::TestClass::test_method -v -s
 - [ ] 期待値との合致確認
 - [ ] ログファイル保存確認
 
-#### ステップ3: 修正対応（必要時）
+## ステップ3: 修正対応（必要時）
 
 ```bash
 # 3-1. テスト失敗時は原因を特定
@@ -250,7 +250,7 @@ bash scripts/run_pytest_with_logs.sh
 - [ ] 前回失敗していたテストがパス
 - [ ] 新規エラー発生していない
 
-### 完了チェック
+## 完了チェック
 
 - [ ] pyright: 0 エラー
 - [ ] ruff: 0 エラー
@@ -296,7 +296,7 @@ ls documents/
 
 - [ ] 対応ファイル特定
 
-#### ステップ2: ドキュメント更新（10～30分）
+## ステップ2: ドキュメント更新（10～30分）
 
 ```bash
 # 2-1. テキストエディタで編集
@@ -315,7 +315,7 @@ vim documents/design/apis/<module>.md
 - [ ] コード例・数式を含む
 - [ ] リンク参照は相対パス
 
-#### ステップ3: ドキュメント整形（3分）
+## ステップ3: ドキュメント整形（3分）
 
 ```bash
 # 3-1. Markdown 正規化
@@ -334,7 +334,7 @@ python scripts/tools/fix_markdown_docs.py
 - [ ] リンク切れなし（報告書確認）
 - [ ] Markdown 記法エラーなし
 
-#### ステップ4: コミット（2分）
+## ステップ4: コミット（2分）
 
 ```bash
 # 4-1. ドキュメント変更をコミット
@@ -350,7 +350,7 @@ git push origin work/<branch>
 - [ ] コミット作成
 - [ ] origin に push
 
-### 完了チェック
+## 完了チェック
 
 - [ ] 対象ドキュメント全て更新
 - [ ] 整形・リンク監査清掃
@@ -391,7 +391,7 @@ python scripts/tools/tfidf_similar_docs.py --output reports/similar_analysis.txt
 - [ ] 類似度スコア確認
 - [ ] `reports/` にレポート保存
 
-#### ステップ2: 設計ファイル整理（10～30分）
+## ステップ2: 設計ファイル整理（10～30分）
 
 ```bash
 # 2-1. dry-run で確認
@@ -410,7 +410,7 @@ python scripts/tools/organize_designs.py
 - [ ] 移動・コピー内容妥当
 - [ ] サブモジュール別コピー完了
 
-#### ステップ3: テンプレート作成（必要時、3分）
+## ステップ3: テンプレート作成（必要時、3分）
 
 ```bash
 # 3-1. サブモジュール用テンプレート作成
@@ -424,7 +424,7 @@ cat python/jax_util/solvers/design/template.md
 
 - [ ] サブモジュール用デザインテンプレート生成
 
-#### ステップ4: 古いファイル削除（危険操作、慎重に）
+## ステップ4: 古いファイル削除（危険操作、慎重に）
 
 ```bash
 # 4-1. 不要なファイルを確認・削除
@@ -440,7 +440,7 @@ python scripts/tools/find_redundant_designs.py --delete
 - [ ] 削除対象確認漏れなし
 - [ ] リンク参照がないか二重確認
 
-### 完了チェック
+## 完了チェック
 
 - [ ] 重複ファイル統合
 - [ ] サブモジュール別整理完了
@@ -480,7 +480,7 @@ ls -la notes/worktrees/
 - [ ] 重要なメモ・結果をコピー
 - [ ] ワークツリー削除前に完了
 
-#### ステップ2: ワークツリー削除（2分）
+## ステップ2: ワークツリー削除（2分）
 
 ```bash
 # 2-1. メインワークツリーに戻る
@@ -503,7 +503,7 @@ git push origin --delete work/my-feature-name-20260318
 - [ ] ブランチが削除された
 - [ ] リモートブランチが削除された
 
-#### ステップ3: 最終確認（1分）
+## ステップ3: 最終確認（1分）
 
 ```bash
 # 3-1. ワークツリー一覧確認
@@ -522,7 +522,7 @@ ls -la .worktrees/
 - [ ] 他のワークツリーは環境維持
 - [ ] `.worktrees/` から完全削除
 
-### 完了チェック
+## 完了チェック
 
 - [ ] carry-over ファイル保存
 - [ ] ワークツリー削除完了
@@ -553,7 +553,7 @@ cat reports/worktree_scope_report.txt
 - [ ] 全ワークツリーが `WORKTREE_SCOPE.md` を保持
 - [ ] missing 項目がないか確認
 
-#### ステップ2: 修復対応（必要時、10分～）
+## ステップ2: 修復対応（必要時、10分～）
 
 WORKTREE_SCOPE.md がない場合：
 
@@ -578,7 +578,7 @@ git push -u origin $(git rev-parse --abbrev-ref HEAD)
 - [ ] 内容を適切に編集
 - [ ] origin に push
 
-### 完了チェック
+## 完了チェック
 
 - [ ] スコープ検査実行
 - [ ] 不足ワークツリーが修復
@@ -606,7 +606,7 @@ python scripts/tools/audit_and_fix_links.py
 python scripts/tools/fix_markdown_docs.py
 ```
 
-#### ステップ2: 設計ファイル品質（5分）
+## ステップ2: 設計ファイル品質（5分）
 
 ```bash
 # 2-1. 類似度検出
@@ -619,7 +619,7 @@ cat reports/similar_analysis.txt
 python scripts/tools/find_redundant_designs.py
 ```
 
-#### ステップ3: コミット（3分）
+## ステップ3: コミット（3分）
 
 ```bash
 # 修正内容をコミット
@@ -628,7 +628,7 @@ git commit -m "docs: apply formatting and link fixes"
 git push origin main
 ```
 
-### 完了チェック
+## 完了チェック
 
 - [ ] 整形・リンク修正完了
 - [ ] 設計ファイル類似度分析完了
@@ -664,7 +664,7 @@ pytest python/tests/<module>/test_<name>.py::TestName::test_method -v -s
 cat python/jax_util/<module>/<file>.py
 ```
 
-### 問題: リンク切れが多い場合
+## 問題: リンク切れが多い場合
 
 ```bash
 # リンク監査実行
@@ -677,7 +677,7 @@ cat reports/link_audit.txt
 vim documents/<affected-file>.md
 ```
 
-### 問題: ワークツリー削除に失敗した
+## 問題: ワークツリー削除に失敗した
 
 ```bash
 # アクティブなワークツリーを確認

@@ -22,8 +22,8 @@ $$
 T_{\mathrm{total}}
 =
 T_{\mathrm{init}}
-+ T_{\mathrm{transfer}}
-+ T_{\mathrm{integral}}
+- T_{\mathrm{transfer}}
+- T_{\mathrm{integral}}
 $$
 
 と書けます。

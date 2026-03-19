@@ -66,7 +66,7 @@ git commit -m "chore(worktree): init scope"
 git push -u origin work/my-feature-YYYYMMDD
 ```
 
-### テスト＆静的解析実行
+## テスト＆静的解析実行
 
 ```bash
 # ★推奨: 統合テスト（pytest + pyright + ruff）
@@ -76,7 +76,7 @@ bash scripts/ci/run_all_checks.sh
 bash scripts/run_pytest_with_logs.sh
 ```
 
-### ドキュメント整形
+## ドキュメント整形
 
 ```bash
 # Markdown 正規化
@@ -86,7 +86,7 @@ python scripts/tools/format_markdown.py
 python scripts/tools/audit_and_fix_links.py
 ```
 
-### 設計ファイル整理
+## 設計ファイル整理
 
 ```bash
 # 重複ファイル検出
@@ -150,7 +150,7 @@ bash scripts/create_toml.sh <package-name>
 
 ______________________________________________________________________
 
-### ワークツリー関連（開発フロー中心）
+## ワークツリー関連（開発フロー中心）
 
 **推奨:**
 
@@ -179,7 +179,7 @@ bash scripts/tools/check_worktree_scopes.sh
 
 ______________________________________________________________________
 
-### テスト・CI 関連（品質保証）
+## テスト・CI 関連（品質保証）
 
 **推奨フロー:**
 
@@ -201,7 +201,7 @@ bash scripts/run_pytest_with_logs.sh
 
 ______________________________________________________________________
 
-### ドキュメント処理（品質改善）
+## ドキュメント処理（品質改善）
 
 **推奨フロー:**
 
@@ -224,7 +224,7 @@ git commit -m "docs: apply formatting and link fixes"
 
 ______________________________________________________________________
 
-### 設計ファイル管理（整理・統合）
+## 設計ファイル管理（整理・統合）
 
 **推奨フロー:**
 
@@ -344,14 +344,14 @@ ______________________________________________________________________
 pytest python/tests/test_module.py::TestClass::test_method -v -s
 ```
 
-### pyright エラー多い場合
+## pyright エラー多い場合
 
 ```bash
 # 型チェックの詳細表示
 pyright python/ --verbose
 ```
 
-### ruff 自動修正
+## ruff 自動修正
 
 ```bash
 # エラー自動修正
@@ -361,7 +361,7 @@ ruff check --fix python/
 git diff python/
 ```
 
-### パッケージ不足
+## パッケージ不足
 
 ```bash
 # 環境チェック

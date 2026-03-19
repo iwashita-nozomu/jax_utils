@@ -320,7 +320,7 @@ vim WORKTREE_SCOPE.md
 # 6. 作業開始
 ```
 
-### フロー2: テスト実行＆ログ保存
+## フロー2: テスト実行＆ログ保存
 
 ```bash
 # テストをログ付きで実行
@@ -331,7 +331,7 @@ ls python/tests/logs/
 cat python/tests/logs/[latest]/pytest.raw.txt
 ```
 
-### フロー3: ドキュメント整形・リンク修正
+## フロー3: ドキュメント整形・リンク修正
 
 ```bash
 # 整形
@@ -344,7 +344,7 @@ python scripts/tools/audit_and_fix_links.py
 python scripts/tools/fix_markdown_docs.py
 ```
 
-### フロー4: 設計ファイル整理
+## フロー4: 設計ファイル整理
 
 ```bash
 # dry-run で効果確認
@@ -361,7 +361,7 @@ python scripts/tools/tfidf_similar_docs.py
 python scripts/tools/find_redundant_designs.py --delete
 ```
 
-### フロー5: ワークツリー規約遵守チェック
+## フロー5: ワークツリー規約遵守チェック
 
 ```bash
 # スコープファイル検査

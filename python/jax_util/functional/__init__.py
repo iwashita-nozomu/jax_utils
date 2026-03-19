@@ -6,7 +6,6 @@ from .monte_carlo import (
 )
 from .smolyak import (
     SmolyakIntegrator,
-    clenshaw_curtis_node_ids,
     clenshaw_curtis_rule,
     difference_rule,
     initialize_smolyak_integrator,

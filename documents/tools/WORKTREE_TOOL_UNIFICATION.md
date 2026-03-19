@@ -79,7 +79,7 @@ ______________________________________________________________________
 # ═══════════════════════════════════════════════════════════════════════════
 ```
 
-#### 1-2. setup_worktree.sh をシンボリックリンク化
+## 1-2. setup_worktree.sh をシンボリックリンク化
 
 ```bash
 # メインワークツリーで実行
@@ -96,7 +96,7 @@ ls -la scripts/setup_worktree.sh
 cat scripts/setup_worktree.sh  # シンボリックリンク先を表示
 ```
 
-#### 1-3. ドキュメント更新
+## 1-3. ドキュメント更新
 
 - [documents/FILE_CHECKLIST_OPERATIONS.md](./FILE_CHECKLIST_OPERATIONS.md)：
 
@@ -106,7 +106,7 @@ cat scripts/setup_worktree.sh  # シンボリックリンク先を表示
 
   > 使用例で `scripts/tools/create_worktree.sh` を優先記載
 
-#### 1-4. Git コミット
+### 1-4. Git コミット
 
 ```bash
 cd /workspace
