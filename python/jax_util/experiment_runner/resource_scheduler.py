@@ -162,8 +162,11 @@ def detect_max_workers(cpu_count: int | None = None, /) -> int:
     - 引数 `cpu_count` が与えられていればそれを使い、なければ `os.cpu_count()` を利用する。
     - 返り値は 1 以上の正の整数であることを保証する。
     """
-    resolved_cpu_count = os.cpu_count() if cpu_count is None else cpu_count
-    return _validate_positive_int(resolved_cpu_count, "cpu_count")
+    # 引数が None のときはシステムの値を使い、それを即座に正規化して返す。
+    return _validate_positive_int(
+        os.cpu_count() if cpu_count is None else cpu_count,
+        "cpu_count",
+    )
 
 
 def detect_host_memory_bytes(
@@ -177,15 +180,12 @@ def detect_host_memory_bytes(
     - `os.sysconf('SC_PAGE_SIZE') * os.sysconf('SC_PHYS_PAGES')` を用いて計算する。
     - テストのために引数でページサイズ/ページ数を注入できるようにしている。
     """
-    resolved_page_size = os.sysconf("SC_PAGE_SIZE") if page_size is None else page_size
-    resolved_phys_pages = (
-        os.sysconf("SC_PHYS_PAGES") if phys_pages is None else phys_pages
-    )
+    # ページサイズ / ページ数の解決をインライン化して直接乗算する。
     return _validate_positive_int(
-        resolved_page_size,
+        os.sysconf("SC_PAGE_SIZE") if page_size is None else page_size,
         "page_size",
     ) * _validate_positive_int(
-        resolved_phys_pages,
+        os.sysconf("SC_PHYS_PAGES") if phys_pages is None else phys_pages,
         "phys_pages",
     )
 
