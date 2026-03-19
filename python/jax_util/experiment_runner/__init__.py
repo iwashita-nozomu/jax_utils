@@ -30,7 +30,6 @@ from .resource_scheduler import (
     FullResourceEstimate,
     GPUDeviceCapacity,
     StandardFullResourceScheduler,
-    ResourceTotals,
 )
 
 __all__ = [
@@ -46,6 +45,7 @@ __all__ = [
     "detect_host_memory_bytes",
     "detect_max_workers",
     "FullResourceCapacity",
+    "FullResourceEstimate",
     "FullResourceEstimate",
     "StandardCompletion",
     "StandardFullResourceScheduler",
