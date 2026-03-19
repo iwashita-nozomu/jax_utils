@@ -50,4 +50,4 @@ python3 /workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functiona
   - `hlo_proto_bytes`
   - `generated_code_size_in_bytes`
   - `temp_size_in_bytes`
-  の 4 つを見ると、IR と compile 後の膨らみをざっくり切り分けやすいです。
+    の 4 つを見ると、IR と compile 後の膨らみをざっくり切り分けやすいです。

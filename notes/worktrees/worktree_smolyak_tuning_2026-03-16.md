@@ -47,7 +47,7 @@
   - `stablehlo.while`
   - `func.call`
   - `stablehlo.gather`
-  が目立ち、積分本体の算術より制御フローと index 処理の比重が高い、というものだった。
+    が目立ち、積分本体の算術より制御フローと index 処理の比重が高い、というものだった。
 
 ## GPU Visibility Probe
 
@@ -65,11 +65,11 @@
   - `CUDA_VISIBLE_DEVICES=<assigned>`
   - `jax.devices() == [cuda:0]`
   - `jax.devices("gpu")` の local id は `[0]`
-  を返す設計だった。
+    を返す設計だった。
 - したがって、この probe が残していた結論は
   - 「child ごとの GPU 可視性分離は成立している」
   - 「GPU 1,2 が遊んで見える主因は可視性バグではなく、CPU 側初期化支配」
-  である。
+    である。
 
 ### Decision
 
@@ -100,7 +100,7 @@
   - `num_points=1`
   - `integrator_init_seconds ≈ 0.009 - 0.012`
   - `avg_integral_seconds ≈ 1.0e-4 - 1.4e-4`
-  だった。
+    だった。
 - これらは tuning 中の手元確認結果であり、branch の本質的な成果物ではない。
 
 ### Decision

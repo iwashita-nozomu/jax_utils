@@ -36,12 +36,12 @@
 - `level=0` は想定通り
   - `dimension must be positive`
   - `level must be positive`
-  の入力検証エラーのみ。
+    の入力検証エラーのみ。
 - `level=1` は
   - `dimension=26` まで成功
   - `dimension=27, 28` で `CUDA OOM`
   - `dimension>=29` は主に `worker_terminated`
-  という切り替わりになっている。
+    という切り替わりになっている。
 - `level=1` の成功ケースでは `num_points=1`。
 - にもかかわらず `integrator_init_seconds` は次元に対して急増している。
   - `d=24`: 約 `7.89 s`
@@ -117,7 +117,7 @@
   `integrator_init_seconds` の立ち上がりほど急ではない。
 - したがって、旧版で支配的だった
   - host 側の巨大 point cloud
-  とは別種のボトルネックへ移っていると考えられる。
+    とは別種のボトルネックへ移っていると考えられる。
 - 現在の tuned run でも dtype が `float16` しか進んでいないので、case ordering が比較のしやすさをまだ損ねている可能性がある。
 - HLO size は小さい case でも十分に可視化できるので、
   大規模 run を止めずに別 worktree で compile / lowering 側の兆候を追える。
@@ -128,7 +128,7 @@
   - case 配布は 3 worker に行われている
   - 3 worker は同時に CPU を使っている
   - しかし GPU kernel 実行は sparse
-  なので、まずは host 側初期化支配が本命である。
+    なので、まずは host 側初期化支配が本命である。
 - ただし runner の並列化実装はかなり重い。
   各 GPU 用 thread が各 case ごとに fresh `ProcessPoolExecutor(max_workers=1)` を作るので、
   process spawn / JAX import / device context 再生成のオーバーヘッドが case ごとに入る。
@@ -144,24 +144,24 @@
   - JIT / lowering
   - 1 回目実行
   - 反復実行
-  を分離して測る。
+    を分離して測る。
 - `num_points=1` の経路だけに絞った HLO / compile cost 観察を行い、
   再帰アンローリングの影響を切り分ける。
 - HLO 実験は
   - CPU で size と op 構造を見る
   - GPU で generated code size と temp size を見る
-  という二段構えにすると、大規模 run と干渉しにくい。
+    という二段構えにすると、大規模 run と干渉しにくい。
 - 二次ボトルネックとしては、現在の実行パスに残る
   - `gather`
   - `while`
   - `slice/concatenate`
-  を順に潰していく。
-  ただし、一次ボトルネックを消す前にここを最適化しても効果は限定的と考えられる。
+    を順に潰していく。
+    ただし、一次ボトルネックを消す前にここを最適化しても効果は限定的と考えられる。
 - case ordering は
   - `level -> dimension -> dtype`
-  もしくは
+    もしくは
   - `dimension -> level -> dtype`
-  に変更して、途中停止しても全 dtype を比較できるようにする。
+    に変更して、途中停止しても全 dtype を比較できるようにする。
 - `worker_terminated` が `OOM` の後段エラーなのか、
   compile side の異常終了なのかをもう少し細かく分類できるようにする。
 - runner 側は、GPU ごとに long-lived な worker process を 1 本ずつ持つ構造へ変える候補がある。
@@ -169,18 +169,18 @@
   - process spawn
   - JAX import
   - device context 再生成
-  の繰り返しを減らせる。
+    の繰り返しを減らせる。
 - 実験環境側の暫定対策として、
   - `workers_per_gpu`
   - worker ごとの CPU affinity 自動分割
   - `OMP_NUM_THREADS=1` などの thread oversubscription 抑制
-  を runner に入れておく価値が高い。
+    を runner に入れておく価値が高い。
 - もし GPU 分離そのものをさらに検証したいなら、
   worker 内で
   - physical GPU UUID
   - `jax.devices()` の実体
   - `CUDA_VISIBLE_DEVICES`
-  を結果 JSON へ残すと確実に判断できる。
+    を結果 JSON へ残すと確実に判断できる。
 
 ## Follow-up
 
@@ -188,7 +188,7 @@
   - `level=1` での compile/init scaling
   - dtype interleave の必要性
   - `worker_terminated` の実体
-  の 3 点。
+    の 3 点。
 
 ## Tooling
 
@@ -217,12 +217,12 @@
   - 実行プロセスの確認
   - HLO dump / summary
   - テスト実行
-  は十分行えた。
+    は十分行えた。
 - 一方で、今回いちばん欲しいのは GPU kernel 単体の統計ではなく
   - host 側初期化
   - compile / lowering
   - GPU 実行
-  の時間関係をまとめて見られるツールである。
+    の時間関係をまとめて見られるツールである。
 - その意味では、`ncu` よりも `nsys` の優先度が高い。
 - JSONL 集計や failure 種別の簡易整理には `jq` があるとかなり楽になる。
 - Python 側の hot spot 確認には `py-spy` が有力。
@@ -234,13 +234,13 @@ Dockerfile 更新時の候補優先度は、現時点では次の順がよさそ
 
 1. `nsys`
    - CPU/GPU timeline を同時に見たい。
-2. `jq`
+1. `jq`
    - JSONL の quick inspection を楽にしたい。
-3. `py-spy`
+1. `py-spy`
    - Python 側の初期化 hot spot を見たい。
-4. `strace`
+1. `strace`
    - process / memory / file I/O の偏りを確認したい。
-5. `perf`
+1. `perf`
    - host 側のより低レベルな profiling 用。
 
 ### Note
@@ -249,5 +249,5 @@ Dockerfile 更新時の候補優先度は、現時点では次の順がよさそ
   - 実験で本当に使ったツール
   - 追加したい理由
   - 代替手段の有無
-  を一緒に整理してから入れる。
+    を一緒に整理してから入れる。
 - 今回の判断では、`nsys` と `jq` がまず有力。

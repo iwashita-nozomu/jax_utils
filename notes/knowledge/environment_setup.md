@@ -20,7 +20,7 @@
   - `OPENBLAS_NUM_THREADS=1`
   - `MKL_NUM_THREADS=1`
   - `NUMEXPR_NUM_THREADS=1`
-  を使う。
+    を使う。
 - CPU affinity を切るときは、worker 数と logical CPU 数を先に確認する。
 
 ## 実験前チェック

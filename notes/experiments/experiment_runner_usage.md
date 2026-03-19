@@ -29,11 +29,13 @@ runner.run(worker)
 ```
 
 - **GPU を使う場合**:
+
   - 環境変数 `CUDA_VISIBLE_DEVICES` / `NVIDIA_VISIBLE_DEVICES` を設定して見える GPU を制御する。
   - `GPUResourceCapacity.from_environment()` と `StandardGPUScheduler` を使うと便利。
   - `gpu_runner.py` の `visible_gpu_ids_from_environment` が環境変数の解釈規則を提供する。
 
 - **リソース自動検出**:
+
   - `FullResourceCapacity.from_system()` は `detect_max_workers()`, `detect_host_memory_bytes()`, `detect_gpu_devices()` を組み合わせて実行環境を推定する。
   - テスト時は `query_rows` / `environ` を注入して振る舞いを固定できます。
 
@@ -71,6 +73,6 @@ pytest -q python/tests/experiment_runner
 - CI に重いテストを分離したワークフローを追加し、通常プルリクでは短時間テストのみ走らせる。
 - 小さな PoC を一つ（例: GPU トポロジ考慮スケジューラのプロトタイプ）を実装して評価する。
 
----
+______________________________________________________________________
 
 ファイル: `notes/experiments/experiment_runner_usage.md`

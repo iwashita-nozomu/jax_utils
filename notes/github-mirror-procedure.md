@@ -41,6 +41,7 @@ git push --mirror github 2>&1 | sed 's/^/[git-mirror] /'
 ```
 
 **特徴:**
+
 - 相対パスで記述（移植性確保）
 - エラーログは `[git-mirror]` プレフィックス付きで表示
 
@@ -71,8 +72,8 @@ Location: /root/.ssh/id_ed25519_github_mirror.pub
 **GitHub への登録手順:**
 
 1. https://github.com/settings/keys にアクセス
-2. **"New SSH key"** をクリック
-3. 以下の公開鍵をペースト：
+1. **"New SSH key"** をクリック
+1. 以下の公開鍵をペースト：
 
 ```
 ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIK+L6Gxakq8DKvU/7ISMIuxA/pS4MRgnPjDLRC0Pvhcb
@@ -168,14 +169,17 @@ git push GitHub --all  # 全ブランチを GitHub へプッシュ
 ## Configuration Summary
 
 **ローカルリポジトリ:**
+
 - `origin` remote: `/mnt/git/jax_util.git`
 - `GitHub` remote: `https://github.com/iwashita-nozomu/jax_utils.git` (fetch only)
 
 **Bare Repository (`/mnt/git/jax_util.git`):**
+
 - `github` remote: `git@github.com:iwashita-nozomu/jax_utils.git` (SSH)
 - Hook: `hooks/post-receive` (自動ミラー実行)
 
 **GitHub:**
+
 - SSH Deploy Key 登録: ✅ Required (see Prerequisites)
 
 ## Related Notes

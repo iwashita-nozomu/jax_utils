@@ -22,7 +22,7 @@
   - JSON/JSONL 保存
   - 失敗分類
   - metadata 保存
-  を再利用できるようにする
+    を再利用できるようにする
 
 ## Conventions
 
@@ -71,7 +71,7 @@
 - 最初の目標は
   - `smolyak_scaling`
   - 将来の別実験 runner
-  が同じ部品を使える状態にすること
+    が同じ部品を使える状態にすること
 
 ### Idea
 
@@ -94,14 +94,14 @@
   - free worker slot
   - timeout
   - fallback failure record
-  だけを管理する
+    だけを管理する
 - child は
   - `case + run_config + worker_slot`
-  を受け取り、
+    を受け取り、
   - 実験実行
   - JSONL 追記
   - stdout completion message
-  を担当する
+    を担当する
 
 ### Source
 
@@ -151,19 +151,19 @@
   - runner 共通ロジック
   - Smolyak 固有ロジック
   - benchmark 条件
-  が 1 ファイルに混ざっている
+    が 1 ファイルに混ざっている
 - そのため
   - multiprocessing だけを直したい
   - JSONL の書き方だけ変えたい
   - 別の積分器へ横展開したい
-  ときに修正範囲が広い
+    ときに修正範囲が広い
 
 ## Immediate Next Steps
 
 1. `run_smolyak_scaling.py` の責務を section 単位で棚卸しする
-2. runner 共通ロジックと Smolyak 固有ロジックの境界を決める
-3. 内部モジュールの最小単位を切る
-4. 既存 CLI を壊さない形で import 経由へ置き換える
+1. runner 共通ロジックと Smolyak 固有ロジックの境界を決める
+1. 内部モジュールの最小単位を切る
+1. 既存 CLI を壊さない形で import 経由へ置き換える
 
 ## Addendum
 

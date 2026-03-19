@@ -49,9 +49,9 @@
 ## 3. 本プロジェクトでの設計原則
 
 1. 最小編集: 1 回の変更は小さく保つ
-2. 観測優先: 先に探索・根拠収集、後で編集
-3. 検証駆動: 編集直後に静的解析・テストを実行
-4. 監査可能: 実行ログ・差分・判断根拠を保存
+1. 観測優先: 先に探索・根拠収集、後で編集
+1. 検証駆動: 編集直後に静的解析・テストを実行
+1. 監査可能: 実行ログ・差分・判断根拠を保存
 
 ## 4. 標準ファイル探索順（重要）
 
@@ -64,15 +64,15 @@
 ### Phase 1: 高シグナル入口
 
 1. `README.md`
-2. `documents/README.md`
-3. 関連規約（`documents/coding-conventions-*.md`）
-4. 設計（`documents/design/jax_util/*.md`）
+1. `documents/README.md`
+1. 関連規約（`documents/coding-conventions-*.md`）
+1. 設計（`documents/design/jax_util/*.md`）
 
 ### Phase 2: 実装の定義側
 
 1. `python/**/__init__.py`
-2. `python/**/core.py`
-3. 型・共通ユーティリティ
+1. `python/**/core.py`
+1. 型・共通ユーティリティ
 
 ### Phase 3: 実装の利用側
 
@@ -96,22 +96,25 @@ $$
 ## 5. 推奨ディレクトリ構成
 
 - `agents/`
-	- `planner/`: タスク分解・計画
-	- `executor/`: 差分適用・worktree 操作
-	- `verifier/`: 解析・テスト・安全判定
-	- `retriever/`: 探索順制御（ランキング）
-	- `policies/`: 変更制約、承認条件
-	- `agents_config.yaml`: 実行設定
-	- `logs/`: 実行ログ
+
+  - `planner/`: タスク分解・計画
+  - `executor/`: 差分適用・worktree 操作
+  - `verifier/`: 解析・テスト・安全判定
+  - `retriever/`: 探索順制御（ランキング）
+  - `policies/`: 変更制約、承認条件
+  - `agents_config.yaml`: 実行設定
+  - `logs/`: 実行ログ
 
 - `scripts/agent_tools/`
-	- 文書整形、リンク監査、類似検出、探索ランキング計算
+
+  - 文書整形、リンク監査、類似検出、探索ランキング計算
 
 - `reports/agents/<run-id>/`
-	- `decision_log.md`
-	- `edits.patch`
-	- `verification.txt`
-	- `retrospective.md`
+
+  - `decision_log.md`
+  - `edits.patch`
+  - `verification.txt`
+  - `retrospective.md`
 
 ## 6. 運用ルール
 

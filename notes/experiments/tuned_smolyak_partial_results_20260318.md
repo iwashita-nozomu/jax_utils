@@ -88,12 +88,12 @@ Interpretation:
 
 「失敗が立ち上がる level」は次の通りである。
 
-| dimension | last all-ok level | first failure | failure mode |
-| --- | ---: | ---: | --- |
-| 1 | 28 | 23 | `oom` が先に出て、`29+` は全 dtype `worker_terminated` |
-| 2 | 13 | 14 | `14+` は全 dtype `timeout` |
-| 3 | 10 | 11 | `11+` は全 dtype `timeout` |
-| 4 | 8 | 9 | `9+` は全 dtype `timeout` |
+| dimension | last all-ok level | first failure | failure mode                                           |
+| --------- | ----------------: | ------------: | ------------------------------------------------------ |
+| 1         |                28 |            23 | `oom` が先に出て、`29+` は全 dtype `worker_terminated` |
+| 2         |                13 |            14 | `14+` は全 dtype `timeout`                             |
+| 3         |                10 |            11 | `11+` は全 dtype `timeout`                             |
+| 4         |                 8 |             9 | `9+` は全 dtype `timeout`                              |
 
 Interpretation:
 
@@ -113,12 +113,12 @@ Interpretation:
 
 その共通セルだけで比較すると、
 
-| dtype | mean abs err | max abs err | mean avg time [s] | max avg time [s] |
-| --- | ---: | ---: | ---: | ---: |
-| `float16` | `4.87e-3` | `6.74e-2` | `1.227` | `14.442` |
-| `bfloat16` | `1.75e-2` | `7.54e-2` | `1.243` | `14.655` |
-| `float32` | `8.38e-4` | `1.42e-2` | `1.236` | `14.347` |
-| `float64` | `8.35e-4` | `1.42e-2` | `1.255` | `14.179` |
+| dtype      | mean abs err | max abs err | mean avg time [s] | max avg time [s] |
+| ---------- | -----------: | ----------: | ----------------: | ---------------: |
+| `float16`  |    `4.87e-3` |   `6.74e-2` |           `1.227` |         `14.442` |
+| `bfloat16` |    `1.75e-2` |   `7.54e-2` |           `1.243` |         `14.655` |
+| `float32`  |    `8.38e-4` |   `1.42e-2` |           `1.236` |         `14.347` |
+| `float64`  |    `8.35e-4` |   `1.42e-2` |           `1.255` |         `14.179` |
 
 Interpretation:
 
@@ -291,9 +291,9 @@ dtype 追加比較より
 次のような構造改善である。
 
 1. point / weight の全展開を避ける
-2. host 上の一時配列と重複保持を減らす
-3. evaluation を chunking / streaming できる形へ寄せる
-4. `dimension=0`, `level=0` を最初から実験レンジから外す
+1. host 上の一時配列と重複保持を減らす
+1. evaluation を chunking / streaming できる形へ寄せる
+1. `dimension=0`, `level=0` を最初から実験レンジから外す
 
 Idea:
 

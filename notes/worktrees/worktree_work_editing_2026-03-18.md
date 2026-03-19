@@ -32,7 +32,7 @@
   - notes/worktree 運用強化
   - review 文書命名整理
   - Pyright/Pylance 設定整理
-  が進んでいる
+    が進んでいる
 - そのため、この branch の 4 commit をまとめて今の `main` に載せるより、必要なら後で commit 単位で再評価した方が安全
 
 ## Decision

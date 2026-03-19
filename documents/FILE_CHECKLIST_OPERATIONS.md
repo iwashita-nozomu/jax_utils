@@ -2,16 +2,17 @@
 
 この文書は、プロジェクト内での典型的な作業フローに対応したチェックリスト・実行手順をまとめます。
 
-**対象読者:** 開発者・メンテナー  
+**対象読者:** 開発者・メンテナー\
 **更新日:** 2026-03-19
 
----
+______________________________________________________________________
 
 ## チェックリスト1: 新規開発ブランチ開始
 
 新しい機能開発・バグ修正を始める場合の統一手順です。
 
 ### 前提条件
+
 - [ ] リポジトリが `main` ブランチである
 - [ ] 作業ツリーが clean 状態（`git status` で何も表示されない）
 - [ ] `origin/main` に接続可能
@@ -19,6 +20,7 @@
 ### セットアップ手順
 
 #### ステップ1: 規約確認（5分以内）
+
 ```bash
 # 1-1. プロジェクト全体ガイド表示
 bash scripts/guide.sh
@@ -32,12 +34,14 @@ cat documents/coding-conventions-project.md
 ```
 
 **確認項目:**
+
 - [ ] ブランチ運用方針 (WORKTREE_SCOPE.md の目的理解)
 - [ ] 実装対象ディレクトリの責務確認
 - [ ] テスト実行方法確認
 - [ ] コミット規則確認（feat: / fix: / docs: など）
 
 #### ステップ2: ワークツリー作成（3分）
+
 ```bash
 # 2-1. 推奨: create_worktree.sh を使用
 bash scripts/tools/create_worktree.sh my-feature-name
@@ -50,11 +54,13 @@ cd .worktrees/my-feature-name
 ```
 
 **確認項目:**
+
 - [ ] ワークツリーディレクトリが作成された
 - [ ] `WORKTREE_SCOPE.md` が存在
 - [ ] `git branch -v` で新ブランチが表示される
 
 #### ステップ3: スコープ設定（5分）
+
 ```bash
 # 3-1. WORKTREE_SCOPE.md を編集
 vim WORKTREE_SCOPE.md
@@ -68,12 +74,14 @@ vim WORKTREE_SCOPE.md
 ```
 
 **確認項目:**
+
 - [ ] `Branch` が正しい（work/my-feature-name-YYYYMMDD）
 - [ ] `Purpose` に日本語で作業内容記述
 - [ ] `Editable Directories` が具体的
 - [ ] `Required Checks` にテスト・チェック項目を記載
 
 #### ステップ4: 最初のコミット（3分）
+
 ```bash
 # 4-1. スコープ設定をコミット
 git add WORKTREE_SCOPE.md
@@ -86,11 +94,13 @@ git branch -vv
 ```
 
 **確認項目:**
+
 - [ ] 初回コミット作成
 - [ ] origin に push 成功
 - [ ] ブランチが origin を tracking している
 
 ### 完了チェック
+
 - [ ] 新ワークツリーが `.worktrees/` に存在
 - [ ] `WORKTREE_SCOPE.md` が記入済み
 - [ ] 初回コミットが origin に push 完了
@@ -98,13 +108,14 @@ git branch -vv
 
 **想定所要時間:** 15分
 
----
+______________________________________________________________________
 
 ## チェックリスト2: Python パッケージ作成・追加
 
 `python/` 配下に新規サブパッケージを追加する場合。
 
 ### 前提条件
+
 - [ ] メインワークツリーで `main` ブランチ
 - [ ] `python/` ディレクトリが存在
 - [ ] 別ワークツリーで作業する場合はそれも clean
@@ -112,6 +123,7 @@ git branch -vv
 ### セットアップ手順
 
 #### ステップ1: 新規パッケージディレクトリ作成
+
 ```bash
 # 1-1. スクリプト実行 OR 手動作成
 bash scripts/git_repo_init.sh
@@ -123,10 +135,12 @@ touch python/jax_util/<my-module>/__init__.py
 ```
 
 **確認項目:**
+
 - [ ] `python/jax_util/<my-module>/` ディレクトリ存在
 - [ ] `__init__.py` ファイル存在
 
 #### ステップ2: pyproject.toml 確認
+
 ```bash
 # 2-1. トップレベルの pyproject.toml 確認
 cat pyproject.toml
@@ -136,10 +150,12 @@ grep -A 5 "tool.pyright" pyproject.toml
 ```
 
 **確認項目:**
+
 - [ ] インクルードパスに「python/jax_util/<my-module>」が含まれている
 - [ ] 分析対象に含まれている
 
 #### ステップ3: pyright・pytest 実行
+
 ```bash
 # 3-1. 型チェック
 pyright python/jax_util/<my-module>/
@@ -149,23 +165,26 @@ pytest python/tests/<my-module>/
 ```
 
 **確認項目:**
+
 - [ ] pyright でエラーなし
 - [ ] pytest で既存テストパス
 
 ### 完了チェック
+
 - [ ] ディレクトリ・`__init__.py` 作成完了
 - [ ] pyproject.toml に登録
 - [ ] 型チェック・テスト実行可能
 
 **想定所要時間:** 5分
 
----
+______________________________________________________________________
 
 ## チェックリスト3: コード実装＆テスト
 
 実装作業完了後のテスト・品質確保手順。
 
 ### 前提条件
+
 - [ ] コード編集完了
 - [ ] ワークツリー内で作業中（もしくはメインワークツリー）
 - [ ] `python/tests/` にテストファイルが存在
@@ -186,6 +205,7 @@ black python/
 ```
 
 **確認項目:**
+
 - [ ] pyright エラー数 = 0
 - [ ] ruff エラー数 = 0
 - [ ] black フォーマット可能
@@ -206,6 +226,7 @@ pytest python/tests/<module>/test_<name>.py::TestClass::test_method -v -s
 ```
 
 **確認項目:**
+
 - [ ] テスト成功数・失敗数確認
 - [ ] 期待値との合致確認
 - [ ] ログファイル保存確認
@@ -225,10 +246,12 @@ bash scripts/run_pytest_with_logs.sh
 ```
 
 **確認項目:**
+
 - [ ] 前回失敗していたテストがパス
 - [ ] 新規エラー発生していない
 
 ### 完了チェック
+
 - [ ] pyright: 0 エラー
 - [ ] ruff: 0 エラー
 - [ ] pytest: 全テストパス
@@ -236,13 +259,14 @@ bash scripts/run_pytest_with_logs.sh
 
 **想定所要時間:** 15～30分
 
----
+______________________________________________________________________
 
 ## チェックリスト4: ドキュメント更新
 
 実装に伴うドキュメント更新手順。
 
 ### 前提条件
+
 - [ ] 実装変更が完了
 - [ ] テストが全パス
 - [ ] `documents/` 配下に対応ファイルが存在
@@ -253,14 +277,14 @@ bash scripts/run_pytest_with_logs.sh
 
 実装変更の種類に応じた対象ドキュメント：
 
-| 変更内容 | 対象ドキュメント |
-| --- | --- |
-| 新規 API 追加 | `documents/design/apis/<module>.md` |
-| 既存 Protocol 変更 | `documents/design/base_components.md` |
-| 型定義追加 | `documents/design/base_components.md` |
-| ユーティリティ追加 | 対応モジュール説明ドキュメント |
-| テスト枠組み変更 | `documents/coding-conventions-testing.md` |
-| 運用ルール変更 | `documents/coding-conventions-project.md` |
+| 変更内容           | 対象ドキュメント                          |
+| ------------------ | ----------------------------------------- |
+| 新規 API 追加      | `documents/design/apis/<module>.md`       |
+| 既存 Protocol 変更 | `documents/design/base_components.md`     |
+| 型定義追加         | `documents/design/base_components.md`     |
+| ユーティリティ追加 | 対応モジュール説明ドキュメント            |
+| テスト枠組み変更   | `documents/coding-conventions-testing.md` |
+| 運用ルール変更     | `documents/coding-conventions-project.md` |
 
 ```bash
 # 1-1. 該当ドキュメント確認
@@ -269,6 +293,7 @@ ls documents/
 ```
 
 **確認項目:**
+
 - [ ] 対応ファイル特定
 
 #### ステップ2: ドキュメント更新（10～30分）
@@ -285,6 +310,7 @@ vim documents/design/apis/<module>.md
 ```
 
 **確認項目:**
+
 - [ ] 日本語で明確に説明記述
 - [ ] コード例・数式を含む
 - [ ] リンク参照は相対パス
@@ -303,6 +329,7 @@ python scripts/tools/fix_markdown_docs.py
 ```
 
 **確認項目:**
+
 - [ ] 改行・余白が正規化
 - [ ] リンク切れなし（報告書確認）
 - [ ] Markdown 記法エラーなし
@@ -319,23 +346,26 @@ git push origin work/<branch>
 ```
 
 **確認項目:**
+
 - [ ] コミット作成
 - [ ] origin に push
 
 ### 完了チェック
+
 - [ ] 対象ドキュメント全て更新
 - [ ] 整形・リンク監査清掃
 - [ ] コミット・push 完了
 
 **想定所要時間:** 20～50分
 
----
+______________________________________________________________________
 
 ## チェックリスト5: 設計ドキュメント整理
 
 設計ファイルが `documents/design/` に多数ある場合の整理・統合。
 
 ### 前提条件
+
 - [ ] `documents/design/` にファイル複数存在
 - [ ] サブモジュール別整理が必要
 - [ ] メインワークツリーで作業
@@ -356,6 +386,7 @@ python scripts/tools/tfidf_similar_docs.py --output reports/similar_analysis.txt
 ```
 
 **確認項目:**
+
 - [ ] 重複候補レポート生成
 - [ ] 類似度スコア確認
 - [ ] `reports/` にレポート保存
@@ -374,6 +405,7 @@ python scripts/tools/organize_designs.py
 ```
 
 **確認項目:**
+
 - [ ] dry-run結果確認
 - [ ] 移動・コピー内容妥当
 - [ ] サブモジュール別コピー完了
@@ -389,6 +421,7 @@ cat python/jax_util/solvers/design/template.md
 ```
 
 **確認項目:**
+
 - [ ] サブモジュール用デザインテンプレート生成
 
 #### ステップ4: 古いファイル削除（危険操作、慎重に）
@@ -402,24 +435,27 @@ python scripts/tools/find_redundant_designs.py --delete
 ```
 
 **確認項目:**
+
 - [ ] 削除前にバックアップ済み
 - [ ] 削除対象確認漏れなし
 - [ ] リンク参照がないか二重確認
 
 ### 完了チェック
+
 - [ ] 重複ファイル統合
 - [ ] サブモジュール別整理完了
 - [ ] テンプレート作成完了
 
 **想定所要時間:** 30～60分
 
----
+______________________________________________________________________
 
 ## チェックリスト6: ワークツリー完了＆クリーンアップ
 
 作業完了後のワークツリー削除・ブランチクローズ手順。
 
 ### 前提条件
+
 - [ ] すべてのコード変更が完了・テスト済み
 - [ ] すべてのコミットが origin に push 完了
 - [ ] PR が merge された OR merge 予定
@@ -440,6 +476,7 @@ ls -la notes/worktrees/
 ```
 
 **確認項目:**
+
 - [ ] 重要なメモ・結果をコピー
 - [ ] ワークツリー削除前に完了
 
@@ -460,6 +497,7 @@ git push origin --delete work/my-feature-name-20260318
 ```
 
 **確認項目:**
+
 - [ ] ワークツリーが削除された
 - [ ] `git worktree list` に表示されない
 - [ ] ブランチが削除された
@@ -479,18 +517,20 @@ ls -la .worktrees/
 ```
 
 **確認項目:**
+
 - [ ] 削除対象ワークツリーが表示されない
 - [ ] 他のワークツリーは環境維持
 - [ ] `.worktrees/` から完全削除
 
 ### 完了チェック
+
 - [ ] carry-over ファイル保存
 - [ ] ワークツリー削除完了
 - [ ] ローカル・リモートブランチ削除完了
 
 **想定所要時間:** 10分
 
----
+______________________________________________________________________
 
 ## チェックリスト7: ワークツリー規約遵守チェック（管理者向け）
 
@@ -509,6 +549,7 @@ cat reports/worktree_scope_report.txt
 ```
 
 **確認項目:**
+
 - [ ] 全ワークツリーが `WORKTREE_SCOPE.md` を保持
 - [ ] missing 項目がないか確認
 
@@ -532,11 +573,13 @@ git push -u origin $(git rev-parse --abbrev-ref HEAD)
 ```
 
 **確認項目:**
+
 - [ ] scopeファイル作成
 - [ ] 内容を適切に編集
 - [ ] origin に push
 
 ### 完了チェック
+
 - [ ] スコープ検査実行
 - [ ] 不足ワークツリーが修復
 
@@ -544,7 +587,7 @@ git push -u origin $(git rev-parse --abbrev-ref HEAD)
 
 **推奨実行頻度:** 週1回（金曜日など）
 
----
+______________________________________________________________________
 
 ## チェックリスト8: ドキュメント品質チェック（管理者サポート向け）
 
@@ -586,6 +629,7 @@ git push origin main
 ```
 
 ### 完了チェック
+
 - [ ] 整形・リンク修正完了
 - [ ] 設計ファイル類似度分析完了
 
@@ -593,17 +637,19 @@ git push origin main
 
 **推奨実行頻度:** 週1回（月曜日など）
 
----
+______________________________________________________________________
 
 ## トラブルシューティング
 
 ### 問題: `setup_worktree.sh` と `create_worktree.sh` の違いは？
 
-**現状:** 
+**現状:**
+
 - 両方共存（要統一）
 - 機能がほぼ重複
 
 **推奨:**
+
 - `scripts/tools/create_worktree.sh` を標準使用
 - `scripts/setup_worktree.sh` は廃止予定
 - または、`setup_worktree.sh` を `create_worktree.sh` へのシンボリックリンクに変更
@@ -645,7 +691,7 @@ lsof +D <worktree-path>
 git worktree remove --force .worktrees/<name>
 ```
 
----
+______________________________________________________________________
 
 ## 参考資料・関連ドキュメント
 
@@ -654,4 +700,3 @@ git worktree remove --force .worktrees/<name>
 - [documents/coding-conventions-project.md](./coding-conventions-project.md) — プロジェクト運用規約
 - [documents/worktree-lifecycle.md](./worktree-lifecycle.md) — ワークツリー管理規約
 - [.github/workflows/](../.github/workflows/) — CI/CD ワークフロー
-

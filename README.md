@@ -5,10 +5,12 @@ Common Python module.
 ## Tools & Workflows
 
 **ツール・スクリプト一覧と使用方法：**
+
 - [documents/tools/TOOLS_DIRECTORY.md](/workspace/documents/tools/TOOLS_DIRECTORY.md) — ツール詳細目録（20個のスクリプト・ツール対応）
 - [documents/FILE_CHECKLIST_OPERATIONS.md](/workspace/documents/FILE_CHECKLIST_OPERATIONS.md) — **作業別チェックリスト・実行手順書（8個フロー対応）**
 
 **推奨される作業開始フロー：**
+
 ```bash
 # 1. 新規ブランチ作成
 bash scripts/tools/create_worktree.sh my-feature-name

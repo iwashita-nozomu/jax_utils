@@ -1,71 +1,74 @@
 # 本プロジェクト完全マッピング報告書
 
-**作成日:** 2026-03-19  
-**調査対象:** `/workspace` 全体  
+**作成日:** 2026-03-19\
+**調査対象:** `/workspace` 全体\
 **レポート範囲:** スクリプト・ツール、ワークフロー、構成ファイル、CI/CD パイプライン、規約体系
 
----
+______________________________________________________________________
 
 ## セクション1: スクリプト・ツール完全リスト
 
 ### 1.1 scripts/ 直下のスクリプト（11個）
 
-| # | ファイル名 | 言語 | 用途 | 実行方法 | 入出力 |
-|---|---|---|---|---|---|
-| 1 | `git_config.sh` | Bash | Git ユーザー・デフォルトブランチ設定 | `bash scripts/git_config.sh` | 標準出力 |
-| 2 | `git_init.sh` | Bash | Git 初期化（`git_config.sh` 呼び出し） | `bash scripts/git_init.sh` / `make git_init` | 標準出力 |
-| 3 | `git_repo_init.sh` | Bash | Python パッケージディレクトリ作成 | `bash scripts/git_repo_init.sh` | `python/<package-name>/` |
-| 4 | `view_conventions.sh` | Bash | 規約ファイル表示・検索 | `bash scripts/view_conventions.sh [keyword]` | コンソール表示 |
-| 5 | `read_conventions.sh` | Bash | 規約ファイル一覧表示 | `bash scripts/read_conventions.sh` | テーブル形式表示 |
-| 6 | `setup_worktree.sh` | Bash | ワークツリー・ブランチ作成 ⚠️ | `bash scripts/setup_worktree.sh <branch> [説明]` | `.worktrees/<branch>/` |
-| 7 | `guide.sh` | Bash | 作業フロー全体ガイド表示 | `bash scripts/guide.sh` | テキストガイド |
-| 8 | `create_toml.sh` | Bash | pyproject.toml テンプレート作成 | `bash scripts/create_toml.sh <pkg-name>` | `pyproject.toml` |
-| 9 | `jsonl_to_md.sh` | Bash | JSONL → Markdown 変換 | `bash scripts/jsonl_to_md.sh <in> <out>` | Markdown ファイル |
-| 10 | `extract_deps_from_svg.sh` | Bash | 依存関係抽出（Graphviz） | `bash scripts/extract_deps_from_svg.sh deps.dot [--internal]` | コンソール出力 |
-| 11 | `run_pytest_with_logs.sh` | Bash | pytest 実行・ログ保存 | `bash scripts/run_pytest_with_logs.sh` | `python/tests/logs/[YYYYMMDD]-[HHMMSS]/` |
+| #   | ファイル名                 | 言語 | 用途                                   | 実行方法                                                      | 入出力                                   |
+| --- | -------------------------- | ---- | -------------------------------------- | ------------------------------------------------------------- | ---------------------------------------- |
+| 1   | `git_config.sh`            | Bash | Git ユーザー・デフォルトブランチ設定   | `bash scripts/git_config.sh`                                  | 標準出力                                 |
+| 2   | `git_init.sh`              | Bash | Git 初期化（`git_config.sh` 呼び出し） | `bash scripts/git_init.sh` / `make git_init`                  | 標準出力                                 |
+| 3   | `git_repo_init.sh`         | Bash | Python パッケージディレクトリ作成      | `bash scripts/git_repo_init.sh`                               | `python/<package-name>/`                 |
+| 4   | `view_conventions.sh`      | Bash | 規約ファイル表示・検索                 | `bash scripts/view_conventions.sh [keyword]`                  | コンソール表示                           |
+| 5   | `read_conventions.sh`      | Bash | 規約ファイル一覧表示                   | `bash scripts/read_conventions.sh`                            | テーブル形式表示                         |
+| 6   | `setup_worktree.sh`        | Bash | ワークツリー・ブランチ作成 ⚠️          | `bash scripts/setup_worktree.sh <branch> [説明]`              | `.worktrees/<branch>/`                   |
+| 7   | `guide.sh`                 | Bash | 作業フロー全体ガイド表示               | `bash scripts/guide.sh`                                       | テキストガイド                           |
+| 8   | `create_toml.sh`           | Bash | pyproject.toml テンプレート作成        | `bash scripts/create_toml.sh <pkg-name>`                      | `pyproject.toml`                         |
+| 9   | `jsonl_to_md.sh`           | Bash | JSONL → Markdown 変換                  | `bash scripts/jsonl_to_md.sh <in> <out>`                      | Markdown ファイル                        |
+| 10  | `extract_deps_from_svg.sh` | Bash | 依存関係抽出（Graphviz）               | `bash scripts/extract_deps_from_svg.sh deps.dot [--internal]` | コンソール出力                           |
+| 11  | `run_pytest_with_logs.sh`  | Bash | pytest 実行・ログ保存                  | `bash scripts/run_pytest_with_logs.sh`                        | `python/tests/logs/[YYYYMMDD]-[HHMMSS]/` |
 
 **前提/関連:**
+
 - `git_config.sh` は `git_init.sh` より呼び出し
 - `setup_worktree.sh` は `.github/copilot-instructions.md` で指定（ドキュメント作成対象）
 - `run_pytest_with_logs.sh` は CI パイプラインで実行推奨
 
----
+______________________________________________________________________
 
 ### 1.2 scripts/tools/ 配下（11個）
 
-| # | ファイル名 | 言語 | 用途 | 実行方法 | 入出力 |
-|---|---|---|---|---|---|
-| 1 | `create_worktree.sh` | Bash | ワークツリー・ブランチ作成（標準推奨） ⭐ | `bash scripts/tools/create_worktree.sh <branch> [path]` | `.worktrees/<branch>/` + `WORKTREE_SCOPE.md` |
-| 2 | `check_worktree_scopes.sh` | Bash | 全ワークツリーのスコープ検査 | `bash scripts/tools/check_worktree_scopes.sh` | `reports/worktree_scope_report.txt` |
-| 3 | `format_markdown.py` | Python | Markdown ファイル正規化 | `python scripts/tools/format_markdown.py [files...]` | ファイル直接修正 |
-| 4 | `fix_markdown_docs.py` | Python | Markdown ドキュメント修正 | `python scripts/tools/fix_markdown_docs.py` | `reports/markdown_fixes_report.txt` |
-| 5 | `audit_and_fix_links.py` | Python | 相対リンク検査・修正 | `python scripts/tools/audit_and_fix_links.py` | `reports/link_audit.txt` |
-| 6 | `organize_designs.py` | Python | 設計ファイル整理（サブモジュール別） | `python scripts/tools/organize_designs.py [--dry-run]` | `documents/design/<submodule>/`, `reports/design_organize_report.txt` |
-| 7 | `create_design_template.py` | Python | 設計テンプレート生成 | `python scripts/tools/create_design_template.py <module-path>` | `<module>/design/template.md` |
-| 8 | `find_similar_designs.py` | Python | 設計ファイル類似度検出 | `python scripts/tools/find_similar_designs.py [--threshold 0.85]` | `reports/similar_designs_report.txt` |
-| 9 | `find_similar_documents.py` | Python | ドキュメント全般類似度検出 | `python scripts/tools/find_similar_documents.py` | `reports/similar_documents_report.txt` |
-| 10 | `tfidf_similar_docs.py` | Python | TF-IDF 高度な類似度分析 | `python scripts/tools/tfidf_similar_docs.py [--output file]` | `reports/tfidf_similar_documents_report.txt` |
-| 11 | `find_redundant_designs.py` | Python | 完全一致する設計と判定、削除 | `python scripts/tools/find_redundant_designs.py [--delete]` | `reports/redundant_designs.txt` |
+| #   | ファイル名                  | 言語   | 用途                                      | 実行方法                                                          | 入出力                                                                |
+| --- | --------------------------- | ------ | ----------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------------------------- |
+| 1   | `create_worktree.sh`        | Bash   | ワークツリー・ブランチ作成（標準推奨） ⭐ | `bash scripts/tools/create_worktree.sh <branch> [path]`           | `.worktrees/<branch>/` + `WORKTREE_SCOPE.md`                          |
+| 2   | `check_worktree_scopes.sh`  | Bash   | 全ワークツリーのスコープ検査              | `bash scripts/tools/check_worktree_scopes.sh`                     | `reports/worktree_scope_report.txt`                                   |
+| 3   | `format_markdown.py`        | Python | Markdown ファイル正規化                   | `python scripts/tools/format_markdown.py [files...]`              | ファイル直接修正                                                      |
+| 4   | `fix_markdown_docs.py`      | Python | Markdown ドキュメント修正                 | `python scripts/tools/fix_markdown_docs.py`                       | `reports/markdown_fixes_report.txt`                                   |
+| 5   | `audit_and_fix_links.py`    | Python | 相対リンク検査・修正                      | `python scripts/tools/audit_and_fix_links.py`                     | `reports/link_audit.txt`                                              |
+| 6   | `organize_designs.py`       | Python | 設計ファイル整理（サブモジュール別）      | `python scripts/tools/organize_designs.py [--dry-run]`            | `documents/design/<submodule>/`, `reports/design_organize_report.txt` |
+| 7   | `create_design_template.py` | Python | 設計テンプレート生成                      | `python scripts/tools/create_design_template.py <module-path>`    | `<module>/design/template.md`                                         |
+| 8   | `find_similar_designs.py`   | Python | 設計ファイル類似度検出                    | `python scripts/tools/find_similar_designs.py [--threshold 0.85]` | `reports/similar_designs_report.txt`                                  |
+| 9   | `find_similar_documents.py` | Python | ドキュメント全般類似度検出                | `python scripts/tools/find_similar_documents.py`                  | `reports/similar_documents_report.txt`                                |
+| 10  | `tfidf_similar_docs.py`     | Python | TF-IDF 高度な類似度分析                   | `python scripts/tools/tfidf_similar_docs.py [--output file]`      | `reports/tfidf_similar_documents_report.txt`                          |
+| 11  | `find_redundant_designs.py` | Python | 完全一致する設計と判定、削除              | `python scripts/tools/find_redundant_designs.py [--delete]`       | `reports/redundant_designs.txt`                                       |
 
 **前提/関連:**
+
 - `create_worktree.sh` は `setup_worktree.sh` より先進版（推奨）
 - `check_worktree_scopes.sh` は CI で定期実行推奨
 - ドキュメント処理スクリプトは `.github/workflows/` で活用可能
 - `organize_designs.py` / `create_design_template.py` はセット運用
 
----
+______________________________________________________________________
 
 ### 1.3 scripts/hlo/ 配下（1個）
 
-| # | ファイル名 | 言語 | 用途 | 実行方法 | 入出力 |
-|---|---|---|---|---|---|
-| 1 | `summarize_hlo_jsonl.py` | Python | HLO JSONL ログ集計・分析 | `python scripts/hlo/summarize_hlo_jsonl.py <input.jsonl> [--top 50]` | コンソール出力（統計） |
+| #   | ファイル名               | 言語   | 用途                     | 実行方法                                                             | 入出力                 |
+| --- | ------------------------ | ------ | ------------------------ | -------------------------------------------------------------------- | ---------------------- |
+| 1   | `summarize_hlo_jsonl.py` | Python | HLO JSONL ログ集計・分析 | `python scripts/hlo/summarize_hlo_jsonl.py <input.jsonl> [--top 50]` | コンソール出力（統計） |
 
 **前提/関連:**
+
 - 入力: `jax_util.hlo.dump_hlo_jsonl()` で生成した JSONL ファイル
 - 出力: レコード数、タグ出現回数、HLO op 頻度分析
 
----
+______________________________________________________________________
 
 ### 1.4 合計統計
 
@@ -91,16 +94,16 @@ scripts/hlo/:           1個
   その他:               1個
 ```
 
----
+______________________________________________________________________
 
 ## セクション2: .github/ CI/CD パイプライン・構成
 
 ### 2.1 GitHub Actions ワークフロー
 
-| ファイル | トリガー | ジョブ群 | 主処理 | 状態 |
-|---|---|---|---|---|
-| `.github/workflows/ci.yml` | push (main, master), PR | `test` | pytest + pyright | 実装済み（基本） |
-| `.github/workflows/agent-coordination.yml` | `workflow_dispatch` | `coordinator`, `reviewer`, `integrator` | 静的解析・テスト + ログ集計 | テンプレート状態 ⚠️ |
+| ファイル                                   | トリガー                | ジョブ群                                | 主処理                      | 状態                |
+| ------------------------------------------ | ----------------------- | --------------------------------------- | --------------------------- | ------------------- |
+| `.github/workflows/ci.yml`                 | push (main, master), PR | `test`                                  | pytest + pyright            | 実装済み（基本）    |
+| `.github/workflows/agent-coordination.yml` | `workflow_dispatch`     | `coordinator`, `reviewer`, `integrator` | 静的解析・テスト + ログ集計 | テンプレート状態 ⚠️ |
 
 ### 2.2 CI/CD パイプラインの詳細
 
@@ -122,6 +125,7 @@ scripts/hlo/:           1個
 ```
 
 **問題点:**
+
 - `experiment_runner` テストのみで、全テスト未実施
 - `pyright`, `ruff` は CI に含まれていない
 - `pytest` のログ保存なし
@@ -148,35 +152,35 @@ scripts/hlo/:           1個
 
 **用途:** エージェント間タスク分配・相互検証
 
----
+______________________________________________________________________
 
 ### 2.3 .github/ 配下の全ファイル
 
-| ファイル | 内容 | 担当 |
-|---|---|---|
-| `AGENTS.md` | エージェント運用指針（4つの必須ロール） | 運用指針 |
-| `copilot-instructions.md` | GitHub Copilot 実装指示書 | コパイロット指示 |
-| `agents/discussion.md` | エージェント間議論ログテンプレート | 議論記録 |
-| `workflows/ci.yml` | 基本 CI（pytest） | CI/CD |
-| `workflows/agent-coordination.yml` | エージェント調整ワークフロー | CI/CD |
+| ファイル                           | 内容                                    | 担当             |
+| ---------------------------------- | --------------------------------------- | ---------------- |
+| `AGENTS.md`                        | エージェント運用指針（4つの必須ロール） | 運用指針         |
+| `copilot-instructions.md`          | GitHub Copilot 実装指示書               | コパイロット指示 |
+| `agents/discussion.md`             | エージェント間議論ログテンプレート      | 議論記録         |
+| `workflows/ci.yml`                 | 基本 CI（pytest）                       | CI/CD            |
+| `workflows/agent-coordination.yml` | エージェント調整ワークフロー            | CI/CD            |
 
----
+______________________________________________________________________
 
 ## セクション3: プロジェクトルート構成ファイル
 
 ### 3.1 主要ファイル一覧
 
-| ファイル/ディレクトリ | 用途 | 内容概要 |
-|---|---|---|
-| **Makefile** | ビルドターゲット | `git_init` (1ターゲット) |
-| **pyproject.toml** | Python パッケージ定義 | jax_util / Python 3.10+ / setuptools |
-| **pyrightconfig.json** | Pyright 設定参照 | `extends: ./pyproject.toml` |
-| **.markdownlint.json** | Markdown リント設定 | MD003/004/013/029/030 ルール定義 |
-| **docker/Dockerfile** | コンテナイメージ定義 | CUDA 12.2 / Python 3.10 / GPU JAX |
-| **docker/requirements.txt** | 依存パッケージ | pytest, scipy-stubs, optax, pyright |
-| **.gitignore** | Git 除外パターン | 仮想環境、キャッシュ、ログ |
-| **.devcontainer/** | VS Code Dev Container | コンテナ開発環境設定 |
-| **.vscode/** | VS Code プロジェクト設定 | ワークスペース設定等 |
+| ファイル/ディレクトリ       | 用途                     | 内容概要                             |
+| --------------------------- | ------------------------ | ------------------------------------ |
+| **Makefile**                | ビルドターゲット         | `git_init` (1ターゲット)             |
+| **pyproject.toml**          | Python パッケージ定義    | jax_util / Python 3.10+ / setuptools |
+| **pyrightconfig.json**      | Pyright 設定参照         | `extends: ./pyproject.toml`          |
+| **.markdownlint.json**      | Markdown リント設定      | MD003/004/013/029/030 ルール定義     |
+| **docker/Dockerfile**       | コンテナイメージ定義     | CUDA 12.2 / Python 3.10 / GPU JAX    |
+| **docker/requirements.txt** | 依存パッケージ           | pytest, scipy-stubs, optax, pyright  |
+| **.gitignore**              | Git 除外パターン         | 仮想環境、キャッシュ、ログ           |
+| **.devcontainer/**          | VS Code Dev Container    | コンテナ開発環境設定                 |
+| **.vscode/**                | VS Code プロジェクト設定 | ワークスペース設定等                 |
 
 ### 3.2 Makefile の詳細
 
@@ -246,6 +250,7 @@ CMD: /bin/bash
 ```
 
 **インストールモジュール:**
+
 ```
 Core:
   - jax[cuda12] (JAX + CUDA Toolkit 12)
@@ -275,24 +280,26 @@ Stubs/Type:
   MD013: 行長制限（無効化）
 ```
 
----
+______________________________________________________________________
 
 ## セクション4: 既存ツール整理ドキュメント
 
 ### 4.1 documents/tools/TOOLS_DIRECTORY.md の現状
 
-**作成日:** 2026-03-19  
+**作成日:** 2026-03-19\
 **状態:** 詳細整理済み（散在 → 構造化進行中）
 
 **構成:**
+
 1. ツール概説（20個のスクリプト分類）
-2. 8つのツール分類セクション
-3. ツール依存グラフ
-4. フロー別ガイド（5フロー）
-5. 整理方針・推奨変更（優先度3段階）
-6. 次ステップ（5段階）
+1. 8つのツール分類セクション
+1. ツール依存グラフ
+1. フロー別ガイド（5フロー）
+1. 整理方針・推奨変更（優先度3段階）
+1. 次ステップ（5段階）
 
 **記載範囲:**
+
 - ✅ 各ツールの用途・実行方法・前提条件
 - ✅ 副作用・エラー処理
 - ✅ 関連ドキュメント参照
@@ -300,91 +307,96 @@ Stubs/Type:
 - ⚠️ 優先度付き改善案不足（レビュー待ち）
 
 **既知問題:**
-1. `setup_worktree.sh` と `create_worktree.sh` の重複 → 統一推奨
-2. `view_conventions.sh` / `read_conventions.sh` の役割曖昧
-3. CI 統合ドキュメント欠落
 
----
+1. `setup_worktree.sh` と `create_worktree.sh` の重複 → 統一推奨
+1. `view_conventions.sh` / `read_conventions.sh` の役割曖昧
+1. CI 統合ドキュメント欠落
+
+______________________________________________________________________
 
 ### 4.2 documents/FILE_CHECKLIST_OPERATIONS.md の現状
 
-**作成日:** 2026-03-19  
+**作成日:** 2026-03-19\
 **状態:** チェックリスト体系完成
 
 **構成:** 8個のチェックリスト
 
-| # | チェックリスト | 項目数 | 所要時間 | 対象 |
-|---|---|---|---|---|
-| 1 | 新規開発ブランチ開始 | 3ステップ | 15分 | 開発者 |
-| 2 | Python パッケージ作成 | 3ステップ | 5分 | 開発者 |
-| 3 | コード実装＆テスト | 3ステップ | 15-30分 | 開発者 |
-| 4 | ドキュメント更新 | 4ステップ | 20-50分 | 開発者 |
-| 5 | 設計ドキュメント整理 | 4ステップ | 30-60分 | メンテナー |
-| 6 | ワークツリー完了＆クリーンアップ | 3ステップ | 10分 | 開発者 |
-| 7 | ワークツリー規約遵守チェック | 2ステップ | 10-30分 | 管理者 |
-| 8 | ドキュメント品質チェック | 3ステップ | 10分 | 管理者 |
+| #   | チェックリスト                   | 項目数    | 所要時間 | 対象       |
+| --- | -------------------------------- | --------- | -------- | ---------- |
+| 1   | 新規開発ブランチ開始             | 3ステップ | 15分     | 開発者     |
+| 2   | Python パッケージ作成            | 3ステップ | 5分      | 開発者     |
+| 3   | コード実装＆テスト               | 3ステップ | 15-30分  | 開発者     |
+| 4   | ドキュメント更新                 | 4ステップ | 20-50分  | 開発者     |
+| 5   | 設計ドキュメント整理             | 4ステップ | 30-60分  | メンテナー |
+| 6   | ワークツリー完了＆クリーンアップ | 3ステップ | 10分     | 開発者     |
+| 7   | ワークツリー規約遵守チェック     | 2ステップ | 10-30分  | 管理者     |
+| 8   | ドキュメント品質チェック         | 3ステップ | 10分     | 管理者     |
 
 **内容:**
+
 - 全セクションに「確認項目」☑️ チェックボックス付き
 - 実装コマンド例・説明 完備
 - トラブルシューティング セクション付き
 
 **特徴:**
+
 - ✅ 粒度・フロー別分類が明確
 - ✅ 所要時間が記載（計画立案用）
 - ✅ 参考資料リンク完備
 - ✅ 管理者向け 2 チェックリスト（規約検査・品質チェック）
 
----
+______________________________________________________________________
 
 ### 4.3 documents/WORKFLOW_INVENTORY.md の現状
 
-**作成日:** 2026-03-19  
+**作成日:** 2026-03-19\
 **状態:** 自動化現状＆未自動化タスク整理
 
 **自動化済みワークフロー（先行実装）:**
+
 1. 静的チェック実行（`scripts/ci/run_static_checks.sh`）
-2. 安全ファイル抽出（`scripts/ci/safe_file_extractor.py`）
-3. 安全ファイル修正（`scripts/ci/safe_fix.sh`）
-4. レポート収集（`scripts/ci/collect_reports.sh`）
-5. 設計ファイル整理（`scripts/tools/organize_designs.py` 等）
+1. 安全ファイル抽出（`scripts/ci/safe_file_extractor.py`）
+1. 安全ファイル修正（`scripts/ci/safe_fix.sh`）
+1. レポート収集（`scripts/ci/collect_reports.sh`）
+1. 設計ファイル整理（`scripts/tools/organize_designs.py` 等）
 
 **未自動化/部分自動化タスク:**
+
 1. ブランチスコープの PR 警告（未実装）
-2. ワークツリー `WORKTREE_SCOPE.md` チェック（有：`check_worktree_scopes.sh`、部分実装）
-3. 設計ファイル類似度検出（有：`find_similar_designs.py`）
-4. 設計移行の dry-run → PR 自動化（未実装）
-5. 設計インデックス自動生成（未実装）
+1. ワークツリー `WORKTREE_SCOPE.md` チェック（有：`check_worktree_scopes.sh`、部分実装）
+1. 設計ファイル類似度検出（有：`find_similar_designs.py`）
+1. 設計移行の dry-run → PR 自動化（未実装）
+1. 設計インデックス自動生成（未実装）
 
 **優先度提案:**
 
-| 優先度 | 項目 | 理由 |
-|---|---|---|
-| 高 | ブランチスコープ PR 警告 | 1 ブランチ = 1 サブモジュール規約の補強 |
-| 高 | ワークツリー scope チェック + オーナー通知 | 規約遵守の自動化 |
-| 中 | 類似度検出ツール（完全版） | 重複排除の効率化 |
-| 中 | 設計移行 dry-run → PR 自動化 | フロー統合 |
-| 低 | インデックス自動生成 | cron で十分 |
+| 優先度 | 項目                                       | 理由                                    |
+| ------ | ------------------------------------------ | --------------------------------------- |
+| 高     | ブランチスコープ PR 警告                   | 1 ブランチ = 1 サブモジュール規約の補強 |
+| 高     | ワークツリー scope チェック + オーナー通知 | 規約遵守の自動化                        |
+| 中     | 類似度検出ツール（完全版）                 | 重複排除の効率化                        |
+| 中     | 設計移行 dry-run → PR 自動化               | フロー統合                              |
+| 低     | インデックス自動生成                       | cron で十分                             |
 
----
+______________________________________________________________________
 
 ## セクション5: 規約体系（コーディング規約・運用規約）
 
 ### 5.1 主要規約ドキュメント一覧
 
-| ファイル | 内容 | 行数 | 対象 |
-|---|---|---|---|
-| `documents/README.md` | ドキュメント体系全体 | TBD | 全員 |
-| `documents/coding-conventions-project.md` | プロジェクト全体運用規約 | 150+ | 全員 |
-| `documents/WORKTREE_SCOPE_TEMPLATE.md` | ワークツリースコープテンプレート | 40+ | 開発者・管理者 |
-| `documents/BRANCH_SCOPE.md` | ブランチスコープ定義 | 10+ | 設計書 |
-| `documents/worktree-lifecycle.md` | ワークツリー管理規約 | TBD | 開発者・管理者 |
-| `documents/AGENTS_COORDINATION.md` | エージェント運用指針 | TBD | 自動化 |
-| `documents/coding-conventions-testing.md` | テスト規約 | TBD | テスト書者 |
-| `documents/coding-conventions-logging.md` | ログ規約 | TBD | 実装者 |
-| `documents/coding-conventions-reviews.md` | レビュー規約 | TBD | レビュアー |
-| `documents/conventions/python/` | Python 規約（細則） | 複数 | Python 開発者 |
-| `documents/conventions/common/` | 共通規約 | 複数 | 全員 |
+| ファイル                                  | 内容                             | 行数 | 対象           |
+| ----------------------------------------- | -------------------------------- | ---- | -------------- |
+| `documents/README.md`                     | ドキュメント体系全体             | TBD  | 全員           |
+| `documents/coding-conventions-project.md` | プロジェクト全体運用規約         | 150+ | 全員           |
+| `documents/WORKTREE_SCOPE_TEMPLATE.md`    | ワークツリースコープテンプレート | 40+  | 開発者・管理者 |
+| `documents/BRANCH_SCOPE.md`               | ブランチスコープ定義             | 10+  | 設計書         |
+| `documents/worktree-lifecycle.md`         | ワークツリー管理規約             | TBD  | 開発者・管理者 |
+| `documents/AGENTS_COORDINATION.md`        | エージェント運用指針             | TBD  | 自動化         |
+| `documents/coding-conventions-testing.md` | テスト規約                       | TBD  | テスト書者     |
+| `documents/coding-conventions-logging.md` | ログ規約                         | TBD  | 実装者         |
+| `documents/coding-conventions-reviews.md` | レビュー規約                     | TBD  | レビュアー     |
+| `documents/conventions/python/`           | Python 規約（細則）              | 複数 | Python 開発者  |
+| `documents/conventions/common/`           | 共通規約                         | 複数 | 全員           |
 
 ### 5.2 coding-conventions-project.md の主要内容
 
@@ -431,23 +443,23 @@ Stubs/Type:
    - Markdown: 相対パスのみ（絶対パス禁止）
 ```
 
----
+______________________________________________________________________
 
 ## セクション6: 配置の問題点と散在状況
 
 ### 6.1 完全な問題点分析
 
-| 問題 | 重大度 | 場所 | 詳細 | 影響範囲 | 推奨対応 |
-|---|---|---|---|---|---|
-| **ワークツリー作成ツール重複** | 🔴 高 | `scripts/setup_worktree.sh` vs `scripts/tools/create_worktree.sh` | 機能 90% 重複、引数体系が異なる | 開発フロー | 統一選択（推奨: `create_worktree.sh` 標準化） |
-| **CI パイプライン不完全** | 🔴 高 | `.github/workflows/ci.yml` | `experiment_runner` テストのみ、`pyright`/`ruff` 未含 | CI 検証精度 | 全テスト + 静的解析を CI ターゲットに |
-| **エージェントワークフロー未実装** | 🟡 中 | `.github/workflows/agent-coordination.yml` | テンプレート骨子状態、実処理欠落 | 自動化効率 | 実装完了（別タスク） |
-| **スクリプト位置づけ混在** | 🟡 中 | `scripts/` / `scripts/tools/` | 「直下」と「tools/」の役割区分が曖昧 | 新規スクリプト追加時の判断 | ディレクトリ運用指針明文化 |
-| **Makefile ターゲット最小限** | 🟡 中 | `Makefile` | 1 ターゲット（git_init）のみ | 開発効率 | テスト・ドキュメント生成等ターゲット追加 |
-| **ドキュメント処理ツールと CI 未統合** | 🟡 中 | `scripts/tools/*.py` vs CI | リンク監査・Markdown 整形が CI に含まれない | ドキュメント品質 | CI に ドキュメント検査ステップ追加 |
-| **設計ファイル整理フロー複雑** | 🟡 中 | `organize_designs.py`, `find_*` 一族 | 5 個のツール分散、統合 CLI 欠落 | ツール使いやすさ | ワンステップ整理コマンド（wrapper） |
-| **実験系スクリプト配置未定** | 🟡 中 | `scripts/hlo/` | 1 個のみ、`experiments/` スクリプトがない | 実験フロー | `scripts/experiments/` ディレクトリ検討 |
-| **設定ファイル分散** | 🟢 低 | `.markdownlint.json`, `pyrightconfig.json` 等 | Dockerfile+requirements.txt 需同期がドキュメント化欠落 | メンテナンス | 設定更新時の SOP 作成 |
+| 問題                                   | 重大度 | 場所                                                              | 詳細                                                   | 影響範囲                   | 推奨対応                                      |
+| -------------------------------------- | ------ | ----------------------------------------------------------------- | ------------------------------------------------------ | -------------------------- | --------------------------------------------- |
+| **ワークツリー作成ツール重複**         | 🔴 高  | `scripts/setup_worktree.sh` vs `scripts/tools/create_worktree.sh` | 機能 90% 重複、引数体系が異なる                        | 開発フロー                 | 統一選択（推奨: `create_worktree.sh` 標準化） |
+| **CI パイプライン不完全**              | 🔴 高  | `.github/workflows/ci.yml`                                        | `experiment_runner` テストのみ、`pyright`/`ruff` 未含  | CI 検証精度                | 全テスト + 静的解析を CI ターゲットに         |
+| **エージェントワークフロー未実装**     | 🟡 中  | `.github/workflows/agent-coordination.yml`                        | テンプレート骨子状態、実処理欠落                       | 自動化効率                 | 実装完了（別タスク）                          |
+| **スクリプト位置づけ混在**             | 🟡 中  | `scripts/` / `scripts/tools/`                                     | 「直下」と「tools/」の役割区分が曖昧                   | 新規スクリプト追加時の判断 | ディレクトリ運用指針明文化                    |
+| **Makefile ターゲット最小限**          | 🟡 中  | `Makefile`                                                        | 1 ターゲット（git_init）のみ                           | 開発効率                   | テスト・ドキュメント生成等ターゲット追加      |
+| **ドキュメント処理ツールと CI 未統合** | 🟡 中  | `scripts/tools/*.py` vs CI                                        | リンク監査・Markdown 整形が CI に含まれない            | ドキュメント品質           | CI に ドキュメント検査ステップ追加            |
+| **設計ファイル整理フロー複雑**         | 🟡 中  | `organize_designs.py`, `find_*` 一族                              | 5 個のツール分散、統合 CLI 欠落                        | ツール使いやすさ           | ワンステップ整理コマンド（wrapper）           |
+| **実験系スクリプト配置未定**           | 🟡 中  | `scripts/hlo/`                                                    | 1 個のみ、`experiments/` スクリプトがない              | 実験フロー                 | `scripts/experiments/` ディレクトリ検討       |
+| **設定ファイル分散**                   | 🟢 低  | `.markdownlint.json`, `pyrightconfig.json` 等                     | Dockerfile+requirements.txt 需同期がドキュメント化欠落 | メンテナンス               | 設定更新時の SOP 作成                         |
 
 ### 6.2 スクリプト散在の具体例
 
@@ -499,7 +511,7 @@ Stubs/Type:
   → 統一度: N/A / 分散度: N/A （独立ディレクトリ）
 ```
 
----
+______________________________________________________________________
 
 ## セクション7: 業界標準パターン（簡潔版）
 
@@ -531,16 +543,18 @@ scripts/
 ```
 
 **参考実例等:**
+
 - JAX, TensorFlow: `tools/` に分析ツール、`scripts/` に実行スクリプト
 - PyTorch: `tools/` に検証ツール、`setup.py` 中心
 - scikit-learn: `maint_tools/` に管理ツール集合、構造化
 
 **本プロジェクトの比較:**
+
 - ✅ 長所: ツール用 `scripts/tools/` ディレクトリ分離（標準パターン従従）
 - ⚠️ 短所: 直下に「混在」（setup + ユーティリティ）
 - ⚠️ 短所: `ci/` ディレクトリがなく、CI スクリプト未統合
 
----
+______________________________________________________________________
 
 ### 7.2 CI/CD ワークフロー整理の標準パターン
 
@@ -565,32 +579,35 @@ Layer 3: GitHub Actions（リモート自動実行）
 ```
 
 **メリット:**
+
 1. ローカル ↔ リモート の一貫性
-2. CI スクリプト自体がバージョン管理される
-3. 新 CI スクリプト追加時にローカルで検証可能
+1. CI スクリプト自体がバージョン管理される
+1. 新 CI スクリプト追加時にローカルで検証可能
 
 **参考事例:**
+
 - Django: `.github/workflows/` から `scripts/runtests.py` を call
 - CPython: Workflows から `Tools/` スクリプトを execution
 - Kubernetes: `.github/workflows/` + `hack/` スクリプト統合
 
 **本プロジェクトの比較:**
+
 - ✅ 長所: `scripts/tools/` にドキュメント処理ツール集約
 - ❌ 短所: `scripts/ci/` がなく、CI スクリプト未バージョン管理
 - ❌ 短所: GitHub Actions から `scripts/` を呼び出していない（直接実行）
 
----
+______________________________________________________________________
 
 ### 7.3 相対パス参照構造の推奨形式
 
 **業界標準（絶対評価）:**
 
-| パターン | 形式 | 用途 | 例 |
-|---|---|---|---|
-| **リポジトリ内（相対）** | `../../path/to/file` | Markdown, Config, Script 相互参照 | ✅ 推奨 |
-| **リポジトリ内（ルート相対）** | `path/to/file` | CI, Docker 内実行 | ✅ 推奨（context 明確時） |
-| **リポジトリ外（絶対）** | `/home/user/...` | 避ける（環境依存）| ❌ 禁止 |
-| **リポジトリ外（$HOME, env）** | `$HOME/path`, `$WORKSPACE/path` | 環境変数経由は OK | ⚠️ 条件付き |
+| パターン                        | 形式                            | 用途                              | 例                        |
+| ------------------------------- | ------------------------------- | --------------------------------- | ------------------------- |
+| **リポジトリ内（相対）**        | `../../path/to/file`            | Markdown, Config, Script 相互参照 | ✅ 推奨                   |
+| **リポジトリ内（ルート相対）**  | `path/to/file`                  | CI, Docker 内実行                 | ✅ 推奨（context 明確時） |
+| **リポジトリ外（絶対）**        | `/home/user/...`                | 避ける（環境依存）                | ❌ 禁止                   |
+| **リポジトリ外（\$HOME, env）** | `$HOME/path`, `$WORKSPACE/path` | 環境変数経由は OK                 | ⚠️ 条件付き               |
 
 **本プロジェクトのパターン:**
 
@@ -623,7 +640,7 @@ LOG_ROOT="./python/tests/logs"  # ← 同様
 [API仕様](file:///home/user/workspace/documents/design/apis/solvers.md)
 ```
 
----
+______________________________________________________________________
 
 ## セクション8: 推奨されるディレクトリ構成案
 
@@ -723,16 +740,16 @@ Make targets:
 
 ### 8.2 具体的な改善アクション
 
-| Phase | 優先度 | 行動 | 所要工数 | 効果 |
-|---|---|---|---|---|
-| 1-1 | 🔴 高 | `setup_worktree.sh` を廃止 → `create_worktree.sh` を標準化 | 5min + テスト | ツール統一 |
-| 1-2 | 🔴 高 | `scripts/ci/` ディレクトリ作成、CI スクリプト集約 | 30分 | ローカル ↔ リモート同期 |
-| 1-3 | 🔴 高 | `scripts/setup/` ディレクトリ作成、初期化スクリプト整理 | 15分 | 関心ごとの分離 |
-| 1-4 | 🟡 中 | `scripts/tools/` に README.md 追加（使用順序ガイド） | 20分 | ツール発見性向上 |
-| 1-5 | 🟡 中 | `.github/workflows/ci.yml` を scripts/ci/ の実行に切り替え | 15分 | ローカル再現性向上 |
-| 2-1 | 🟡 中 | `scripts/guide/` → `view_conventions.sh` と `read_conventions.sh` を 統合 | 20分 | UI 統一 |
-| 2-2 | 🟡 中 | `scripts/tools/design/` 統合 wrapper 作成 | 30分 | ワンステップ整理 |
-| 2-3 | 🟢 低 | `scripts/experiments/` ディレクトリ作成、実験スクリプト予約 | 10分 | 将来展開対応 |
+| Phase | 優先度 | 行動                                                                      | 所要工数      | 効果                    |
+| ----- | ------ | ------------------------------------------------------------------------- | ------------- | ----------------------- |
+| 1-1   | 🔴 高  | `setup_worktree.sh` を廃止 → `create_worktree.sh` を標準化                | 5min + テスト | ツール統一              |
+| 1-2   | 🔴 高  | `scripts/ci/` ディレクトリ作成、CI スクリプト集約                         | 30分          | ローカル ↔ リモート同期 |
+| 1-3   | 🔴 高  | `scripts/setup/` ディレクトリ作成、初期化スクリプト整理                   | 15分          | 関心ごとの分離          |
+| 1-4   | 🟡 中  | `scripts/tools/` に README.md 追加（使用順序ガイド）                      | 20分          | ツール発見性向上        |
+| 1-5   | 🟡 中  | `.github/workflows/ci.yml` を scripts/ci/ の実行に切り替え                | 15分          | ローカル再現性向上      |
+| 2-1   | 🟡 中  | `scripts/guide/` → `view_conventions.sh` と `read_conventions.sh` を 統合 | 20分          | UI 統一                 |
+| 2-2   | 🟡 中  | `scripts/tools/design/` 統合 wrapper 作成                                 | 30分          | ワンステップ整理        |
+| 2-3   | 🟢 低  | `scripts/experiments/` ディレクトリ作成、実験スクリプト予約               | 10分          | 将来展開対応            |
 
 ### 8.3 Phase 1 実装ロードマップ（1-2 週間見積）
 
@@ -755,20 +772,20 @@ Optional (Phase 2):
   + 2-3 experiments 予約
 ```
 
----
+______________________________________________________________________
 
 ## セクション9: サマリー＆推奨実装順序
 
 ### 9.1 本プロジェクトの総合評価
 
-| 観点 | 評価 | 理由 |
-|---|---|---|
-| **スクリプト整理度** | 7/10 | ツール集約は良好。重複・散在が残存 |
-| **CI/CD 整備度** | 5/10 | 基本 CI は存在。全テスト + ドキュメント検査が欠落 |
-| **ドキュメント充実度** | 9/10 | 規約・チェックリスト・ツール目録が詳細。実装指示明確 |
-| **運用規約体系** | 8/10 | WORKTREE_SCOPE, BRANCH_SCOPE, コンベンション整備。但し分散 |
-| **相対パス参照度** | 6/10 | Markdown は相対パス。Shell スクリプトは絶対パス混在 |
-| **業界標準準拠度** | 6/10 | 理想型への 60% 達成。Phase 1 改善で 80% へ |
+| 観点                   | 評価 | 理由                                                       |
+| ---------------------- | ---- | ---------------------------------------------------------- |
+| **スクリプト整理度**   | 7/10 | ツール集約は良好。重複・散在が残存                         |
+| **CI/CD 整備度**       | 5/10 | 基本 CI は存在。全テスト + ドキュメント検査が欠落          |
+| **ドキュメント充実度** | 9/10 | 規約・チェックリスト・ツール目録が詳細。実装指示明確       |
+| **運用規約体系**       | 8/10 | WORKTREE_SCOPE, BRANCH_SCOPE, コンベンション整備。但し分散 |
+| **相対パス参照度**     | 6/10 | Markdown は相対パス。Shell スクリプトは絶対パス混在        |
+| **業界標準準拠度**     | 6/10 | 理想型への 60% 達成。Phase 1 改善で 80% へ                 |
 
 ### 9.2 ブロッカーと推奨優先順序
 
@@ -809,57 +826,57 @@ Optional (Phase 2):
 
 ### 9.3 実装済み・要改善・未実装の整理表
 
-| 機能 | 状態 | 改善予定 | 優先度 |
-|---|---|---|---|
-| Git 初期化スクリプト | ✅ 完成 | — | — |
-| ワークツリー作成 | ⚠️ 重複 | 統一（create_worktree.sh 標準） | 🔴 高 |
-| チェックリスト体系 | ✅ 完成 | — | — |
-| 規約ドキュメント | ✅ 完成 | 散在解消（リンク整理） | 🟡 中 |
-| CI 基本テスト | ✅ 存在 | 全テスト + 静的解析追加 | 🔴 高 |
-| CI ドキュメント検査 | ❌ なし | 実装（audit_links + format） | 🟡 中 |
-| Makefile | ✅ 最小限 | ターゲット追加 | 🟡 中 |
-| スクリプト README | ❌ なし | 作成（全ディレクトリ） | 🟡 中 |
-| ツール統合 CLI | ❌ なし | 設計整理 wrapper 追加 | 🟢 低 |
-| エージェント自動化 | ⚠️ スケルトン | 完全実装 | 🟢 低 |
-| 相対パス統一化 | ⚠️ 混在 | Bash スクリプト修正 | 🟡 中 |
+| 機能                 | 状態          | 改善予定                        | 優先度 |
+| -------------------- | ------------- | ------------------------------- | ------ |
+| Git 初期化スクリプト | ✅ 完成       | —                               | —      |
+| ワークツリー作成     | ⚠️ 重複       | 統一（create_worktree.sh 標準） | 🔴 高  |
+| チェックリスト体系   | ✅ 完成       | —                               | —      |
+| 規約ドキュメント     | ✅ 完成       | 散在解消（リンク整理）          | 🟡 中  |
+| CI 基本テスト        | ✅ 存在       | 全テスト + 静的解析追加         | 🔴 高  |
+| CI ドキュメント検査  | ❌ なし       | 実装（audit_links + format）    | 🟡 中  |
+| Makefile             | ✅ 最小限     | ターゲット追加                  | 🟡 中  |
+| スクリプト README    | ❌ なし       | 作成（全ディレクトリ）          | 🟡 中  |
+| ツール統合 CLI       | ❌ なし       | 設計整理 wrapper 追加           | 🟢 低  |
+| エージェント自動化   | ⚠️ スケルトン | 完全実装                        | 🟢 低  |
+| 相対パス統一化       | ⚠️ 混在       | Bash スクリプト修正             | 🟡 中  |
 
----
+______________________________________________________________________
 
 ## 附録A: ファイル・スクリプト参照一覧（全 23個）
 
 ### A.1 shells スクリプト（Bash, 14個）
 
 1. [scripts/git_config.sh](scripts/git_config.sh)
-2. [scripts/git_init.sh](scripts/git_init.sh)
-3. [scripts/git_repo_init.sh](scripts/git_repo_init.sh)
-4. [scripts/view_conventions.sh](scripts/view_conventions.sh)
-5. [scripts/read_conventions.sh](scripts/read_conventions.sh)
-6. [scripts/setup_worktree.sh](scripts/setup_worktree.sh) ⚠️ 廃止予定
-7. [scripts/guide.sh](scripts/guide.sh)
-8. [scripts/create_toml.sh](scripts/create_toml.sh)
-9. [scripts/jsonl_to_md.sh](scripts/jsonl_to_md.sh)
-10. [scripts/extract_deps_from_svg.sh](scripts/extract_deps_from_svg.sh)
-11. [scripts/run_pytest_with_logs.sh](scripts/run_pytest_with_logs.sh)
-12. [scripts/tools/create_worktree.sh](scripts/tools/create_worktree.sh) ⭐ 推奨
-13. [scripts/tools/check_worktree_scopes.sh](scripts/tools/check_worktree_scopes.sh)
+1. [scripts/git_init.sh](scripts/git_init.sh)
+1. [scripts/git_repo_init.sh](scripts/git_repo_init.sh)
+1. [scripts/view_conventions.sh](scripts/view_conventions.sh)
+1. [scripts/read_conventions.sh](scripts/read_conventions.sh)
+1. [scripts/setup_worktree.sh](scripts/setup_worktree.sh) ⚠️ 廃止予定
+1. [scripts/guide.sh](scripts/guide.sh)
+1. [scripts/create_toml.sh](scripts/create_toml.sh)
+1. [scripts/jsonl_to_md.sh](scripts/jsonl_to_md.sh)
+1. [scripts/extract_deps_from_svg.sh](scripts/extract_deps_from_svg.sh)
+1. [scripts/run_pytest_with_logs.sh](scripts/run_pytest_with_logs.sh)
+1. [scripts/tools/create_worktree.sh](scripts/tools/create_worktree.sh) ⭐ 推奨
+1. [scripts/tools/check_worktree_scopes.sh](scripts/tools/check_worktree_scopes.sh)
 
 ### A.2 Python スクリプト（9個）
 
 1. [scripts/tools/format_markdown.py](scripts/tools/format_markdown.py)
-2. [scripts/tools/fix_markdown_docs.py](scripts/tools/fix_markdown_docs.py)
-3. [scripts/tools/audit_and_fix_links.py](scripts/tools/audit_and_fix_links.py)
-4. [scripts/tools/organize_designs.py](scripts/tools/organize_designs.py)
-5. [scripts/tools/create_design_template.py](scripts/tools/create_design_template.py)
-6. [scripts/tools/find_similar_designs.py](scripts/tools/find_similar_designs.py)
-7. [scripts/tools/find_similar_documents.py](scripts/tools/find_similar_documents.py)
-8. [scripts/tools/tfidf_similar_docs.py](scripts/tools/tfidf_similar_docs.py)
-9. [scripts/tools/find_redundant_designs.py](scripts/tools/find_redundant_designs.py)
+1. [scripts/tools/fix_markdown_docs.py](scripts/tools/fix_markdown_docs.py)
+1. [scripts/tools/audit_and_fix_links.py](scripts/tools/audit_and_fix_links.py)
+1. [scripts/tools/organize_designs.py](scripts/tools/organize_designs.py)
+1. [scripts/tools/create_design_template.py](scripts/tools/create_design_template.py)
+1. [scripts/tools/find_similar_designs.py](scripts/tools/find_similar_designs.py)
+1. [scripts/tools/find_similar_documents.py](scripts/tools/find_similar_documents.py)
+1. [scripts/tools/tfidf_similar_docs.py](scripts/tools/tfidf_similar_docs.py)
+1. [scripts/tools/find_redundant_designs.py](scripts/tools/find_redundant_designs.py)
 
 ### A.3 HLO (1個)
 
 1. [scripts/hlo/summarize_hlo_jsonl.py](scripts/hlo/summarize_hlo_jsonl.py)
 
----
+______________________________________________________________________
 
 ## 附録B: 設定ファイル参考情報
 
@@ -909,7 +926,7 @@ agent-coordination.yml:
   State: Skeleton (未完全)
 ```
 
----
+______________________________________________________________________
 
 ## 附録C: 互換性と相互依存グラフ
 
@@ -944,52 +961,60 @@ agent-coordination.yml:
     └─→ extract_deps_from_svg.sh
 ```
 
----
+______________________________________________________________________
 
 ## 結論
 
 本プロジェクトは以下の強みを持ちます：
 
 ✅ **ドキュメント整備:**
+
 - 規約・チェックリスト・ツール目録が詳細かつ実用的
 - コーディング規約が厳密で一貫性がある
 
 ✅ **ツール群の充実:**
+
 - 23個のスクリプト・ツールが、操作性・保守性を考慮して配置
 - Python + Bash の混合利用で、タスク適性に合わせた実装
 
 ✅ **運用体系の完成度:**
+
 - WORKTREE_SCOPE による スコープ管理
 - チェックリスト形式の段階的手順書
 
 **改善余地:**
 
 ⚠️ **ツール重複:**
+
 - `setup_worktree.sh` と `create_worktree.sh` 統一が喫緊
 
 ⚠️ **CI/CD 未完全:**
+
 - ドキュメント検査が CI に含まれない
 - Agent Coordination が未実装
 
 ⚠️ **相対パス混在:**
+
 - Bash スクリプトに絶対パスが散在
 
 **推奨 Phase 1 実装項目（優先度順）:**
+
 1. ワークツリーツール統一（5分）
-2. scripts/ci/ 作成 + CI 統合（30分）
-3. Makefile ターゲット追加（15分）
-4. ツール README 作成（60分）
-5. CI ドキュメント検査追加（30分）
+1. scripts/ci/ 作成 + CI 統合（30分）
+1. Makefile ターゲット追加（15分）
+1. ツール README 作成（60分）
+1. CI ドキュメント検査追加（30分）
 
 **期待効果:**
+
 - 開発フロー統一化 → 心理的負荷軽減
 - ローカル ↔ リモート CI 同期 → 再現性向上
 - ツール発見性向上 → 新規ユーザーオンボーディング短縮
 - 業界標準に接近 → 80% 準拠まで改善
 
----
+______________________________________________________________________
 
-**レポート作成者:** GitHub Copilot  
-**作成日:** 2026-03-19  
-**対象期間:** プロジェクト全期間  
+**レポート作成者:** GitHub Copilot\
+**作成日:** 2026-03-19\
+**対象期間:** プロジェクト全期間\
 **次回レビュー日:** 2026-04-02（実装後 2 週間）

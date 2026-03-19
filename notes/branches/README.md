@@ -23,12 +23,12 @@
 
 ## Index
 
-| Branch | Note | Role | Status |
-| --- | --- | --- | --- |
-| `main` | [main.md](/workspace/notes/branches/main.md) | 既定のコード・文書の統合先 | active |
-| `results/functional-smolyak-scaling` | [results_functional_smolyak_scaling.md](/workspace/notes/branches/results_functional_smolyak_scaling.md) | 旧版 Smolyak の完了結果と途中結果 | archived |
-| `results/functional-smolyak-scaling-tuned` | [results_functional_smolyak_scaling_tuned.md](/workspace/notes/branches/results_functional_smolyak_scaling_tuned.md) | tuned Smolyak の継続実験 | active |
-| `work/smolyak-tuning-20260316` | [work_smolyak_tuning_20260316.md](/workspace/notes/branches/work_smolyak_tuning_20260316.md) | tuned 積分器の設計・HLO 解析 | archived |
-| `work/experiment-runner-module-20260316` | [work_experiment_runner_module_20260316.md](/workspace/notes/branches/work_experiment_runner_module_20260316.md) | 実験 runner のモジュール化 | archived |
-| `work/editing-20260316` | [work_editing_20260316.md](/workspace/notes/branches/work_editing_20260316.md) | 汎用編集用 worktree | archived |
-| `work/jaxutil-test-expansion-20260317` | [work_jaxutil_test_expansion_20260317.md](/workspace/notes/branches/work_jaxutil_test_expansion_20260317.md) | `jax_util` 全体の test coverage 拡張 | archived |
+| Branch                                     | Note                                                                                                                 | Role                                 | Status   |
+| ------------------------------------------ | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------ | -------- |
+| `main`                                     | [main.md](/workspace/notes/branches/main.md)                                                                         | 既定のコード・文書の統合先           | active   |
+| `results/functional-smolyak-scaling`       | [results_functional_smolyak_scaling.md](/workspace/notes/branches/results_functional_smolyak_scaling.md)             | 旧版 Smolyak の完了結果と途中結果    | archived |
+| `results/functional-smolyak-scaling-tuned` | [results_functional_smolyak_scaling_tuned.md](/workspace/notes/branches/results_functional_smolyak_scaling_tuned.md) | tuned Smolyak の継続実験             | active   |
+| `work/smolyak-tuning-20260316`             | [work_smolyak_tuning_20260316.md](/workspace/notes/branches/work_smolyak_tuning_20260316.md)                         | tuned 積分器の設計・HLO 解析         | archived |
+| `work/experiment-runner-module-20260316`   | [work_experiment_runner_module_20260316.md](/workspace/notes/branches/work_experiment_runner_module_20260316.md)     | 実験 runner のモジュール化           | archived |
+| `work/editing-20260316`                    | [work_editing_20260316.md](/workspace/notes/branches/work_editing_20260316.md)                                       | 汎用編集用 worktree                  | archived |
+| `work/jaxutil-test-expansion-20260317`     | [work_jaxutil_test_expansion_20260317.md](/workspace/notes/branches/work_jaxutil_test_expansion_20260317.md)         | `jax_util` 全体の test coverage 拡張 | archived |
