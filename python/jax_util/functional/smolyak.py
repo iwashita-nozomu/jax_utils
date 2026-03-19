@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from itertools import combinations
 from math import comb
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -16,6 +16,23 @@ from jax.typing import DTypeLike
 
 from ..base import DEFAULT_DTYPE, Vector
 from .protocols import Function
+
+
+# NumPy 配列を JAX 配列へ変換する補助関数。
+def _to_jax_arrays(
+    *arrays: NDArray[np.floating[Any]],
+    dtype: DTypeLike,
+) -> tuple[jax.Array, ...]:
+    """1 つ以上の NumPy 配列を指定 dtype の JAX 配列へ変換する。
+    
+    Args:
+        *arrays: 変換する NumPy 配列群
+        dtype: 変換先 dtype
+    
+    Returns:
+        tuple[jax.Array, ...]: 変換済み JAX 配列のタプル
+    """
+    return tuple(jnp.asarray(arr, dtype=dtype) for arr in arrays)
 
 
 # 責務: 正の整数値の上限に対して最小限の unsigned dtype を選ぶ。
@@ -120,9 +137,7 @@ def _clenshaw_curtis_rule_numpy(
 # 責務: level ごとの入れ子な Clenshaw-Curtis 則を [-0.5, 0.5] 上で返す。
 def clenshaw_curtis_rule(level: int, /) -> tuple[Vector, Vector]:
     nodes_np, weights_np = _clenshaw_curtis_rule_numpy(level)
-    nodes = jnp.asarray(nodes_np, dtype=DEFAULT_DTYPE)
-    weights = jnp.asarray(weights_np, dtype=DEFAULT_DTYPE)
-    return nodes, weights
+    return cast(tuple[Vector, Vector], _to_jax_arrays(nodes_np, weights_np, dtype=DEFAULT_DTYPE))
 
 
 # 責務: 入れ子な 1 次元積分則から差分積分則を NumPy 上で構築する。
@@ -159,9 +174,7 @@ def _difference_rule_numpy(
 # 責務: Clenshaw-Curtis の差分積分則 Delta_level を構築する。
 def difference_rule(level: int, /) -> tuple[Vector, Vector]:
     diff_nodes_np, diff_weights_np = _difference_rule_numpy(level)
-    diff_nodes = jnp.asarray(diff_nodes_np, dtype=DEFAULT_DTYPE)
-    diff_weights = jnp.asarray(diff_weights_np, dtype=DEFAULT_DTYPE)
-    return diff_nodes, diff_weights
+    return cast(tuple[Vector, Vector], _to_jax_arrays(diff_nodes_np, diff_weights_np, dtype=DEFAULT_DTYPE))
 
 
 # 責務: |k|_1 <= max_norm を満たす正整数 multi-index を exact-size 配列で列挙する。
@@ -262,12 +275,10 @@ def _initialize_rule_storage(
 ]:
     max_rule_level = _max_difference_rule_level(dimension, prepared_level)
     rule_nodes_np, rule_weights_np, rule_offsets_np, rule_lengths_np = _difference_rule_storage_numpy(max_rule_level)
-    return (
-        jnp.asarray(rule_nodes_np, dtype=dtype),
-        jnp.asarray(rule_weights_np, dtype=dtype),
-        jnp.asarray(rule_offsets_np, dtype=jnp.int64),
-        jnp.asarray(rule_lengths_np, dtype=jnp.int64),
-    )
+    rule_nodes, rule_weights = cast(tuple[Vector, Vector], _to_jax_arrays(rule_nodes_np, rule_weights_np, dtype=dtype))
+    rule_offsets = jnp.asarray(rule_offsets_np, dtype=jnp.int64)
+    rule_lengths = jnp.asarray(rule_lengths_np, dtype=jnp.int64)
+    return rule_nodes, rule_weights, rule_offsets, rule_lengths
 
 
 # 責務: active level に対応する term index と評価点数メタデータを初期化する。
