@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+from __future__ import annotations
+
+from dataclasses import dataclass
+import json
 import os
 import time
-from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Mapping, cast
+
+PYTHON_ROOT = Path(__file__).resolve().parents[2]
+if str(PYTHON_ROOT) not in __import__('sys').path:
+    __import__('sys').path.insert(0, str(PYTHON_ROOT))
 
 import pytest
 
@@ -64,6 +71,7 @@ class FullResourceRecordingTask:
         started_at = time.time()
         time.sleep(_sleep_seconds(case))
         finished_at = time.time()
+
         return {"case_id": case_id, "started_at": started_at, "finished_at": finished_at, "gpu_ids": context.get("gpu_ids", "")}
 
 
@@ -104,3 +112,56 @@ def test_heavy_resource_scheduler(tmp_path: Path) -> None:
 
     assert len(scheduler.completions) == count
     assert elapsed < 120.0
+
+
+def _run_all_tests() -> None:
+    # 単体実行用のラッパー: テストを実行して結果を 1 行 JSON で出力する。
+    count = 2000
+    with TemporaryDirectory() as tmp_dir:
+        try:
+            # 再利用しやすくするため、テスト関数と同様のロジックをここでも実行する
+            cases: list[dict[str, object]] = []
+            for i in range(count):
+                has_gpu = (i % 4) == 0
+                cases.append({
+                    "case_id": i,
+                    "sleep_seconds": 0.001,
+                    "host_memory_bytes": 1,
+                    "gpu_count": 1 if has_gpu else 0,
+                    "gpu_memory_bytes": 1 if has_gpu else 0,
+                })
+
+            scheduler = StandardFullResourceScheduler(
+                resource_capacity=FullResourceCapacity(
+                    max_workers=16,
+                    host_memory_bytes=64,
+                    gpu_devices=(
+                        GPUDeviceCapacity(gpu_id=0, memory_bytes=8, max_slots=1),
+                        GPUDeviceCapacity(gpu_id=1, memory_bytes=8, max_slots=1),
+                        GPUDeviceCapacity(gpu_id=2, memory_bytes=8, max_slots=1),
+                    ),
+                ),
+                cases=cases,
+                estimate_builder=_resource_estimate,
+            )
+
+            runner = StandardRunner(scheduler)
+            worker = StandardWorker(FullResourceRecordingTask(Path(tmp_dir)))
+
+            start = time.perf_counter()
+            runner.run(worker)
+            elapsed = time.perf_counter() - start
+
+            result = {
+                "case": "heavy_resource_scheduler",
+                "expected": {"count": count, "elapsed_lt_seconds": 120.0},
+                "actual": {"count": len(scheduler.completions), "elapsed_seconds": elapsed},
+            }
+            print(json.dumps(result, ensure_ascii=True, sort_keys=True))
+        except Exception as exc:  # pragma: no cover - for manual runs
+            print(json.dumps({"case": "heavy_resource_scheduler", "error": str(exc)}))
+            raise
+
+
+if __name__ == "__main__":
+    _run_all_tests()
