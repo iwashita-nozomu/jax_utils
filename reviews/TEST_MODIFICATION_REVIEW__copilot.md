@@ -33,7 +33,7 @@ ______________________________________________________________________
 ```python
 def test_func_supports_composition_and_pointwise_products() -> None:
 def _custom_nested_rule(level: int) -> tuple[jnp.ndarray, jnp.ndarray]:
-```
+```text
 
 ## 2. **構造的カバレッジが充実**
 
@@ -56,7 +56,7 @@ with pytest.raises(ValueError, match="positive"):
     clenshaw_curtis_node_ids(0)
 with pytest.raises(ValueError, match="positive"):
     trapezoidal_node_ids(0)
-```
+```text
 
 ✅ エラーメッセージの正規表現マッチも検証
 
@@ -73,7 +73,7 @@ with pytest.raises(ValueError, match="positive"):
     ],
 )
 def test_get_bool_env_parses_common_spellings(...) -> None:
-```
+```text
 
 ✅ 複数のケースを効率的にテスト
 
@@ -85,7 +85,7 @@ def test_partition_cpu_indices_and_build_worker_slots_cover_edge_cases(
 ) -> None:
     monkeypatch.delattr(os, "sched_getaffinity", raising=False)
     monkeypatch.setattr(os, "cpu_count", lambda: 3)
-```
+```python
 
 ✅ 外部依存を隔離して単体テストを実現
 
@@ -108,7 +108,7 @@ def test_func_supports_composition_and_pointwise_products() -> None:
     ...
 
 ## 最後が定義なし → 単体実行不可
-```
+```text
 
 **改善案（各ファイルの末尾に追加）：**
 
@@ -121,7 +121,7 @@ def _run_all_tests() -> None:
 
 if __name__ == "__main__":
     _run_all_tests()
-```
+```yaml
 
 ### # 影響を受けるファイル一覧
 
@@ -167,7 +167,7 @@ def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
     print(json.dumps(log_entry), flush=True)
 
     assert jnp.allclose(jnp.sum(weights), jnp.asarray(1.0))
-```
+```yaml
 
 **影響を受けるファイル:**
 
@@ -184,7 +184,7 @@ ______________________________________________________________________
 
 ```python
 def test_...(monkeypatch: pytest.MonkeyPatch) -> None:
-```
+```python
 
 **確認項目：**
 
@@ -231,7 +231,7 @@ def _run_all_tests() -> None:
 
 if __name__ == "__main__":
     _run_all_tests()
-```
+```python
 
 **影響:**
 

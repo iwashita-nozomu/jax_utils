@@ -72,7 +72,7 @@ ______________________________________________________________________
 
 ### 1.4 合計統計
 
-```
+``` bash
 scripts/直下:           11個
 scripts/tools/:         11個
 scripts/hlo/:           1個
@@ -92,7 +92,7 @@ scripts/hlo/:           1個
   HLO 分析:             1個
   ユーティリティ:       3個
   その他:               1個
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -122,7 +122,7 @@ ______________________________________________________________________
     6. pytest 実行（python/tests/experiment_runner）
 
 実行対象: experiment_runner テストのみ（限定的）
-```
+```yaml
 
 **問題点:**
 
@@ -148,7 +148,7 @@ ______________________________________________________________________
      → レポートアップロード（future）
 
 状態: 実装骨子のみ（実際の統合処理未実装）
-```
+```yaml
 
 **用途:** エージェント間タスク分配・相互検証
 
@@ -194,7 +194,7 @@ ______________________________________________________________________
 概観:
   - ターゲット数: 1個（最小限）
   - 拡張予定: CI ターゲット、テスト実行ターゲット、ドキュメント生成等
-```
+```yaml
 
 **問題点:** ターゲット数が少なく、開発効率化フローが Makefile 化されていない
 
@@ -229,7 +229,7 @@ ______________________________________________________________________
 
 [tool.pytest.ini_options]
   testpaths: python/tests
-```
+```text
 
 ### 3.4 docker/Dockerfile の詳細
 
@@ -247,11 +247,11 @@ PYTHONPATH: /workspace/python
 git safe.directory: /mnt/git/template.git, /mnt/git/jax_util.git
 
 CMD: /bin/bash
-```
+```yaml
 
 **インストールモジュール:**
 
-```
+```yaml
 Core:
   - jax[cuda12] (JAX + CUDA Toolkit 12)
   - jaxtyping, equinox (JAX 関連)
@@ -265,7 +265,7 @@ Development:
 
 Stubs/Type:
   - scipy-stubs, typeguard (型情報)
-```
+```text
 
 ### 3.5 .markdownlint.json ルール
 
@@ -278,7 +278,7 @@ Stubs/Type:
 
 無効化:
   MD013: 行長制限（無効化）
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -400,7 +400,7 @@ ______________________________________________________________________
 
 ### 5.2 coding-conventions-project.md の主要内容
 
-```
+```yaml
 セクション:
 
 1. 対象: Docker 環境・ドキュメント運用・サブモジュール位置づけ
@@ -441,7 +441,7 @@ ______________________________________________________________________
    - worktree = WORKTREE_SCOPE.md 必須
    - 実験結果 = results/<topic> ブランチに分離
    - Markdown: 相対パスのみ（絶対パス禁止）
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -463,7 +463,7 @@ ______________________________________________________________________
 
 ### 6.2 スクリプト散在の具体例
 
-```
+```yaml
 ツール機能別分類ビュー（散在度分析）:
 
 【ワークツリー管理】
@@ -509,7 +509,7 @@ ______________________________________________________________________
 【HLO 分析】
   ✓ summarize_hlo_jsonl.py           (scripts/hlo/)
   → 統一度: N/A / 分散度: N/A （独立ディレクトリ）
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -519,7 +519,7 @@ ______________________________________________________________________
 
 **標準的なパターン：**
 
-```
+```text
 scripts/
 ├── README.md                    ← スクリプト使用ガイド
 ├── setup/                       ← 初期化・セットアップ
@@ -540,7 +540,7 @@ scripts/
 └── experiments/                 ← 実験・分析スクリプト
     ├── run_experiment.sh
     └── analyze_results.py
-```
+```yaml
 
 **参考実例等:**
 
@@ -560,7 +560,7 @@ ______________________________________________________________________
 
 **業界標準の 3 層構造:**
 
-```
+```yaml
 Layer 1: ローカル開発（developers）
   ├─ make test          （CLI 実行）
   ├─ make lint
@@ -576,7 +576,7 @@ Layer 3: GitHub Actions（リモート自動実行）
   │   └─ scripts/ci/run_checks.sh を呼び出し（同じ処理）
   └─ .github/workflows/pr-checks.yml
       └─ 段階的テスト
-```
+```yaml
 
 **メリット:**
 
@@ -626,7 +626,7 @@ LOG_ROOT="/workspace/python/tests/logs"  # ← run_pytest_with_logs.sh
 # 改善案:
 PYTHONPATH="./python"  # ← reporoot からの相対
 LOG_ROOT="./python/tests/logs"  # ← 同様
-```
+```yaml
 
 **Markdown リンク推奨:**
 
@@ -638,7 +638,7 @@ LOG_ROOT="./python/tests/logs"  # ← 同様
 ❌ 非推奨:
 [ドキュメント](/workspace/documents/README.md)
 [API仕様](file:///home/user/workspace/documents/design/apis/solvers.md)
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -736,7 +736,7 @@ Make targets:
   make ci                 ← scripts/ci/run_all_checks.sh
   make clean-design       ← scripts/integration/clean_designs.sh
   make validate           ← scripts/integration/full_validation.sh
-```
+```text
 
 ### 8.2 具体的な改善アクション
 
@@ -753,7 +753,7 @@ Make targets:
 
 ### 8.3 Phase 1 実装ロードマップ（1-2 週間見積）
 
-```
+```yaml
 Week 1:
   [Day 1] 1-1 setup_worktree 統一（廃止 + テスト）
   [Day 2] 1-2 scripts/ci/ ディレクトリと CI スクリプト集約
@@ -770,7 +770,7 @@ Optional (Phase 2):
   + 2-1 conventions 統合
   + 2-2 design 統合 wrapper
   + 2-3 experiments 予約
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -789,7 +789,7 @@ ______________________________________________________________________
 
 ### 9.2 ブロッカーと推奨優先順序
 
-```
+```yaml
 即実施（ブロッカー）:
   [1] setup_worktree.sh 廃止 → create_worktree.sh 統一
       理由: 開発者混乱、ドキュメント矛盾
@@ -822,7 +822,7 @@ ______________________________________________________________________
   [6] 設計ファイル整理統合 wrapper 作成
   [7] GitHub Actions agent-coordination.yml 完全実装
   [8] experiments スクリプト構成体系化
-```
+```yaml
 
 ### 9.3 実装済み・要改善・未実装の整理表
 
@@ -895,7 +895,7 @@ Python packages:
   pytest scipy scipy-stubs
   optax
   pyright pydeps
-```
+```text
 
 ### B.2 pyproject.toml セッティング
 
@@ -909,7 +909,7 @@ Ruff:
   Line length: 100
   Target: Python 3.10+
   Lint select: E (errors), F (flake8), I (isort)
-```
+```text
 
 ### B.3 CI ワークフロー設定概要
 
@@ -924,7 +924,7 @@ agent-coordination.yml:
   Trigger: workflow_dispatch
   Jobs: coordinator → reviewer → integrator (pipeline)
   State: Skeleton (未完全)
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -932,7 +932,7 @@ ______________________________________________________________________
 
 ### C.1 スクリプト依存グラフ（簡略版）
 
-```
+```text
 ┌─ git_config.sh
 │
 ├─ git_init.sh ──┬─→ [プロジェクト初期化]
@@ -959,7 +959,7 @@ ______________________________________________________________________
     ├─→ view_conventions.sh
     ├─→ guide.sh
     └─→ extract_deps_from_svg.sh
-```
+```yaml
 
 ______________________________________________________________________
 

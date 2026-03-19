@@ -266,7 +266,7 @@ ______________________________________________________________________
 
 ## ツール依存関係グラフ
 
-```
+```text
 main ブランチ
   ↓
 git_init.sh
@@ -293,7 +293,7 @@ git_init.sh
               ├→ find_redundant_designs.py
               ├→ find_similar_designs.py
               └→ tfidf_similar_docs.py
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -318,7 +318,7 @@ cd .worktrees/my-feature
 vim WORKTREE_SCOPE.md
 
 # 6. 作業開始
-```
+```yaml
 
 ## フロー2: テスト実行＆ログ保存
 
@@ -329,7 +329,7 @@ bash scripts/run_pytest_with_logs.sh
 # ログ確認
 ls python/tests/logs/
 cat python/tests/logs/[latest]/pytest.raw.txt
-```
+```yaml
 
 ## フロー3: ドキュメント整形・リンク修正
 
@@ -342,7 +342,7 @@ python scripts/tools/audit_and_fix_links.py
 
 # ドキュメント修正
 python scripts/tools/fix_markdown_docs.py
-```
+```yaml
 
 ## フロー4: 設計ファイル整理
 
@@ -359,7 +359,7 @@ python scripts/tools/tfidf_similar_docs.py
 
 # 重複削除
 python scripts/tools/find_redundant_designs.py --delete
-```
+```yaml
 
 ## フロー5: ワークツリー規約遵守チェック
 
@@ -369,7 +369,7 @@ bash scripts/tools/check_worktree_scopes.sh
 
 # レポート確認
 cat reports/worktree_scope_report.txt
-```
+```yaml
 
 ______________________________________________________________________
 

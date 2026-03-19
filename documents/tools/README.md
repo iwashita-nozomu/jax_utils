@@ -110,7 +110,7 @@ ______________________________________________________________________
 
 ```bash
 bash scripts/tools/create_worktree.sh my-feature-name
-```
+```yaml
 
 ### Q: テストを実行してログを保存したいのですが？
 
@@ -120,7 +120,7 @@ bash scripts/tools/create_worktree.sh my-feature-name
 
 ```bash
 bash scripts/run_pytest_with_logs.sh
-```
+```yaml
 
 ### Q: Markdown ドキュメントを整形・修正したいのですが？
 
@@ -131,7 +131,7 @@ bash scripts/run_pytest_with_logs.sh
 ```bash
 python scripts/tools/format_markdown.py
 python scripts/tools/audit_and_fix_links.py
-```
+```yaml
 
 ### Q: 設計ファイルが重複しているようですが、整理できますか？
 
@@ -142,7 +142,7 @@ python scripts/tools/audit_and_fix_links.py
 ```bash
 python scripts/tools/find_redundant_designs.py
 python scripts/tools/tfidf_similar_docs.py
-```
+```yaml
 
 ### Q: setup_worktree.sh と create_worktree.sh の違いは？
 
@@ -176,7 +176,7 @@ docker/requirements.txt を確認し、pip install で追加
 
 # ローカル環境の場合
 pip install -e ".[dev]"  # pyproject.toml に基づいて
-```
+```text
 
 ______________________________________________________________________
 

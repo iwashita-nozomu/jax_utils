@@ -40,7 +40,7 @@ raise ValueError(f"...{other.__name__}...")
 
 ## ✅ After (Fixed)
 raise ValueError(f"...Got {other.ndim}D array...")
-```
+```yaml
 
 **影響:** `__mul__`, `__rmul__` メソッドでのスカラー・演算子判定エラー排除
 
@@ -60,7 +60,7 @@ def new_loss(_param:Params)-> Scalar:
 
 ## ✅ After (修正)
 raise NotImplementedError("This module is not yet implemented")
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -81,7 +81,7 @@ def hstack_linops(ops:List[LinearOperator])->LinearOperator:
     数学的には:
         [ A1 A2 ... An ] @ [v1; v2; ...; vn] = A1@v1 + A2@v2 + ... + An@vn
     """
-```
+```yaml
 
 **改善点:**
 
@@ -110,7 +110,7 @@ References
   SIAM journal on numerical analysis, 29(4), 1146-1173.
   https://epubs.siam.org/doi/abs/10.1137/0729071
 """
-```
+```yaml
 
 ### # 📖 LOBPCG (Knyazev, 2001)
 
@@ -127,7 +127,7 @@ References
   SIAM journal on scientific computing, 23(2), 517-541.
   https://epubs.siam.org/doi/abs/10.1137/S1064827500366124
 """
-```
+```yaml
 
 ### # 📖 PDIPM (Mehrotra, 1992)
 
@@ -143,7 +143,7 @@ References
   SIAM journal on optimization, 2(4), 575-601.
   https://epubs.siam.org/doi/abs/10.1137/0802028
 """
-```
+```text
 
 ______________________________________________________________________
 
@@ -221,7 +221,7 @@ ______________________________________________________________________
 
 ## コード品質スコアボード (9/10 ポイント分布)
 
-```
+```yaml
 ┌─────────────────────────────────────┐
 │  数学的正確性   : 9/10  ████████░   │
 │  型安全性       : 9/10  ████████░   │
@@ -232,7 +232,7 @@ ______________________________________________________________________
 ├─────────────────────────────────────┤
 │  総合スコア     : 7.8/10 B+ Grade   │
 └─────────────────────────────────────┘
-```
+```python
 
 ## バグ・課題一覧
 
@@ -281,7 +281,7 @@ ______________________________________________________________________
 ```bash
 $ python3 -m compileall -q python/jax_util
 ✅ Syntax check: PASSED
-```
+```python
 
 ## ✅ Import Verification
 

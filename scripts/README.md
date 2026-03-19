@@ -64,7 +64,7 @@ vim WORKTREE_SCOPE.md
 git add WORKTREE_SCOPE.md
 git commit -m "chore(worktree): init scope"
 git push -u origin work/my-feature-YYYYMMDD
-```
+```text
 
 ## テスト＆静的解析実行
 
@@ -74,7 +74,7 @@ bash scripts/ci/run_all_checks.sh
 
 # またはシンプル版（pytest のみ＋ログ保存）
 bash scripts/run_pytest_with_logs.sh
-```
+```text
 
 ## ドキュメント整形
 
@@ -84,7 +84,7 @@ python scripts/tools/format_markdown.py
 
 # リンク監査・修正
 python scripts/tools/audit_and_fix_links.py
-```
+```text
 
 ## 設計ファイル整理
 
@@ -94,7 +94,7 @@ python scripts/tools/find_redundant_designs.py
 
 # 類似度分析
 python scripts/tools/tfidf_similar_docs.py
-```
+```yaml
 
 ______________________________________________________________________
 
@@ -144,7 +144,7 @@ bash scripts/git_repo_init.sh
 
 # pyproject.toml ひな形
 bash scripts/create_toml.sh <package-name>
-```
+```yaml
 
 **詳細:** [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト2](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
@@ -160,7 +160,7 @@ bash scripts/setup_worktree.sh my-feature
 
 # または（内容同一）
 bash scripts/tools/create_worktree.sh my-feature
-```
+```yaml
 
 **補助:**
 
@@ -170,7 +170,7 @@ bash scripts/guide.sh
 
 # 全ワークツリー検査
 bash scripts/tools/check_worktree_scopes.sh
-```
+```yaml
 
 **詳細:**
 
@@ -192,7 +192,7 @@ bash scripts/ci/run_all_checks.sh --quick
 
 # 3. シンプル版（pytest のみ）
 bash scripts/run_pytest_with_logs.sh
-```
+```yaml
 
 **詳細:**
 
@@ -218,7 +218,7 @@ python scripts/tools/fix_markdown_docs.py
 # 4. 変更をコミット
 git add documents/
 git commit -m "docs: apply formatting and link fixes"
-```
+```yaml
 
 **詳細:** [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト4](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
@@ -244,7 +244,7 @@ python scripts/tools/organize_designs.py
 
 # 5. テンプレート作成（新規モジュール時）
 python scripts/tools/create_design_template.py python/jax_util/<module>/
-```
+```yaml
 
 **詳細:** [../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト5](../documents/FILE_CHECKLIST_OPERATIONS.md)
 
@@ -259,7 +259,7 @@ ______________________________________________________________________
 ```yaml
 - name: Run all checks
   run: bash scripts/ci/run_all_checks.sh
-```
+```yaml
 
 **つまり:** ローカルで成功 = リモート CI でも成功（高確率）
 
@@ -283,7 +283,7 @@ make git_init
 
 # テスト実行（ci/run_all_checks.sh 内部から呼び出し可能）
 make test          # 未実装（scripts/ci/run_all_checks.sh で代替）
-```
+```yaml
 
 詳細: [../Makefile](../Makefile)
 
@@ -291,7 +291,7 @@ ______________________________________________________________________
 
 ## 📊 ツール使用フロー図
 
-```
+```text
 開発開始
   ├→ git_init.sh          （初回のみ）
   │
@@ -323,7 +323,7 @@ ______________________________________________________________________
 ワークツリー完了
   ├→ carry-over ファイル保存
   └→ git worktree remove
-```
+```text
 
 ______________________________________________________________________
 
@@ -342,14 +342,14 @@ ______________________________________________________________________
 ```bash
 # 失敗したテスト単体を再実行
 pytest python/tests/test_module.py::TestClass::test_method -v -s
-```
+```text
 
 ## pyright エラー多い場合
 
 ```bash
 # 型チェックの詳細表示
 pyright python/ --verbose
-```
+```text
 
 ## ruff 自動修正
 
@@ -359,7 +359,7 @@ ruff check --fix python/
 
 # 修正内容確認
 git diff python/
-```
+```text
 
 ## パッケージ不足
 
@@ -369,7 +369,7 @@ python -c "import pytest; import pyright; import ruff; print('OK')"
 
 # インストール
 pip install -r docker/requirements.txt
-```
+```text
 
 ______________________________________________________________________
 
@@ -377,7 +377,7 @@ ______________________________________________________________________
 
 ### ディレクトリ構成
 
-```
+```text
 scripts/
 ├── README.md                    ← このファイル（統合窓口）
 ├── ci/                          ← CI スクリプト集約（推奨実行）
@@ -392,7 +392,7 @@ scripts/
 ├── setup/                       ← 初期化（将来 Phase 2）
 ├── dev/                         ← 開発補助（将来 Phase 2）
 └── guide/                       ← ガイド・表示（将来 Phase 2）
-```
+```yaml
 
 **現状:** Phase 1（tools/ 集約）
 **今後:** Phase 2 で細分化（setup/, dev/, ci/, guide/ へ段階移行）
@@ -407,7 +407,7 @@ scripts/
 
 # ./ci/README.md から ../../documents/... への参照
 [FILE_CHECKLIST_OPERATIONS.md](../../documents/FILE_CHECKLIST_OPERATIONS.md)
-```
+```yaml
 
 ______________________________________________________________________
 

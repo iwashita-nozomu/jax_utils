@@ -50,7 +50,7 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
   --levels 4:5 \
   --dtypes all \
   --num-accuracy-problems 9
-```
+```text
 
 3 GPU を使って広めのレンジを並列に流す例です。
 
@@ -62,7 +62,7 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
   --levels 4:8 \
   --dtypes float16,bfloat16,float32,float64 \
   --num-accuracy-problems 9
-```
+```text
 
 時間計測の反復回数や係数レンジも変えられます。
 
@@ -76,11 +76,11 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
   --num-accuracy-problems 9 \
   --coeff-start -0.55 \
   --coeff-stop 0.65
-```
+```text
 
 実験後に結果レポートを作る例です。
 
 ```bash
 python3 /workspace/experiments/functional/smolyak_scaling/render_smolyak_scaling_report.py \
   --input /workspace/experiments/functional/smolyak_scaling/results/latest.json
-```
+```text

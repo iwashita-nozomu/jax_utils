@@ -77,7 +77,7 @@ ______________________________________________________________________
 #   - ワークツリー既存の場合はエラーで停止
 #
 # ═══════════════════════════════════════════════════════════════════════════
-```
+```text
 
 ## 1-2. setup_worktree.sh をシンボリックリンク化
 
@@ -94,7 +94,7 @@ ln -s tools/create_worktree.sh scripts/setup_worktree.sh
 # 確認
 ls -la scripts/setup_worktree.sh
 cat scripts/setup_worktree.sh  # シンボリックリンク先を表示
-```
+```yaml
 
 ## 1-3. ドキュメント更新
 
@@ -122,7 +122,7 @@ git commit -m "refactor(tools): unify worktree creation via create_worktree.sh
 BREAKING CHANGE: None (backward compatible via symlink)
 "
 git push origin main
-```
+```yaml
 
 ### メリット
 

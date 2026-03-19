@@ -27,7 +27,7 @@ bash scripts/ci/run_all_checks.sh --quick
 
 # 詳細出力
 bash scripts/ci/run_all_checks.sh --verbose
-```
+```yaml
 
 **実行内容:**
 
@@ -61,7 +61,7 @@ git commit -m "feat: new feature"
 
 # 4. リモート push
 git push origin branch-name
-```
+```text
 
 ## GitHub Actions CI との関係
 
@@ -70,7 +70,7 @@ git push origin branch-name
 ```yaml
 - name: Run all checks
   run: bash scripts/ci/run_all_checks.sh
-```
+```yaml
 
 **つまり:** ローカルで成功 = リモート CI でも成功（高確率）
 
@@ -86,7 +86,7 @@ pytest python/tests/test_module.py::TestClass::test_method -v
 
 # 失敗情報を詳しく表示
 pytest python/tests/ -v --tb=long
-```
+```yaml
 
 詳細: [../../documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト3](../../documents/FILE_CHECKLIST_OPERATIONS.md)
 
@@ -98,7 +98,7 @@ pyright python/ 2>&1 | grep "error"
 
 # 特定モジュールのみチェック
 pyright python/jax_util/solvers/
-```
+```text
 
 ## ruff エラー修正
 
@@ -108,7 +108,7 @@ ruff check --fix python/
 
 # 修正内容確認
 git diff python/
-```
+```text
 
 ## 依存パッケージが不足の場合
 
@@ -122,7 +122,7 @@ pip install -r docker/requirements.txt
 # または Docker 使用
 docker build -t jax-util -f docker/Dockerfile .
 docker run --rm -v $(pwd):/workspace -w /workspace jax-util bash scripts/ci/run_all_checks.sh
-```
+```text
 
 ______________________________________________________________________
 
@@ -134,7 +134,7 @@ ______________________________________________________________________
 
 ```bash
 export PYTHONPATH="/workspace/python:${PYTHONPATH:-}"
-```
+```yaml
 
 参照: [documents/coding-conventions-project.md](../../documents/coding-conventions-project.md)
 
@@ -144,7 +144,7 @@ export PYTHONPATH="/workspace/python:${PYTHONPATH:-}"
 
 ```bash
 bash scripts/ci/run_all_checks.sh 2>&1 | tee logs/ci_$(date +%Y%m%d_%H%M%S).txt
-```
+```yaml
 
 ______________________________________________________________________
 

@@ -46,7 +46,7 @@ def _run_all_tests() -> None:
 
 if __name__ == "__main__":
     _run_all_tests()
-```
+```text
 
 ## 効果
 
@@ -74,7 +74,7 @@ pytest python/tests/base/test_linearoperator_branches.py \
        python/tests/hlo/test_hlo_dump_helpers.py -v
 
 ## 結果: 16 passed in 4.56s
-```
+```text
 
 ## 単体実行テスト
 
@@ -83,7 +83,7 @@ pytest python/tests/base/test_linearoperator_branches.py \
 python3 python/tests/functional/test_protocols_and_smolyak_helpers.py
 
 ## 結果: 6 passed, 1 warning in 0.84s
-```
+```python
 
 ______________________________________________________________________
 
@@ -141,7 +141,7 @@ def test_smolyak_grid_supports_custom_rules_and_validation() -> None:
         "passed": True,
     }
     print(json.dumps(log_entry), flush=True)
-```
+```python
 
 ## Layer 3（オプション・Low）：CI/CD 統合
 

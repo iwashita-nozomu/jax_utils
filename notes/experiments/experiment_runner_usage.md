@@ -7,7 +7,7 @@
 
 - **Simple FIFO 実行（CPU）**:
 
-```
+```python
 from jax_util.experiment_runner.runner import (
     StandardWorker, StandardScheduler, StandardRunner, StandardResourceCapacity
 )
@@ -26,7 +26,7 @@ scheduler = StandardScheduler(
 worker = StandardWorker(task)
 runner = StandardRunner(scheduler)
 runner.run(worker)
-```
+```yaml
 
 - **GPU を使う場合**:
 
@@ -47,7 +47,7 @@ runner.run(worker)
 
 ```bash
 pytest -q python/tests/experiment_runner
-```
+```yaml
 
 **設計上の注意**
 

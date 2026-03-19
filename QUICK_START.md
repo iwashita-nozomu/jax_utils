@@ -26,7 +26,7 @@
 
 ```bash
 bash scripts/view_conventions.sh
-```
+```yaml
 
 **主要な規約（最初に確認すべき）:**
 
@@ -38,7 +38,7 @@ bash scripts/view_conventions.sh
 
 ```bash
 bash scripts/setup_worktree.sh <branch-name> [description]
-```
+```yaml
 
 **例:**
 
@@ -51,7 +51,7 @@ bash scripts/setup_worktree.sh train-api-refactor "train.pyのAPI改善"
 
 # テスト追加
 bash scripts/setup_worktree.sh neuralnetwork-tests "ニューラルネットテスト拡充"
-```
+```yaml
 
 自動作成される内容：
 
@@ -72,7 +72,7 @@ make test
 git add -A
 git commit -m "category: 説明"
 git push origin work/<branch-name>-<YYYYMMDD>
-```
+```text
 
 ## 📋 コミットメッセージの規約
 
@@ -83,7 +83,7 @@ docs:      ドキュメント更新
 refactor:  コード改善（機能変更なし）
 test:      テスト追加/修正
 chore:     ビルド等の設定変更
-```
+```text
 
 ## 🧹 ワークツリーのクリーンアップ
 
@@ -95,7 +95,7 @@ git worktree remove .worktrees/<branch-name>-<YYYYMMDD>
 
 # ローカルブランチを削除
 git branch -d work/<branch-name>-<YYYYMMDD>
-```
+```text
 
 ## 📊 現在のブランチ・ワークツリー確認
 
@@ -108,7 +108,7 @@ git branch -v
 
 # リモートブランチ
 git branch -r
-```
+```text
 
 ## 🔗 参考資料
 
@@ -116,13 +116,13 @@ git branch -r
 
 ```bash
 bash scripts/guide.sh
-```
+```text
 
 ### 規約一覧
 
 ```bash
 bash scripts/view_conventions.sh
-```
+```text
 
 ### 特定の規約を確認
 
@@ -135,7 +135,7 @@ less documents/conventions/common/05_docs.md
 
 # プロジェクト全体のコーディング規則
 less documents/coding-conventions-project.md
-```
+```text
 
 ## 💡 Tips
 
@@ -148,7 +148,7 @@ bash scripts/setup_worktree.sh major-feature-name "大型機能の実装"
 cd .worktrees/major-feature-name-20260318
 # ... 大きな変更 ...
 # 複数回コミット可能
-```
+```text
 
 ## 2. バグ修正（緊急・小規模）
 
@@ -158,7 +158,7 @@ cd .worktrees/quick-fix-20260318
 # ... 修正 ...
 git add -A
 git commit -m "fix: バグ詳細"
-```
+```text
 
 ## 3. ドキュメント更新（規約改善含む）
 
@@ -166,7 +166,7 @@ git commit -m "fix: バグ詳細"
 bash scripts/setup_worktree.sh docs-update "規約更新・ドキュメント改善"
 cd .worktrees/docs-update-20260318
 # ... ファイル編集 ...
-```
+```text
 
 ## ⚠️ 注意点
 
@@ -191,21 +191,21 @@ cd .worktrees/docs-update-20260318
 # origin/mainが古い可能性
 git fetch origin main
 bash scripts/setup_worktree.sh ...
-```
+```text
 
 ## ブランチ削除に失敗
 
 ```bash
 # マージされていない場合は -D で強制削除
 git branch -D work/branch-name-20260318
-```
+```text
 
 ## ワークツリー登録状態を確認
 
 ```bash
 git worktree prune  # 無効なエントリを削除
 git worktree list   # 確認
-```
+```text
 
 ______________________________________________________________________
 

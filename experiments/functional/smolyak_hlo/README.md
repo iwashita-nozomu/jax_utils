@@ -21,7 +21,7 @@ python3 /workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functiona
   --level 3 \
   --dtype float32 \
   --num-repeats 16
-```
+```text
 
 ## 出力
 

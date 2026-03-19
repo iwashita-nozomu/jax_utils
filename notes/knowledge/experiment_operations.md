@@ -58,7 +58,7 @@
 
 ### 参考コマンド
 
-```
+```yaml
 # ワークツリー作成（例）
 bash scripts/setup_worktree.sh experiment-runner-generalization "GPU scheduler work"
 
@@ -105,4 +105,4 @@ git checkout main
 - ワークツリー作成前に最新の main を取得する
 - ワークツリー内でユニットテストを実行する
 - 依存が増える変更はコンテナ定義を同時に更新する
-```
+```text

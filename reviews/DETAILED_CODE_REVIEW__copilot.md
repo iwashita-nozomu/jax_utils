@@ -45,7 +45,7 @@ ______________________________________________________________________
 
 ```python
 raise ValueError(f"...{other.__name__} is vector.")
-```
+```yaml
 
 **原因:** `jax.Array` には `__name__` 属性がない
 
@@ -57,7 +57,7 @@ raise ValueError(f"...{other.__name__} is vector.")
 
 ## After
 raise ValueError(f"...Got {other.ndim}D array (vector).")
-```
+```yaml
 
 **影響度:** 🔴 Critical（__mul__, __rmul__ 呼び出し時に例外発生）
 
@@ -75,10 +75,10 @@ ______________________________________________________________________
 - 関数名 `hstack_linops` は通常の NumPy hstack（要素並置）を連想させるが、
 - 実装は **加算合成**（sum）## 定義：
 
-```
+```text
 通常のhstack(A, B) @ v ≠ A @ v + B @ v
 実装のhstack_linops([A, B]) @ [v1; v2] = A @ v1 + B @ v2  ✓
-```
+```yaml
 
 **根拠:**
 
@@ -105,7 +105,7 @@ ______________________________________________________________________
 ```python
 if op.shape[0] != u_dims[0]:
     raise ValueError("...same input dimension for hstack.")  # ← 誤り
-```
+```yaml
 
 **問題:** メッセージが "input dimension" と言っているが、チェック対象は `op.shape[0]`（出力次元）
 
@@ -114,7 +114,7 @@ if op.shape[0] != u_dims[0]:
 ```python
 if op.shape[0] != u_dims[0]:
     raise ValueError("...same **output** dimension for hstack.")
-```
+```yaml
 
 **修正済み:** ✅ Yes
 
@@ -215,7 +215,7 @@ eqx.filter_vmap(mv, in_axes=1, out_axes=1)(X)  ✓ Correct
 ## 3. jax.linearize + adjoint (効率)
 val, jac_mv = jax.linearize(f, x0)
 val, jvp = eqx.filter_vjp(f, x0)  ✓ Correct
-```
+```python
 
 ## ⚠️ 改善推奨：import 副作用
 
@@ -224,7 +224,7 @@ val, jvp = eqx.filter_vjp(f, x0)  ✓ Correct
 
 ```python
 jax.config.update("jax_enable_x64", _get_bool_env(...))  # ← Import時に実行
-```
+```python
 
 **問題:** import 時にグローバル JAX 設定が変更される
 
@@ -243,7 +243,7 @@ def ensure_jax_configured():
 ## Option 2: Explicit setup function
 def configure_jax_environment():
     jax.config.update(...)
-```
+```yaml
 
 **理由:**
 
@@ -278,7 +278,7 @@ ______________________________________________________________________
 
 ## テストディレクトリ構造
 
-```
+```text
 python/tests/
 ├── base/                    # 基盤テスト（小規模）
 ├── solvers/                 # ソルバテスト（充実）
@@ -290,7 +290,7 @@ python/tests/
 │   └── test_pdipm.py        ✓ PDIPM
 └── functional/              # 汎関数テスト
     └── test_*.py
-```
+```yaml
 
 ## テストカバレッジ評価
 
@@ -306,7 +306,7 @@ ______________________________________________________________________
 
 ## Solvers
 
-```
+```yaml
 ## References:
 ## [1] Paige, C. C., & Saunders, M. A. (1975).
 ## Solution of sparse indefinite systems of linear equations.
@@ -316,11 +316,11 @@ ______________________________________________________________________
 ## [3] Knyazev, A. V. (2001).
 ## Toward the optimal preconditioned eigensolver.
 ## SIAN J. Sci. Comput., 23(2), 517-541.
-```
+```text
 
 ## Optimizers
 
-```
+```yaml
 ## References:
 ## [1] Mehrotra, S. (1992).
 ## On the implementation of a primal-dual interior point method.
@@ -328,7 +328,7 @@ ______________________________________________________________________
 ## [2] Boyd, S., & Vandenberghe, L. (2004).
 ## Convex Optimization.
 ## Cambridge University Press.
-```
+```python
 
 ______________________________________________________________________
 

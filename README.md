@@ -28,7 +28,7 @@ pyright python/
 # 4. ドキュメント更新
 python ../scripts/tools/format_markdown.py
 python ../scripts/tools/audit_and_fix_links.py
-```
+```text
 
 詳細は [FILE_CHECKLIST_OPERATIONS.md](./documents/FILE_CHECKLIST_OPERATIONS.md) の**チェックリスト1～8**を参照してください。
 
@@ -47,7 +47,7 @@ python ../scripts/tools/audit_and_fix_links.py
 pip install -e ".[dev]"
 pytest
 ruff check .
-```
+```text
 
 ## HLO (JSONL) utility
 
@@ -55,7 +55,7 @@ ruff check .
 
 ```bash
 python scripts/hlo/summarize_hlo_jsonl.py path/to/hlo.jsonl --top 50
-```
+```yaml
 
 主な出力項目:
 

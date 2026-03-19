@@ -26,7 +26,7 @@ mdformat path/to/docs/ scripts/
 
 # 修正前に確認（ドライラン）
 mdformat --check path/to/file.md
-```
+```yaml
 
 ## 対象ファイル
 

@@ -31,7 +31,7 @@ bash scripts/view_conventions.sh naming
 # 1-3. 重要なドキュメント確認
 cat documents/README.md
 cat documents/coding-conventions-project.md
-```
+```yaml
 
 **確認項目:**
 
@@ -51,7 +51,7 @@ bash scripts/tools/create_worktree.sh my-feature-name
 
 # 2-2. ワークツリー移動
 cd .worktrees/my-feature-name
-```
+```yaml
 
 **確認項目:**
 
@@ -71,7 +71,7 @@ vim WORKTREE_SCOPE.md
 #   - Editable Directories: 編集対象ディレクトリ
 #   - Required Checks: 実行必須テスト
 #   - Special Rules: 特別な指定事項
-```
+```yaml
 
 **確認項目:**
 
@@ -91,7 +91,7 @@ git push -u origin work/my-feature-name-YYYYMMDD
 # 4-2. 確認
 git log -n2 --oneline
 git branch -vv
-```
+```yaml
 
 **確認項目:**
 
@@ -132,7 +132,7 @@ bash scripts/git_repo_init.sh
 # OR 手動で作成
 mkdir -p python/jax_util/<my-module>
 touch python/jax_util/<my-module>/__init__.py
-```
+```yaml
 
 **確認項目:**
 
@@ -147,7 +147,7 @@ cat pyproject.toml
 
 # 2-2. 新規パッケージが [tool.pyright] include に追加されているか確認
 grep -A 5 "tool.pyright" pyproject.toml
-```
+```yaml
 
 **確認項目:**
 
@@ -162,7 +162,7 @@ pyright python/jax_util/<my-module>/
 
 # 3-2. テスト実行（後述のチェックリスト3 参照）
 pytest python/tests/<my-module>/
-```
+```yaml
 
 **確認項目:**
 
@@ -202,7 +202,7 @@ ruff check python/
 
 # 1-3. 自動フォーマット（オプション）
 black python/
-```
+```yaml
 
 **確認項目:**
 
@@ -223,7 +223,7 @@ tail -50 python/tests/logs/[latest]/pytest.raw.txt
 # 2-3. 特定テストのみ実行（デバッグ時）
 pytest python/tests/<module>/test_<name>.py -v
 pytest python/tests/<module>/test_<name>.py::TestClass::test_method -v -s
-```
+```yaml
 
 **確認項目:**
 
@@ -243,7 +243,7 @@ ruff check --fix python/
 
 # 3-3. 再実行
 bash scripts/run_pytest_with_logs.sh
-```
+```yaml
 
 **確認項目:**
 
@@ -290,7 +290,7 @@ ______________________________________________________________________
 # 1-1. 該当ドキュメント確認
 ls documents/design/
 ls documents/
-```
+```yaml
 
 **確認項目:**
 
@@ -307,7 +307,7 @@ vim documents/design/apis/<module>.md
 
 # 2-3. 数式・図解の追加（必要に応じて）
 # 例: $$ \min_x \frac{1}{2} x^T A x + b^T x $$
-```
+```yaml
 
 **確認項目:**
 
@@ -326,7 +326,7 @@ python scripts/tools/audit_and_fix_links.py
 
 # 3-3. ドキュメント品質チェック
 python scripts/tools/fix_markdown_docs.py
-```
+```yaml
 
 **確認項目:**
 
@@ -343,7 +343,7 @@ git commit -m "docs: update API documentation for <module>"
 
 # 4-2. push
 git push origin work/<branch>
-```
+```yaml
 
 **確認項目:**
 
@@ -383,7 +383,7 @@ python scripts/tools/find_similar_designs.py
 
 # 1-3. ドキュメント全般の類似度検出（詳細分析）
 python scripts/tools/tfidf_similar_docs.py --output reports/similar_analysis.txt
-```
+```yaml
 
 **確認項目:**
 
@@ -402,7 +402,7 @@ cat reports/organize_designs_dryrun.txt
 
 # 2-3. OK なら実行
 python scripts/tools/organize_designs.py
-```
+```yaml
 
 **確認項目:**
 
@@ -418,7 +418,7 @@ python scripts/tools/create_design_template.py python/jax_util/solvers/
 
 # 3-2. 確認
 cat python/jax_util/solvers/design/template.md
-```
+```yaml
 
 **確認項目:**
 
@@ -432,7 +432,7 @@ cat python/jax_util/solvers/design/template.md
 
 # 4-2. 完全一致ファイルを自動削除
 python scripts/tools/find_redundant_designs.py --delete
-```
+```yaml
 
 **確認項目:**
 
@@ -473,7 +473,7 @@ cp -r notes/experiments/* notes/worktrees/<worktree-name>-<date>/
 
 # 1-2. 持ち帰り内容を整理
 ls -la notes/worktrees/
-```
+```yaml
 
 **確認項目:**
 
@@ -494,7 +494,7 @@ git branch -d work/my-feature-name-20260318
 
 # 2-4. リモートブランチ削除（merge 後のみ）
 git push origin --delete work/my-feature-name-20260318
-```
+```yaml
 
 **確認項目:**
 
@@ -514,7 +514,7 @@ git branch -v
 
 # 3-3. ファイル構造確認
 ls -la .worktrees/
-```
+```yaml
 
 **確認項目:**
 
@@ -546,7 +546,7 @@ bash scripts/tools/check_worktree_scopes.sh
 
 # 1-2. レポート確認
 cat reports/worktree_scope_report.txt
-```
+```yaml
 
 **確認項目:**
 
@@ -570,7 +570,7 @@ cd "$MISSING_WT"
 git add WORKTREE_SCOPE.md
 git commit -m "chore(worktree): add WORKTREE_SCOPE"
 git push -u origin $(git rev-parse --abbrev-ref HEAD)
-```
+```yaml
 
 **確認項目:**
 
@@ -604,7 +604,7 @@ python scripts/tools/audit_and_fix_links.py
 
 # 1-3. ドキュメント修正推奨
 python scripts/tools/fix_markdown_docs.py
-```
+```yaml
 
 ## ステップ2: 設計ファイル品質（5分）
 
@@ -617,7 +617,7 @@ cat reports/similar_analysis.txt
 
 # 2-3. 重複削除提案確認
 python scripts/tools/find_redundant_designs.py
-```
+```yaml
 
 ## ステップ3: コミット（3分）
 
@@ -626,7 +626,7 @@ python scripts/tools/find_redundant_designs.py
 git add documents/
 git commit -m "docs: apply formatting and link fixes"
 git push origin main
-```
+```yaml
 
 ## 完了チェック
 
@@ -662,7 +662,7 @@ pytest python/tests/<module>/test_<name>.py::TestName::test_method -v -s
 
 # ソースコード確認
 cat python/jax_util/<module>/<file>.py
-```
+```yaml
 
 ## 問題: リンク切れが多い場合
 
@@ -675,7 +675,7 @@ cat reports/link_audit.txt
 
 # 手動修正（相対パス統一）
 vim documents/<affected-file>.md
-```
+```yaml
 
 ## 問題: ワークツリー削除に失敗した
 
@@ -689,7 +689,7 @@ lsof +D <worktree-path>
 
 # 強制削除（最終手段）
 git worktree remove --force .worktrees/<name>
-```
+```text
 
 ______________________________________________________________________
 

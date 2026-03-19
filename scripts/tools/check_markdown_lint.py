@@ -152,6 +152,19 @@ class MarkdownLinter:
 
         return issues
 
+    def check_md040(self, filepath: str) -> List[Tuple[int, str]]:
+        """MD040: Fenced code blocks should have language specified"""
+        with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            lines = f.readlines()
+
+        issues = []
+        for i, line in enumerate(lines, 1):
+            # Opening ``` without language specification
+            if re.match(r"^```\s*$", line):
+                issues.append((i, "Fenced code block should specify language"))
+
+        return issues
+
     def scan_file(self, filepath: str) -> List[Tuple[int, str, str]]:
         """ファイルをスキャン"""
         check_methods = [
@@ -161,6 +174,7 @@ class MarkdownLinter:
             ("MD009", self.check_md009),
             ("MD010", self.check_md010),
             ("MD030", self.check_md030),
+            ("MD040", self.check_md040),
         ]
 
         all_issues = []
