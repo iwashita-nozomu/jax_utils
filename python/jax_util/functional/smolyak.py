@@ -29,75 +29,49 @@ def _compact_unsigned_dtype(max_value: int, /) -> np.dtype[np.unsignedinteger[An
     return np.dtype(np.uint64)
 
 
-# 責務: dyadic 分数の canonical ID を 1 次元ノード列へ割り当てる。
-def _dyadic_fraction_ids(
-    numerators: NDArray[np.int64],
-    denominator_power: int,
-    /,
-) -> NDArray[np.unsignedinteger[Any]]:
-    max_id = (1 << (denominator_power + 1)) - 1
-    id_dtype = _compact_unsigned_dtype(max_id)
-    ids = np.empty(numerators.shape, dtype=id_dtype)
+# 責務: level ごとの Clenshaw-Curtis ノードへ dyadic 分数の整数キーを割り当てる。
+def _clenshaw_curtis_node_keys(level: int, /) -> NDArray[np.unsignedinteger[Any]]:
+    if level < 1:
+        raise ValueError("level must be positive.")
+    if level == 1:
+        return np.asarray([[1, 1]], dtype=np.uint8)
+
+    denominator_power = level - 1
+    numerators = np.arange(1 << denominator_power, -1, -1, dtype=np.int64)
+    key_dtype = _compact_unsigned_dtype(max(1 << denominator_power, denominator_power))
+    keys = np.empty(numerators.shape + (2,), dtype=key_dtype)
     denominator = np.int64(1 << denominator_power)
+
+    reduced_numerators = keys[:, 0]
+    reduced_powers = keys[:, 1]
 
     zero_mask = numerators == 0
     one_mask = numerators == denominator
     inner_mask = ~(zero_mask | one_mask)
 
-    ids[zero_mask] = 1
-    ids[one_mask] = 2
+    reduced_numerators[zero_mask] = 0
+    reduced_powers[zero_mask] = 0
+    reduced_numerators[one_mask] = 1
+    reduced_powers[one_mask] = 0
 
     inner = numerators[inner_mask]
     if inner.size > 0:
         lowbit = inner & (-inner)
         shifts = np.log2(lowbit.astype(np.float64)).astype(np.int64)
-        reduced_power = denominator_power - shifts
-        reduced_numerators = inner >> shifts
-        ids[inner_mask] = ((np.int64(1) << reduced_power) + reduced_numerators).astype(id_dtype)
+        reduced_numerators[inner_mask] = (inner >> shifts).astype(key_dtype)
+        reduced_powers[inner_mask] = (denominator_power - shifts).astype(key_dtype)
 
-    return ids
+    return keys
 
 
-# 責務: canonical ID から dyadic 分数の分子・分母を復元する。
-def _dyadic_fraction_from_ids(
-    ids: NDArray[np.integer[Any]],
+# 責務: Clenshaw-Curtis の整数キー列からノード列を復元する。
+def _clenshaw_curtis_nodes_from_keys(
+    keys: NDArray[np.integer[Any]],
     /,
-) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
-    numerators = np.empty(ids.shape, dtype=np.float64)
-    denominators = np.ones(ids.shape, dtype=np.float64)
-
-    zero_mask = ids == 1
-    one_mask = ids == 2
-    inner_mask = ~(zero_mask | one_mask)
-
-    numerators[zero_mask] = 0.0
-    numerators[one_mask] = 1.0
-
-    inner_ids = ids[inner_mask]
-    if inner_ids.size > 0:
-        inner_ids_int64 = inner_ids.astype(np.int64, copy=False)
-        powers = np.floor(np.log2(inner_ids_int64.astype(np.float64))).astype(np.int64)
-        numerators[inner_mask] = (inner_ids_int64 - (np.int64(1) << powers)).astype(np.float64)
-        denominators[inner_mask] = np.exp2(powers.astype(np.float64))
-
-    return numerators, denominators
-
-
-# 責務: level ごとの Clenshaw-Curtis ノードへ canonical ID を割り当てる。
-def clenshaw_curtis_node_ids(level: int, /) -> NDArray[np.unsignedinteger[Any]]:
-    if level < 1:
-        raise ValueError("level must be positive.")
-    if level == 1:
-        return np.asarray([3], dtype=np.uint8)
-
-    denominator_power = level - 1
-    numerators = np.arange(1 << denominator_power, -1, -1, dtype=np.int64)
-    return _dyadic_fraction_ids(numerators, denominator_power)
-
-
-# 責務: Clenshaw-Curtis の canonical ID 列からノード列を復元する。
-def clenshaw_curtis_nodes_from_ids(ids: NDArray[np.integer[Any]], /) -> NDArray[np.floating[Any]]:
-    numerators, denominators = _dyadic_fraction_from_ids(ids)
+) -> NDArray[np.floating[Any]]:
+    numerators = keys[:, 0].astype(np.float64, copy=False)
+    denominator_powers = keys[:, 1].astype(np.float64, copy=False)
+    denominators = np.exp2(denominator_powers)
     return 0.5 * np.cos(np.pi * numerators / denominators)
 
 
@@ -156,36 +130,35 @@ def _difference_rule_numpy(
     level: int,
     /,
 ) -> tuple[
-    NDArray[np.integer[Any]] | None,
     NDArray[np.floating[Any]],
     NDArray[np.floating[Any]],
 ]:
     nodes, weights = _clenshaw_curtis_rule_numpy(level)
-    node_ids = clenshaw_curtis_node_ids(level)
+    node_keys = _clenshaw_curtis_node_keys(level)
     if level == 1:
-        return node_ids, nodes, weights
+        return nodes, weights
 
-    previous_ids = clenshaw_curtis_node_ids(level - 1)
+    previous_keys = _clenshaw_curtis_node_keys(level - 1)
     previous_weights = _clenshaw_curtis_rule_numpy(level - 1)[1]
 
-    all_ids = np.concatenate([node_ids, previous_ids], axis=0)
+    all_keys = np.concatenate([node_keys, previous_keys], axis=0)
     all_weights = np.concatenate([weights, -previous_weights], axis=0)
-    unique_ids, inverse = np.unique(all_ids, return_inverse=True)
+    unique_keys, inverse = np.unique(all_keys, axis=0, return_inverse=True)
 
-    unique_weights = np.zeros(unique_ids.shape[0], dtype=all_weights.dtype)
+    unique_weights = np.zeros(unique_keys.shape[0], dtype=all_weights.dtype)
     np.add.at(unique_weights, inverse, all_weights)
 
     mask = np.abs(unique_weights) > 1e-15
-    filtered_ids = unique_ids[mask]
+    filtered_keys = unique_keys[mask]
     filtered_weights = unique_weights[mask]
-    filtered_nodes = clenshaw_curtis_nodes_from_ids(filtered_ids)
+    filtered_nodes = _clenshaw_curtis_nodes_from_keys(filtered_keys)
     order = np.argsort(filtered_nodes)
-    return filtered_ids[order], filtered_nodes[order], filtered_weights[order]
+    return filtered_nodes[order], filtered_weights[order]
 
 
 # 責務: Clenshaw-Curtis の差分積分則 Delta_level を構築する。
 def difference_rule(level: int, /) -> tuple[Vector, Vector]:
-    _, diff_nodes_np, diff_weights_np = _difference_rule_numpy(level)
+    diff_nodes_np, diff_weights_np = _difference_rule_numpy(level)
     diff_nodes = jnp.asarray(diff_nodes_np, dtype=DEFAULT_DTYPE)
     diff_weights = jnp.asarray(diff_weights_np, dtype=DEFAULT_DTYPE)
     return diff_nodes, diff_weights
@@ -253,7 +226,7 @@ def _difference_rule_storage_numpy(
     lengths = np.empty((max_level,), dtype=np.int64)
 
     for current_level in range(1, max_level + 1):
-        _, nodes_np, weights_np = _difference_rule_numpy(current_level)
+        nodes_np, weights_np = _difference_rule_numpy(current_level)
         nodes_by_level.append(nodes_np)
         weights_by_level.append(weights_np)
         lengths[current_level - 1] = nodes_np.shape[0]
@@ -638,7 +611,6 @@ def initialize_smolyak_integrator(
 __all__ = [
     "SmolyakIntegrator",
     "clenshaw_curtis_rule",
-    "clenshaw_curtis_node_ids",
     "difference_rule",
     "initialize_smolyak_integrator",
     "multi_indices",

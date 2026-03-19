@@ -1,3 +1,9 @@
+"""ランナーと標準的なスケジューラ/ワーカーの実装。
+
+軽量な抽象（`StandardScheduler` / `StandardRunner` / `StandardWorker`）を提供します。
+実装は並列実行と完了ハンドリングの単純な契約に従います。
+"""
+
 from __future__ import annotations
 
 from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wait
@@ -6,6 +12,7 @@ from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
 from .protocols import (
+    ResourceEstimate,
     Scheduler,
     SUCCESS_EXIT_CODE,
     TaskContext,
@@ -17,10 +24,29 @@ from .protocols import (
 T = TypeVar("T")
 U = TypeVar("U")
 
+__all__ = [
+    "StandardWorker",
+    "StandardResourceCapacity",
+    "StandardCompletion",
+    "StandardScheduler",
+    "StandardRunner",
+]
+
 
 class StandardWorker(Generic[T, U]):
-    def __init__(self, task: Callable[[T, TaskContext], U]) -> None:
+    """ワーカー呼び出しラッパー。
+
+    - `task` を実行し、例外が発生した場合はトレースを出力してエラーコードを返す。
+    - 任意で `resource_estimator` を注入して `resource_estimate` を提供できる。
+    """
+
+    def __init__(
+        self,
+        task: Callable[[T, TaskContext], U],
+        resource_estimator: Callable[[T], ResourceEstimate] | None = None,
+    ) -> None:
         self.task = task
+        self._resource_estimator = resource_estimator
 
     def __call__(self, case: T, context: TaskContext) -> int:
         try:
@@ -29,6 +55,11 @@ class StandardWorker(Generic[T, U]):
         except Exception:
             traceback.print_exc()
             return WORKER_PROTOCOL_ERROR_EXIT_CODE
+
+    def resource_estimate(self, case: T) -> ResourceEstimate:
+        if self._resource_estimator is None:
+            raise ValueError("resource_estimator is not configured.")
+        return self._resource_estimator(case)
 
 
 @dataclass(frozen=True)
@@ -48,6 +79,12 @@ class StandardCompletion(Generic[T]):
 
 
 class StandardScheduler(Generic[T]):
+    """FIFO ベースのシンプルなスケジューラ実装。
+
+    - `next_case()` で次のケースとその `TaskContext` を返す。
+    - `on_finish()` で `completions` に結果を記録する。
+    """
+
     def __init__(
         self,
         resource_capacity: StandardResourceCapacity,
@@ -69,18 +106,14 @@ class StandardScheduler(Generic[T]):
         return dict(self._context_builder(case))
 
     def next_case(self) -> tuple[T, TaskContext] | None:
-        # 待機中のケースから FIFO 順で次のケースを取り出します。
-        # context_builder が指定されている場合は context を生成し、
-        # 指定がなければ空の context を返します。
-        # 待機中のケースがなくなったときだけ None を返します。
+        """待機中ケースの先頭を取り出して (case, context) を返す。存在しなければ None を返す。"""
         if self._pending_cases:
             case = self._pending_cases.pop(0)
             return case, self._build_context(case)
         return None
 
     def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:
-        # ケース完了時に結果を completions リストへ記録します。
-        # context の不変性を確保するため、dict() で複製してから保存します。
+        """完了時に `completions` に結果を記録する（context は複製して保存）。"""
         self.completions.append(
             StandardCompletion(
                 case=case,
@@ -94,13 +127,16 @@ class StandardScheduler(Generic[T]):
 
 
 class StandardRunner(Generic[T, U]):
+    """スケジューラとワーカーを使ってケースを並列実行するランナー。
+
+    - `ProcessPoolExecutor` を使って `max_workers` 並列プロセスで実行する。
+    - 完了ごとに `scheduler.on_finish` を呼び、次のケースを投入する。
+    """
+
     def __init__(self, scheduler: Scheduler[T]) -> None:
         self.scheduler = scheduler
 
     def run(self, worker: Worker[T, U]) -> None:
-        # ProcessPoolExecutor で max_workers 本のプロセスを起動し、ケースを並列実行します。
-        # scheduler から次のケースを取得し、完了時に on_finish を呼び出して状態を更新します。
-        # FIRST_COMPLETED で done future を順次処理し、新しいケースを投入します。
         with ProcessPoolExecutor(
             max_workers=self.scheduler.resource_capacity.max_workers
         ) as ex:

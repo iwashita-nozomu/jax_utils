@@ -13,15 +13,19 @@ PYTHON_ROOT = Path(__file__).resolve().parents[2]
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
-from jax_util.experiment_runner import (
+from jax_util.experiment_runner.gpu_runner import (
     GPUResourceCapacity,
     StandardGPUScheduler,
+    visible_gpu_ids_from_environment,
+)
+from jax_util.experiment_runner.runner import (
     StandardRunner,
     StandardWorker,
     SUCCESS_EXIT_CODE,
+)
+from jax_util.experiment_runner.protocols import (
     TaskContext,
     WORKER_PROTOCOL_ERROR_EXIT_CODE,
-    visible_gpu_ids_from_environment,
 )
 
 
@@ -147,8 +151,10 @@ def _run_standard_gpu_scheduler_assigns_and_releases_gpu_slots() -> None:
 
     assert first_context["gpu_id"] == "3"
     assert first_context["CUDA_VISIBLE_DEVICES"] == "3"
+    assert first_context["NVIDIA_VISIBLE_DEVICES"] == "3"
     assert second_context["gpu_id"] == "7"
     assert second_context["CUDA_VISIBLE_DEVICES"] == "7"
+    assert second_context["NVIDIA_VISIBLE_DEVICES"] == "7"
 
     scheduler.on_finish(first_case, first_context, SUCCESS_EXIT_CODE)
     third_job = scheduler.next_case()
