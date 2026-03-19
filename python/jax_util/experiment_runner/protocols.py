@@ -10,7 +10,8 @@ TaskContext: TypeAlias = dict[str, str]
 
 
 class ResourceEstimate(Protocol):
-    # Concrete schedulers may use per-case estimates internally.
+    # 実際の見積もり実装は task を定義する実験コードと同じ場所に置き、
+    # scheduler 側はその結果だけを消費する方針です。
     ...
 
 
@@ -24,6 +25,11 @@ class Worker(Protocol[T, U]):
 
     # Task を実行して終了コードを返します。ログ出力は worker 側で扱います。
     def __call__(self, case: T, context: TaskContext) -> int: ...
+
+
+class ResourceEstimatingWorker(Worker[T, U], Protocol[T, U]):
+    # task 実装と同じ場所で定義された per-case の資源見積もりを返します。
+    def resource_estimate(self, case: T) -> ResourceEstimate: ...
 
 
 class Scheduler(Protocol[T]):

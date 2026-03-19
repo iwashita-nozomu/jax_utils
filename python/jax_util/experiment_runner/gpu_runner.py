@@ -78,6 +78,7 @@ class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
         resource_capacity: GPUResourceCapacity,
         cases: list[T],
         context_builder: Callable[[T], TaskContext] | None = None,
+        disable_gpu_preallocation: bool = False,
     ) -> None:
         super().__init__(
             resource_capacity=resource_capacity,
@@ -85,6 +86,7 @@ class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
             context_builder=context_builder,
         )
         self._available_gpu_ids = deque(resource_capacity.gpu_ids)
+        self._disable_gpu_preallocation = disable_gpu_preallocation
 
     @property
     def resource_capacity(self) -> GPUResourceCapacity:
@@ -99,6 +101,9 @@ class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
         context = self._build_context(case)
         context["gpu_id"] = str(gpu_id)
         context["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
+        context["NVIDIA_VISIBLE_DEVICES"] = str(gpu_id)
+        if self._disable_gpu_preallocation:
+            context["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
         return case, context
 
     def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:

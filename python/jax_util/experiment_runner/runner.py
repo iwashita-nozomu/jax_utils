@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
 from .protocols import (
+    ResourceEstimate,
     Scheduler,
     SUCCESS_EXIT_CODE,
     TaskContext,
@@ -19,8 +20,13 @@ U = TypeVar("U")
 
 
 class StandardWorker(Generic[T, U]):
-    def __init__(self, task: Callable[[T, TaskContext], U]) -> None:
+    def __init__(
+        self,
+        task: Callable[[T, TaskContext], U],
+        resource_estimator: Callable[[T], ResourceEstimate] | None = None,
+    ) -> None:
         self.task = task
+        self._resource_estimator = resource_estimator
 
     def __call__(self, case: T, context: TaskContext) -> int:
         try:
@@ -29,6 +35,11 @@ class StandardWorker(Generic[T, U]):
         except Exception:
             traceback.print_exc()
             return WORKER_PROTOCOL_ERROR_EXIT_CODE
+
+    def resource_estimate(self, case: T) -> ResourceEstimate:
+        if self._resource_estimator is None:
+            raise ValueError("resource_estimator is not configured.")
+        return self._resource_estimator(case)
 
 
 @dataclass(frozen=True)

@@ -147,8 +147,10 @@ def _run_standard_gpu_scheduler_assigns_and_releases_gpu_slots() -> None:
 
     assert first_context["gpu_id"] == "3"
     assert first_context["CUDA_VISIBLE_DEVICES"] == "3"
+    assert first_context["NVIDIA_VISIBLE_DEVICES"] == "3"
     assert second_context["gpu_id"] == "7"
     assert second_context["CUDA_VISIBLE_DEVICES"] == "7"
+    assert second_context["NVIDIA_VISIBLE_DEVICES"] == "7"
 
     scheduler.on_finish(first_case, first_context, SUCCESS_EXIT_CODE)
     third_job = scheduler.next_case()

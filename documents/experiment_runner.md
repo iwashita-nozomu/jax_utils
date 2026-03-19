@@ -13,6 +13,7 @@
 - `ResourceEstimate` は各ケースを起動したときの資源見積もりです。
 - 典型例は必要 GPU 数、推定メモリ量、優先度などです。
 - 最小 protocol では runner へ直接見せず、concrete scheduler の内部表現として使います。
+- 見積もりロジック自体は framework 側へ押し込まず、実際の task を定義する実験コードと同じ場所で実装する方針です。
 
 ### 1.2 `ResourceCapacity`
 
@@ -25,6 +26,7 @@
 - protocol 上の実行入口は `__call__(case, context) -> int` です。
 - `task` は `Callable[[T, TaskContext], U]` です。
 - 複数の実験関数を回したい場合は、`task` 側で `context` を見て分岐します。
+- resource-aware な実験では、worker が `resource_estimate(case)` を追加で持ってよく、task と見積もりを同じ実装単位に寄せるのを推奨します。
 
 ### 1.4 `Scheduler[T]`
 
@@ -66,4 +68,10 @@
 - resource-aware な順序最適化は scheduler 側へ追加します。
 - GPU 固有差分が必要になっても、runner を増やすのではなく scheduler と resource 表現で吸収する方針です。
 - [gpu_runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/gpu_runner.py) には、環境から GPU 一覧を読み取り、1 プロセス 1 GPU を仮定する `GPUResourceCapacity` と `StandardGPUScheduler` を置きます。
-- `ResourceEstimate` を本格利用する scheduler は別ファイルで追加してよいです。
+- [resource_scheduler.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/resource_scheduler.py) には、1 task = 1 process を前提に host memory と GPU ごとの slot / memory を同時に見る `FullResourceCapacity`、`FullResourceEstimate`、`StandardFullResourceScheduler` を置きます。
+- `StandardFullResourceScheduler` に渡す `estimate_builder` は、task 実装に隣接した関数、または `task.resource_estimate(case)` のような bound method として定義するのを基本にします。
+- `StandardFullResourceScheduler.from_worker(...)` を使うと、worker が持つ `resource_estimate(case)` をそのまま scheduler へ渡せます。
+- `FullResourceCapacity.from_system(...)` は、`max_workers` を CPU 数、`host_memory_bytes` を物理メモリ量、`gpu_devices` を可視 GPU とそのメモリ容量から自動検出する入口です。
+- 既存の GPU 実験コードとの整合のため、GPU を割り当てる scheduler は `CUDA_VISIBLE_DEVICES` に加えて `NVIDIA_VISIBLE_DEVICES` も `TaskContext` へ入れられるようにします。
+- JAX の GPU メモリ先取りを避けたい実験では、scheduler 初期化時に `disable_gpu_preallocation=True` を渡し、`XLA_PYTHON_CLIENT_PREALLOCATE=false` を `TaskContext` へ載せます。
+- 既存の multi-GPU 実験は fresh subprocess へ環境変数を入れてから JAX を使う流儀だったため、import 前の環境固定が重要な task では、将来的に subprocess runner 系も併用できる形を残します。
