@@ -104,19 +104,146 @@ def _benchmark_integration_time(
     }
 
 
-def benchmark_initialization_scaling() -> dict[str, Any]:
+def run_light_benchmarks() -> dict[str, Any]:
+    """軽量ベンチマーク: 素早く性能傾向を掴む。
+    
+    実行時間: ~30秒
+    対象空間: d=1-8, level=1-5
+    用途: デバッグ・開発環境での素早い検証
+    """
+    print("\n[1/3] Initialization Scaling (Light) d=1-8, level=1...")
+    scaling_result = benchmark_initialization_scaling(
+        max_dimension=8,
+        level=1,
+        num_trials=2,
+    )
+    
+    print("\n[2/3] Level Refinement (Light) d=3, level=1-5...")
+    refinement_result = benchmark_level_refinement(
+        dimension=3,
+        max_level=5,
+        num_trials=2,
+    )
+    
+    print("\n[3/3] Dtype Comparison (Light) d=4, level=2...")
+    dtype_result = benchmark_dtype_comparison(
+        dimension=4,
+        level=2,
+        num_trials=2,
+    )
+    
+    return {
+        "benchmarks": [
+            scaling_result,
+            refinement_result,
+            dtype_result,
+        ],
+    }
+
+
+def run_heavy_benchmarks() -> dict[str, Any]:
+    """中程度ベンチマーク: 詳細な性能分析。
+    
+    実行時間: ~5-10分
+    対象空間: d=1-15, level=1-8
+    用途: 主要な性能特性の理解、改善前後の比較
+    """
+    print("\n[1/3] Initialization Scaling (Heavy) d=1-15, level=1...")
+    scaling_result = benchmark_initialization_scaling(
+        max_dimension=15,
+        level=1,
+        num_trials=3,
+    )
+    
+    print("\n[2/3] Level Refinement (Heavy) d=3, level=1-8...")
+    refinement_result = benchmark_level_refinement(
+        dimension=3,
+        max_level=8,
+        num_trials=2,
+    )
+    
+    print("\n[3/3] Dtype Comparison (Heavy) d=8, level=3...")
+    dtype_result = benchmark_dtype_comparison(
+        dimension=8,
+        level=3,
+        num_trials=2,
+    )
+    
+    return {
+        "benchmarks": [
+            scaling_result,
+            refinement_result,
+            dtype_result,
+        ],
+    }
+
+
+def run_extreme_benchmarks() -> dict[str, Any]:
+    """重量ベンチマーク: 指数的スケーリングの限界確認。
+    
+    実行時間: ~1時間以上
+    対象空間: d=1-20, level=1-10
+    用途: 大規模問題での漸近性能、設計限界の特定
+    
+    注意: 高次元・高レベルでは初期化時間が支配的になり、
+          計算時間は exp(d) に従うことが予想される。
+    """
+    print("\n[1/3] Initialization Scaling (Extreme) d=1-20, level=1...")
+    scaling_result = benchmark_initialization_scaling(
+        max_dimension=20,
+        level=1,
+        num_trials=2,
+    )
+    
+    print("\n[2/3] Level Refinement (Extreme) d=4, level=1-10...")
+    refinement_result = benchmark_level_refinement(
+        dimension=4,
+        max_level=10,
+        num_trials=1,
+    )
+    
+    print("\n[3/3] Dtype Comparison (Extreme) d=10, level=4...")
+    dtype_result = benchmark_dtype_comparison(
+        dimension=10,
+        level=4,
+        num_trials=1,
+    )
+    
+    return {
+        "benchmarks": [
+            scaling_result,
+            refinement_result,
+            dtype_result,
+        ],
+    }
+
+
+def benchmark_initialization_scaling(
+    max_dimension: int = 8,
+    level: int = 1,
+    num_trials: int = 2,
+) -> dict[str, Any]:
     """初期化時間の次元スケーリングを計測。
     
     責務: dimension が増えるとき、初期化時間がどのように増加するかを定量化。
+    
+    Parameters:
+    -----------
+    max_dimension : int
+        測定する最大次元 (default: 8)
+    level : int
+        Smolyak level (default: 1)
+    num_trials : int
+        各ケースの試行回数 (default: 2)
     """
     results = []
     
-    for dimension in range(1, 9):  # d=1 to 8
+    for dimension in range(1, max_dimension + 1):
         result = _benchmark_integration_time(
             dimension=dimension,
-            level=1,  # level を固定
+            level=level,
             dtype=jnp.float64,
-            num_trials=2,  # 複数回実行して安定性を確認
+            num_trials=num_trials,
         )
         results.append(result)
         print(f"✓ d={dimension}: init={result['init_time']['mean_sec']:.4f}s, integral={result['integral_time']['mean_sec']:.4f}s")
@@ -124,25 +251,38 @@ def benchmark_initialization_scaling() -> dict[str, Any]:
     return {
         "benchmark": "initialization_scaling",
         "description": "次元ごとの初期化・積分時間のスケーリング",
-        "fixed_level": 1,
+        "max_dimension": max_dimension,
+        "fixed_level": level,
         "results": results,
     }
 
 
-def benchmark_level_refinement() -> dict[str, Any]:
+def benchmark_level_refinement(
+    dimension: int = 3,
+    max_level: int = 5,
+    num_trials: int = 2,
+) -> dict[str, Any]:
     """level 上昇時の実行時間増加（refinement cost）を計測。
     
     責務: level を上げるたびの追加コスト（初期化・積分）を定量化。
+    
+    Parameters:
+    -----------
+    dimension : int
+        固定する次元 (default: 3)
+    max_level : int
+        測定する最大 level (default: 5)
+    num_trials : int
+        各ケースの試行回数 (default: 2)
     """
-    dimension = 3
     results = []
     
-    for level in range(1, 6):  # level=1 to 5
+    for level in range(1, max_level + 1):
         result = _benchmark_integration_time(
             dimension=dimension,
             level=level,
             dtype=jnp.float64,
-            num_trials=2,
+            num_trials=num_trials,
         )
         results.append(result)
         print(f"✓ level={level}: init={result['init_time']['mean_sec']:.4f}s, n_eval={result['num_evaluation_points']}")
@@ -151,17 +291,29 @@ def benchmark_level_refinement() -> dict[str, Any]:
         "benchmark": "level_refinement",
         "description": "Level 上昇時の初期化・積分コスト",
         "fixed_dimension": dimension,
+        "max_level": max_level,
         "results": results,
     }
 
 
-def benchmark_dtype_comparison() -> dict[str, Any]:
+def benchmark_dtype_comparison(
+    dimension: int = 4,
+    level: int = 2,
+    num_trials: int = 2,
+) -> dict[str, Any]:
     """異なる dtype での性能比較。
     
     責務: 精度による初期化・実行時間の差を確認。
+    
+    Parameters:
+    -----------
+    dimension : int
+        固定する次元 (default: 4)
+    level : int
+        固定する level (default: 2)
+    num_trials : int
+        各ケースの試行回数 (default: 2)
     """
-    dimension = 4
-    level = 2
     results = []
     
     for dtype in [jnp.float32, jnp.float64]:
@@ -169,53 +321,59 @@ def benchmark_dtype_comparison() -> dict[str, Any]:
             dimension=dimension,
             level=level,
             dtype=dtype,
-            num_trials=2,
+            num_trials=num_trials,
         )
         results.append(result)
         print(f"✓ {dtype.__name__}: init={result['init_time']['mean_sec']:.4f}s")
     
     return {
         "benchmark": "dtype_comparison",
-        "description": "異なる 精度での性能比較",
+        "description": "異なる精度での性能比較",
         "fixed_dimension": dimension,
         "fixed_level": level,
         "results": results,
     }
 
 
-def run_all_benchmarks(output_file: str | Path | None = None) -> dict[str, Any]:
-    """すべてのベンチマークを実行して結果を返す。
+def run_all_benchmarks(
+    level: str = "light",
+    output_file: str | Path | None = None,
+) -> dict[str, Any]:
+    """指定したレベルのベンチマークを実行。
     
     Parameters:
     -----------
+    level : str
+        ベンチマークレベル: "light" (既定), "heavy", "extreme"
     output_file : str | Path, optional
         結果を出力する JSON ファイル (default: None で出力しない)
     
     Returns:
     --------
     dict[str, Any]
-        すべてのベンチマーク結果を統合した辞書
+        ベンチマーク結果を統合した辞書
     """
     print("=" * 60)
     print("Smolyak Integrator Benchmark Suite")
     print("=" * 60)
+    print()
     
-    print("\n[1/3] Initialization Scaling...")
-    scaling_result = benchmark_initialization_scaling()
-    
-    print("\n[2/3] Level Refinement...")
-    refinement_result = benchmark_level_refinement()
-    
-    print("\n[3/3] Dtype Comparison...")
-    dtype_result = benchmark_dtype_comparison()
+    if level.lower() == "light":
+        benchmark_result = run_light_benchmarks()
+    elif level.lower() == "heavy":
+        benchmark_result = run_heavy_benchmarks()
+    elif level.lower() == "extreme":
+        benchmark_result = run_extreme_benchmarks()
+    else:
+        raise ValueError(
+            f"不明なレベル: {level}. "
+            "'light', 'heavy', 'extreme' のいずれかを指定してください。"
+        )
     
     all_results = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        "benchmarks": [
-            scaling_result,
-            refinement_result,
-            dtype_result,
-        ],
+        "benchmark_level": level,
+        "suite": benchmark_result,
     }
     
     if output_file is not None:
@@ -231,5 +389,18 @@ def run_all_benchmarks(output_file: str | Path | None = None) -> dict[str, Any]:
 if __name__ == "__main__":
     import sys
     
-    output_file = sys.argv[1] if len(sys.argv) > 1 else None
-    run_all_benchmarks(output_file=output_file)
+    # コマンドラインオプション処理
+    benchmark_level = "light"
+    output_file = None
+    
+    for i, arg in enumerate(sys.argv[1:]):
+        if arg in ("--light", "--heavy", "--extreme"):
+            benchmark_level = arg.lstrip("-")
+        elif arg == "--output" and i + 2 < len(sys.argv):
+            output_file = sys.argv[i + 2]
+    
+    # 最後の引数が出力ファイルパスの場合
+    if len(sys.argv) > 1 and not sys.argv[-1].startswith("--"):
+        output_file = sys.argv[-1]
+    
+    run_all_benchmarks(level=benchmark_level, output_file=output_file)
