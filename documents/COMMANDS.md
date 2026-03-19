@@ -143,6 +143,99 @@ pytest --junitxml=reports/test-results/junit.xml || true
 
 この運用により、新しいエージェントはコマンドを直接呼び出して作業を再現・検証できるようになります。
 
+## 推奨ワークフロー（詳細手順）
+
+以下は `auto-fix` を行う場合の具体的手順です。worktree 運用規約に従い、まずは `work/*` ワークツリーや `origin/main` を同期・確認してください（参照: `documents/worktree-lifecycle.md`）。
+
+前提: `origin/main` が最新であること、作業ワークツリーが clean であること。
+
+1) ベースワークツリー準備
+
+```bash
+# main を最新化
+git fetch origin
+git switch main
+git pull --ff-only origin main
+
+# 新しい作業ブランチを作る（作業はワークツリーで）
+scripts/setup_worktree.sh work/fix-ruff-YYYYMMDD
+cd .worktrees/work/fix-ruff-YYYYMMDD
+```
+
+2) 解析レポート作成（読み取り専用）
+
+```bash
+# レポートを作る（ローカルでの再現）
+scripts/ci/run_static_checks.sh reports/static-analysis
+
+# 生成物例
+# - reports/static-analysis/ruff.json
+# - reports/static-analysis/pyright.txt
+# - reports/test-results/junit.xml
+```
+
+3) 安全ファイル抽出（他ブランチとの競合回避）
+
+```bash
+# safe ファイル一覧を作る
+python3 scripts/ci/safe_file_extractor.py
+# 出力: /tmp/safe_files.txt, reports/static-analysis/safe_files.txt
+```
+
+4) 自動修正の dry-run（まず検証）
+
+```bash
+# dry-run: 実際にはコミットせずに変更差分を確認
+cp /tmp/safe_files.txt /tmp/safe_files_dry.txt
+while read -r f; do
+  echo "ruff --fix $f (dry-run)"
+  # 実行して差分を作るが commit しない
+  ruff --fix "$f" || true
+done < /tmp/safe_files_dry.txt
+
+# フォーマット
+black --line-length 100 $(sed 's@^/workspace/@@' /tmp/safe_files_dry.txt)
+
+# レビュー: git diff を見て問題がないか確認する
+git status --porcelain
+git --no-pager diff
+
+# ロールバック（dry-run の場合）
+git restore --staged . || true
+git restore . || true
+```
+
+5) 自動修正の適用（コミット）
+
+```bash
+# 安全と判断したら実行（--commit オプション）
+scripts/ci/safe_fix.sh --commit
+
+# これにより小さなコミットが作られ、ブランチに push される
+```
+
+6) PR 作成とレビュー
+
+- PR ボディには `reviews/PRIORITIZED_FIXES.md` や `reports/static-analysis/*` へのリンクを含めること。
+- `reviewer` が `pyright`/`pytest` を確認し、問題なければ `integrator` が統合する。
+
+## 失敗時の扱い（要約）
+
+- `ruff`/`pyright` のエラー: レポートを `reports/` に保存し、PR にログを添付して担当者に差し戻す。
+- `pytest` の失敗: 自動マージ禁止。GPU 依存は `integration/gpu` に分離。
+- 自動スクリプトが途中で失敗した場合は、`reports/logs/<job>-<ts>.log` を作成して `auditor` に通知する。
+
+## コマンドの説明テンプレート（新規コマンド作成時に必ず記載）
+
+- 命名: `scripts/<scope>/<name>.sh` または `scripts/<scope>/<name>.py`
+- 概要: 何をするか一文で説明
+- 引数: 主要なフラグと挙動（`--dry-run`, `--commit`, `--report-dir` 等）
+- 入出力: 入力ファイル/期待する出力ファイルを明記
+- 事前条件: 必要な前提（main 同期、worktree の clean 等）
+- 失敗時の対応: 失敗したらどのログを確認するか、誰に報告するか
+
+新しいコマンドを作ったら、このテンプレートに従って `scripts/` 側と `documents/COMMANDS.md` の双方に説明を追加してください。
+
 ---
 
 作成日: 2026-03-19
