@@ -1,0 +1,106 @@
+from __future__ import annotations
+
+import os
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from tempfile import TemporaryDirectory
+from typing import Mapping, cast
+
+import pytest
+
+from jax_util.experiment_runner import (
+    FullResourceCapacity,
+    FullResourceEstimate,
+    GPUDeviceCapacity,
+    StandardFullResourceScheduler,
+    StandardRunner,
+    StandardWorker,
+    TaskContext,
+)
+
+
+if os.environ.get("RUN_HEAVY_TESTS") not in {"1", "true", "True"}:
+    pytest.skip("heavy tests disabled; set RUN_HEAVY_TESTS=1 to enable", allow_module_level=True)
+
+
+def _case_id(case: Mapping[str, object], /) -> int:
+    value = case.get("case_id")
+    if not isinstance(value, int):
+        raise TypeError("case_id must be int.")
+    return value
+
+
+def _sleep_seconds(case: Mapping[str, object], /) -> float:
+    value = case.get("sleep_seconds")
+    if not isinstance(value, (int, float)):
+        raise TypeError("sleep_seconds must be numeric.")
+    return float(value)
+
+
+def _resource_estimate(case: Mapping[str, object], /) -> FullResourceEstimate:
+    host_memory_bytes = case.get("host_memory_bytes", 0)
+    gpu_count = case.get("gpu_count", 0)
+    gpu_memory_bytes = case.get("gpu_memory_bytes", 0)
+    if not isinstance(host_memory_bytes, int):
+        raise TypeError("host_memory_bytes must be int.")
+    if not isinstance(gpu_count, int):
+        raise TypeError("gpu_count must be int.")
+    if not isinstance(gpu_memory_bytes, int):
+        raise TypeError("gpu_memory_bytes must be int.")
+    return FullResourceEstimate(
+        host_memory_bytes=host_memory_bytes,
+        gpu_count=gpu_count,
+        gpu_memory_bytes=gpu_memory_bytes,
+    )
+
+
+@dataclass(frozen=True)
+class FullResourceRecordingTask:
+    records_dir: Path
+
+    def __call__(self, case: dict[str, object], context: TaskContext) -> dict[str, object]:
+        case_id = _case_id(case)
+        started_at = time.time()
+        time.sleep(_sleep_seconds(case))
+        finished_at = time.time()
+        return {"case_id": case_id, "started_at": started_at, "finished_at": finished_at, "gpu_ids": context.get("gpu_ids", "")}
+
+
+def test_heavy_resource_scheduler(tmp_path: Path) -> None:
+    # 非常に多数のケースでスケジューラ/ランナーを負荷検証する
+    count = 2000
+    cases: list[dict[str, object]] = []
+    for i in range(count):
+        has_gpu = (i % 4) == 0
+        cases.append({
+            "case_id": i,
+            "sleep_seconds": 0.001,
+            "host_memory_bytes": 1,
+            "gpu_count": 1 if has_gpu else 0,
+            "gpu_memory_bytes": 1 if has_gpu else 0,
+        })
+
+    scheduler = StandardFullResourceScheduler(
+        resource_capacity=FullResourceCapacity(
+            max_workers=16,
+            host_memory_bytes=64,
+            gpu_devices=(
+                GPUDeviceCapacity(gpu_id=0, memory_bytes=8, max_slots=1),
+                GPUDeviceCapacity(gpu_id=1, memory_bytes=8, max_slots=1),
+                GPUDeviceCapacity(gpu_id=2, memory_bytes=8, max_slots=1),
+            ),
+        ),
+        cases=cases,
+        estimate_builder=_resource_estimate,
+    )
+
+    runner = StandardRunner(scheduler)
+    worker = StandardWorker(FullResourceRecordingTask(tmp_path))
+
+    start = time.perf_counter()
+    runner.run(worker)
+    elapsed = time.perf_counter() - start
+
+    assert len(scheduler.completions) == count
+    assert elapsed < 120.0

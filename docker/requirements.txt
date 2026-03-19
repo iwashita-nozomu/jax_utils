@@ -1,4 +1,9 @@
+jaxtyping
+typeguard
+equinox
 pytest>=8
+scipy
 scipy-stubs
 optax
 pyright
+pydeps
