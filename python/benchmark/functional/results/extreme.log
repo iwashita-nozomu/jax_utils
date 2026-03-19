@@ -1,0 +1,44 @@
+============================================================
+Smolyak Integrator Benchmark Suite
+============================================================
+
+
+[1/3] Initialization Scaling (Extreme) d=1-20, level=1...
+✓ d=1: init=0.0735s, integral=0.1795s
+✓ d=2: init=0.0022s, integral=0.2572s
+✓ d=3: init=0.0019s, integral=0.2397s
+✓ d=4: init=0.0028s, integral=0.2785s
+✓ d=5: init=0.0029s, integral=0.2714s
+✓ d=6: init=0.0024s, integral=0.2972s
+✓ d=7: init=0.0027s, integral=0.3241s
+✓ d=8: init=0.0032s, integral=0.4189s
+✓ d=9: init=0.0036s, integral=0.4094s
+✓ d=10: init=0.0065s, integral=0.4745s
+✓ d=11: init=0.0075s, integral=0.4657s
+✓ d=12: init=0.0090s, integral=0.4930s
+✓ d=13: init=0.0116s, integral=0.5713s
+✓ d=14: init=0.0204s, integral=0.5764s
+✓ d=15: init=0.0400s, integral=0.6086s
+✓ d=16: init=0.0821s, integral=0.6564s
+✓ d=17: init=0.1598s, integral=0.6583s
+✓ d=18: init=0.3264s, integral=0.7917s
+✓ d=19: init=0.7355s, integral=0.7675s
+✓ d=20: init=1.6755s, integral=1.0031s
+
+[2/3] Level Refinement (Extreme) d=4, level=1-10...
+✓ level=1: init=0.0027s, n_eval=1
+✓ level=2: init=0.0032s, n_eval=13
+✓ level=3: init=0.0034s, n_eval=87
+✓ level=4: init=0.0036s, n_eval=411
+✓ level=5: init=0.0048s, n_eval=1574
+✓ level=6: init=0.0061s, n_eval=5270
+✓ level=7: init=0.0061s, n_eval=16122
+✓ level=8: init=0.0085s, n_eval=46290
+✓ level=9: init=0.0100s, n_eval=126879
+✓ level=10: init=0.0148s, n_eval=335715
+
+[3/3] Dtype Comparison (Extreme) d=10, level=4...
+✓ float32: init=0.0254s
+✓ float64: init=0.0143s
+
+✓ Results saved to python/benchmark/functional/results/extreme.json

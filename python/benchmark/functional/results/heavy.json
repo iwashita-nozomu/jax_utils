@@ -1,0 +1,507 @@
+{
+  "timestamp": "2026-03-19T14:33:59Z",
+  "benchmark_level": "heavy",
+  "suite": {
+    "benchmarks": [
+      {
+        "benchmark": "initialization_scaling",
+        "description": "\u6b21\u5143\u3054\u3068\u306e\u521d\u671f\u5316\u30fb\u7a4d\u5206\u6642\u9593\u306e\u30b9\u30b1\u30fc\u30ea\u30f3\u30b0",
+        "max_dimension": 15,
+        "fixed_level": 1,
+        "results": [
+          {
+            "dimension": 1,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.13303112983703613,
+              "std_sec": 0.18629583638124672,
+              "min_sec": 0.001188039779663086,
+              "max_sec": 0.39649319648742676
+            },
+            "integral_time": {
+              "mean_sec": 0.16072948773701987,
+              "std_sec": 0.04312544711728065,
+              "min_sec": 0.12415480613708496,
+              "max_sec": 0.221282958984375
+            }
+          },
+          {
+            "dimension": 2,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.0016642411549886067,
+              "std_sec": 0.00030770349808775105,
+              "min_sec": 0.0014314651489257812,
+              "max_sec": 0.0020990371704101562
+            },
+            "integral_time": {
+              "mean_sec": 0.22363877296447754,
+              "std_sec": 0.037437554470681,
+              "min_sec": 0.17084836959838867,
+              "max_sec": 0.25353193283081055
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.002474069595336914,
+              "std_sec": 0.0002958766561718158,
+              "min_sec": 0.002055644989013672,
+              "max_sec": 0.002685546875
+            },
+            "integral_time": {
+              "mean_sec": 0.21174025535583496,
+              "std_sec": 0.02965689801861647,
+              "min_sec": 0.1899261474609375,
+              "max_sec": 0.25366997718811035
+            }
+          },
+          {
+            "dimension": 4,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.0019747416178385415,
+              "std_sec": 0.00013293331904997864,
+              "min_sec": 0.0018422603607177734,
+              "max_sec": 0.002156496047973633
+            },
+            "integral_time": {
+              "mean_sec": 0.2608175277709961,
+              "std_sec": 0.02627301512498074,
+              "min_sec": 0.22462964057922363,
+              "max_sec": 0.2862076759338379
+            }
+          },
+          {
+            "dimension": 5,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.0021753311157226562,
+              "std_sec": 0.0001698190898371088,
+              "min_sec": 0.002050161361694336,
+              "max_sec": 0.0024154186248779297
+            },
+            "integral_time": {
+              "mean_sec": 0.255160649617513,
+              "std_sec": 0.028994548788757707,
+              "min_sec": 0.23271727561950684,
+              "max_sec": 0.29610180854797363
+            }
+          },
+          {
+            "dimension": 6,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.0027529398600260415,
+              "std_sec": 0.00016759682401219802,
+              "min_sec": 0.002551555633544922,
+              "max_sec": 0.002961874008178711
+            },
+            "integral_time": {
+              "mean_sec": 0.2981363932291667,
+              "std_sec": 0.04585181919721611,
+              "min_sec": 0.2643599510192871,
+              "max_sec": 0.3629615306854248
+            }
+          },
+          {
+            "dimension": 7,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.002759059270222982,
+              "std_sec": 0.0001159414512385449,
+              "min_sec": 0.0026693344116210938,
+              "max_sec": 0.0029227733612060547
+            },
+            "integral_time": {
+              "mean_sec": 0.3088342348734538,
+              "std_sec": 0.02538626355397395,
+              "min_sec": 0.288576602935791,
+              "max_sec": 0.3446323871612549
+            }
+          },
+          {
+            "dimension": 8,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.003093560536702474,
+              "std_sec": 0.0002661208011415816,
+              "min_sec": 0.0027914047241210938,
+              "max_sec": 0.0034389495849609375
+            },
+            "integral_time": {
+              "mean_sec": 0.38587578137715656,
+              "std_sec": 0.046040247581456424,
+              "min_sec": 0.3286113739013672,
+              "max_sec": 0.4413435459136963
+            }
+          },
+          {
+            "dimension": 9,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.0035511652628580728,
+              "std_sec": 0.0005007151308103538,
+              "min_sec": 0.003183603286743164,
+              "max_sec": 0.0042591094970703125
+            },
+            "integral_time": {
+              "mean_sec": 0.4249562422434489,
+              "std_sec": 0.04221273958565859,
+              "min_sec": 0.36670780181884766,
+              "max_sec": 0.46540355682373047
+            }
+          },
+          {
+            "dimension": 10,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.026839494705200195,
+              "std_sec": 0.031076962561402088,
+              "min_sec": 0.004602193832397461,
+              "max_sec": 0.07078790664672852
+            },
+            "integral_time": {
+              "mean_sec": 0.434961477915446,
+              "std_sec": 0.031342786835114114,
+              "min_sec": 0.39066076278686523,
+              "max_sec": 0.4583926200866699
+            }
+          },
+          {
+            "dimension": 11,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.006342490514119466,
+              "std_sec": 0.0008974600687142292,
+              "min_sec": 0.00565338134765625,
+              "max_sec": 0.0076100826263427734
+            },
+            "integral_time": {
+              "mean_sec": 0.4642919699350993,
+              "std_sec": 0.03767380175290594,
+              "min_sec": 0.42958831787109375,
+              "max_sec": 0.5166540145874023
+            }
+          },
+          {
+            "dimension": 12,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.007338285446166992,
+              "std_sec": 0.0002432136739122566,
+              "min_sec": 0.007114410400390625,
+              "max_sec": 0.007676362991333008
+            },
+            "integral_time": {
+              "mean_sec": 0.49079283078511554,
+              "std_sec": 0.04542614713314124,
+              "min_sec": 0.44434165954589844,
+              "max_sec": 0.55245041847229
+            }
+          },
+          {
+            "dimension": 13,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.011450052261352539,
+              "std_sec": 0.0003798815329516051,
+              "min_sec": 0.01109766960144043,
+              "max_sec": 0.011977434158325195
+            },
+            "integral_time": {
+              "mean_sec": 0.5678757826487223,
+              "std_sec": 0.025434219215396715,
+              "min_sec": 0.5319488048553467,
+              "max_sec": 0.5873520374298096
+            }
+          },
+          {
+            "dimension": 14,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.021282354990641277,
+              "std_sec": 0.000984772951718561,
+              "min_sec": 0.019927501678466797,
+              "max_sec": 0.022238969802856445
+            },
+            "integral_time": {
+              "mean_sec": 0.5732177893320719,
+              "std_sec": 0.0630995249205169,
+              "min_sec": 0.5228581428527832,
+              "max_sec": 0.662196159362793
+            }
+          },
+          {
+            "dimension": 15,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.12363266944885254,
+              "std_sec": 0.07813355678684872,
+              "min_sec": 0.0406339168548584,
+              "max_sec": 0.2283039093017578
+            },
+            "integral_time": {
+              "mean_sec": 0.6489171187082926,
+              "std_sec": 0.04395302086480925,
+              "min_sec": 0.5957386493682861,
+              "max_sec": 0.7033782005310059
+            }
+          }
+        ]
+      },
+      {
+        "benchmark": "level_refinement",
+        "description": "Level \u4e0a\u6607\u6642\u306e\u521d\u671f\u5316\u30fb\u7a4d\u5206\u30b3\u30b9\u30c8",
+        "fixed_dimension": 3,
+        "max_level": 8,
+        "results": [
+          {
+            "dimension": 3,
+            "level": 1,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1,
+            "num_terms": 1,
+            "init_time": {
+              "mean_sec": 0.0029439926147460938,
+              "std_sec": 0.0007884502410888672,
+              "min_sec": 0.0021555423736572266,
+              "max_sec": 0.003732442855834961
+            },
+            "integral_time": {
+              "mean_sec": 0.20867478847503662,
+              "std_sec": 0.009987711906433105,
+              "min_sec": 0.19868707656860352,
+              "max_sec": 0.21866250038146973
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 2,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 10,
+            "num_terms": 4,
+            "init_time": {
+              "mean_sec": 0.002115488052368164,
+              "std_sec": 0.0002257823944091797,
+              "min_sec": 0.0018897056579589844,
+              "max_sec": 0.0023412704467773438
+            },
+            "integral_time": {
+              "mean_sec": 0.2625540494918823,
+              "std_sec": 0.040372490882873535,
+              "min_sec": 0.2221815586090088,
+              "max_sec": 0.30292654037475586
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 3,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 52,
+            "num_terms": 10,
+            "init_time": {
+              "mean_sec": 0.0023311376571655273,
+              "std_sec": 0.00011909008026123047,
+              "min_sec": 0.002212047576904297,
+              "max_sec": 0.002450227737426758
+            },
+            "integral_time": {
+              "mean_sec": 0.22910857200622559,
+              "std_sec": 0.002213716506958008,
+              "min_sec": 0.22689485549926758,
+              "max_sec": 0.2313222885131836
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 4,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 196,
+            "num_terms": 20,
+            "init_time": {
+              "mean_sec": 0.002634763717651367,
+              "std_sec": 0.00011348724365234375,
+              "min_sec": 0.0025212764739990234,
+              "max_sec": 0.002748250961303711
+            },
+            "integral_time": {
+              "mean_sec": 0.34471356868743896,
+              "std_sec": 0.101645827293396,
+              "min_sec": 0.24306774139404297,
+              "max_sec": 0.44635939598083496
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 5,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 619,
+            "num_terms": 35,
+            "init_time": {
+              "mean_sec": 0.003107309341430664,
+              "std_sec": 0.0003848075866699219,
+              "min_sec": 0.002722501754760742,
+              "max_sec": 0.003492116928100586
+            },
+            "integral_time": {
+              "mean_sec": 0.3013685941696167,
+              "std_sec": 0.0002492666244506836,
+              "min_sec": 0.301119327545166,
+              "max_sec": 0.3016178607940674
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 6,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 1762,
+            "num_terms": 56,
+            "init_time": {
+              "mean_sec": 0.0036897659301757812,
+              "std_sec": 0.0005340576171875,
+              "min_sec": 0.0031557083129882812,
+              "max_sec": 0.004223823547363281
+            },
+            "integral_time": {
+              "mean_sec": 0.4923797845840454,
+              "std_sec": 0.02450740337371826,
+              "min_sec": 0.46787238121032715,
+              "max_sec": 0.5168871879577637
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 7,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 4698,
+            "num_terms": 84,
+            "init_time": {
+              "mean_sec": 0.004477858543395996,
+              "std_sec": 0.00036275386810302734,
+              "min_sec": 0.004115104675292969,
+              "max_sec": 0.0048406124114990234
+            },
+            "integral_time": {
+              "mean_sec": 0.905038595199585,
+              "std_sec": 0.07912468910217285,
+              "min_sec": 0.8259139060974121,
+              "max_sec": 0.9841632843017578
+            }
+          },
+          {
+            "dimension": 3,
+            "level": 8,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 11988,
+            "num_terms": 120,
+            "init_time": {
+              "mean_sec": 0.005465507507324219,
+              "std_sec": 0.0008990764617919922,
+              "min_sec": 0.0045664310455322266,
+              "max_sec": 0.006364583969116211
+            },
+            "integral_time": {
+              "mean_sec": 1.813944697380066,
+              "std_sec": 0.1579958200454712,
+              "min_sec": 1.6559488773345947,
+              "max_sec": 1.971940517425537
+            }
+          }
+        ]
+      },
+      {
+        "benchmark": "dtype_comparison",
+        "description": "\u7570\u306a\u308b\u7cbe\u5ea6\u3067\u306e\u6027\u80fd\u6bd4\u8f03",
+        "fixed_dimension": 8,
+        "fixed_level": 3,
+        "results": [
+          {
+            "dimension": 8,
+            "level": 3,
+            "dtype": "<class 'jax.numpy.float32'>",
+            "num_evaluation_points": 317,
+            "num_terms": 45,
+            "init_time": {
+              "mean_sec": 0.012738466262817383,
+              "std_sec": 0.007887840270996094,
+              "min_sec": 0.004850625991821289,
+              "max_sec": 0.020626306533813477
+            },
+            "integral_time": {
+              "mean_sec": 0.7447190284729004,
+              "std_sec": 0.23810839653015137,
+              "min_sec": 0.506610631942749,
+              "max_sec": 0.9828274250030518
+            }
+          },
+          {
+            "dimension": 8,
+            "level": 3,
+            "dtype": "<class 'jax.numpy.float64'>",
+            "num_evaluation_points": 317,
+            "num_terms": 45,
+            "init_time": {
+              "mean_sec": 0.007082343101501465,
+              "std_sec": 0.0017200708389282227,
+              "min_sec": 0.005362272262573242,
+              "max_sec": 0.008802413940429688
+            },
+            "integral_time": {
+              "mean_sec": 0.5084874629974365,
+              "std_sec": 0.004736185073852539,
+              "min_sec": 0.503751277923584,
+              "max_sec": 0.5132236480712891
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
