@@ -48,7 +48,7 @@ __all__ = [
 ]
 
 
-def get_spawn_context() -> mp.context.SpawnContext:
+def get_spawn_context() -> mp.SpawnContext:  # type: ignore[attr-defined]
     """'spawn' コンテキストを取得し、JAX fork() 互換性問題を回避する。
     
     Notes
@@ -56,6 +56,11 @@ def get_spawn_context() -> mp.context.SpawnContext:
     spawn コンテキストは CPU-only でも推奨されます。JAX は import 時に
     キャッシュやトレース情報を初期化するため、fork() ベースでは状態が
     不確定になる可能性があります。
+    
+    Returns
+    -------
+    mp.SpawnContext
+        spawn multiprocessing context
     """
     try:
         ctx = mp.get_context("spawn")
@@ -144,9 +149,10 @@ def check_picklable(obj: Any, name: str = "object") -> None:
 def create_jax_safe_process_pool(
     max_workers: int,
     *,
-    mp_context: mp.context.SpawnContext | None = None,
+    mp_context: mp.SpawnContext | None = None,  # type: ignore[attr-defined]
 ) -> Generator[ProcessPoolExecutor, None, None]:
-    """JAX fork() 互換性を確保した ProcessPoolExecutor を作成する context manager.
+    """
+    JAX fork() 互換性を確保した ProcessPoolExecutor を作成する context manager.
     
     spawn コンテキストを使用して、各 worker プロセスが independent な
     Python インタプリタを起動します。CPU-only でも spawn を使用すべき理由：
@@ -160,7 +166,7 @@ def create_jax_safe_process_pool(
     max_workers : int
         ワーカープロセス数（1 以上）
 
-    mp_context : mp.context.SpawnContext | None, optional
+    mp_context : mp.SpawnContext | None, optional
         マルチプロセッシングコンテキスト。
         デフォルト (None) では get_spawn_context() を自動取得。
 
@@ -172,8 +178,9 @@ def create_jax_safe_process_pool(
     if max_workers < 1:
         raise ValueError(f"max_workers must be positive, got {max_workers}")
 
+    # mp_context は SpawnContext 型で、実行時に正しく取得される
     if mp_context is None:
-        mp_context = get_spawn_context()
+        mp_context = get_spawn_context()  # type: ignore[assignment]
 
     executor = ProcessPoolExecutor(
         max_workers=max_workers,

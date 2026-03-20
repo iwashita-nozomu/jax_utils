@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Protocol, TypeAlias, TypeVar
+from typing import Any, Callable, Protocol, TypeAlias, TypeVar
 
 
 T = TypeVar("T")
@@ -24,8 +24,9 @@ __all__ = [
     "WORKER_PROTOCOL_ERROR_EXIT_CODE",
 ]
 
-# `TaskContext` はワーカーへ渡す環境や設定を表す辞書です（文字列値のみを想定）。
-TaskContext: TypeAlias = dict[str, str]
+# `TaskContext` はワーカーへ渡す環境や設定を表す辞書です。
+# 実験段階では、dict[str, Any] を許容します。
+TaskContext: TypeAlias = dict[str, str | Any]
 
 
 class ResourceEstimate(Protocol):

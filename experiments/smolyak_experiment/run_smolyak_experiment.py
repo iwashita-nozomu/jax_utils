@@ -18,13 +18,11 @@ JAX メモリ管理: CUDA/GPU メモリの先取りを無効化し、
 import argparse
 import fcntl
 import json
-import os
 import re
 import sys
 import time
-from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 # ワークスペース構成を解決（すべての import より前に実行）
 SCRIPT_DIR = Path(__file__).resolve().parent.parent.parent
@@ -38,7 +36,6 @@ if str(WORKSPACE_ROOT) not in sys.path:
 from jax_util.experiment_runner import disable_jax_memory_preallocation
 disable_jax_memory_preallocation(gpu_devices=False)
 
-import jax
 import jax.numpy as jnp
 import numpy as np
 
@@ -147,6 +144,7 @@ def run_single_case(case: dict[str, Any]) -> dict[str, Any]:
         result["num_evaluation_points"] = int(integrator.num_evaluation_points)
         
         # 簡単な被積分関数：f(x) = sum(x_i^2)
+        # Note: Function protocol は operator overload を要求するため、cast で型を強制
         def integrand(x: jnp.ndarray) -> jnp.ndarray:
             return jnp.sum(x**2, axis=-1)
         
@@ -154,7 +152,8 @@ def run_single_case(case: dict[str, Any]) -> dict[str, Any]:
         run_times = []
         for _ in range(2):
             start_time = time.perf_counter()
-            result_value = integrator.integrate(integrand)
+            # SmolyakIntegrator.integrate() の Function protocol に合わせるため cast
+            result_value = integrator.integrate(cast("Function", integrand))  # type: ignore[arg-type]
             run_time = (time.perf_counter() - start_time) * 1000.0
             run_times.append(run_time)
         
@@ -167,7 +166,7 @@ def run_single_case(case: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-class SmolyakWorker(Worker):
+class SmolyakWorker(Worker[dict[str, Any], int]):
     """
     Smolyak リソース認識ワーカー。
     
@@ -176,14 +175,21 @@ class SmolyakWorker(Worker):
     逐次追記する。
     
     戻り値: SUCCESS_EXIT_CODE (0) または WORKER_PROTOCOL_ERROR_EXIT_CODE (1)
+    
+    Attributes
+    ----------
+    task : Callable
+        Worker Protocol の必須属性。この worker インスタンス自体を callable として提供。
     """
     
-    def resource_estimate(self, case: dict[str, Any]) -> FullResourceEstimate:
-        """ケースのリソース見積もりを返す。"""
-        return cases.estimate_case_resources(case)
+    def __init__(self) -> None:
+        """Worker Protocol の task 属性を満たします。"""
+        # task 属性は Callable[[case, context], int] として実装
+        # __call__ メソッドで実行されるので、これをラップします
+        self.task = self._task_impl
     
-    def __call__(self, case: dict[str, Any], context: TaskContext) -> int:
-        """タスク実行後、結果を JSONL に逐次追記し、exit code を返す。"""
+    def _task_impl(self, case: dict[str, Any], context: TaskContext) -> int:
+        """内部的な task 実装。__call__ と同じロジックを実行。"""
         try:
             result = run_single_case(case)
             
@@ -199,6 +205,14 @@ class SmolyakWorker(Worker):
             # エラーを記録し、エラーコードを返す
             context["error"] = str(e)
             return WORKER_PROTOCOL_ERROR_EXIT_CODE
+    
+    def resource_estimate(self, case: dict[str, Any]) -> FullResourceEstimate:
+        """ケースのリソース見積もりを返す。"""
+        return cases.estimate_case_resources(case)
+    
+    def __call__(self, case: dict[str, Any], context: TaskContext) -> int:
+        """タスク実行後、結果を JSONL に逐次追記し、exit code を返す。"""
+        return self._task_impl(case, context)
     
     @staticmethod
     def _append_jsonl(result: dict[str, Any], jsonl_path: str | Path) -> None:
@@ -355,12 +369,13 @@ def run_experiment(args: argparse.Namespace) -> None:
     # JSONL 出力ファイルパス（ケース実行時に逐次追記される）
     jsonl_file = output_dir / f"results_{timestamp}.jsonl"
     
-    # コンテキストビルダー
+    # コンテキストビルダー: TaskContext は dict[str, Any]
     def context_builder(case: dict[str, Any]) -> TaskContext:
-        return {
+        ctx: TaskContext = {
             "case_id": case["case_id"],
             "jsonl_path": str(jsonl_file),
         }
+        return ctx
     
     # スケジューラを作成
     scheduler = StandardFullResourceScheduler.from_worker(
@@ -434,6 +449,8 @@ def run_experiment(args: argparse.Namespace) -> None:
     
     if skipped_count > 0:
         print(f"Skipped (already completed): {skipped_count}")
+        # 今回実行したケース数（残りケース数 = 全ケース - スキップ済みケース）
+        completed_count = len(remaining_cases)
         print(f"New cases completed this run: {completed_count}")
     
     if len(all_results) > 0:
