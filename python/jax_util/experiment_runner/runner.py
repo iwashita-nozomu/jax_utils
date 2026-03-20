@@ -15,7 +15,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
-from .jax_context import create_jax_safe_process_pool
+from .jax_context import check_picklable, create_jax_safe_process_pool
 from .protocols import (
     ResourceEstimate,
     Scheduler,
@@ -155,7 +155,18 @@ class StandardRunner(Generic[T, U]):
         ----------
         worker : Worker
             各ケースを実行するワーカー
+            
+        Raises
+        ------
+        ValueError
+            ワーカーが pickle 化不可能な場合。ProcessPoolExecutor で
+            別プロセスに送出できる必要があります。
         """
+        # ワーカーが pickle 化可能であることを確認
+        # ProcessPoolExecutor でワーカーを別プロセスに送出するため、
+        # pickle 化可能である必要があります。ここで早期検証してエラーを捕捉する
+        check_picklable(worker, name="Worker")
+
         # spawn コンテキストを使用する場合と通常の ProcessPoolExecutor を使い分ける
         if self.use_spawn_context:
             with create_jax_safe_process_pool(
