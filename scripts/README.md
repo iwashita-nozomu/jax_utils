@@ -51,7 +51,7 @@ ______________________________________________________________________
 
 ### 新規ブランチ開始（最初の1回）
 
-```bash
+````bash
 # 1. 規約確認（推奨）
 bash scripts/view_conventions.sh naming
 
@@ -68,17 +68,19 @@ git push -u origin work/my-feature-YYYYMMDD
 
 ## テスト＆静的解析実行
 
+> **詳細は [`documents/tools/README.md` — CI スクリプト実行ガイド](../documents/tools/README.md#🔄-ci-スクリプト実行ガイドscriptsci) を参照**
+
 ```bash
 # ★推奨: 統合テスト（pytest + pyright + ruff）
 bash scripts/ci/run_all_checks.sh
 
 # またはシンプル版（pytest のみ＋ログ保存）
 bash scripts/run_pytest_with_logs.sh
-```text
+````
 
 ## ドキュメント整形
 
-```bash
+````bash
 # Markdown 正規化
 python scripts/tools/format_markdown.py
 
@@ -452,10 +454,11 @@ ______________________________________________________________________
 
 ### 動作トラブル
 
-- [./ci/README.md#トラブルシューティング](./ci/README.md) — CI 関連
+- [../documents/tools/README.md#トラブルシューティング](../documents/tools/README.md#トラブルシューティング) — CI・ツール関連
 - [../documents/FILE_CHECKLIST_OPERATIONS.md#トラブルシューティング](../documents/FILE_CHECKLIST_OPERATIONS.md) — 作業関連
 
 ______________________________________________________________________
 
 **最終更新:** 2026-03-19\
 **管理:** GitHub Copilot & Development Team
+````
