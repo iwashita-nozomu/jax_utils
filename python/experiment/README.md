@@ -14,46 +14,83 @@
 experiment/
 ├── __init__.py                      # Public API 定義
 ├── README.md                        # このファイル
-├── case_generator.py                # ケース生成ロジック（未実装）
-├── protocols.py                     # Protocol/Interface 定義（未実装）
-├── runner.py                        # 実験実行エンジン（未実装）
-├── analysis.py                      # 結果分析・集計ロジック（未実装）
-├── utils.py                         # ユーティリティ関数（未実装）
+├── case_generator.py                # ケース生成ロジック（共通、未実装）
+├── protocols.py                     # Protocol/Interface 定義（共通、未実装）
+├── runner.py                        # 実験実行エンジン（共通、未実装）
+├── analysis.py                      # 結果分析・集計ロジック（共通、未実装）
+├── utils.py                         # ユーティリティ関数（共通、未実装）
 │
-├── smolyak/                         # Smolyak 積分器専用モジュール
+├── smolyak/                         # 実験1: Smolyak スケーリング実験
 │   ├── __init__.py                  # Smolyak パッケージ API
+│   ├── README.md                    # 実験内容の説明
 │   ├── cases.py                     # ケース定義（未実装）
 │   ├── runner_config.py             # 実行構成（未実装）
-│   ├── test_cases.py                # テスト用ケース定義（未実装）
 │   └── results_aggregator.py        # 結果集計（未実装）
 │
-├── tests/                           # ユニットテスト
+├── smolyakexperiment/               # 実験2: Smolyak 派生実験
+│   ├── __init__.py                  # パッケージ API
+│   ├── README.md                    # 実験内容の説明
+│   ├── cases.py                     # ケース定義（未実装）
+│   ├── runner_config.py             # 実行構成（未実装）
+│   └── results_aggregator.py        # 結果集計（未実装）
+│
+├── tests/                           # ユニットテスト（共通）
 │   ├── __init__.py
 │   ├── test_case_generator.py       # ケース生成テスト（未実装）
 │   ├── test_runner.py               # 実行エンジン smoke test（未実装）
-│   ├── test_analysis.py             # 分析ロジックテスト（未実装）
-│   └── test_smolyak_*.py            # Smolyak 専用テスト（未実装）
+│   └── test_analysis.py             # 分析ロジックテスト（未実装）
 │
-└── fixtures/                        # テスト用固定データ
+└── fixtures/                        # テスト用固定データ（共通）
     ├── small_cases.json             # 小規模ケース（未実装）
     └── baseline_results.json        # 期待結果（未実装）
 ```
 
+### 実験フォルダの構造
+
+各実験フォルダ（例: `smolyak/`, `smolyakexperiment/`）は以下の同等構造を持ちます：
+
+```
+<experiment_name>/
+├── __init__.py                      # パッケージ初期化
+├── README.md                        # 【重要】実験内容、パラメータ、期待結果を記述
+├── cases.py                         # 実験に特化したケース生成・検証
+├── runner_config.py                 # パラメータ範囲、実行設定
+└── results_aggregator.py            # 結果集計・フィルタリング
+```
+
+各実験の `README.md` には以下を記述してください：
+- 実験の目的と期待される発見
+- パラメータ範囲（次元、レベル、dtype など）
+- 推定実行時間
+- 結果の意味合い
+
 ## 実装ステータス
 
+### 既存実験フォルダ
+
+| フォルダ | 説明 | ステータス |
+|---------|------|----------|
+| `smolyak/` | Smolyak 積分器スケーリング実験（d=1-50, level=1-50） | 設計完了 |
+| `smolyakexperiment/` | Smolyak 派生実験 | 構造作成完了 |
+
+### フェーズ進捗
+
 - [ ] **Phase 1**: 基礎モジュール実装
-- [ ] **Phase 2**: Smolyak 専用実装
+- [ ] **Phase 2**: 各実験専用実装
 - [ ] **Phase 3**: 大規模実験実行・結果集計
 
-### 現在
+### 更新履歴
 
-**2026-03-20**: 規約作成・ディレクトリ構造確定
+**2026-03-20 v1.1**: 実験フォルダ拡張
+- [x] `smolyakexperiment/` フォルダ構造作成
+- [x] README.md 更新（複数実験対応）
 
+**2026-03-20 v1.0**: 初版作成・規約確定
 - [x] `documents/conventions/python/30_experiment_directory_structure.md` 作成
 - [x] `notes/knowledge/experiment_directory_planning.md` 作成
-- [ ] コード実装（次フェーズ）
+- [x] `smolyak/` ディレクトリ構造確定
 
-## 設計仕様
+## 設計仕様（Smolyak 実験）
 
 ### 大規模 Smolyak 実験設計
 
@@ -76,6 +113,60 @@ experiment/
 - CPU alone: ~25 時間
 - GPU 4 並列: ~6-7 時間
 - パイロット（d=1-20, level=1-20）: ~1 時間
+
+---
+
+## 新しい実験フォルダを追加する方法
+
+新しい実験を追加する場合、以下のテンプレートに従ってください：
+
+### ステップ 1: ディレクトリ作成
+
+```bash
+mkdir -p python/experiment/<experiment_name>
+```
+
+### ステップ 2: テンプレートファイル作成
+
+各フォルダに以下 5 ファイルを配置：
+
+- `__init__.py` - パッケージ初期化（[例](./smolyakexperiment/__init__.py)）
+- `README.md` - **【重要】実験内容の詳細説明**
+- `cases.py` - ケース生成・検証ロジック
+- `runner_config.py` - パラメータ範囲・実行設定
+- `results_aggregator.py` - 結果集計・フィルタリング
+
+### ステップ 3: README.md に記述する内容
+
+```markdown
+# <実験名> Experiment Module
+
+## 実験概要
+
+### 目的
+...
+
+### 実験パラメータ
+- **Parameter1**: 範囲
+- **Parameter2**: 範囲
+- ...
+
+### 推定実行時間
+- CPU のみ: X 時間
+- GPU: Y 時間
+
+## ディレクトリ構造
+
+## 各モジュールの説明
+
+## 実装ステータス
+
+## 使用方法（実装後）
+
+## 参考資料
+```
+
+参考: [smolyakexperiment/README.md](./smolyakexperiment/README.md)
 
 ---
 
