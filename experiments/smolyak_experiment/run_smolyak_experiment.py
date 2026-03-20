@@ -402,7 +402,7 @@ def run_experiment(args: argparse.Namespace) -> None:
     )
     
     # StandardRunner で並列実行（spawn context で 4 ワーカー）
-    runner = StandardRunner(scheduler, use_spawn_context=True)
+    runner = StandardRunner(scheduler)
     start_time = time.perf_counter()
     runner.run(worker)
     elapsed_total = time.perf_counter() - start_time

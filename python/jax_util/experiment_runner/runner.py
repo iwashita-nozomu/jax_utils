@@ -134,22 +134,19 @@ class StandardScheduler(Generic[T]):
 class StandardRunner(Generic[T, U]):
     """スケジューラとワーカーを使ってケースを並列実行するランナー。
 
-    - `ProcessPoolExecutor` を使って `max_workers` 並列プロセスで実行する。
-    - `use_spawn_context=True`（デフォルト）で spawn コンテキストを使用し、
-      JAX fork() 互換性の問題を回避する。
+    - spawn コンテキストで ProcessPoolExecutor を起動（CPU-only でも）
+    - JAX fork() 互換性問題を完全に回避
     - 完了ごとに `scheduler.on_finish` を呼び、次のケースを投入する。
     """
 
-    def __init__(
-        self,
-        scheduler: Scheduler[T],
-        use_spawn_context: bool = True,
-    ) -> None:
+    def __init__(self, scheduler: Scheduler[T]) -> None:
         self.scheduler = scheduler
-        self.use_spawn_context = use_spawn_context
 
     def run(self, worker: Worker[T, U]) -> None:
         """ケースを並列実行する。
+        
+        spawn コンテキストで ProcessPoolExecutor を起動し、
+        JAX fork() 互換性を確保しながら並列実行する。
         
         Parameters
         ----------
@@ -163,21 +160,13 @@ class StandardRunner(Generic[T, U]):
             別プロセスに送出できる必要があります。
         """
         # ワーカーが pickle 化可能であることを確認
-        # ProcessPoolExecutor でワーカーを別プロセスに送出するため、
-        # pickle 化可能である必要があります。ここで早期検証してエラーを捕捉する
         check_picklable(worker, name="Worker")
 
-        # spawn コンテキストを使用する場合と通常の ProcessPoolExecutor を使い分ける
-        if self.use_spawn_context:
-            with create_jax_safe_process_pool(
-                max_workers=self.scheduler.resource_capacity.max_workers
-            ) as ex:
-                self._execute_with_executor(ex, worker)
-        else:
-            with ProcessPoolExecutor(
-                max_workers=self.scheduler.resource_capacity.max_workers
-            ) as ex:
-                self._execute_with_executor(ex, worker)
+        # 常に spawn コンテキストで executor を起動
+        with create_jax_safe_process_pool(
+            max_workers=self.scheduler.resource_capacity.max_workers
+        ) as ex:
+            self._execute_with_executor(ex, worker)
 
     def _execute_with_executor(
         self,
