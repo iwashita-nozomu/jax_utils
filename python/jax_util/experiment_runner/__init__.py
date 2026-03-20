@@ -57,6 +57,9 @@ from .jax_context import (
     check_picklable,
     create_jax_safe_process_pool,
 )
+from .context_utils import (
+    apply_environment_variables,
+)
 
 __all__ = [
     # runner
@@ -85,4 +88,5 @@ __all__ = [
     "disable_jax_memory_preallocation",
     "check_picklable",
     "create_jax_safe_process_pool",
+    "apply_environment_variables",
 ]

@@ -7,3 +7,4 @@ scipy-stubs
 optax
 pyright
 pydeps
+psutil

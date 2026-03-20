@@ -106,6 +106,11 @@ class GPUResourceCapacity(StandardResourceCapacity):
 class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
     """単純な GPU ID FIFO を用いたスケジューラ実装。
 
+    .. deprecated::
+        `StandardFullResourceScheduler` を使ってください。
+        GPU メモリ制約、ホストメモリ制約、ワーカースロット制約を
+        統合的に管理できる、より高度なリソース管理を提供します。
+
     - `next_case()` は利用可能な GPU があればケースを返し、コンテキストに GPU 指定を埋める。
     - `on_finish()` で GPU ID をプールへ戻す。
     

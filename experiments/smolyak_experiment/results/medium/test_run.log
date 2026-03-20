@@ -1,0 +1,21 @@
+======================================================================
+Smolyak Experiment - MEDIUM
+======================================================================
+
+Config:
+  Dimensions: 1-10
+  Levels: 1-10
+  dtypes: ['float32', 'float64']
+  Trials per case: 2
+  Total cases: 200
+  Total tasks: 400
+
+Generated 400 cases
+
+Resource Capacity:
+  Max workers: 4
+  Host memory: 16.0 GB
+  GPU devices: 0 (managed by scheduler)
+
+Running 400 cases (4 parallel workers with spawn context):
+

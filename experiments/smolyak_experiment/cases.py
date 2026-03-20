@@ -8,6 +8,7 @@ Smolyak 積分器向けの大規模実験ケースを生成・検証するロジ
 
 from typing import Any
 import sys
+import os
 from pathlib import Path
 
 # 相対スケジューラのインポートを解決
@@ -28,7 +29,8 @@ def estimate_case_resources(case: dict[str, Any]) -> FullResourceEstimate:
     Parameters
     ----------
     case : dict
-        {"dimension": int, "level": int, "dtype": str, ...}
+        {"dimension": int, "level": int, "dtype": str, "device": str, ...}
+        - device: "cpu" または "gpu"
         
     Returns
     -------
@@ -38,6 +40,7 @@ def estimate_case_resources(case: dict[str, Any]) -> FullResourceEstimate:
     dimension = case["dimension"]
     level = case["level"]
     dtype = case["dtype"]
+    device = case.get("device", "cpu")  # デフォルト CPU
     
     # データ型ごとのバイト数
     dtype_bytes = {
@@ -60,15 +63,41 @@ def estimate_case_resources(case: dict[str, Any]) -> FullResourceEstimate:
     factor = 2.5
     host_memory_bytes = int(estimated_points * bytes_per_element * factor)
     
-    # 最大値を 1 GB に制限（smoke/small 実験では十分）
-    max_memory = 1 * 1024 * 1024 * 1024  # 1 GB
+    # 最大値を環境変数で上書き可能（デフォルト 8 GB）
+    # 下限はデフォルトで適用しない（運用で必要なら環境変数で指定）
+    default_max = 8 * 1024 * 1024 * 1024  # 8 GB
+    env_max = os.environ.get("ESTIMATE_MAX_MEMORY_BYTES")
+    try:
+        max_memory = int(env_max) if env_max is not None else default_max
+    except Exception:
+        max_memory = default_max
+
     host_memory_bytes = min(host_memory_bytes, max_memory)
+
+    # 環境変数で明示的に下限を指定した場合のみ適用する
+    env_min = os.environ.get("ESTIMATE_MIN_MEMORY_BYTES")
+    if env_min is not None:
+        try:
+            min_memory = int(env_min)
+            host_memory_bytes = max(host_memory_bytes, min_memory)
+        except Exception:
+            # 無効な値なら無視して続行
+            pass
     
-    # CPU 上で実行（GPU を使わない）
+    # device に応じてリソース見積もりを決定
+    if device == "gpu":
+        # GPU 実行の場合：1GPU + GPU メモリ
+        gpu_count = 1
+        gpu_memory_bytes = host_memory_bytes  # GPU メモリも同程度必要
+    else:
+        # CPU 実行の場合：GPU 不要
+        gpu_count = 0
+        gpu_memory_bytes = 0
+    
     return FullResourceEstimate(
         host_memory_bytes=host_memory_bytes,
-        gpu_count=0,
-        gpu_memory_bytes=0,
+        gpu_count=gpu_count,
+        gpu_memory_bytes=gpu_memory_bytes,
         gpu_slots=1,
     )
 
@@ -94,6 +123,7 @@ def generate_cases(config: Any) -> list[dict[str, Any]]:
         - level: int
         - dtype: str
         - trial_index: int
+        - device: str - "cpu" または "gpu"
         
     Examples
     --------
@@ -129,6 +159,7 @@ def generate_cases(config: Any) -> list[dict[str, Any]]:
                         "dtype": dtype,
                         "trial_index": trial_index,
                         "index": case_counter,
+                        "device": config.device,  # リソース見積もりで使用
                     }
                     cases_list.append(case)
                     case_counter += 1

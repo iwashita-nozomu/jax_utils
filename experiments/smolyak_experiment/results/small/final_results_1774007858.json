@@ -1,0 +1,54 @@
+{
+  "condition": {
+    "min_dimension": 1,
+    "max_dimension": 5,
+    "min_level": 1,
+    "max_level": 5,
+    "dtypes": [
+      "float32"
+    ],
+    "num_trials": 2,
+    "timeout_seconds": 300.0,
+    "device": "cpu",
+    "num_accuracy_problems": 9,
+    "coeff_start": -0.55,
+    "coeff_stop": 0.65,
+    "total_cases": 25,
+    "total_tasks": 50,
+    "experimental": false
+  },
+  "total_cases": 50,
+  "successful_cases": 50,
+  "failed_cases": 0,
+  "success_rate": 100.0,
+  "elapsed_seconds": 4.811665773391724,
+  "throughput_cases_per_second": 10.391411697067065,
+  "init_time_stats": {
+    "count": 50,
+    "mean_ms": 5.961435702629387,
+    "min_ms": 1.3241390115581453,
+    "max_ms": 13.274638971779495
+  },
+  "integrate_time_stats": {
+    "count": 50,
+    "mean_ms": 113.58064776170067,
+    "min_ms": 55.69453799398616,
+    "max_ms": 187.0412385032978
+  },
+  "accuracy_stats": {
+    "absolute_error": {
+      "count": 50,
+      "mean": 0.05000017394622165,
+      "min": 0.0,
+      "max": 0.4166666666666667,
+      "median": 3.9736429868764134e-08
+    },
+    "relative_error": {
+      "count": 50,
+      "mean": 0.2000005013942718,
+      "min": 0.0,
+      "max": 1.0,
+      "median": 9.536743168503391e-08
+    }
+  }
+}

@@ -564,7 +564,10 @@ class SmolyakIntegrator(eqx.Module):
         )
 
     def integrate(self, f: Function, /) -> Vector:
-        return _smolyak_plan_integral(
+        # JIT コンパイルを適用して実行速度を向上させる。
+        # `_smolyak_plan_integral` は JAX 純粋関数なので jax.jit で安全にコンパイル可能。
+        compiled = jax.jit(_smolyak_plan_integral)
+        return compiled(
             f,
             self.term_levels,
             self.term_num_points,

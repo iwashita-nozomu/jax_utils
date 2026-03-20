@@ -6,28 +6,28 @@
 
 from __future__ import annotations
 
-from typing import Any, Callable, Protocol, TypeAlias, TypeVar
+from typing import  Callable, Protocol, TypeAlias, TypeVar
 
 
-T = TypeVar("T")
-U = TypeVar("U")
+T = TypeVar("T") # ケースの型
+U = TypeVar("U") # 結果の型
 
 __all__ = [
     "TaskContext",
     "ResourceEstimate",
     "ResourceCapacity",
     "Worker",
-    "ResourceEstimatingWorker",
     "Scheduler",
     "Runner",
     "SUCCESS_EXIT_CODE",
     "WORKER_PROTOCOL_ERROR_EXIT_CODE",
 ]
 
-# `TaskContext` はワーカーへ渡す環境や設定を表す辞書です。
+# `TaskContext` はワーカーへ渡す環境や設定を表す。
 # 実験段階では、dict[str, Any] を許容します。
-TaskContext: TypeAlias = dict[str, str | Any]
 
+class TaskContext(Protocol):
+    ...
 
 class ResourceEstimate(Protocol):
     """ケースごとのリソース見積もりを表すプロトコル。
@@ -50,13 +50,9 @@ class Worker(Protocol[T, U]):
     - エラー時は例外を投げても構わないが、ランナーは終了コードで結果を受け取る契約になっている。
     """
 
-    task: Callable[[T, TaskContext], U]
+    task: Callable[[T], U]
 
     def __call__(self, case: T, context: TaskContext) -> int: ...
-
-
-class ResourceEstimatingWorker(Worker[T, U], Protocol[T, U]):
-    """`resource_estimate(case)` を提供するワーカーの拡張プロトコル。"""
 
     def resource_estimate(self, case: T) -> ResourceEstimate: ...
 
