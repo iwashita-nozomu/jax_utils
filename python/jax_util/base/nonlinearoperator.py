@@ -1,3 +1,14 @@
+"""非線形演算子と PyTree 構造管理。
+
+非線形変換、ニューラルネットワーク層、任意の PyTree
+構造データを扱うための Protocol とユーティリティを提供します。
+
+主要 Protocol:
+    NonLinearOperator: 非線形変換の抽象インターフェース
+    Differentiable: 微分可能性の明示
+    PyTreeCompatible: JAX PyTree フォーマット対応
+"""
+
 from __future__ import annotations
 
 

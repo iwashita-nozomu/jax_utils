@@ -1,3 +1,23 @@
+"""KKT 条件ソルバー。
+
+等式・不等式制約付き最適化問題を Karush-Kuhn-Tucker (KKT)
+条件の求解に帰着させる最適化手法を実装します。
+
+主要関数:
+    lagrangian: ラグランジアン構成
+    kkt_matrix: KKT 行列構築
+    kkt_solve: KKT システム求解
+
+数学背景:
+    - ラグランジュ乗数法
+    - 障壁法による不等式制約処理
+    - 内点法統合
+
+参考資料:
+    - documents/coding-conventions-solvers.md
+    - Nocedal & Wright: Numerical Optimization (2006)
+"""
+
 from __future__ import annotations
 
 from pathlib import Path

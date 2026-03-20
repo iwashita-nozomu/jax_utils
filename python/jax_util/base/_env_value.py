@@ -1,3 +1,16 @@
+"""環境値・定数管理。
+
+実行時の数値精度、デバッグ設定、計算定数を一元管理します。
+
+定数:
+    DEFAULT_DTYPE: デフォルト浮動小数点型（float32 / float64）
+    EPS: 機械イプシロン
+    DEBUG: デバッグモード フラグ
+    ZERO, ONE, HALF: 定数値
+    WEAK_EPS: 弱い数値安定性基準
+    AVOID_ZERO_DIV: ゼロ除算回避用最小値
+"""
+
 import os
 
 import jax

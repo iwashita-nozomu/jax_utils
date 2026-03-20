@@ -1,3 +1,14 @@
+"""行列ベクトル積演算子の検証ユーティリティ。
+
+ソルバー実装前に LinearOperator の形状・型を検証し、
+エラーを早期に発見します。
+
+テスト関数:
+    check_shape_consistency: shape プロパティの一貫性
+    check_matmul_output: __matmul__ の出力型・形状
+    check_adjoint_symmetry: 随伴演算子の対称性検証
+"""
+
 from __future__ import annotations
 
 import json

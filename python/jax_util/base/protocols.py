@@ -1,3 +1,23 @@
+"""基盤型・Protocol 定義。
+
+すべてのモジュールが依存する型エイリアスと Protocol を定義します。
+
+型エイリアス:
+    Scalar: Float[Array, ""]（スカラー）
+    Vector: Float[Array, "n"]（n 次元ベクトル）
+    Matrix: Float[Array, "m n"]（m×n 行列）
+    Boolean, Integer: 体言型
+
+Protocol:
+    LinearOperator: 線形演算子 @property shape と __matmul__
+    Operator: より一般的な演算子インターフェース
+    SolverLike: ソルバー実装の共通プロトコル
+
+参考資料:
+    - documents/design/protocols.md（全 Protocol の設計）
+    - documents/design/base_components.md（型パラメータ戦略）
+"""
+
 from __future__ import annotations
 
 from typing import (

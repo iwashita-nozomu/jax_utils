@@ -1,3 +1,19 @@
+"""JAX との相互作用テスト。
+
+ソルバーが JAX の自動微分・コンパイル・行列演算と
+正しく相互作用することを検証します。
+
+テスト対象:
+    自動微分（grad, jacobian）
+    JIT コンパイル
+    vmap（ベクトル化）
+    複雑な行列操作
+
+参考資料:
+    - documents/coding-conventions-testing.md
+    - python/tests/test_import.py
+"""
+
 import json
 from pathlib import Path
 

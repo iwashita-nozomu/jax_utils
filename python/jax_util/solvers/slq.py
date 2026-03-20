@@ -1,3 +1,19 @@
+"""対称不定行列用ソルバー（Symmetric Indefinite Quadratic, SLQ）。
+
+正定値制限なしに、対称不定行列 A に対して
+線形システム Ax = b を求解します。
+
+実装:
+    saddle point 問題への適用
+    ブロック対系化（block diagonalization）
+    混合精度演算対応
+
+応用:
+    - 制約付き最適化の KKT ソルバー
+    - 流体計算の圧力ポアソン方程式
+    - 構造解析の接触問題
+"""
+
 from __future__ import annotations
 
 from collections.abc import Callable

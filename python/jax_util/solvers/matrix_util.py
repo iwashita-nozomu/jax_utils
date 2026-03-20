@@ -1,3 +1,16 @@
+"""行列ユーティリティ関数。
+
+行列形式変換、構造検証、数値性質チェックを提供し、
+ソルバー実装を簡潔にします。
+
+主要関数:
+    ensure_matrix_form: 様々な形式を統一フォーマットに
+    check_symmetry: 対称性検証
+    check_positive_definite: 正定値性検証
+    condition_number: 条件数計算
+    normalize_matrix: 数値安定化
+"""
+
 from jax import numpy as jnp
 
 from ..base import ONE, Matrix

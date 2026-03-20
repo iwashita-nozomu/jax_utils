@@ -1,3 +1,22 @@
+"""線形演算子の基本インターフェース。
+
+A x = b 形の線形方程式を解く際に使用される線形演算子
+（行列、微分演算子、共分散行列など）を表現します。
+
+主要クラス:
+    LinearOperator: 行列とみなせる線形変換の抽象基底
+    Operator: より一般的な演算子プロトコル
+
+実装例:
+    >>> from jax_util.base import LinearOperator
+    >>> class MyOp(LinearOperator):
+    ...     @property
+    ...     def shape(self):
+    ...         return (100, 100)
+    ...     def __matmul__(self, x):
+    ...         return jnp.dot(self.matrix, x)
+"""
+
 from __future__ import annotations
 
 

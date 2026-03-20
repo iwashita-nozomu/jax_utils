@@ -1,3 +1,22 @@
+"""共役勾配法（Conjugate Gradient Method, PCG）。
+
+対称正定値行列 A に対して線形方程式 Ax = b を
+高速に求解します。疎行列に特に効果的です。
+
+実装:
+    PCGState: 各イテレーション状態（x, r, p, α, β）
+    pcg_solve: メイントルーチン
+    preset_iterations: 前処理反復オプション
+
+数学的背景:
+    最適化方向なぞ (steepest descent + conjugacy condition)
+    収束性: O(κ log(1/ε)) イテレーション（κ = 条件数）
+
+参考資料:
+    - Nocedal & Wright (2006), Ch. 5
+    - Golub & van Loan (2013), Matrix Computations
+"""
+
 from __future__ import annotations
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
