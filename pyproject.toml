@@ -15,6 +15,7 @@ dev = [
   "pytest>=8",
   "ruff>=0.5",
   "scipy-stubs",
+  "pydocstyle>=6.3",
 ]
 
 [tool.setuptools]
@@ -28,7 +29,9 @@ line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-select = ["E", "F", "I"]
+select = ["E", "F", "I", "D", "UP"]
+# D: docstring チェック
+# UP: Python 最新構文への自動升格
 
 [tool.pyright]
 # 型検査は strict を基本方針とします。
@@ -58,6 +61,18 @@ reportUnknownMemberType = "none"
 reportUnusedVariable = "none"
 reportConstantRedefinition = "none"
 reportMissingTypeStubs = "none"
+
+[tool.pydocstyle]
+# Docstring 規約の設定
+# D100: モジュール docstring 必須
+# D101: クラス docstring 必須
+# D102: パブリックメソッド docstring 必須
+# D103: 関数 docstring 必須
+# D104-D105: パッケージ/Magic method は除外
+match = "python/jax_util/.*\\.py"
+match_dir = "python/jax_util"
+# プライベート関数 (_prefix) の docstring チェックは除外
+ignore = ["D104", "D105", "D107"]
 
 [tool.pytest.ini_options]
 testpaths = ["python/tests"]

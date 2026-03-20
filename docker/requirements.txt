@@ -10,6 +10,7 @@ optax
 # 開発・解析
 pyright
 pydeps
+pydocstyle
 
 # ドキュメント・フォーマット
 mdformat

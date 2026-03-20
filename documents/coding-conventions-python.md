@@ -28,6 +28,63 @@ def my_function(x: jnp.ndarray) -> jnp.ndarray:
     return x + 1
 ```
 
+### 📝 Docstring テンプレート
+
+**モジュール docstring**:
+```python
+"""module_name パッケージの概要。
+
+このモジュールは[責務]を担当します。
+- [主要機能1]
+- [主要機能2]
+
+主要クラス/関数:
+    ClassName: [簡潔な説明]
+    function_name: [簡潔な説明]
+
+参考資料:
+    - documents/coding-conventions-python.md
+"""
+```
+
+**クラス docstring**:
+```python
+class MyClass:
+    """クラスの概要（1行）。
+    
+    より詳細な説明をここに書きます。
+    複数行になっても OK です。
+    
+    Attributes:
+        attr1 (Type): 属性の説明
+        attr2 (Type): 属性の説明
+    """
+```
+
+**関数 docstring**:
+```python
+def my_function(x: Vector, y: Scalar) -> Matrix:
+    """関数の概要（1行）。
+    
+    より詳細な説明。前提条件やアルゴリズムの概略を書きます。
+    
+    Args:
+        x: ベクトル入力の説明
+        y: スカラー係数の説明
+        
+    Returns:
+        出力行列の説明
+        
+    Raises:
+        ValueError: 条件を満たさない場合の説明
+        
+    Example:
+        >>> x = jnp.array([1, 2, 3])
+        >>> y = 2.0
+        >>> result = my_function(x, y)
+    """
+```
+
 ---
 
 ## 現在の対象

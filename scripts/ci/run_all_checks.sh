@@ -81,13 +81,35 @@ else
 fi
 echo ""
 
-# 3. ruff (QUICK_MODE でスキップ可能)
+# 3. pydocstyle 実行（Docstring 検証）
+echo "3️⃣  pydocstyle を実行中... (Docstring チェック)"
+if python -m pydocstyle python/jax_util/ 2>&1; then
+  echo "✅ pydocstyle 成功"
+else
+  echo "⚠️  pydocstyle エラーあり（詳細: documents/DOCSTRING_GUIDE.md を参照）"
+fi
+echo ""
+
+# 4. ruff (QUICK_MODE でスキップ可能)
 if [ $QUICK_MODE -eq 0 ]; then
-  echo "3️⃣  ruff を実行中..."
-  if python -m ruff check python/ 2>&1 | head -20; then
+  echo "4️⃣  ruff を実行中..."
+  echo "   - E,F: コード品質（エラー・警告）"
+  echo "   - I: Import 順序チェック"
+  echo "   - D: Docstring 検証"
+  echo "   - UP: Python 最新構文チェック"
+  echo ""
+  
+  RUFF_ERRORS=$(python -m ruff check python/ --select D,E,F,I,UP 2>&1)
+  
+  if echo "$RUFF_ERRORS" | grep -q "error:"; then
+    echo "   $RUFF_ERRORS" | head -30
+    echo "❌ ruff エラーで CI 失敗"
+    EXIT_CODE=1
+  elif [ -z "$RUFF_ERRORS" ] || echo "$RUFF_ERRORS" | grep -q "All checks passed"; then
     echo "✅ ruff 成功"
   else
-    echo "⚠️  ruff チェック: エラーあり（自動修正: ruff check --fix） "
+    echo "⚠️  ruff 警告あり（詳細: ruff check python/ --show）"
+    echo "$RUFF_ERRORS" | head -20
   fi
   echo ""
 fi
