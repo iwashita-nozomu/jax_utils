@@ -10,7 +10,8 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Announce
-        run: echo "Agent coordinator: prepare tasks and notify reviewers"
+        run: |
+          echo "Agent coordinator: prepare tasks and notify reviewers"
 
   reviewer:
     needs: coordinator
