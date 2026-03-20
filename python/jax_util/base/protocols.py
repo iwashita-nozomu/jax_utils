@@ -74,18 +74,25 @@ class VectorFn(Protocol):
     def __call__(self,x:Vector, /) -> Vector: ...
     ...
 
+class NonlinearOperator(Protocol):
+    @property
+    def shape(self) -> Tuple[int,...]: ...
+    
+    def __call__(self,x:Vector, /) -> Vector: ...
+    ...
+
 
 VariableT = TypeVar("VariableT")
 EqualityResidualT = TypeVar("EqualityResidualT")
 InequalityResidualT = TypeVar("InequalityResidualT")
 DualT = TypeVar("DualT")
 
-
+@runtime_checkable
 class OptimizationProblem(Protocol[VariableT]):
     objective: Callable[[VariableT], Scalar]
     ...
 
-
+@runtime_checkable
 class ConstrainedOptimizationProblem(
     OptimizationProblem[VariableT],
     Protocol[VariableT, EqualityResidualT, InequalityResidualT],

@@ -6,7 +6,29 @@ from .linearoperator import LinOp
 
 import equinox as eqx
 import jax
-from typing import Callable,Tuple
+from typing import Callable,Tuple, Optional
+
+# バッチ対応の非線形作用素の実装　Operatorに準拠
+
+class NonlinOp(eqx.Module):
+    f: VectorFn
+    __shape__: Optional[Tuple[int,...]] = eqx.field(static=True)
+
+    # 責務: 既知なら作用素の shape を公開します。
+    @property
+    def shape(self) -> Tuple[int,...]:
+        if self.__shape__ is None:
+            raise ValueError("Shape is not specified.")
+        return self.__shape__
+    
+    def __call__(self, x: Vector |Matrix) -> Vector | Matrix:
+        
+        if x.ndim == 1:
+            return self.f(x)
+        elif x.ndim == 2:
+            return jax.vmap(self.f, in_axes=-1, out_axes=-1)(x)
+        else:
+            raise ValueError("入力は1次元ベクトルまたは2次元行列でなければなりません。")
 
 
 
