@@ -18,7 +18,6 @@ JAX メモリ管理: CUDA/GPU メモリの先取りを無効化し、
 import argparse
 import fcntl
 import json
-import re
 import sys
 import time
 from pathlib import Path
@@ -250,8 +249,8 @@ def run_experiment(args: argparse.Namespace) -> None:
     """
     本実験を実行する。
     
-    サイズ（--small / --medium / --large / --default）に応じて
-    パラメータを選択し、StandardFullResourceScheduler で並列実行。
+    StandardRunner + StandardFullResourceScheduler を使って
+    spawn context での並列実行を行う。
     """
     
     # サイズ別の構成
@@ -292,18 +291,9 @@ def run_experiment(args: argparse.Namespace) -> None:
             num_trials=3,
             device="cpu",
         ),
-        "full": runner_config.SmolyakExperimentConfig(
-            min_dimension=1,
-            max_dimension=50,
-            min_level=1,
-            max_level=50,
-            dtypes=["float16", "bfloat16", "float32", "float64"],
-            num_trials=3,
-            device="cpu",
-        ),
     }
     
-    # サイズを選択
+    # サイズのバリデーション
     size = args.size or "small"
     if size not in configs_by_size:
         print(f"Error: size must be one of {list(configs_by_size.keys())}")
@@ -328,9 +318,7 @@ def run_experiment(args: argparse.Namespace) -> None:
     case_list = cases.generate_cases(config)
     print(f"\nGenerated {len(case_list)} cases")
     
-    # リソース容量を定義
-    # ホストメモリ: 16 GB（実システムに応じて調整）
-    # ワーカー: 4 並列
+    # リソース容量を定義（spawn context で 4 並列）
     resource_capacity = FullResourceCapacity(
         max_workers=4,
         host_memory_bytes=16 * 1024 * 1024 * 1024,  # 16 GB
@@ -344,69 +332,41 @@ def run_experiment(args: argparse.Namespace) -> None:
     output_dir = Path(__file__).parent / "results" / size
     output_dir.mkdir(parents=True, exist_ok=True)
     
-    # 既存の JSONL ファイルをチェック（再開用）
-    # 同じサイズ・タイムスタンプのペアがあれば、それを使用
-    existing_jsonls = sorted(output_dir.glob("results_*.jsonl"), reverse=True)
-    
+    # タイムスタンプを生成（新規実行またはチェックポイント再開で使用）
     timestamp = int(time.time())
-    
-    # 最新の JSONL と JSON が同じタイムスタンプなら再開、違うなら新規
-    if existing_jsonls:
-        latest_jsonl = existing_jsonls[0]
-        # ファイル名から UNIX time を抽出
-        match = re.search(r"results_(\d+)\.jsonl", latest_jsonl.name)
-        if match:
-            checkpoint_timestamp = int(match.group(1))
-            # 同じタイムスタンプの JSON も存在するかチェック
-            json_file = output_dir / f"results_{checkpoint_timestamp}.json"
-            if json_file.exists():
-                # 既に完了しているので新規開始
-                pass
-            else:
-                # JSON がない場合は再開用の JSONL として使用
-                timestamp = checkpoint_timestamp
-    
-    # JSONL 出力ファイルパス（ケース実行時に逐次追記される）
     jsonl_file = output_dir / f"results_{timestamp}.jsonl"
     
-    # コンテキストビルダー: TaskContext は dict[str, Any]
-    def context_builder(case: dict[str, Any]) -> TaskContext:
-        ctx: TaskContext = {
-            "case_id": case["case_id"],
-            "jsonl_path": str(jsonl_file),
-        }
-        return ctx
-    
-    # スケジューラを作成
-    scheduler = StandardFullResourceScheduler.from_worker(
-        resource_capacity=resource_capacity,
-        cases=case_list,
-        worker=worker,
-        context_builder=context_builder,
-    )
-    
-    print(f"\nResource Capacity:")
-    print(f"  Max workers: {resource_capacity.max_workers}")
-    print(f"  Host memory: {resource_capacity.host_memory_bytes / (1024**3):.1f} GB")
-    print(f"  GPU devices: {len(resource_capacity.gpu_devices)}")
-    
-    # 実行
-    print("\nRunning cases (4 parallel workers with spawn context):")
-    print()
-    
-    # 既に実行済みのケースを読み込む（再開用）
+    # 既存の JSONL ファイルから完了済みケースを読み込む（再開用）
     completed_case_ids = load_completed_case_ids(jsonl_file)
-    if completed_case_ids:
-        print(f"Found {len(completed_case_ids)} completed cases in checkpoint file")
-        print(f"Skipping those and resuming from case {len(completed_case_ids)+1}")
-        print()
     
     # 未実行ケースのみをフィルタリング
     remaining_cases = [
         case for case in case_list
         if case["case_id"] not in completed_case_ids
     ]
-    skipped_count = len(case_list) - len(remaining_cases)
+    
+    if completed_case_ids:
+        print(f"\nFound {len(completed_case_ids)} completed cases")
+        print(f"Resuming from case {len(completed_case_ids) + 1}...\n")
+    else:
+        print()
+    
+    # リソース情報を表示
+    print(f"Resource Capacity:")
+    print(f"  Max workers: {resource_capacity.max_workers}")
+    print(f"  Host memory: {resource_capacity.host_memory_bytes / (1024**3):.1f} GB")
+    print(f"  GPU devices: {len(resource_capacity.gpu_devices)}")
+    print(f"\nRunning {len(remaining_cases)} cases (4 parallel workers with spawn context):")
+    print()
+    
+    # コンテキストビルダー: TaskContext = dict[str, Any]
+    def context_builder(case: dict[str, Any]) -> TaskContext:
+        # JSONL ファイルパスと case_id をコンテキストに追加
+        ctx: TaskContext = {
+            "case_id": case["case_id"],
+            "jsonl_path": str(jsonl_file),
+        }
+        return ctx
     
     # スケジューラを作成（未実行ケースのみ）
     scheduler = StandardFullResourceScheduler.from_worker(
@@ -416,7 +376,7 @@ def run_experiment(args: argparse.Namespace) -> None:
         context_builder=context_builder,
     )
     
-    # StandardRunner で並列実行（spawn context で 4 ワーカー）
+    # StandardRunner で spawn context による並列実行
     runner = StandardRunner(scheduler)
     start_time = time.perf_counter()
     runner.run(worker)
@@ -447,11 +407,9 @@ def run_experiment(args: argparse.Namespace) -> None:
     print(f"Failed: {len(failed_results)} / {len(all_results)}")
     print(f"Total elapsed time (this run): {elapsed_total:.1f} s ({elapsed_total/60:.1f} m)")
     
-    if skipped_count > 0:
-        print(f"Skipped (already completed): {skipped_count}")
-        # 今回実行したケース数（残りケース数 = 全ケース - スキップ済みケース）
-        completed_count = len(remaining_cases)
-        print(f"New cases completed this run: {completed_count}")
+    if completed_case_ids:
+        print(f"Resumed from checkpoint: {len(completed_case_ids)} cases already done")
+        print(f"New cases completed this run: {len(remaining_cases)}")
     
     if len(all_results) > 0:
         throughput = len(all_results) / elapsed_total if elapsed_total > 0 else 0
