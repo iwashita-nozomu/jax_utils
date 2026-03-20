@@ -28,6 +28,8 @@
 - [Environment Setup](/workspace/notes/knowledge/environment_setup.md)
 - [Experiment Operations](/workspace/notes/knowledge/experiment_operations.md)
 - [Benchmark vs Experiment](/workspace/notes/knowledge/benchmark_vs_experiment.md) ← 性能測定の使い分け
+- [Benchmark Levels Analysis](/workspace/notes/knowledge/benchmark_levels_analysis.md) ← Light/Heavy/Extreme の特性
+- [Experiment Directory Planning](/workspace/notes/knowledge/experiment_directory_planning.md) ← 大規模実験（d=1-50）の設計 **NEW**
 - [Pyright Operations](/workspace/notes/knowledge/pyright_operations.md)
 - [Literature Intake](/workspace/notes/knowledge/literature_intake.md)
 - [Git Mirroring](/workspace/notes/knowledge/git_mirroring.md)
