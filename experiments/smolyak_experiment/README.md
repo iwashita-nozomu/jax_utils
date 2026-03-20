@@ -28,7 +28,7 @@ Smolyak 積分器の性能を多次元・多レベルにわたって系統的に
 ## ディレクトリ構造
 
 ```
-smolyakexperiment/
+smolyak_experiment/
 ├── __init__.py                      # パッケージ初期化
 ├── README.md                        # このファイル
 ├── cases.py                         # 実験ケース定義
@@ -101,26 +101,25 @@ class SmolyakExperimentConfig:
 ## 使用方法（実装後）
 
 ```python
-from python.experiment import runner, case_generator
-from python.experiment.smolyakexperiment import cases, runner_config
+from experiments.smolyak_experiment import cases, runner_config
+
+# 構成設定
+config = runner_config.SmolyakExperimentConfig()
+print(f"Total cases: {config.total_cases}")
+print(f"Total tasks: {config.total_tasks}")
 
 # ケース生成
-config = runner_config.SmolyakExperimentConfig()
 case_spec = cases.make_smolyak_case_spec(config)
-experiment_cases = case_generator.generate_cases(case_spec)
 
-# 実験実行
-results = runner.run_experiment(experiment_cases, runner_config=config)
-
-# 結果集計
-aggregated = cases.aggregate_results(results)
+# 結果集計（実装後）
+# aggregated = results_aggregator.aggregate_by_dtype(results)
 ```
 
 ## 参考資料
 
-- [Python 実験ディレクトリ構造規約](/workspace/documents/conventions/python/30_experiment_directory_structure.md)
-- [実験ディレクトリ計画と設計](/workspace/notes/knowledge/experiment_directory_planning.md)
-- [ベンチマーク報告書](/workspace/python/benchmark/functional/results/BENCHMARK_REPORT.md)
+- [実験ディレクトリ計画と設計](../../notes/knowledge/experiment_directory_planning.md)
+- [ベンチマーク報告書](../../python/benchmark/functional/results/BENCHMARK_REPORT.md)
+- [既存実験参考: smolyak_scaling](../functional/smolyak_scaling/README.md)
 
 ---
 

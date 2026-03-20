@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-smolyakexperiment パッケージ
+smolyak_experiment パッケージ
 
 Smolyak 積分器の大規模実験モジュール
 """
