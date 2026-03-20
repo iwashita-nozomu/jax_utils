@@ -8,9 +8,12 @@ Smolyak 積分器向けの大規模実験ケースを生成・検証するロジ
 from typing import Any
 
 
-def make_smolyak_case_spec(config: Any) -> dict[str, Any]:
+def generate_cases(config: Any) -> list[dict[str, Any]]:
     """
-    Smolyak 実験用のケース仕様を生成。
+    Smolyak 実験用のケースリストを生成。
+    
+    次元・レベル・データ型の直積からケースを生成し、各ケースに
+    一意な case_id を付与する。
     
     Parameters
     ----------
@@ -19,35 +22,47 @@ def make_smolyak_case_spec(config: Any) -> dict[str, Any]:
         
     Returns
     -------
-    dict[str, Any]
-        ケース生成関数が受け取る CaseSpec 互換の仕様辞書
+    list[dict[str, Any]]
+        各辞書は以下を含む:
+        - case_id: str - 一意識別子（"d{d}_l{l}_{dtype}_t{trial}"）
+        - dimension: int
+        - level: int
+        - dtype: str
+        - trial_index: int
         
-    Notes
-    -----
-    実装予定: 次元、レベル、dtype の直積ケースを生成
+    Examples
+    --------
+    >>> from experiments.smolyak_experiment import runner_config, cases
+    >>> config = runner_config.SmolyakExperimentConfig(
+    ...     min_dimension=1, max_dimension=3,
+    ...     min_level=1, max_level=2,
+    ...     dtypes=["float32"],
+    ...     num_trials=1
+    ... )
+    >>> case_list = cases.generate_cases(config)
+    >>> len(case_list)  # 3 * 2 * 1 * 1
+    6
+    >>> case_list[0]["case_id"]
+    'd1_l1_float32_t0'
     """
-    raise NotImplementedError("make_smolyak_case_spec() の実装が待機中です")
-
-
-def aggregate_results(results: list[dict[str, Any]]) -> dict[str, Any]:
-    """
-    Smolyak 実験結果を集計・グループ化。
+    cases_list: list[dict[str, Any]] = []
+    case_counter = 0
     
-    Parameters
-    ----------
-    results : list[dict]
-        個別の実験結果（各要素は dtype, dimension, level, init_time 等を含む）
-        
-    Returns
-    -------
-    dict[str, Any]
-        dtype × dimension 別に集計された結果
-        
-    Notes
-    -----
-    実装予定: 以下の集計を行う
-    - dtype ごとの初期化時間の統計
-    - dimension ごとのスケーリング分析
-    - level の精度-時間トレードオフ分析
-    """
-    raise NotImplementedError("aggregate_results() の実装が待機中です")
+    # dimension -> level -> dtype -> trial の順序で生成
+    for dimension in range(config.min_dimension, config.max_dimension + 1):
+        for level in range(config.min_level, config.max_level + 1):
+            for dtype in config.dtypes:
+                for trial_index in range(config.num_trials):
+                    case_id = f"d{dimension}_l{level}_{dtype}_t{trial_index}"
+                    case = {
+                        "case_id": case_id,
+                        "dimension": dimension,
+                        "level": level,
+                        "dtype": dtype,
+                        "trial_index": trial_index,
+                        "index": case_counter,
+                    }
+                    cases_list.append(case)
+                    case_counter += 1
+    
+    return cases_list

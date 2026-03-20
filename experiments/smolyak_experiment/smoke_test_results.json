@@ -1,0 +1,99 @@
+{
+  "config": {
+    "min_dimension": 1,
+    "max_dimension": 3,
+    "min_level": 1,
+    "max_level": 2,
+    "dtypes": [
+      "float32"
+    ],
+    "num_trials": 1,
+    "timeout_seconds": 300.0,
+    "device": "cpu",
+    "num_accuracy_problems": 9,
+    "coeff_start": -0.55,
+    "coeff_stop": 0.65,
+    "total_cases": 6,
+    "total_tasks": 6,
+    "experimental": false
+  },
+  "results": [
+    {
+      "case_id": "d1_l1_float32_t0",
+      "dimension": 1,
+      "level": 1,
+      "dtype": "float32",
+      "trial_index": 0,
+      "status": "SUCCESS",
+      "init_time_ms": 126.88890798017383,
+      "error": null,
+      "integrate_time_ms": 145.19732652115636,
+      "num_evaluation_points": 1
+    },
+    {
+      "case_id": "d1_l2_float32_t0",
+      "dimension": 1,
+      "level": 2,
+      "dtype": "float32",
+      "trial_index": 0,
+      "status": "SUCCESS",
+      "init_time_ms": 11.619329976383597,
+      "error": null,
+      "integrate_time_ms": 126.53336051153019,
+      "num_evaluation_points": 4
+    },
+    {
+      "case_id": "d2_l1_float32_t0",
+      "dimension": 2,
+      "level": 1,
+      "dtype": "float32",
+      "trial_index": 0,
+      "status": "SUCCESS",
+      "init_time_ms": 1.8907180055975914,
+      "error": null,
+      "integrate_time_ms": 204.08859048620798,
+      "num_evaluation_points": 1
+    },
+    {
+      "case_id": "d2_l2_float32_t0",
+      "dimension": 2,
+      "level": 2,
+      "dtype": "float32",
+      "trial_index": 0,
+      "status": "SUCCESS",
+      "init_time_ms": 12.2259630006738,
+      "error": null,
+      "integrate_time_ms": 171.58971849130467,
+      "num_evaluation_points": 7
+    },
+    {
+      "case_id": "d3_l1_float32_t0",
+      "dimension": 3,
+      "level": 1,
+      "dtype": "float32",
+      "trial_index": 0,
+      "status": "SUCCESS",
+      "init_time_ms": 2.126787032466382,
+      "error": null,
+      "integrate_time_ms": 244.19098149519414,
+      "num_evaluation_points": 1
+    },
+    {
+      "case_id": "d3_l2_float32_t0",
+      "dimension": 3,
+      "level": 2,
+      "dtype": "float32",
+      "trial_index": 0,
+      "status": "SUCCESS",
+      "init_time_ms": 12.211224995553493,
+      "error": null,
+      "integrate_time_ms": 195.60776749858633,
+      "num_evaluation_points": 10
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "success": 6,
+    "failed": 0
+  }
+}
