@@ -110,6 +110,9 @@ def generate_cases(config: Any) -> list[dict[str, Any]]:
     >>> case_list[0]["case_id"]
     'd1_l1_float32_t0'
     """
+    # 構成の妥当性を検証
+    config.validate()
+    
     cases_list: list[dict[str, Any]] = []
     case_counter = 0
     

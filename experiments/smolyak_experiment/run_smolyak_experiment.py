@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+# results branch: results/smolyak-experiment-201
 """
 Smolyak 積分器大規模実験実行スクリプト
 
@@ -12,7 +13,9 @@ StandardFullResourceScheduler を使用して、リソース認識型の
 """
 
 import argparse
+import fcntl
 import json
+import re
 import sys
 import time
 from dataclasses import asdict
@@ -41,6 +44,45 @@ from jax_util.experiment_runner import (
 )
 from jax_util.experiment_runner.protocols import Worker
 from experiments.smolyak_experiment import cases, runner_config, results_aggregator
+
+
+def load_completed_case_ids(jsonl_path: str | Path) -> set[str]:
+    """
+    既に実行済みのケースの ID セットを JSONL ファイルから読み込む。
+    
+    Parameters
+    ----------
+    jsonl_path : str | Path
+        JSONL ファイルパス. 存在しない場合は空セットを返す。
+        
+    Returns
+    -------
+    set[str]
+        完了済みケースの ID セット
+    """
+    completed = set()
+    jsonl_path = Path(jsonl_path)
+    
+    if not jsonl_path.exists():
+        return completed
+    
+    try:
+        with open(jsonl_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    obj = json.loads(line)
+                    if "case_id" in obj:
+                        completed.add(obj["case_id"])
+                except json.JSONDecodeError:
+                    # 不正な行はスキップ
+                    pass
+    except Exception as e:
+        print(f"Warning: Failed to read checkpoint file: {e}")
+    
+    return completed
 
 
 def run_single_case(case: dict[str, Any]) -> dict[str, Any]:
@@ -77,7 +119,10 @@ def run_single_case(case: dict[str, Any]) -> dict[str, Any]:
     
     try:
         # JAX dtype に変換
-        jax_dtype = getattr(jnp, dtype)
+        try:
+            jax_dtype = getattr(jnp, dtype)
+        except AttributeError:
+            raise ValueError(f"Unsupported dtype: {dtype}")
         
         # 初期化時間を測定
         start_time = time.perf_counter()
@@ -117,7 +162,8 @@ class SmolyakWorker(Worker):
     Smolyak リソース認識ワーカー。
     
     StandardFullResourceScheduler と協働して、リソース見積もりに基づいた
-    スケジューリングを行う。
+    スケジューリングを行う。ケース実行後、結果を context["jsonl_path"] に
+    指定されたファイルへ JSONL 形式で逐次追記する。
     """
     
     def resource_estimate(self, case: dict[str, Any]) -> FullResourceEstimate:
@@ -125,9 +171,48 @@ class SmolyakWorker(Worker):
         return cases.estimate_case_resources(case)
     
     def __call__(self, case: dict[str, Any], context: TaskContext) -> None:
-        """タスクを実行"""
+        """タスク実行後、結果を JSONL に逐次追記"""
         result = run_single_case(case)
+        
+        # JSONL ファイルへ排他制御付きで追記
+        jsonl_path = context.get("jsonl_path")
+        if jsonl_path:
+            self._append_jsonl(result, jsonl_path)
+        
+        # context にも結果を保存（シーケンシャル実行時用）
         context["result"] = result
+    
+    @staticmethod
+    def _append_jsonl(result: dict[str, Any], jsonl_path: str | Path) -> None:
+        """
+        結果を JSONL ファイルに排他制御付きで追記。
+        
+        Parameters
+        ----------
+        result : dict
+            実行結果
+        jsonl_path : str | Path
+            JSONL ファイルパス
+        """
+        jsonl_path = Path(jsonl_path)
+        jsonl_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # fcntl で排他制御（Unix/Linux）
+        try:
+            with open(jsonl_path, "a") as f:
+                # ファイルロック取得
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX)
+                try:
+                    # JSON 1 行追記
+                    f.write(json.dumps(result) + "\n")
+                    f.flush()
+                finally:
+                    fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+        except Exception as e:
+            # Windows など fcntl 非対応環境での fallback
+            # この場合は排他制御なしで append
+            with open(jsonl_path, "a") as f:
+                f.write(json.dumps(result) + "\n")
 
 
 def run_experiment(args: argparse.Namespace) -> None:
@@ -224,9 +309,41 @@ def run_experiment(args: argparse.Namespace) -> None:
     # ワーカーを作成
     worker = SmolyakWorker()
     
+    # 出力ディレクトリを作成
+    output_dir = Path(__file__).parent / "results" / size
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    # 既存の JSONL ファイルをチェック（再開用）
+    # 同じサイズ・タイムスタンプのペアがあれば、それを使用
+    existing_jsonls = sorted(output_dir.glob("results_*.jsonl"), reverse=True)
+    
+    timestamp = int(time.time())
+    
+    # 最新の JSONL と JSON が同じタイムスタンプなら再開、違うなら新規
+    if existing_jsonls:
+        latest_jsonl = existing_jsonls[0]
+        # ファイル名から UNIX time を抽出
+        match = re.search(r"results_(\d+)\.jsonl", latest_jsonl.name)
+        if match:
+            checkpoint_timestamp = int(match.group(1))
+            # 同じタイムスタンプの JSON も存在するかチェック
+            json_file = output_dir / f"results_{checkpoint_timestamp}.json"
+            if json_file.exists():
+                # 既に完了しているので新規開始
+                pass
+            else:
+                # JSON がない場合は再開用の JSONL として使用
+                timestamp = checkpoint_timestamp
+    
+    # JSONL 出力ファイルパス（ケース実行時に逐次追記される）
+    jsonl_file = output_dir / f"results_{timestamp}.jsonl"
+    
     # コンテキストビルダー
     def context_builder(case: dict[str, Any]) -> TaskContext:
-        return {"case_id": case["case_id"]}
+        return {
+            "case_id": case["case_id"],
+            "jsonl_path": str(jsonl_file),
+        }
     
     # スケジューラを作成
     scheduler = StandardFullResourceScheduler.from_worker(
@@ -245,14 +362,28 @@ def run_experiment(args: argparse.Namespace) -> None:
     print("\nRunning cases (sequential execution with resource awareness):")
     print()
     
+    # 既に実行済みのケースを読み込む（再開用）
+    completed_case_ids = load_completed_case_ids(jsonl_file)
+    if completed_case_ids:
+        print(f"Found {len(completed_case_ids)} completed cases in checkpoint file")
+        print(f"Skipping those and resuming from case {len(completed_case_ids)+1}")
+        print()
+    
     # ワーカーを実行（シーケンシャル）
     # JAX は multiprocessing fork() と非互換のため、シーケンシャル実行で十分
     results = []
     completed_count = 0
+    skipped_count = 0
     start_time = time.perf_counter()
     
     for case in case_list:
-        context = {"case_id": case["case_id"]}
+        # 既に完了したケースはスキップ
+        if case["case_id"] in completed_case_ids:
+            skipped_count += 1
+            continue
+        
+        # context_builder を使用して jsonl_path を含める
+        context = context_builder(case)
         worker(case, context)
         
         if "result" in context:
@@ -264,8 +395,9 @@ def run_experiment(args: argparse.Namespace) -> None:
             if completed_count % 10 == 0 or completed_count == len(case_list):
                 elapsed = time.perf_counter() - start_time
                 throughput = completed_count / elapsed if elapsed > 0 else 0
+                total_display = len(case_list) - skipped_count if skipped_count > 0 else len(case_list)
                 print(
-                    f"  [{completed_count:4d}/{len(case_list):4d}] "
+                    f"  [{completed_count:4d}/{total_display:4d}] "
                     f"elapsed={elapsed:7.1f}s  throughput={throughput:5.1f} cases/s"
                 )
     
@@ -276,13 +408,32 @@ def run_experiment(args: argparse.Namespace) -> None:
     print("Results Summary")
     print("=" * 70)
     
-    success_results = [r for r in results if r["status"] == "SUCCESS"]
-    failed_results = [r for r in results if r["status"] != "SUCCESS"]
+    # JSONL ファイルから全結果を読み込む（再開後の全グローバル結果）
+    all_results = []
+    with open(jsonl_file) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                all_results.append(json.loads(line))
+            except json.JSONDecodeError:
+                pass
     
-    print(f"\nSuccessful: {len(success_results)} / {len(results)}")
-    print(f"Failed: {len(failed_results)} / {len(results)}")
-    print(f"Total elapsed time: {elapsed_total:.1f} s ({elapsed_total/60:.1f} m)")
-    print(f"Throughput: {len(results)/elapsed_total:.1f} cases/s")
+    success_results = [r for r in all_results if r["status"] == "SUCCESS"]
+    failed_results = [r for r in all_results if r["status"] != "SUCCESS"]
+    
+    print(f"\nSuccessful: {len(success_results)} / {len(all_results)}")
+    print(f"Failed: {len(failed_results)} / {len(all_results)}")
+    print(f"Total elapsed time (this run): {elapsed_total:.1f} s ({elapsed_total/60:.1f} m)")
+    
+    if skipped_count > 0:
+        print(f"Skipped (already completed): {skipped_count}")
+        print(f"New cases completed this run: {completed_count}")
+    
+    if len(all_results) > 0:
+        throughput = len(all_results) / elapsed_total if elapsed_total > 0 else 0
+        print(f"Throughput (this run): {throughput:.1f} cases/s")
     
     if success_results:
         init_times = [r["init_time_ms"] for r in success_results]
@@ -314,13 +465,10 @@ def run_experiment(args: argparse.Namespace) -> None:
         for r in failed_results[:10]:
             print(f"  {r['case_id']}: {r['error']}")
     
-    # 結果を JSON に保存
-    output_dir = Path(__file__).parent / "results" / size
-    output_dir.mkdir(parents=True, exist_ok=True)
+    # 最終結果を JSON に保存（JSONL と同時に保存）
+    json_file = output_dir / f"results_{timestamp}.json"
     
-    output_file = output_dir / f"results_{int(time.time())}.json"
-    
-    with open(output_file, "w") as f:
+    with open(json_file, "w") as f:
         json.dump({
             "config": config.to_dict(),
             "resource_capacity": {
@@ -328,17 +476,19 @@ def run_experiment(args: argparse.Namespace) -> None:
                 "host_memory_bytes": resource_capacity.host_memory_bytes,
                 "gpu_devices": len(resource_capacity.gpu_devices),
             },
-            "results": results,
+            "results": all_results,
             "summary": {
-                "total": len(results),
+                "total": len(all_results),
                 "success": len(success_results),
                 "failed": len(failed_results),
                 "elapsed_seconds": elapsed_total,
-                "throughput_cases_per_sec": len(results) / elapsed_total if elapsed_total > 0 else 0,
+                "throughput_cases_per_sec": len(all_results) / elapsed_total if elapsed_total > 0 else 0,
             }
         }, f, indent=2)
     
-    print(f"\nResults saved to: {output_file}")
+    print(f"\nResults saved to:")
+    print(f"  JSON (all results): {json_file}")
+    print(f"  JSONL (per-case): {jsonl_file}")
     print("=" * 70)
 
 
