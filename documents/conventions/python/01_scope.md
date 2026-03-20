@@ -1,7 +1,5 @@
 # 対象
 
-この章は、Python 規約の適用範囲を定義します。
-
 ## 要約
 
 - 対象は `python/jax_util/` 配下の Python 実装です。

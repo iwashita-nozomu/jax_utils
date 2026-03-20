@@ -9,7 +9,6 @@
     "*.hpp": "cpp",
     "*.h": "cpp"
   },
-  "python.defaultInterpreterPath": "/usr/bin/python3",
   "python.envFile": "${workspaceFolder}/.env",
   "python-envs.pythonProjects": [],
   "python.testing.unittestArgs": [
@@ -21,5 +20,5 @@
   ],
   "python.testing.pytestEnabled": false,
   "python.testing.unittestEnabled": true,
-  "python-envs.defaultEnvManager": "ms-python.python:system"
+  "python-envs.defaultEnvManager": "ms-python.python:venv"
 }

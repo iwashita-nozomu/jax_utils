@@ -2,6 +2,20 @@
 
 この文書は、`python/tests/` 配下のテストを対象にします。
 
+## 🚀 クイックリファレンス
+
+**初めての場合**: まずこのセクションをお読みください
+
+| 用途 | コマンド | 詳細 |
+|---|---|---|
+| **最初の pytest 実行** | `pytest python/tests/base/test_*.py -v` | → [実行方法](#32-標準出力を表示する) |
+| **ユニットテスト作成** | 想定解 + 比較検証 | → [想定解](#4-想定解と標準出力ログ) |
+| **統合テスト設計** | 異なるレイヤー・複数ケース | → [分類](#2-配置と分類) |
+| **エッジケーステスト** | 乱数 seed 固定 + 悪条件 | → [乱数](#5-乱数大規模テスト) |
+| **テスト失敗の診断** | JSON ログを `python/tests/logs/` 確認 | → [実行方法](#3-実行方法) |
+
+---
+
 ## 1. 対象と目的
 
 - 対象は `python/tests/` 配下のテストです。
@@ -12,13 +26,10 @@
 - テストは `python/tests/` に集約します。
 - 分類は次の通りです。
   - `python/tests/base/`: 単体テスト（高速）。
-  - `python/tests/functional/`: 積分・汎関数まわりの検証（低〜中コスト）。
   - `python/tests/solvers/`: 数値ソルバの検証（中〜高コスト）。
   - `python/tests/optimizers/`: 最適化アルゴリズムの検証（中〜高コスト）。
   - `python/tests/hlo/`: HLO 関連ユーティリティの検証（低〜中コスト）。
-  - `python/tests/experiment_runner/`: 実験実行補助と subprocess scheduler の検証（低〜中コスト）。
   - `python/tests/neuralnetwork/`: 実験段階の NN 系検証。
-  - `python/tests/logs/`: テスト実行ログ、exit code、考察メモなどの補助資料を置きます。
 - 大規模ケースは `case` や `*_large` の名称で明示します。
 
 ## 3. 実行方法
