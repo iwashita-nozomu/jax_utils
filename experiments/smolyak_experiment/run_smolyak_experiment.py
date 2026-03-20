@@ -7,14 +7,18 @@ Smolyak 積分器大規模実験実行スクリプト
 次元・レベル・データ型の全組み合わせで Smolyak 積分器の
 初期化時間・実行時間を測定し、スケーリング特性を分析する。
 
-StandardFullResourceScheduler を使用して、リソース認識型の
-並列実行を行う。ワーカー数・ホストメモリ を追跡しながら
-効率的にタスクをスケジューリング。
+StandardRunner + StandardFullResourceScheduler を使用して、リソース認識型の
+並列実行を行う（spawn コンテキストで 4 ワーカー並列）。
+ワーカー数・ホストメモリを追跡しながら効率的にタスクをスケジューリング。
+
+JAX メモリ管理: CUDA/GPU メモリの先取りを無効化し、
+マルチプロセス環境でのメモリ競合を回避する。
 """
 
 import argparse
 import fcntl
 import json
+import os
 import re
 import sys
 import time
@@ -22,17 +26,21 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-import jax
-import jax.numpy as jnp
-import numpy as np
-
-# ワークスペース構成を解決
+# ワークスペース構成を解決（すべての import より前に実行）
 SCRIPT_DIR = Path(__file__).resolve().parent.parent.parent
 WORKSPACE_ROOT = SCRIPT_DIR
 if str(WORKSPACE_ROOT / "python") not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT / "python"))
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
+
+# JAX メモリ先取り無効化（JAX import 前に設定）
+from jax_util.experiment_runner import disable_jax_memory_preallocation
+disable_jax_memory_preallocation(gpu_devices=False)
+
+import jax
+import jax.numpy as jnp
+import numpy as np
 
 from jax_util.functional.smolyak import SmolyakIntegrator
 from jax_util.experiment_runner import (
@@ -41,6 +49,8 @@ from jax_util.experiment_runner import (
     StandardFullResourceScheduler,
     StandardRunner,
     TaskContext,
+    SUCCESS_EXIT_CODE,
+    WORKER_PROTOCOL_ERROR_EXIT_CODE,
 )
 from jax_util.experiment_runner.protocols import Worker
 from experiments.smolyak_experiment import cases, runner_config, results_aggregator
@@ -161,26 +171,34 @@ class SmolyakWorker(Worker):
     """
     Smolyak リソース認識ワーカー。
     
-    StandardFullResourceScheduler と協働して、リソース見積もりに基づいた
-    スケジューリングを行う。ケース実行後、結果を context["jsonl_path"] に
-    指定されたファイルへ JSONL 形式で逐次追記する。
+    StandardRunner と協働して、リソース見積もりに基づいたスケジューリングを行う。
+    ケース実行後、結果を context["jsonl_path"] に指定されたファイルへ JSONL 形式で
+    逐次追記する。
+    
+    戻り値: SUCCESS_EXIT_CODE (0) または WORKER_PROTOCOL_ERROR_EXIT_CODE (1)
     """
     
     def resource_estimate(self, case: dict[str, Any]) -> FullResourceEstimate:
         """ケースのリソース見積もりを返す。"""
         return cases.estimate_case_resources(case)
     
-    def __call__(self, case: dict[str, Any], context: TaskContext) -> None:
-        """タスク実行後、結果を JSONL に逐次追記"""
-        result = run_single_case(case)
-        
-        # JSONL ファイルへ排他制御付きで追記
-        jsonl_path = context.get("jsonl_path")
-        if jsonl_path:
-            self._append_jsonl(result, jsonl_path)
-        
-        # context にも結果を保存（シーケンシャル実行時用）
-        context["result"] = result
+    def __call__(self, case: dict[str, Any], context: TaskContext) -> int:
+        """タスク実行後、結果を JSONL に逐次追記し、exit code を返す。"""
+        try:
+            result = run_single_case(case)
+            
+            # JSONL ファイルへ排他制御付きで追記
+            jsonl_path = context.get("jsonl_path")
+            if jsonl_path:
+                self._append_jsonl(result, jsonl_path)
+            
+            # context にも結果を保存（StandardRunner で使用）
+            context["result"] = result
+            return SUCCESS_EXIT_CODE
+        except Exception as e:
+            # エラーを記録し、エラーコードを返す
+            context["error"] = str(e)
+            return WORKER_PROTOCOL_ERROR_EXIT_CODE
     
     @staticmethod
     def _append_jsonl(result: dict[str, Any], jsonl_path: str | Path) -> None:
@@ -208,9 +226,8 @@ class SmolyakWorker(Worker):
                     f.flush()
                 finally:
                     fcntl.flock(f.fileno(), fcntl.LOCK_UN)
-        except Exception as e:
+        except Exception:
             # Windows など fcntl 非対応環境での fallback
-            # この場合は排他制御なしで append
             with open(jsonl_path, "a") as f:
                 f.write(json.dumps(result) + "\n")
 
@@ -359,7 +376,7 @@ def run_experiment(args: argparse.Namespace) -> None:
     print(f"  GPU devices: {len(resource_capacity.gpu_devices)}")
     
     # 実行
-    print("\nRunning cases (sequential execution with resource awareness):")
+    print("\nRunning cases (4 parallel workers with spawn context):")
     print()
     
     # 既に実行済みのケースを読み込む（再開用）
@@ -369,38 +386,25 @@ def run_experiment(args: argparse.Namespace) -> None:
         print(f"Skipping those and resuming from case {len(completed_case_ids)+1}")
         print()
     
-    # ワーカーを実行（シーケンシャル）
-    # JAX は multiprocessing fork() と非互換のため、シーケンシャル実行で十分
-    results = []
-    completed_count = 0
-    skipped_count = 0
+    # 未実行ケースのみをフィルタリング
+    remaining_cases = [
+        case for case in case_list
+        if case["case_id"] not in completed_case_ids
+    ]
+    skipped_count = len(case_list) - len(remaining_cases)
+    
+    # スケジューラを作成（未実行ケースのみ）
+    scheduler = StandardFullResourceScheduler.from_worker(
+        resource_capacity=resource_capacity,
+        cases=remaining_cases,
+        worker=worker,
+        context_builder=context_builder,
+    )
+    
+    # StandardRunner で並列実行（spawn context で 4 ワーカー）
+    runner = StandardRunner(scheduler, use_spawn_context=True)
     start_time = time.perf_counter()
-    
-    for case in case_list:
-        # 既に完了したケースはスキップ
-        if case["case_id"] in completed_case_ids:
-            skipped_count += 1
-            continue
-        
-        # context_builder を使用して jsonl_path を含める
-        context = context_builder(case)
-        worker(case, context)
-        
-        if "result" in context:
-            result = context["result"]
-            results.append(result)
-            completed_count += 1
-            
-            # 定期的に進捗を表示
-            if completed_count % 10 == 0 or completed_count == len(case_list):
-                elapsed = time.perf_counter() - start_time
-                throughput = completed_count / elapsed if elapsed > 0 else 0
-                total_display = len(case_list) - skipped_count if skipped_count > 0 else len(case_list)
-                print(
-                    f"  [{completed_count:4d}/{total_display:4d}] "
-                    f"elapsed={elapsed:7.1f}s  throughput={throughput:5.1f} cases/s"
-                )
-    
+    runner.run(worker)
     elapsed_total = time.perf_counter() - start_time
     
     # 結果集計
@@ -410,15 +414,16 @@ def run_experiment(args: argparse.Namespace) -> None:
     
     # JSONL ファイルから全結果を読み込む（再開後の全グローバル結果）
     all_results = []
-    with open(jsonl_file) as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                all_results.append(json.loads(line))
-            except json.JSONDecodeError:
-                pass
+    if jsonl_file.exists():
+        with open(jsonl_file) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    all_results.append(json.loads(line))
+                except json.JSONDecodeError:
+                    pass
     
     success_results = [r for r in all_results if r["status"] == "SUCCESS"]
     failed_results = [r for r in all_results if r["status"] != "SUCCESS"]

@@ -8,6 +8,7 @@
 このファイルではサブモジュール自体のみをインポートし、個別シンボルをトップレベルに露出しません。
 """
 
+from . import jax_context as jax_context
 from . import runner as runner
 from . import gpu_runner as gpu_runner
 from . import resource_scheduler as resource_scheduler
@@ -44,11 +45,16 @@ from .gpu_runner import (
     visible_gpu_ids_from_environment,
 )
 
-# Protocols / constants
+# Protocols / constants / JAX utilities
 from .protocols import (
     TaskContext,
     SUCCESS_EXIT_CODE,
     WORKER_PROTOCOL_ERROR_EXIT_CODE,
+)
+from .jax_context import (
+    get_spawn_context,
+    disable_jax_memory_preallocation,
+    create_jax_safe_process_pool,
 )
 
 __all__ = [
@@ -70,8 +76,11 @@ __all__ = [
     "GPUResourceCapacity",
     "StandardGPUScheduler",
     "visible_gpu_ids_from_environment",
-    # protocols / constants
+    # protocols / constants / jax utilities
     "TaskContext",
     "SUCCESS_EXIT_CODE",
     "WORKER_PROTOCOL_ERROR_EXIT_CODE",
+    "get_spawn_context",
+    "disable_jax_memory_preallocation",
+    "create_jax_safe_process_pool",
 ]

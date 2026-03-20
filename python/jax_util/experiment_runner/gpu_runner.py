@@ -3,7 +3,12 @@
 - 環境変数 `CUDA_VISIBLE_DEVICES` / `NVIDIA_VISIBLE_DEVICES` の解釈を行うユーティリティを提供する。
 - 単純な FIFO ベースで GPU ID を割り当てる `StandardGPUScheduler` を実装する。
 
-このモジュールは副作用を持たないように設計されています（インポート時に環境を検査しません）。
+GPU コンテキスト: StandardGPUScheduler は spawn context での実行を想定し、
+CUDA_VISIBLE_DEVICES の自動設定と JAX メモリ先取り無効化（XLA_PYTHON_CLIENT_PREALLOCATE）
+をサポートしています。
+
+参考:
+- JAX CUDA メモリ管理: https://jax.readthedocs.io/en/latest/deployment.html
 """
 
 from __future__ import annotations
@@ -103,13 +108,19 @@ class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
 
     - `next_case()` は利用可能な GPU があればケースを返し、コンテキストに GPU 指定を埋める。
     - `on_finish()` で GPU ID をプールへ戻す。
+    
+    JAX メモリ管理: disable_jax_memory_preallocation=True で、worker コンテキストに
+    以下の設定を自動追加します：
+    - XLA_PYTHON_CLIENT_PREALLOCATE=false: GPU メモリ先取りを無効化
+    - XLA_PYTHON_CLIENT_MEM_FRACTION=0.9: 利用可能 GPU メモリの 90% まで使用
+    - TF_FORCE_GPU_ALLOW_GROWTH=true: メモリの grow-as-needed を有効化
     """
     def __init__(
         self,
         resource_capacity: GPUResourceCapacity,
         cases: list[T],
         context_builder: Callable[[T], TaskContext] | None = None,
-        disable_gpu_preallocation: bool = False,
+        disable_jax_memory_preallocation: bool = True,
     ) -> None:
         super().__init__(
             resource_capacity=resource_capacity,
@@ -117,7 +128,7 @@ class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
             context_builder=context_builder,
         )
         self._available_gpu_ids = deque(resource_capacity.gpu_ids)
-        self._disable_gpu_preallocation = disable_gpu_preallocation
+        self._disable_jax_memory_preallocation = disable_jax_memory_preallocation
 
     @property
     def resource_capacity(self) -> GPUResourceCapacity:
@@ -133,8 +144,13 @@ class StandardGPUScheduler(StandardScheduler[T], Generic[T]):
         context["gpu_id"] = str(gpu_id)
         context["CUDA_VISIBLE_DEVICES"] = str(gpu_id)
         context["NVIDIA_VISIBLE_DEVICES"] = str(gpu_id)
-        if self._disable_gpu_preallocation:
+        
+        # JAX メモリ先取り無効化の設定
+        if self._disable_jax_memory_preallocation:
             context["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+            context["XLA_PYTHON_CLIENT_MEM_FRACTION"] = "0.9"
+            context["TF_FORCE_GPU_ALLOW_GROWTH"] = "true"
+        
         return case, context
 
     def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:

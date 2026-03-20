@@ -2,6 +2,10 @@
 
 軽量な抽象（`StandardScheduler` / `StandardRunner` / `StandardWorker`）を提供します。
 実装は並列実行と完了ハンドリングの単純な契約に従います。
+
+JAX fork() 互換性: StandardRunner は spawn コンテキストでワーカープロセスを起動
+することで、fork() ベースの multiprocessing 問題を回避できます。
+use_spawn_context=True（デフォルト）で有効です。
 """
 
 from __future__ import annotations
@@ -11,6 +15,7 @@ import traceback
 from dataclasses import dataclass
 from typing import Callable, Generic, TypeVar
 
+from .jax_context import create_jax_safe_process_pool
 from .protocols import (
     ResourceEstimate,
     Scheduler,
@@ -130,30 +135,61 @@ class StandardRunner(Generic[T, U]):
     """スケジューラとワーカーを使ってケースを並列実行するランナー。
 
     - `ProcessPoolExecutor` を使って `max_workers` 並列プロセスで実行する。
+    - `use_spawn_context=True`（デフォルト）で spawn コンテキストを使用し、
+      JAX fork() 互換性の問題を回避する。
     - 完了ごとに `scheduler.on_finish` を呼び、次のケースを投入する。
     """
 
-    def __init__(self, scheduler: Scheduler[T]) -> None:
+    def __init__(
+        self,
+        scheduler: Scheduler[T],
+        use_spawn_context: bool = True,
+    ) -> None:
         self.scheduler = scheduler
+        self.use_spawn_context = use_spawn_context
 
     def run(self, worker: Worker[T, U]) -> None:
-        with ProcessPoolExecutor(
-            max_workers=self.scheduler.resource_capacity.max_workers
-        ) as ex:
-            running: dict[Future[int], tuple[T, TaskContext]] = {}
-            while not self.scheduler.is_completed() or running:
-                while True:
-                    job = self.scheduler.next_case()
-                    if job is None:
-                        break
-                    case, context = job
-                    fut = ex.submit(worker, case, context)
-                    running[fut] = job
+        """ケースを並列実行する。
+        
+        Parameters
+        ----------
+        worker : Worker
+            各ケースを実行するワーカー
+        """
+        # spawn コンテキストを使用する場合と通常の ProcessPoolExecutor を使い分ける
+        if self.use_spawn_context:
+            with create_jax_safe_process_pool(
+                max_workers=self.scheduler.resource_capacity.max_workers
+            ) as ex:
+                self._execute_with_executor(ex, worker)
+        else:
+            with ProcessPoolExecutor(
+                max_workers=self.scheduler.resource_capacity.max_workers
+            ) as ex:
+                self._execute_with_executor(ex, worker)
 
-                if not running:
-                    continue
+    def _execute_with_executor(
+        self,
+        executor: ProcessPoolExecutor,
+        worker: Worker[T, U],
+    ) -> None:
+        """Executor を使用してケースを実行する。"""
+        running: dict[Future[int], tuple[T, TaskContext]] = {}
+        while not self.scheduler.is_completed() or running:
+            # 新しいケースを投入できるまで試行
+            while True:
+                job = self.scheduler.next_case()
+                if job is None:
+                    break
+                case, context = job
+                fut = executor.submit(worker, case, context)
+                running[fut] = job
 
-                done, _ = wait(running, return_when=FIRST_COMPLETED)
-                for fut in done:
-                    case, context = running.pop(fut)
-                    self.scheduler.on_finish(case, context, fut.result())
+            if not running:
+                continue
+
+            # 最初に完了したタスクを待つ
+            done, _ = wait(running, return_when=FIRST_COMPLETED)
+            for fut in done:
+                case, context = running.pop(fut)
+                self.scheduler.on_finish(case, context, fut.result())

@@ -30,8 +30,8 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 319.2269380087964,
-      "integrate_time_ms": 147.18253599130549,
+      "init_time_ms": 8.818444970529526,
+      "integrate_time_ms": 105.1382184959948,
       "num_evaluation_points": 1,
       "error": null
     },
@@ -42,8 +42,8 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 12.265915982425213,
-      "integrate_time_ms": 132.1681165136397,
+      "init_time_ms": 12.963665009010583,
+      "integrate_time_ms": 109.38164099934511,
       "num_evaluation_points": 4,
       "error": null
     },
@@ -54,8 +54,8 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 1.8769760499708354,
-      "integrate_time_ms": 303.9947364886757,
+      "init_time_ms": 10.588778997771442,
+      "integrate_time_ms": 130.05898302071728,
       "num_evaluation_points": 1,
       "error": null
     },
@@ -66,8 +66,8 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 12.520765012595803,
-      "integrate_time_ms": 174.0053695102688,
+      "init_time_ms": 8.901718014385551,
+      "integrate_time_ms": 126.14082751679234,
       "num_evaluation_points": 7,
       "error": null
     },
@@ -78,8 +78,8 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 2.210878999903798,
-      "integrate_time_ms": 224.66062547755428,
+      "init_time_ms": 10.590561025310308,
+      "integrate_time_ms": 136.08867349103093,
       "num_evaluation_points": 1,
       "error": null
     },
@@ -90,8 +90,8 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 11.404015007428825,
-      "integrate_time_ms": 194.09617502242327,
+      "init_time_ms": 8.686969988048077,
+      "integrate_time_ms": 131.09906698809937,
       "num_evaluation_points": 10,
       "error": null
     }
@@ -100,7 +100,7 @@
     "total": 6,
     "success": 6,
     "failed": 0,
-    "elapsed_seconds": 2.7124663020367734,
-    "throughput_cases_per_sec": 2.212009047078166
+    "elapsed_seconds": 2.0773554429761134,
+    "throughput_cases_per_sec": 2.888287616010541
   }
 }
