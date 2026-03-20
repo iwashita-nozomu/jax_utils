@@ -14,11 +14,13 @@ bash scripts/setup_worktree.sh my-feature-name "機能説明"
 
 # ワークツリーに移動
 cd .worktrees/my-feature-name
-```text
+```
+
+**⚠️ 注意**: ローカル仮想環境（`.venv`, `venv` など）の作成は **禁止** です。Docker 環境を使用してください。詳細は [documents/coding-conventions-project.md](./documents/coding-conventions-project.md#3-docker%E7%92%B0%E5%A2%83%E3%81%AE%E6%96%B9%E9%87%9D) を参照。
 
 ## 2. 最初のコミット
 
-```bash
+````bash
 # スコープ確認・編集
 vim WORKTREE_SCOPE.md
 git add WORKTREE_SCOPE.md && git commit -m "chore(worktree): initialize scope"
@@ -196,3 +198,4 @@ ______________________________________________________________________
 - **Development:** `pip install -e ".[dev]"` → `pytest` → `ruff check .`
 - **HLO Analysis:** `python scripts/hlo/summarize_hlo_jsonl.py <file.jsonl>`
 - **Notes:** [notes/README.md](./notes/README.md) 参照
+````

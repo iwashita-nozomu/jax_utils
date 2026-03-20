@@ -26,9 +26,48 @@
 
 ## 3. Docker 環境の方針
 
+### 基本原則
+
 - 既定の実行環境は `docker/Dockerfile` を基準にします。
 - 追加パッケージが必要な場合は、**`docker/Dockerfile` と `docker/requirements.txt` を同時に更新**します。
-- 仮想環境の作成は行いません。`venv` / `virtualenv` / `conda` の導入は対象外です。
+
+### 仮想環境（`.venv` 等）の禁止
+
+**ローカル仮想環境の作成は厳禁です。以下のツールは使用しません：**
+
+- `python -m venv`
+- `virtualenv`
+- `conda`
+- `pyenv`
+- その他の仮想環境構築ツール
+
+**禁止対象ディレクトリ：**
+
+- `.venv`, `.venv-*` (venv)
+- `venv/`, `env/` (virtualenv)
+- `.conda/`, `conda-env/` (conda)
+- その他の `.env*` ディレクトリ
+
+**理由：**
+
+- Docker 環境が単一真実であり、ローカル仮想環境との差異が問題を隠蔽
+- CI/CD パイプラインとの整合性を保つため
+- 依存パッケージの一元管理で再現性を確保
+- `.gitignore` を通じた管理を避けリポジトリの複雑性低減
+
+**代わりに Docker 環境を使用してください：**
+
+```bash
+# Docker コンテナ内で作業
+docker build docker -t jax_util:latest
+docker run -it -v /workspace:/workspace jax_util:latest bash
+
+# または VS Code Dev Containers 拡張を使用
+# (Dockerfile が自動検出される)
+```
+
+### パッケージ管理
+
 - テストやスクリプトは `PYTHONPATH=/workspace/python` を基本とします。
 - import パスは `jax_util.*` で統一します。
 
