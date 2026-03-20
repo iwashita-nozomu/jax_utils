@@ -279,7 +279,7 @@ ______________________________________________________________________
 
 | 変更内容           | 対象ドキュメント                          |
 | ------------------ | ----------------------------------------- |
-| 新規 API 追加      | `documents/design/apis/<module>.md`       |
+| 新規 API 追加      | `documents/design/jax_util/<module>.md`   |
 | 既存 Protocol 変更 | `documents/design/base_components.md`     |
 | 型定義追加         | `documents/design/base_components.md`     |
 | ユーティリティ追加 | 対応モジュール説明ドキュメント            |
@@ -300,7 +300,7 @@ ls documents/
 
 ```bash
 # 2-1. テキストエディタで編集
-vim documents/design/apis/<module>.md
+vim documents/design/jax_util/<module>.md
 
 # 2-2. コード参照の追加（相対パス）
 # 例: [関数 `solve_kkt`](../../python/jax_util/solvers/kkt.py#L42)

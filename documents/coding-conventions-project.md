@@ -103,7 +103,7 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 - 実装変更が入った場合は、該当する `documents/` の文書を同時に更新します。
 - 規約を増やすときは `documents/conventions/` に追記します。
 - base の型・Protocol・クラスを変えるときは `documents/design/base_components.md` を更新します。
-- 安定サブモジュールの API を変えるときは `documents/design/apis/` の対応ファイルを更新します。
+- 安定サブモジュールの API を変えるときは `documents/design/jax_util/` の対応ファイルを更新します。
 - 文書は参照の一覧ではなく、責務ごとのまとまりとして編成します。
 - 実装パスへの参照は、実装上の制約を明示する必要がある場合に限ります。
 

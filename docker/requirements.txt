@@ -1,17 +1,20 @@
-# コア依存
+# Core numerical computing
 jaxtyping
 typeguard
 equinox
-pytest>=8
+optax
 scipy
 scipy-stubs
-optax
 
-# 開発・解析
+# Testing
+pytest>=8
+
+# Development & Analysis
 pyright
 pydeps
 pydocstyle
+ruff
 
-# ドキュメント・フォーマット
+# Documentation & Formatting
 mdformat
 mdformat-myst

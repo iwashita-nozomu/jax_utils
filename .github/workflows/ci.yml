@@ -31,5 +31,14 @@ jobs:
       - name: Install package
         run: pip install -e python
 
-      - name: Run experiment_runner tests
-        run: pytest -q python/tests/experiment_runner -q
+      - name: Run pytest（全テスト）
+        run: python -m pytest python/tests/ -q --tb=short
+
+      - name: Run pyright（型チェック）
+        run: python -m pyright python/ || true
+
+      - name: Run pydocstyle（Docstring 検証）
+        run: python -m pydocstyle python/jax_util/ || true
+
+      - name: Run ruff（スタイル・品質チェック）
+        run: python -m ruff check python/ --select E,F,I,D,UP || true
