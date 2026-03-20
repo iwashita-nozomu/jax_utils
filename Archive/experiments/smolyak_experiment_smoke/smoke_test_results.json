@@ -25,9 +25,9 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 126.88890798017383,
+      "init_time_ms": 121.32645101519302,
       "error": null,
-      "integrate_time_ms": 145.19732652115636,
+      "integrate_time_ms": 255.13664749450982,
       "num_evaluation_points": 1
     },
     {
@@ -37,9 +37,9 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 11.619329976383597,
+      "init_time_ms": 13.340527017135173,
       "error": null,
-      "integrate_time_ms": 126.53336051153019,
+      "integrate_time_ms": 132.28547052131034,
       "num_evaluation_points": 4
     },
     {
@@ -49,9 +49,9 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 1.8907180055975914,
+      "init_time_ms": 1.9636459765024483,
       "error": null,
-      "integrate_time_ms": 204.08859048620798,
+      "integrate_time_ms": 202.40770649979822,
       "num_evaluation_points": 1
     },
     {
@@ -61,9 +61,9 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 12.2259630006738,
+      "init_time_ms": 13.431608967948705,
       "error": null,
-      "integrate_time_ms": 171.58971849130467,
+      "integrate_time_ms": 239.85655751312152,
       "num_evaluation_points": 7
     },
     {
@@ -73,9 +73,9 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 2.126787032466382,
+      "init_time_ms": 2.446982020046562,
       "error": null,
-      "integrate_time_ms": 244.19098149519414,
+      "integrate_time_ms": 226.42292847740464,
       "num_evaluation_points": 1
     },
     {
@@ -85,9 +85,9 @@
       "dtype": "float32",
       "trial_index": 0,
       "status": "SUCCESS",
-      "init_time_ms": 12.211224995553493,
+      "init_time_ms": 13.105518009979278,
       "error": null,
-      "integrate_time_ms": 195.60776749858633,
+      "integrate_time_ms": 192.37230200087652,
       "num_evaluation_points": 10
     }
   ],

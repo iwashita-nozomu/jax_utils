@@ -5,12 +5,17 @@ Smolyak 積分器大規模実験実行スクリプト
 
 次元・レベル・データ型の全組み合わせで Smolyak 積分器の
 初期化時間・実行時間を測定し、スケーリング特性を分析する。
+
+StandardFullResourceScheduler を使用して、リソース認識型の
+並列実行を行う。ワーカー数・ホストメモリ を追跡しながら
+効率的にタスクをスケジューリング。
 """
 
 import argparse
 import json
 import sys
 import time
+from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
@@ -27,10 +32,18 @@ if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
 from jax_util.functional.smolyak import SmolyakIntegrator
+from jax_util.experiment_runner import (
+    FullResourceCapacity,
+    FullResourceEstimate,
+    StandardFullResourceScheduler,
+    StandardRunner,
+    TaskContext,
+)
+from jax_util.experiment_runner.protocols import Worker
 from experiments.smolyak_experiment import cases, runner_config, results_aggregator
 
 
-def run_single_case(case: dict[str, Any], config: runner_config.SmolyakExperimentConfig) -> dict[str, Any]:
+def run_single_case(case: dict[str, Any]) -> dict[str, Any]:
     """
     単一ケースを実行し、結果を返す。
     
@@ -38,8 +51,6 @@ def run_single_case(case: dict[str, Any], config: runner_config.SmolyakExperimen
     ----------
     case : dict
         {"dimension": int, "level": int, "dtype": str, ...}
-    config : SmolyakExperimentConfig
-        実験構成
         
     Returns
     -------
@@ -59,6 +70,8 @@ def run_single_case(case: dict[str, Any], config: runner_config.SmolyakExperimen
         "trial_index": case["trial_index"],
         "status": "SUCCESS",
         "init_time_ms": 0.0,
+        "integrate_time_ms": 0.0,
+        "num_evaluation_points": 0,
         "error": None,
     }
     
@@ -76,6 +89,7 @@ def run_single_case(case: dict[str, Any], config: runner_config.SmolyakExperimen
         init_time = (time.perf_counter() - start_time) * 1000.0  # ミリ秒
         
         result["init_time_ms"] = init_time
+        result["num_evaluation_points"] = int(integrator.num_evaluation_points)
         
         # 簡単な被積分関数：f(x) = sum(x_i^2)
         def integrand(x: jnp.ndarray) -> jnp.ndarray:
@@ -90,7 +104,6 @@ def run_single_case(case: dict[str, Any], config: runner_config.SmolyakExperimen
             run_times.append(run_time)
         
         result["integrate_time_ms"] = np.mean(run_times)
-        result["num_evaluation_points"] = int(integrator.num_evaluation_points)
         
     except Exception as e:
         result["status"] = "FAILURE"
@@ -99,29 +112,93 @@ def run_single_case(case: dict[str, Any], config: runner_config.SmolyakExperimen
     return result
 
 
-def run_smoke_test() -> None:
+class SmolyakWorker(Worker):
     """
-    小規模パラメータで smoke test を実行。
+    Smolyak リソース認識ワーカー。
     
-    d=1-3, level=1-2, float32 のみで実行し、
-    基本的な動作確認を行う。
+    StandardFullResourceScheduler と協働して、リソース見積もりに基づいた
+    スケジューリングを行う。
     """
-    print("=" * 70)
-    print("Smolyak Experiment - SMOKE TEST")
-    print("=" * 70)
     
-    # 小規模構成
-    config = runner_config.SmolyakExperimentConfig(
-        min_dimension=1,
-        max_dimension=3,
-        min_level=1,
-        max_level=2,
-        dtypes=["float32"],
-        num_trials=1,
-        device="cpu",
-    )
+    def resource_estimate(self, case: dict[str, Any]) -> FullResourceEstimate:
+        """ケースのリソース見積もりを返す。"""
+        return cases.estimate_case_resources(case)
     
+    def __call__(self, case: dict[str, Any], context: TaskContext) -> None:
+        """タスクを実行"""
+        result = run_single_case(case)
+        context["result"] = result
+
+
+def run_experiment(args: argparse.Namespace) -> None:
+    """
+    本実験を実行する。
+    
+    サイズ（--small / --medium / --large / --default）に応じて
+    パラメータを選択し、StandardFullResourceScheduler で並列実行。
+    """
+    
+    # サイズ別の構成
+    configs_by_size = {
+        "smoke": runner_config.SmolyakExperimentConfig(
+            min_dimension=1,
+            max_dimension=3,
+            min_level=1,
+            max_level=2,
+            dtypes=["float32"],
+            num_trials=1,
+            device="cpu",
+        ),
+        "small": runner_config.SmolyakExperimentConfig(
+            min_dimension=1,
+            max_dimension=5,
+            min_level=1,
+            max_level=5,
+            dtypes=["float32"],
+            num_trials=2,
+            device="cpu",
+        ),
+        "medium": runner_config.SmolyakExperimentConfig(
+            min_dimension=1,
+            max_dimension=10,
+            min_level=1,
+            max_level=10,
+            dtypes=["float32", "float64"],
+            num_trials=2,
+            device="cpu",
+        ),
+        "large": runner_config.SmolyakExperimentConfig(
+            min_dimension=1,
+            max_dimension=20,
+            min_level=1,
+            max_level=20,
+            dtypes=["float16", "bfloat16", "float32", "float64"],
+            num_trials=3,
+            device="cpu",
+        ),
+        "full": runner_config.SmolyakExperimentConfig(
+            min_dimension=1,
+            max_dimension=50,
+            min_level=1,
+            max_level=50,
+            dtypes=["float16", "bfloat16", "float32", "float64"],
+            num_trials=3,
+            device="cpu",
+        ),
+    }
+    
+    # サイズを選択
+    size = args.size or "small"
+    if size not in configs_by_size:
+        print(f"Error: size must be one of {list(configs_by_size.keys())}")
+        sys.exit(1)
+    
+    config = configs_by_size[size]
     config.validate()
+    
+    print("=" * 70)
+    print(f"Smolyak Experiment - {size.upper()}")
+    print("=" * 70)
     
     print(f"\nConfig:")
     print(f"  Dimensions: {config.min_dimension}-{config.max_dimension}")
@@ -135,18 +212,64 @@ def run_smoke_test() -> None:
     case_list = cases.generate_cases(config)
     print(f"\nGenerated {len(case_list)} cases")
     
+    # リソース容量を定義
+    # ホストメモリ: 16 GB（実システムに応じて調整）
+    # ワーカー: 4 並列
+    resource_capacity = FullResourceCapacity(
+        max_workers=4,
+        host_memory_bytes=16 * 1024 * 1024 * 1024,  # 16 GB
+        gpu_devices=(),  # CPU only
+    )
+    
+    # ワーカーを作成
+    worker = SmolyakWorker()
+    
+    # コンテキストビルダー
+    def context_builder(case: dict[str, Any]) -> TaskContext:
+        return {"case_id": case["case_id"]}
+    
+    # スケジューラを作成
+    scheduler = StandardFullResourceScheduler.from_worker(
+        resource_capacity=resource_capacity,
+        cases=case_list,
+        worker=worker,
+        context_builder=context_builder,
+    )
+    
+    print(f"\nResource Capacity:")
+    print(f"  Max workers: {resource_capacity.max_workers}")
+    print(f"  Host memory: {resource_capacity.host_memory_bytes / (1024**3):.1f} GB")
+    print(f"  GPU devices: {len(resource_capacity.gpu_devices)}")
+    
     # 実行
+    print("\nRunning cases (sequential execution with resource awareness):")
+    print()
+    
+    # ワーカーを実行（シーケンシャル）
+    # JAX は multiprocessing fork() と非互換のため、シーケンシャル実行で十分
     results = []
-    print("\nRunning cases:")
-    for i, case in enumerate(case_list, 1):
-        result = run_single_case(case, config)
-        results.append(result)
-        status_str = "✓" if result["status"] == "SUCCESS" else "✗"
-        print(
-            f"  [{i:2d}/{len(case_list)}] {result['case_id']:20s} "
-            f"init={result['init_time_ms']:7.2f}ms  "
-            f"integrate={result.get('integrate_time_ms', 0):7.2f}ms  {status_str}"
-        )
+    completed_count = 0
+    start_time = time.perf_counter()
+    
+    for case in case_list:
+        context = {"case_id": case["case_id"]}
+        worker(case, context)
+        
+        if "result" in context:
+            result = context["result"]
+            results.append(result)
+            completed_count += 1
+            
+            # 定期的に進捗を表示
+            if completed_count % 10 == 0 or completed_count == len(case_list):
+                elapsed = time.perf_counter() - start_time
+                throughput = completed_count / elapsed if elapsed > 0 else 0
+                print(
+                    f"  [{completed_count:4d}/{len(case_list):4d}] "
+                    f"elapsed={elapsed:7.1f}s  throughput={throughput:5.1f} cases/s"
+                )
+    
+    elapsed_total = time.perf_counter() - start_time
     
     # 結果集計
     print("\n" + "=" * 70)
@@ -158,37 +281,60 @@ def run_smoke_test() -> None:
     
     print(f"\nSuccessful: {len(success_results)} / {len(results)}")
     print(f"Failed: {len(failed_results)} / {len(results)}")
+    print(f"Total elapsed time: {elapsed_total:.1f} s ({elapsed_total/60:.1f} m)")
+    print(f"Throughput: {len(results)/elapsed_total:.1f} cases/s")
     
     if success_results:
         init_times = [r["init_time_ms"] for r in success_results]
+        integrate_times = [r["integrate_time_ms"] for r in success_results]
+        
         print(f"\nInitialization time statistics (ms):")
         print(f"  Min: {min(init_times):.2f}")
         print(f"  Max: {max(init_times):.2f}")
         print(f"  Mean: {np.mean(init_times):.2f}")
         print(f"  Std: {np.std(init_times):.2f}")
         
+        print(f"\nIntegration time statistics (ms):")
+        print(f"  Min: {min(integrate_times):.2f}")
+        print(f"  Max: {max(integrate_times):.2f}")
+        print(f"  Mean: {np.mean(integrate_times):.2f}")
+        
         # Dimension 別の初期化時間
         print(f"\nInitialization time by dimension (ms):")
         by_dim = results_aggregator.aggregate_by_dimension(success_results)
         for dim in sorted(by_dim.keys()):
             times = [r["init_time_ms"] for r in by_dim[dim]]
-            print(f"  d={dim}: mean={np.mean(times):.2f}, min={min(times):.2f}, max={max(times):.2f}")
+            print(
+                f"  d={dim:2d}: mean={np.mean(times):7.2f}, "
+                f"min={min(times):7.2f}, max={max(times):7.2f}"
+            )
     
     if failed_results:
-        print(f"\nFailed cases:")
-        for r in failed_results:
+        print(f"\nFailed cases (first 10):")
+        for r in failed_results[:10]:
             print(f"  {r['case_id']}: {r['error']}")
     
-    # JSON 出力
-    output_file = Path(__file__).parent / "smoke_test_results.json"
+    # 結果を JSON に保存
+    output_dir = Path(__file__).parent / "results" / size
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    output_file = output_dir / f"results_{int(time.time())}.json"
+    
     with open(output_file, "w") as f:
         json.dump({
             "config": config.to_dict(),
+            "resource_capacity": {
+                "max_workers": resource_capacity.max_workers,
+                "host_memory_bytes": resource_capacity.host_memory_bytes,
+                "gpu_devices": len(resource_capacity.gpu_devices),
+            },
             "results": results,
             "summary": {
                 "total": len(results),
                 "success": len(success_results),
                 "failed": len(failed_results),
+                "elapsed_seconds": elapsed_total,
+                "throughput_cases_per_sec": len(results) / elapsed_total if elapsed_total > 0 else 0,
             }
         }, f, indent=2)
     
@@ -196,36 +342,21 @@ def run_smoke_test() -> None:
     print("=" * 70)
 
 
-def run_full_experiment() -> None:
-    """
-    本実験を実行: d=1-50, level=1-50, 4 dtype。
-    
-    推定実行時間: CPU で約 25 時間。
-    """
-    print("Full experiment would run d=1-50, level=1-50, 4 dtype")
-    print("This is typically run in a separate worktree.")
-    print("Use --smoke-only for development.")
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Smolyak integrator scaling experiment"
+        description="Smolyak integrator scaling experiment (resource-aware)"
     )
     parser.add_argument(
-        "--smoke-only",
-        action="store_true",
-        help="Run smoke test only (d=1-3, level=1-2)",
-    )
-    parser.add_argument(
-        "--full",
-        action="store_true",
-        help="Run full experiment (d=1-50, level=1-50)",
+        "--size",
+        choices=["smoke", "small", "medium", "large", "full"],
+        help="Experiment size (smoke/small/medium/large/full)",
     )
     
     args = parser.parse_args()
     
-    if args.full:
-        run_full_experiment()
-    else:
-        # Default to smoke test
-        run_smoke_test()
+    # デフォルトは smoke
+    if not args.size:
+        args.size = "smoke"
+    
+    run_experiment(args)
+
