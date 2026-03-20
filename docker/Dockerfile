@@ -13,7 +13,10 @@ RUN python3 -m pip install --upgrade pip
 
 # JAXは「コンテナ内同梱CUDA/cuDNN」を使う版（localじゃない）
 RUN pip install --no-cache-dir "jax[cuda12]"
-RUN pip install jaxtyping typeguard equinox pytest scipy scipy-stubs optax pyright pydeps mdformat mdformat-myst
+
+# その他依存パッケージ（requirements.txt で一元管理）
+COPY docker/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 WORKDIR /work
 ENV PYTHONPATH=/workspace/python

@@ -1,6 +1,16 @@
+# コア依存
+jaxtyping
+typeguard
+equinox
 pytest>=8
+scipy
 scipy-stubs
 optax
+
+# 開発・解析
 pyright
+pydeps
+
+# ドキュメント・フォーマット
 mdformat
 mdformat-myst
