@@ -23,6 +23,49 @@
   ```
   変更は原則としてワークツリー側で行い、main 側のファイルを直接編集してコンフリクトを生じさせない。main 側修正が必要な場合は integrator が調整ブランチを作り、全エージェントで検証後に適用する。
 
+## Reviewer チェックリスト（必須）
+
+各 PR / ワークツリー統合前に、以下を 100% 確認してください。
+
+### コード品質
+
+- [ ] **型注釈**: `python -m pyright ./python/jax_util` で「0 errors, 0 warnings」か確認
+- [ ] **Docstring**: モジュール・クラス・public 関数に docstring（1行説明 + Args/Returns）があるか
+- [ ] **テストカバレッジ**: solvers 以上のモジュール用に JSON ログ出力があるか確認
+- [ ] **禁止ファイルなし**: `if __name__ == "__main__":` が本体モジュール (`./python/jax_util/`) 内にないか確認
+
+### 規約遵守
+
+- [ ] **Import 統一**: `from jax_util.*` （相対 import `from ..`）で統一しているか
+- [ ] **循環 import なし**: 依存方向が `base → solvers → optimizers → experiment_runner` に従っているか
+- [ ] **命名規約**: ファイル名・関数名が公開/非公開 (`_prefix`) で統一しているか
+- [ ] **テスト命名**: `test_<module>_<function>_<scenario>` 形式か確認
+
+### ドキュメント
+
+- [ ] **Markdown 形式**: mdformat 後の編集ファイルはミスがないか（相対パス、リンク）
+- [ ] **コメント質**: 責務コメント（`# 責務: ...`）が関数内に記載されているか
+
+### ワークツリー・Git
+
+- [ ] **スコープ document**: `WORKTREE_SCOPE.md` が ワークツリー root に配置されているか
+- [ ] **Git commit メッセージ**: conventional commits 形式か（`feat:`, `fix:`, `docs:` など）
+- [ ] **branch name**: `work/<task-name>` または `results/<experiment-name>` 形式か
+
+### CI 実行
+
+- [ ] **pytest 全通過**: `python -m pytest python/tests/ -q` が 0 failures か
+- [ ] **pyright**: 型エラーなし
+- [ ] **pydocstyle**: docstring 警告なし（許容設定）
+- [ ] **ruff**: import, style エラーなし
+
+### 条件付き
+
+- [ ] **新規モジュール追加**: `__all__` で公開 API を明示しているか
+- [ ] **実験段階コード**: neuralnetwork / hlo の場合、`__init__.py` に「実験段階」と明記しているか
+
+再審査が必要な場合は、`review:needs-revision` ラベルを付与し、改善箇所を comment で detail に指摘してください。
+
 報告・議論:
 
 - すべてのエージェント実行はログを残し、`notes/` にレポートを追加すること。

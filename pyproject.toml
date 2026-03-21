@@ -64,14 +64,10 @@ ignore = ["./python/tests"]
 extraPaths = ["./python", "./python/jax_util"]
 stubPath = "./python/typings"
 
-# 既存の型情報が薄い依存に配慮し、unknown 系は抑制します。
-reportUnknownParameterType = "none"
-reportUnknownArgumentType = "none"
-reportUnknownVariableType = "none"
-reportUnknownMemberType = "none"
-reportUnusedVariable = "none"
-reportConstantRedefinition = "none"
-reportMissingTypeStubs = "none"
+
+reportUnusedVariable = "warning"
+reportConstantRedefinition = "warning"
+reportMissingTypeStubs = "warning"
 
 [tool.pydocstyle]
 # Docstring 規約の設定

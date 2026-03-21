@@ -1,30 +1,29 @@
 {
+  "editor.fontSize": 13,
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+  "editor.wordWrap": "on",
+  "editor.rulers": [100],
+  "editor.minimap.enabled": true,
+
   "C_Cpp.intelliSenseEngine": "Tag Parser",
   "C_Cpp.intelliSenseMaxTagParsingTime": 1,
   "cmake.configureOnOpen": false,
-  "files.watcherExclude": {
-    "**/.git/objects/**": true,
-    "**/node_modules/**": true,
-    "**/build/**": true,
-    "**/__pycache__/**": true,
-    "**/.pytest_cache/**": true,
-    "**/dist/**": true,
-    "**/reports/**": true,
-    "**/references/**": true,
-    "**/notes/**": true,
-    "**/diary/**": true,
-    "**/.worktrees/**": true
-  },
-  "python.envFile": "${workspaceFolder}/.env",
-  "python.testing.unittestArgs": ["-v", "-s", "./python", "-p", "test_*.py"],
-  "python.testing.unittestEnabled": true,
-  "python.analysis.diagnosticMode": "openFilesOnly",
-  "python.analysis.typeCheckingMode": "off",
-  "python.linting.enabled": false,
-  "python.linting.enabled": false,
+
   "extensions.autoUpdate": false,
   "telemetry.telemetryLevel": "off",
   "extensions.ignoreRecommendations": true,
+
   "git.autofetch": false,
-  "git.autorefresh": false
+  "git.autorefresh": false,
+  "[python]": {
+    "editor.formatOnSave": false,
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    }
+  },
+
+  "[markdown]": {
+    "editor.formatOnSave": false
+  }
 }
