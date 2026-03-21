@@ -1,3 +1,23 @@
 {
-  "extends": "./pyproject.toml"
+  "extends": "./pyproject.toml",
+  "include": ["./python/jax_util"],
+  "exclude": [
+    "**/.*",
+    "**/node_modules",
+    "**/__pycache__",
+    "**/build",
+    "**/dist",
+    "**/reports",
+    "**/experiments",
+    "**/*.egg-info",
+    "./references",
+    "./notes",
+    "./diary",
+    "./includes",
+    "./lib",
+    "./src",
+    "./scripts",
+    "./.worktrees",
+    "./python/tests"
+  ]
 }

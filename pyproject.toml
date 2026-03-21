@@ -45,7 +45,18 @@ exclude = [
   "**/__pycache__",
   "**/build",
   "**/dist",
+  "**/reports",
+  "**/experiments",
+  "**/*.egg-info",
   "./python/jax_util/solvers/archive",
+  "./references",
+  "./notes",
+  "./diary",
+  "./includes",
+  "./lib",
+  "./src",
+  "./scripts",
+  "./.worktrees",
 ]
 ignore = ["./python/tests"]
 

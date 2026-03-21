@@ -7,10 +7,8 @@
       "intelliSenseMode": "linux-gcc-x64",
       "cppStandard": "c++20",
       "includePath": [
-        "/mnt/l/PINNS1/include",
         "/usr/include",
-        "/usr/local/include",
-        "/usr/local/include/highs"
+        "/usr/local/include"
       ],
       "forcedInclude": [
       ]

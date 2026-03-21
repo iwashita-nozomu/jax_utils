@@ -1,24 +1,30 @@
 {
-  "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
-  "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
-  "cmake.configureOnOpen": true,
-  "cmake.buildDirectory": "${workspaceFolder}/build",
-  "files.associations": {
-    "*.cu": "cuda-cpp",
-    "*.cuh": "cuda-cpp",
-    "*.hpp": "cpp",
-    "*.h": "cpp"
+  "C_Cpp.intelliSenseEngine": "Tag Parser",
+  "C_Cpp.intelliSenseMaxTagParsingTime": 1,
+  "cmake.configureOnOpen": false,
+  "files.watcherExclude": {
+    "**/.git/objects/**": true,
+    "**/node_modules/**": true,
+    "**/build/**": true,
+    "**/__pycache__/**": true,
+    "**/.pytest_cache/**": true,
+    "**/dist/**": true,
+    "**/reports/**": true,
+    "**/references/**": true,
+    "**/notes/**": true,
+    "**/diary/**": true,
+    "**/.worktrees/**": true
   },
   "python.envFile": "${workspaceFolder}/.env",
-  "python-envs.pythonProjects": [],
-  "python.testing.unittestArgs": [
-    "-v",
-    "-s",
-    "./python",
-    "-p",
-    "test_*.py"
-  ],
-  "python.testing.pytestEnabled": false,
+  "python.testing.unittestArgs": ["-v", "-s", "./python", "-p", "test_*.py"],
   "python.testing.unittestEnabled": true,
-  "python-envs.defaultEnvManager": "ms-python.python:venv"
+  "python.analysis.diagnosticMode": "openFilesOnly",
+  "python.analysis.typeCheckingMode": "off",
+  "python.linting.enabled": false,
+  "python.linting.enabled": false,
+  "extensions.autoUpdate": false,
+  "telemetry.telemetryLevel": "off",
+  "extensions.ignoreRecommendations": true,
+  "git.autofetch": false,
+  "git.autorefresh": false
 }
