@@ -13,9 +13,6 @@
   "extensions.autoUpdate": false,
   "telemetry.telemetryLevel": "off",
   "extensions.ignoreRecommendations": true,
-
-  "git.autofetch": false,
-  "git.autorefresh": false,
   "[python]": {
     "editor.formatOnSave": false,
     "editor.codeActionsOnSave": {
