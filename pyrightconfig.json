@@ -1,5 +1,6 @@
 {
   "extends": "./pyproject.toml",
+  "typeCheckingMode": "strict",
   "include": ["./python/jax_util"],
   "exclude": [
     "**/.*",
@@ -19,5 +20,9 @@
     "./scripts",
     "./.worktrees",
     "./python/tests"
-  ]
+  ],
+  "reportUnknownMemberType": "none",
+  "reportUnknownVariableType": "none",
+  "reportUnknownArgumentType": "none",
+  "reportUnknownParameterType": "none"
 }

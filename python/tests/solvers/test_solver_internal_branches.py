@@ -15,7 +15,8 @@ from jax_util.solvers._check_mv_operator import (
     print_Mv_report,
 )
 from jax_util.solvers._minres import MINRESState, minres_solve
-import jax_util.solvers._test_jax as test_jax_module
+# from jax_util.solvers._test_jax は移動済み（python/tests/solvers/test_jax_debug.py）
+# import jax_util.solvers._test_jax as test_jax_module
 from jax_util.solvers.archive._fgmres import gmres_solve
 from jax_util.solvers.kkt_solver import KKTState, _kkt_block_solver, initialize_kkt_state
 from jax_util.solvers.lobpcg import (
@@ -60,16 +61,10 @@ def test_archived_solver_and_internal_jax_helpers_are_executable(capsys: pytest.
     with pytest.raises(AssertionError, match="archived"):
         gmres_solve()
 
-    test_jax_module._print_jax_env()
-    test_jax_module._smoke_test()
-    direct_lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
-    assert [line["event"] for line in direct_lines] == ["version", "devices"]
-
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", RuntimeWarning)
-        runpy.run_module("jax_util.solvers._test_jax", run_name="__main__")
-    module_lines = [json.loads(line) for line in capsys.readouterr().out.splitlines() if line.strip()]
-    assert [line["event"] for line in module_lines] == ["version", "devices"]
+    # NOTE: _test_jax モジュールは python/tests/solvers/test_jax_debug.py に移動済み
+    # test_jax_module._print_jax_env()
+    # test_jax_module._smoke_test()
+    # 代わりに test_jax_debug.py を実行してください
 
 
 def test_slq_normal_probes_and_minres_wrapper_cover_remaining_solver_helpers() -> None:
