@@ -1,0 +1,629 @@
+{
+  "version": 5,
+  "team": {
+    "id": "jax_util_permanent_team",
+    "report_root": "reports/agents",
+    "branch_prefix": "agent",
+    "worktree_scope_required": true,
+    "default_runtime_policy": "design_first_single_writer_team",
+    "task_catalog": "agents/task_catalog.yaml",
+    "communication_protocol": "agents/COMMUNICATION_PROTOCOL.md",
+    "canonical_runtime": "scripts/agent_tools/agent_team.py",
+    "summary": "The manager is the single front-door role for intake, scoping, routing, and escalation. Design is mandatory before implementation. Only implementer may modify repository files. Every execution role has a paired reviewer that stays artifact-only."
+  },
+  "always_on_roles": [
+    {
+      "id": "manager",
+      "owns": [
+        "user_intent_capture",
+        "acceptance_criteria",
+        "ambiguity_tracking",
+        "planning",
+        "scope_locking",
+        "specialist_activation",
+        "permission_decisions",
+        "delegation",
+        "escalation",
+        "cross_role_handoffs"
+      ],
+      "required_outputs": [
+        "intent_brief.md",
+        "team_manifest.yaml",
+        "decision_log.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "intent_brief",
+          "decision_log",
+          "team_manifest"
+        ],
+        "notes": "The manager records intake, scoping, routing, and decisions only in the run artifact bundle."
+      }
+    },
+    {
+      "id": "manager_reviewer",
+      "owns": [
+        "scope_review",
+        "acceptance_review",
+        "routing_review"
+      ],
+      "required_outputs": [
+        "management_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "management_review"
+        ],
+        "notes": "The manager reviewer approves or challenges scope, acceptance criteria, and specialist activation."
+      }
+    },
+    {
+      "id": "designer",
+      "owns": [
+        "solution_design",
+        "module_boundary_design",
+        "change_plan"
+      ],
+      "required_outputs": [
+        "design_brief.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "design_brief"
+        ],
+        "notes": "The designer produces the approved implementation plan before coding begins."
+      }
+    },
+    {
+      "id": "design_reviewer",
+      "owns": [
+        "design_review",
+        "risk_review",
+        "simplicity_review"
+      ],
+      "required_outputs": [
+        "design_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "design_review"
+        ],
+        "notes": "The design reviewer independently checks architecture, scope fit, and risk before implementation."
+      }
+    },
+    {
+      "id": "implementer",
+      "owns": [
+        "code_and_docs_edits",
+        "local_validation"
+      ],
+      "required_outputs": [
+        "decision_log.md"
+      ],
+      "write_policy": {
+        "mode": "worktree_scope_plus_artifacts",
+        "allowed_artifacts": [
+          "decision_log"
+        ],
+        "requires_worktree_scope": true,
+        "notes": "The implementer is the only role allowed to modify repository files, and only inside WORKTREE_SCOPE.md editable directories."
+      }
+    },
+    {
+      "id": "change_reviewer",
+      "owns": [
+        "implementation_review",
+        "regression_review",
+        "design_guardrails"
+      ],
+      "required_outputs": [
+        "change_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "change_review"
+        ],
+        "notes": "The implementation reviewer checks each coding chunk and may only update review artifacts."
+      }
+    },
+    {
+      "id": "final_reviewer",
+      "owns": [
+        "final_independent_review",
+        "ship_blockers",
+        "risk_summary"
+      ],
+      "required_outputs": [
+        "final_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "final_review"
+        ],
+        "notes": "The final reviewer performs an independent ship decision and remains artifact-only."
+      }
+    },
+    {
+      "id": "verifier",
+      "owns": [
+        "ci_execution",
+        "quality_gates"
+      ],
+      "required_outputs": [
+        "verification.txt"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "verification"
+        ],
+        "notes": "Verification may update only the verification artifact."
+      }
+    },
+    {
+      "id": "auditor",
+      "owns": [
+        "evidence_capture",
+        "closeout",
+        "retrospective"
+      ],
+      "required_outputs": [
+        "retrospective.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "retrospective"
+        ],
+        "notes": "Audit closeout is recorded only in retrospective artifacts."
+      }
+    }
+  ],
+  "specialist_roles": [
+    {
+      "id": "researcher",
+      "activation": "internet_or_algorithm_research_needed",
+      "owns": [
+        "external_research",
+        "algorithm_survey",
+        "source_collection"
+      ],
+      "required_outputs": [
+        "research_notes.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "research_notes"
+        ],
+        "notes": "Research findings are recorded in research notes, not direct repo edits."
+      }
+    },
+    {
+      "id": "research_reviewer",
+      "activation": "internet_or_algorithm_research_needed",
+      "owns": [
+        "source_quality_review",
+        "research_gap_review",
+        "citation_review"
+      ],
+      "required_outputs": [
+        "research_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "research_review"
+        ],
+        "notes": "The research reviewer checks source quality and whether the proposed research actually supports the plan."
+      }
+    },
+    {
+      "id": "scheduler",
+      "activation": "large_or_multi_stage_change",
+      "owns": [
+        "milestone_plan",
+        "dependency_tracking",
+        "delivery_checkpoints"
+      ],
+      "required_outputs": [
+        "schedule.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "schedule"
+        ],
+        "notes": "Scheduling stays in the report bundle."
+      }
+    },
+    {
+      "id": "schedule_reviewer",
+      "activation": "large_or_multi_stage_change",
+      "owns": [
+        "milestone_review",
+        "dependency_review",
+        "delivery_risk_review"
+      ],
+      "required_outputs": [
+        "schedule_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "schedule_review"
+        ],
+        "notes": "The schedule reviewer checks milestone realism and sequencing risk."
+      }
+    },
+    {
+      "id": "infra_steward",
+      "activation": "ci_experiment_or_platform_work",
+      "owns": [
+        "infra_assessment",
+        "experiment_runner_design",
+        "automation_change_plan"
+      ],
+      "required_outputs": [
+        "infra_notes.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "infra_notes"
+        ],
+        "notes": "Infra stewardship proposes and reviews infra changes, while the implementer applies repo edits."
+      }
+    },
+    {
+      "id": "infra_reviewer",
+      "activation": "ci_experiment_or_platform_work",
+      "owns": [
+        "infra_safety_review",
+        "operational_risk_review",
+        "rollback_review"
+      ],
+      "required_outputs": [
+        "infra_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "infra_review"
+        ],
+        "notes": "The infra reviewer checks rollout, safety, and maintenance cost before coding begins."
+      }
+    }
+  ],
+  "handoffs": [
+    {
+      "from": "manager",
+      "to": "manager_reviewer",
+      "gate": "intent, acceptance criteria, and scope package is written"
+    },
+    {
+      "from": "manager_reviewer",
+      "to": "manager",
+      "gate": "management review feedback is resolved or escalated"
+    },
+    {
+      "from": "manager",
+      "to": "researcher",
+      "gate": "research is required and intake package is approved"
+    },
+    {
+      "from": "manager",
+      "to": "scheduler",
+      "gate": "change is large enough to require milestones and intake package is approved"
+    },
+    {
+      "from": "manager",
+      "to": "infra_steward",
+      "gate": "task touches CI, experiments, docker, or platform automation and intake package is approved"
+    },
+    {
+      "from": "manager",
+      "to": "designer",
+      "gate": "design can begin immediately with approved intake package"
+    },
+    {
+      "from": "researcher",
+      "to": "research_reviewer",
+      "gate": "research notes are ready"
+    },
+    {
+      "from": "research_reviewer",
+      "to": "researcher",
+      "gate": "research review feedback is resolved or escalated"
+    },
+    {
+      "from": "researcher",
+      "to": "manager",
+      "gate": "research is approved or escalated"
+    },
+    {
+      "from": "scheduler",
+      "to": "schedule_reviewer",
+      "gate": "schedule is ready"
+    },
+    {
+      "from": "schedule_reviewer",
+      "to": "scheduler",
+      "gate": "schedule review feedback is resolved or escalated"
+    },
+    {
+      "from": "scheduler",
+      "to": "manager",
+      "gate": "schedule is approved or escalated"
+    },
+    {
+      "from": "infra_steward",
+      "to": "infra_reviewer",
+      "gate": "infra notes are ready"
+    },
+    {
+      "from": "infra_reviewer",
+      "to": "infra_steward",
+      "gate": "infra review feedback is resolved or escalated"
+    },
+    {
+      "from": "infra_steward",
+      "to": "manager",
+      "gate": "infra plan is approved or escalated"
+    },
+    {
+      "from": "manager",
+      "to": "designer",
+      "gate": "approved specialist inputs are attached"
+    },
+    {
+      "from": "designer",
+      "to": "design_reviewer",
+      "gate": "design brief is ready"
+    },
+    {
+      "from": "design_reviewer",
+      "to": "designer",
+      "gate": "design review feedback is resolved or escalated"
+    },
+    {
+      "from": "designer",
+      "to": "implementer",
+      "gate": "design is approved or escalated"
+    },
+    {
+      "from": "implementer",
+      "to": "change_reviewer",
+      "gate": "one implementation chunk is ready"
+    },
+    {
+      "from": "change_reviewer",
+      "to": "implementer",
+      "gate": "implementation feedback resolved or escalated"
+    },
+    {
+      "from": "implementer",
+      "to": "final_reviewer",
+      "gate": "implementation complete and self-check done"
+    },
+    {
+      "from": "final_reviewer",
+      "to": "implementer",
+      "gate": "final review feedback is resolved or escalated"
+    },
+    {
+      "from": "implementer",
+      "to": "verifier",
+      "gate": "final review feedback resolved and final self-check done"
+    },
+    {
+      "from": "verifier",
+      "to": "auditor",
+      "gate": "required checks executed and recorded"
+    }
+  ],
+  "context_policies": [
+    {
+      "roles": [
+        "manager",
+        "manager_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "decision_log.md",
+        "team_manifest.yaml",
+        "management_review.md"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    },
+    {
+      "roles": [
+        "researcher",
+        "research_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "research_notes.md",
+        "research_review.md"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    },
+    {
+      "roles": [
+        "scheduler",
+        "schedule_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "schedule.md",
+        "schedule_review.md"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    },
+    {
+      "roles": [
+        "infra_steward",
+        "infra_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "infra_notes.md",
+        "infra_review.md"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    },
+    {
+      "roles": [
+        "designer",
+        "design_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "management_review.md",
+        "research_notes.md",
+        "research_review.md",
+        "schedule.md",
+        "schedule_review.md",
+        "infra_notes.md",
+        "infra_review.md",
+        "design_brief.md",
+        "design_review.md"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    },
+    {
+      "roles": [
+        "implementer",
+        "change_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "management_review.md",
+        "design_brief.md",
+        "design_review.md",
+        "research_notes.md",
+        "research_review.md",
+        "schedule.md",
+        "schedule_review.md",
+        "infra_notes.md",
+        "infra_review.md",
+        "change_review.md",
+        "diff",
+        "verification.txt"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    },
+    {
+      "roles": [
+        "implementer",
+        "final_reviewer"
+      ],
+      "mode": "isolated",
+      "share_only": [
+        "intent_brief.md",
+        "management_review.md",
+        "design_brief.md",
+        "design_review.md",
+        "research_notes.md",
+        "research_review.md",
+        "schedule.md",
+        "schedule_review.md",
+        "infra_notes.md",
+        "infra_review.md",
+        "change_review.md",
+        "final_review.md",
+        "diff",
+        "verification.txt"
+      ],
+      "do_not_share": [
+        "private_scratchpads",
+        "hidden_chain_of_thought",
+        "direct_session_memory"
+      ]
+    }
+  ],
+  "activation_rules": [
+    {
+      "role": "researcher",
+      "when": "algorithm choice, internet lookup, or external verification is needed"
+    },
+    {
+      "role": "research_reviewer",
+      "when": "researcher is active"
+    },
+    {
+      "role": "scheduler",
+      "when": "task spans multiple milestones, modules, or long-running edits"
+    },
+    {
+      "role": "schedule_reviewer",
+      "when": "scheduler is active"
+    },
+    {
+      "role": "infra_steward",
+      "when": "task touches CI, Docker, experiment runners, or platform automation"
+    },
+    {
+      "role": "infra_reviewer",
+      "when": "infra_steward is active"
+    }
+  ],
+  "quality_gates": [
+    "scripts/ci/pre_review.sh",
+    "make ci"
+  ],
+  "artifacts": {
+    "intent_brief": "intent_brief.md",
+    "decision_log": "decision_log.md",
+    "team_manifest": "team_manifest.yaml",
+    "management_review": "management_review.md",
+    "design_brief": "design_brief.md",
+    "design_review": "design_review.md",
+    "change_review": "change_review.md",
+    "final_review": "final_review.md",
+    "verification": "verification.txt",
+    "retrospective": "retrospective.md",
+    "research_notes": "research_notes.md",
+    "research_review": "research_review.md",
+    "schedule": "schedule.md",
+    "schedule_review": "schedule_review.md",
+    "infra_notes": "infra_notes.md",
+    "infra_review": "infra_review.md"
+  }
+}

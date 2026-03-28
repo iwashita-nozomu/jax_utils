@@ -1,58 +1,35 @@
 # Permanent Agent Team
 
-This directory is the source of truth for the repo's long-lived agent team.
+This directory defines the repo's long-lived agent team.
 
-## Purpose
+## Canonical Sources
 
-- Keep the same long-lived agent team available for every task.
-- Reuse the same team shape across Codex, GitHub Actions, and any other agent runtime.
-- Make agent runs reproducible.
-- Store evidence for every run under `reports/agents/`.
+- Team definition and role permissions: `agents/agents_config.json`
+- Inter-agent communication rules: `agents/COMMUNICATION_PROTOCOL.md`
+- Runtime implementation used by bootstrap and permission checks: `scripts/agent_tools/agent_team.py`
+- Task workflow catalog: `agents/TASK_WORKFLOWS.md`
+- Machine-readable task catalog: `agents/task_catalog.yaml`
 
-## Always-On Roles
+Keep detailed role logic in the canonical sources above. Other docs should link back here instead of duplicating role definitions.
 
-- `intent_analyst`: converts the user request into scope, acceptance criteria, and ambiguity notes.
-- `coordinator`: owns planning, delegation, cross-role handoffs, and escalation.
-- `editor`: owns code or document changes inside the approved scope.
-- `change_reviewer`: reviews each implementation chunk or milestone before the next chunk proceeds.
-- `final_reviewer`: performs an independent final review before verification.
-- `verifier`: owns automated checks and confirms that required gates ran.
-- `auditor`: owns the final evidence bundle and closeout record.
+## Team Shape
 
-## Specialist Roles
+- Always-on roles: `manager`, `manager_reviewer`, `designer`, `design_reviewer`, `implementer`, `change_reviewer`, `final_reviewer`, `verifier`, `auditor`
+- Specialist roles: `researcher`, `research_reviewer`, `scheduler`, `schedule_reviewer`, `infra_steward`, `infra_reviewer`
+- `manager` is the integrated control role for intake, scoping, specialist activation, permissions, and escalation.
+- `designer` always runs before `implementer`.
+- Every execution role has a paired reviewer, and the reviewed role must apply review feedback before handoff proceeds.
+- Only `implementer` may modify repository files.
+- Every other role is artifact-only and writes only to the run bundle under `reports/agents/<run-id>/`.
+- Execution roles and their paired reviewers remain isolated from each other's private working context.
 
-- `researcher`: looks up algorithms, external APIs, papers, and internet references when local context is not enough.
-- `scheduler`: manages milestones and dependency tracking for large or multi-stage changes.
-- `infra_steward`: owns CI, Docker, experiment runners, automation, and infra expansion work.
-
-## Context Isolation
-
-- `editor`, `change_reviewer`, and `final_reviewer` must not share private scratchpads or hidden working context.
-- Reviewers only consume approved artifacts such as `intent_brief.md`, `research_notes.md`, `schedule.md`, diffs, and test evidence.
-- This separation is intentional so that review remains independent.
-
-## Activation Guide
-
-- Enable `researcher` when algorithm choice, web research, or external verification is required.
-- Enable `scheduler` for large refactors, multi-module edits, or any task that needs milestone tracking.
-- Enable `infra_steward` for `experiment_runner`, CI, Docker, automation, or platform expansion work.
-
-## Standard Run Flow
-
-1. Bootstrap a run directory.
-1. Capture user intent and acceptance criteria.
-1. Enable specialist roles if the task needs research, scheduling, or infra stewardship.
-1. Execute the scoped change.
-1. Review incrementally, then run an independent final review.
-1. Verify the change and save evidence.
-1. Close out with a retrospective.
-
-## Bootstrap Command
+## Standard Commands
 
 ```bash
 python3 scripts/agent_tools/bootstrap_agent_run.py \
   --task "describe the task" \
-  --owner "<agent-or-human>"
+  --owner "<agent-or-human>" \
+  --workspace-root "$PWD"
 ```
 
 ```bash
@@ -60,45 +37,35 @@ python3 scripts/agent_tools/bootstrap_agent_run.py \
   --task "large algorithm change" \
   --owner "<agent-or-human>" \
   --enable researcher \
-  --enable scheduler
+  --enable scheduler \
+  --workspace-root "$PWD"
+```
+
+`--enable researcher` のように specialist の execution role を有効化すると、paired reviewer も同じ activation group として自動的に含まれます。
+
+```bash
+python3 scripts/agent_tools/validate_role_write_scope.py \
+  --report-dir reports/agents/<run-id> \
+  --workspace-root "$PWD" \
+  --report-snapshot-out /tmp/agent-report-before.json \
+  --workspace-snapshot-out /tmp/agent-workspace-before.json
 ```
 
 ```bash
-python3 scripts/agent_tools/bootstrap_agent_run.py \
-  --task "infra expansion" \
-  --owner "<agent-or-human>" \
-  --full-team
+python3 scripts/agent_tools/validate_role_write_scope.py \
+  --role change_reviewer \
+  --report-dir reports/agents/<run-id> \
+  --report-snapshot-in /tmp/agent-report-before.json \
+  --workspace-snapshot-in /tmp/agent-workspace-before.json \
+  --workspace-root "$PWD"
 ```
-
-The command creates:
-
-- `reports/agents/<run-id>/intent_brief.md`
-- `reports/agents/<run-id>/decision_log.md`
-- `reports/agents/<run-id>/review_log.md`
-- `reports/agents/<run-id>/team_manifest.yaml`
-- `reports/agents/<run-id>/verification.txt`
-- `reports/agents/<run-id>/retrospective.md`
-
-When specialist roles are enabled, it also creates:
-
-- `reports/agents/<run-id>/research_notes.md`
-- `reports/agents/<run-id>/schedule.md`
-- `reports/agents/<run-id>/infra_notes.md`
-
-## Canonical Files
-
-- Team config: `agents/agents_config.yaml`
-- Task workflow catalog: `agents/TASK_WORKFLOWS.md`
-- Machine-readable task catalog: `agents/task_catalog.yaml`
-- GitHub-facing policy: `.github/AGENTS.md`
-- Repo coordination guide: `documents/AGENTS_COORDINATION.md`
-- Run artifacts: `reports/agents/<run-id>/`
 
 ## Operating Rules
 
-- Use this same team structure even when a different agent implementation is used.
-- Keep reviewers independent from the editor's private context.
-- Do not push directly to `main`.
-- Keep work scoped to a worktree or explicitly approved branch.
-- Run verification before handoff or closeout.
-- Record decisions that affect scope, risk, or acceptance criteria.
+- Reuse this same team shape across Codex, GitHub Actions, and any other agent runtime.
+- GitHub Actions models the handoff spine with reviewer-return loops and can activate specialists through workflow inputs when a run needs them.
+- Treat `agents/agents_config.json` as the single source of truth for roles, handoffs, and write policies.
+- Treat `agents/COMMUNICATION_PROTOCOL.md` as the single source of truth for handoff, review, response, and escalation messages.
+- Keep repo edits inside `WORKTREE_SCOPE.md` editable directories whenever `implementer` is active.
+- Capture both a report-dir snapshot and a workspace-change snapshot before an artifact-only role runs, then validate against both after the role writes.
+- Record scope, risk, and acceptance decisions in the report bundle.

@@ -5,9 +5,11 @@ workflow_families:
     name: Scoped Correction
     roles:
       always_on:
-        - intent_analyst
-        - coordinator
-        - editor
+        - manager
+        - manager_reviewer
+        - designer
+        - design_reviewer
+        - implementer
         - change_reviewer
         - final_reviewer
         - verifier
@@ -21,15 +23,18 @@ workflow_families:
     name: Research-Driven Change
     roles:
       always_on:
-        - intent_analyst
-        - coordinator
-        - editor
+        - manager
+        - manager_reviewer
+        - designer
+        - design_reviewer
+        - implementer
         - change_reviewer
         - final_reviewer
         - verifier
         - auditor
       specialists:
         - researcher
+        - research_reviewer
     tasks:
       - T2
       - T8
@@ -37,15 +42,18 @@ workflow_families:
     name: Large Delivery
     roles:
       always_on:
-        - intent_analyst
-        - coordinator
-        - editor
+        - manager
+        - manager_reviewer
+        - designer
+        - design_reviewer
+        - implementer
         - change_reviewer
         - final_reviewer
         - verifier
         - auditor
       specialists:
         - scheduler
+        - schedule_reviewer
     tasks:
       - T3
       - T4
@@ -53,17 +61,22 @@ workflow_families:
     name: Platform and Infra
     roles:
       always_on:
-        - intent_analyst
-        - coordinator
-        - editor
+        - manager
+        - manager_reviewer
+        - designer
+        - design_reviewer
+        - implementer
         - change_reviewer
         - final_reviewer
         - verifier
         - auditor
       specialists:
         - researcher
+        - research_reviewer
         - scheduler
+        - schedule_reviewer
         - infra_steward
+        - infra_reviewer
     tasks:
       - T6
       - T7
@@ -75,115 +88,225 @@ tasks:
     family: scoped_correction
     specialists: []
     steps:
-      - intent_brief を作成
-      - scope を局所化
-      - editor が修正
+      - manager が intent と scope を確定
+      - manager_reviewer が intake を review
+      - manager が review を受けて scope を修正
+      - designer が修正方針を設計
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が修正
       - change_reviewer が chunk review
+      - implementer が review を受けて修正
       - final_reviewer が独立 review
+      - implementer が final review を受けて必要なら修正
       - verifier が対象 test を実行
   - id: T2
     name: アルゴリズム改善のための外部調査つき実装
     family: research_driven_change
     specialists:
       - researcher
+      - research_reviewer
     steps:
-      - intent_brief を作成
+      - manager が改善目標と受け入れ条件を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて intake を修正
       - researcher が外部調査
-      - coordinator が採用案を決定
-      - editor が実装
-      - reviewer 群が research と diff を review
+      - research_reviewer が調査を review
+      - researcher が review を受けて調査を修正
+      - manager が採用案を決定
+      - designer が実装方針を設計
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が実装
+      - change_reviewer が diff を review
+      - implementer が review を受けて修正
+      - final_reviewer が research と最終 diff を review
+      - implementer が final review を受けて必要なら修正
       - verifier が test と benchmark を実行
   - id: T3
     name: base / solvers / optimizers をまたぐ大規模 refactor
     family: large_delivery
     specialists:
       - scheduler
+      - schedule_reviewer
     steps:
-      - refactor の goal / non-goal を定義
+      - manager が refactor の goal / non-goal を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて intake を修正
       - scheduler が milestone を作成
-      - editor が chunk ごとに変更
+      - schedule_reviewer が milestone を review
+      - scheduler が review を受けて schedule を修正
+      - designer が chunk 境界を含む設計を作成
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が chunk ごとに変更
       - change_reviewer が逐次 review
+      - implementer が review を受けて逐次修正
       - final_reviewer が設計整合を確認
+      - implementer が final review を受けて必要なら修正
       - verifier が主要 CI を実行
   - id: T4
     name: 新 API / 新機能の追加
     family: large_delivery
     specialists:
       - scheduler
+      - schedule_reviewer
     steps:
-      - API contract を定義
+      - manager が API contract を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて intake を修正
       - scheduler が実装順序を決定
-      - editor が code / test / docs を更新
-      - reviewer 群が compatibility を review
+      - schedule_reviewer が順序計画を review
+      - scheduler が review を受けて schedule を修正
+      - designer が API 設計を作成
+      - design_reviewer が API 設計を review
+      - designer が review を受けて設計を修正
+      - implementer が code / test / docs を更新
+      - change_reviewer が compatibility を review
+      - implementer が review を受けて修正
+      - final_reviewer が公開面を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が CI を実行
   - id: T5
     name: CI failure / flaky test の切り分けと修正
     family: scoped_correction
     specialists: []
     steps:
-      - failure symptom を固定
+      - manager が failure symptom を固定
+      - manager_reviewer が intake を review
+      - manager が review を受けて symptom を修正
+      - designer が切り分けと修正方針を設計
+      - design_reviewer が方針を review
+      - designer が review を受けて方針を修正
       - cause を切り分け
-      - editor が修正
-      - reviewer 群が過剰修正を防ぐ
+      - implementer が修正
+      - change_reviewer が過剰修正を防ぐ
+      - implementer が review を受けて修正
+      - final_reviewer が再発防止を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が failing command を再実行
   - id: T6
     name: experiment_runner の拡張や運用改善
     family: platform_and_infra
     specialists:
       - scheduler
+      - schedule_reviewer
       - infra_steward
+      - infra_reviewer
     steps:
-      - 運用課題を明文化
+      - manager が運用課題を明文化
+      - manager_reviewer が intake を review
+      - manager が review を受けて課題定義を修正
       - infra_steward が infra surface を整理
+      - infra_reviewer が infra surface を review
+      - infra_steward が review を受けて infra plan を修正
       - scheduler が rollout を設計
-      - editor が runner と docs を更新
-      - reviewer 群が運用 regression を確認
+      - schedule_reviewer が rollout を review
+      - scheduler が review を受けて schedule を修正
+      - designer が runner / ops 設計を作成
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が runner と docs を更新
+      - change_reviewer が運用 regression を確認
+      - implementer が review を受けて修正
+      - final_reviewer が安全性を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が runner 系 test を実行
   - id: T7
     name: Docker / GitHub Actions / 自動化基盤の拡張
     family: platform_and_infra
     specialists:
       - infra_steward
+      - infra_reviewer
     steps:
-      - desired workflow を定義
+      - manager が desired workflow を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて desired workflow を修正
       - infra_steward が対象 infra を整理
-      - editor が workflow / Docker / scripts を更新
-      - reviewer 群が運用リスクを確認
+      - infra_reviewer が infra 方針を review
+      - infra_steward が review を受けて infra plan を修正
+      - designer が rollout / permission 設計を作成
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が workflow / Docker / scripts を更新
+      - change_reviewer が運用リスクを review
+      - implementer が review を受けて修正
+      - final_reviewer が maintenance cost を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が構文と dry-run 相当を確認
   - id: T8
     name: 性能ボトルネック調査と benchmark 主導の最適化
     family: research_driven_change
     specialists:
       - researcher
+      - research_reviewer
       - scheduler
+      - schedule_reviewer
     steps:
-      - target metric を定義
+      - manager が target metric を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて評価条件を修正
       - researcher が候補手法を調査
+      - research_reviewer が調査を review
+      - researcher が review を受けて調査を修正
       - scheduler が計測順序を作る
-      - editor が測定と最適化を実装
-      - reviewer 群が妥当性を確認
+      - schedule_reviewer が計測順序を review
+      - scheduler が review を受けて順序を修正
+      - designer が最適化方針を設計
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が測定と最適化を実装
+      - change_reviewer が妥当性を review
+      - implementer が review を受けて修正
+      - final_reviewer が benchmark 妥当性を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が benchmark を実行
   - id: T9
     name: 実装変更に追随する設計文書・README・テスト整合
     family: scoped_correction
     specialists: []
     steps:
-      - 変更対象 doc/test 範囲を定義
-      - editor が docs と tests を更新
-      - reviewer 群が内容整合と可読性を確認
+      - manager が変更対象 doc/test 範囲を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて対象範囲を修正
+      - designer が文書反映方針を設計
+      - design_reviewer が方針を review
+      - designer が review を受けて設計を修正
+      - implementer が docs と tests を更新
+      - change_reviewer が内容整合を review
+      - implementer が review を受けて修正
+      - final_reviewer が可読性を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が markdown formatting と test を確認
   - id: T10
     name: 依存更新、runtime 互換性対応、JAX 周辺 upgrade
     family: platform_and_infra
     specialists:
       - researcher
+      - research_reviewer
       - scheduler
+      - schedule_reviewer
       - infra_steward
+      - infra_reviewer
     steps:
-      - upgrade の動機と互換性要件を定義
+      - manager が upgrade の動機と互換性要件を定義
+      - manager_reviewer が intake を review
+      - manager が review を受けて要件を修正
       - researcher が upstream breaking changes を調査
+      - research_reviewer が調査を review
+      - researcher が review を受けて調査を修正
       - infra_steward が infra impact を整理
+      - infra_reviewer が infra impact を review
+      - infra_steward が review を受けて infra plan を修正
       - scheduler が rollout を段階化
-      - editor が code / deps / docs を更新
-      - reviewer 群が migration risk を確認
+      - schedule_reviewer が rollout を review
+      - scheduler が review を受けて rollout を修正
+      - designer が migration 設計を作成
+      - design_reviewer が設計を review
+      - designer が review を受けて設計を修正
+      - implementer が code / deps / docs を更新
+      - change_reviewer が migration risk を review
+      - implementer が review を受けて修正
+      - final_reviewer が upgrade 方針を最終 review
+      - implementer が final review を受けて必要なら修正
       - verifier が full CI を実行

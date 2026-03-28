@@ -102,7 +102,7 @@ $$
   - `verifier/`: 解析・テスト・安全判定
   - `retriever/`: 探索順制御（ランキング）
   - `policies/`: 変更制約、承認条件
-  - `agents_config.yaml`: 実行設定
+  - `agents_config.json`: 実行設定
   - `logs/`: 実行ログ
 
 - `scripts/agent_tools/`

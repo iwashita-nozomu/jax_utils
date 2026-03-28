@@ -1,81 +1,83 @@
 # エージェントチーム運用と役割分担
 
-目的: このリポジトリで恒久的に使えるエージェントチームを定義し、毎回同じ入口、同じ証跡、同じ品質ゲートで運用すること。
+目的: 恒久的なエージェントチームを、毎回同じ入口と同じ権限モデルで運用すること。
 
 ## 正本
 
-- チーム概要: `agents/README.md`
-- 構成ファイル: `agents/agents_config.yaml`
-- タスク workflow カタログ: `agents/TASK_WORKFLOWS.md`
-- GitHub 側の運用指針: `.github/AGENTS.md`
+- チーム定義と role permission: `agents/agents_config.json`
+- agent 間やり取りの規約: `agents/COMMUNICATION_PROTOCOL.md`
+- runtime 実装: `scripts/agent_tools/agent_team.py`
+- 人間向け入口: `agents/README.md`
+- task workflow カタログ: `agents/TASK_WORKFLOWS.md`
 
-## 恒久チームの役割
+この文書は運用の入口に留め、詳細な role 定義は正本へ集約する。
 
-- Intent Analyst: ユーザー要求を読み取り、意図、受け入れ条件、曖昧点を `intent_brief.md` に落とす担当。
-- Coordinator: スコープ固定、受け入れ条件定義、役割分担、エスカレーション担当。
-- Editor: スコープ内の実装・文書変更担当。
-- Change Reviewer: 実装中の各チャンクを逐次レビューする担当。
-- Final Reviewer: editor と独立して最終レビューする担当。
-- Verifier: `scripts/ci/pre_review.sh` と必要な CI コマンド実行担当。
-- Auditor: 実行ログ、判断根拠、検証結果、ふりかえりの集約担当。
+agent 間の handoff、review、response、escalation の書き方は `agents/COMMUNICATION_PROTOCOL.md` を参照する。
 
-## 条件付き専門ロール
+## 現在のチーム構成
 
-- Researcher: アルゴリズム調査、外部資料調査、インターネット検索担当。
-- Scheduler: 大規模変更のマイルストーン管理、順序管理、依存関係管理担当。
-- Infra Steward: experiment runner、CI、Docker、基盤自動化の保守・拡張担当。
+- Always-on: `manager`, `manager_reviewer`, `designer`, `design_reviewer`, `implementer`, `change_reviewer`, `final_reviewer`, `verifier`, `auditor`
+- Specialists: `researcher`, `research_reviewer`, `scheduler`, `schedule_reviewer`, `infra_steward`, `infra_reviewer`
+- `manager` が intent、scope、specialist activation、permission 判断、handoff を統合管理する
+- `designer` が coding 前の設計を担当し、`design_reviewer` の review と修正反映を通す
+- 各 execution role は reviewer の feedback を受けて修正してから次段へ進む
+- repo を直接編集できるのは `implementer` だけ
+- それ以外の role は artifact-only で、`reports/agents/<run-id>/` の自分の成果物だけを更新する
 
-## コンテキスト分離
+## 基本フロー
 
-- Editor と reviewer 群は private context を共有しない。
-- reviewer は `intent_brief.md`、`research_notes.md`、`schedule.md`、diff、`verification.txt` などの明示的成果物だけを見る。
-- この分離により、逐次レビューと最終レビューの独立性を守る。
+1. `bootstrap_agent_run.py` で run bundle を作る。
+1. `manager` が `intent_brief.md`、scope、specialist role を確定する。
+1. `manager_reviewer` が intake を review し、`manager` が feedback を反映する。
+1. 必要なら `researcher` / `research_reviewer`、`scheduler` / `schedule_reviewer`、`infra_steward` / `infra_reviewer` を順に通す。
+1. `designer` が設計を作り、`design_reviewer` が review し、`designer` が feedback を反映する。
+1. `implementer` が `WORKTREE_SCOPE.md` の editable directories 内で実装する。
+1. `change_reviewer` が chunk review を行い、`implementer` が feedback を反映する。
+1. `final_reviewer` が独立レビューを行い、`implementer` が必要なら最後の修正を行う。
+1. `verifier` が quality gate を実行する。
+1. `auditor` が closeout を `retrospective.md` に残す。
 
-## 実行フロー
+## コマンド
 
-1. Coordinator が run を作成する。
-1. `python3 scripts/agent_tools/bootstrap_agent_run.py --task "<task>" --owner "<owner>"` を実行する。
-1. 必要に応じて `--enable researcher --enable scheduler --enable infra_steward` または `--full-team` を付ける。
-1. Intent Analyst が `intent_brief.md` を作成する。
-1. `reports/agents/<run-id>/team_manifest.yaml` に沿って handoff を進める。
-1. Editor が変更し、Change Reviewer が逐次 findings を返す。
-1. Final Reviewer が独立レビューを行う。
-1. Verifier が `scripts/ci/pre_review.sh` または `make ci` を実行する。
-1. Auditor が `decision_log.md`、`verification.txt`、`retrospective.md` を完成させる。
+```bash
+python3 scripts/agent_tools/bootstrap_agent_run.py \
+  --task "<task>" \
+  --owner "<owner>" \
+  --workspace-root "$PWD"
+```
 
-## 標準出力
+```bash
+python3 scripts/agent_tools/validate_role_write_scope.py \
+  --report-dir reports/agents/<run-id> \
+  --workspace-root "$PWD" \
+  --report-snapshot-out /tmp/agent-report-before.json \
+  --workspace-snapshot-out /tmp/agent-workspace-before.json
+```
 
-各 run は必ず以下を持つ:
+```bash
+python3 scripts/agent_tools/validate_role_write_scope.py \
+  --role change_reviewer \
+  --report-dir reports/agents/<run-id> \
+  --report-snapshot-in /tmp/agent-report-before.json \
+  --workspace-snapshot-in /tmp/agent-workspace-before.json \
+  --workspace-root "$PWD"
+```
 
-- `reports/agents/<run-id>/intent_brief.md`
-- `reports/agents/<run-id>/decision_log.md`
-- `reports/agents/<run-id>/review_log.md`
-- `reports/agents/<run-id>/team_manifest.yaml`
-- `reports/agents/<run-id>/verification.txt`
-- `reports/agents/<run-id>/retrospective.md`
+`pre_review.sh` では、必要なら以下で verifier の write scope も検査できる。
 
-必要に応じて追加される:
+```bash
+AGENT_REPORT_DIR=reports/agents/<run-id> \
+AGENT_ROLE=verifier \
+AGENT_ENFORCE_WRITE_SCOPE=1 \
+bash scripts/ci/pre_review.sh
+```
 
-- `reports/agents/<run-id>/research_notes.md`
-- `reports/agents/<run-id>/schedule.md`
-- `reports/agents/<run-id>/infra_notes.md`
+## 運用ルール
 
-`AGENT_REPORT_DIR=reports/agents/<run-id>` を指定して `scripts/ci/pre_review.sh` を実行すると、検証結果を `verification.txt` に追記できます。
-
-## 安全ルール
-
-- `WORKTREE_SCOPE.md` がない worktree では開始しない。
-- `main` へ直接 push しない。
-- スコープ外変更が必要になったら、Coordinator が明示的に再スコープする。
-- 自動化が削除や大規模移動を行う場合、人間承認を先に取る。
-- close 前に少なくとも 1 回は検証を実行し、結果を保存する。
-
-## 専門エージェント
-
-タスクに応じて一時的な専門エージェントを追加してよい。ただし、必ず恒久チームのどれかが最終責任を持つ。
-
-例:
-
-- Design organizer: `scripts/tools/organize_designs.py` を扱う。
-- Template generator: `scripts/tools/create_design_template.py` を扱う。
-- Experiment reviewer: `experiments/` と `reports/` の整合性を確認する。
+- `agents/agents_config.json` を role 定義の単一正本として扱う。
+- `scripts/agent_tools/agent_team.py` を runtime 実装の単一正本として扱う。
+- role 定義を他文書へコピーしない。必要ならリンクする。
+- GitHub Actions では reviewer-return loop を含む handoff spine を通し、specialist role も workflow input から有効化できるようにする。
+- `implementer` 以外が repo ファイルを触る workflow は作らない。
+- artifact-only role を検査するときは、role 実行前の report snapshot と workspace snapshot の両方を取り、role 実行後の差分で write scope を判定する。
+- `WORKTREE_SCOPE.md` がある作業では、repo 変更を editable directories に限定する。

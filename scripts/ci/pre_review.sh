@@ -23,9 +23,22 @@ export PYTHONPATH="${WORKSPACE_ROOT}/python:${PYTHONPATH:-}"
 
 REPORT_DIR="${AGENT_REPORT_DIR:-}"
 REPORT_FILE=""
+REPORT_SNAPSHOT_FILE=""
+WORKSPACE_SNAPSHOT_FILE=""
 RUN_STATUS="running"
+AGENT_ROLE_NAME="${AGENT_ROLE:-}"
+ENFORCE_WRITE_SCOPE="${AGENT_ENFORCE_WRITE_SCOPE:-0}"
 if [ -n "${REPORT_DIR}" ]; then
     mkdir -p "${REPORT_DIR}"
+    if [ -n "${AGENT_ROLE_NAME}" ] && [ "${ENFORCE_WRITE_SCOPE}" = "1" ]; then
+        REPORT_SNAPSHOT_FILE="$(mktemp)"
+        WORKSPACE_SNAPSHOT_FILE="$(mktemp)"
+        python3 scripts/agent_tools/validate_role_write_scope.py \
+            --report-dir "${REPORT_DIR}" \
+            --workspace-root "${WORKSPACE_ROOT}" \
+            --report-snapshot-out "${REPORT_SNAPSHOT_FILE}" \
+            --workspace-snapshot-out "${WORKSPACE_SNAPSHOT_FILE}" > /dev/null
+    fi
     REPORT_FILE="${REPORT_DIR%/}/verification.txt"
     {
         echo "pre_review_started_at_utc=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
@@ -46,9 +59,49 @@ write_report() {
     fi
 }
 
+enforce_write_scope() {
+    if [ -z "${REPORT_DIR}" ] || [ -z "${AGENT_ROLE_NAME}" ] || [ "${ENFORCE_WRITE_SCOPE}" != "1" ]; then
+        return 0
+    fi
+    local cmd=(
+        python3
+        scripts/agent_tools/validate_role_write_scope.py
+        --role "${AGENT_ROLE_NAME}"
+        --report-dir "${REPORT_DIR}"
+        --workspace-root "${WORKSPACE_ROOT}"
+    )
+    if [ -n "${REPORT_FILE}" ]; then
+        cmd+=(--file "${REPORT_FILE}")
+    fi
+    if [ -n "${REPORT_SNAPSHOT_FILE}" ]; then
+        cmd+=(--report-snapshot-in "${REPORT_SNAPSHOT_FILE}")
+    fi
+    if [ -n "${WORKSPACE_SNAPSHOT_FILE}" ]; then
+        cmd+=(--workspace-snapshot-in "${WORKSPACE_SNAPSHOT_FILE}")
+    fi
+    if "${cmd[@]}"; then
+        write_report "write_scope=pass"
+        return 0
+    fi
+    write_report "write_scope=fail"
+    return 1
+}
+
+fail_run() {
+    RUN_STATUS="failed"
+    enforce_write_scope || true
+    exit 1
+}
+
 finalize_report() {
     write_report "status=${RUN_STATUS}"
     write_report "pre_review_finished_at_utc=$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    if [ -n "${REPORT_SNAPSHOT_FILE}" ] && [ -f "${REPORT_SNAPSHOT_FILE}" ]; then
+        rm -f "${REPORT_SNAPSHOT_FILE}"
+    fi
+    if [ -n "${WORKSPACE_SNAPSHOT_FILE}" ] && [ -f "${WORKSPACE_SNAPSHOT_FILE}" ]; then
+        rm -f "${WORKSPACE_SNAPSHOT_FILE}"
+    fi
 }
 
 trap finalize_report EXIT
@@ -67,8 +120,7 @@ if python3 -m pyright ./python/jax_util; then
 else
     echo -e "${RED}❌ Type errors found. Review code.${NC}"
     write_report "pyright=fail"
-    RUN_STATUS="failed"
-    exit 1
+    fail_run
 fi
 
 # 2. Test execution
@@ -86,8 +138,7 @@ if python3 -m pytest python/tests/ -q --tb=short \
 else
     echo -e "${RED}❌ Test failures. Fix tests.${NC}"
     write_report "pytest=fail"
-    RUN_STATUS="failed"
-    exit 1
+    fail_run
 fi
 
 # 3. Docstring validation
@@ -120,3 +171,8 @@ echo ""
 echo "Next: Commit changes and open PR"
 echo ""
 RUN_STATUS="passed"
+if ! enforce_write_scope; then
+    RUN_STATUS="failed"
+    echo -e "${RED}❌ Write scope violation detected for role ${AGENT_ROLE_NAME}.${NC}"
+    exit 1
+fi

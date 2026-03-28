@@ -1,76 +1,51 @@
 # Agent Team — Coordination Guide
 
-このリポジトリの恒久的なエージェントチーム運用ポリシーです。
+このリポジトリでは、恒久チームの正本を 1 か所に寄せます。
 
-正本:
+## 正本
 
-- チーム定義: `agents/README.md`
-- 構成: `agents/agents_config.yaml`
-- タスク workflow: `agents/TASK_WORKFLOWS.md`
-- 運用ガイド: `documents/AGENTS_COORDINATION.md`
+- チーム定義と write policy: `agents/agents_config.json`
+- agent 間 communication の規約: `agents/COMMUNICATION_PROTOCOL.md`
+- runtime 実装: `scripts/agent_tools/agent_team.py`
+- 人間向け入口: `agents/README.md`
+- task workflow: `agents/TASK_WORKFLOWS.md`
+- repo 運用ガイド: `documents/AGENTS_COORDINATION.md`
 
-## 恒久チームの必須ロール
+## 運用の要点
 
-- `intent_analyst`: ユーザー要求をスコープ、受け入れ条件、曖昧点へ変換する。
-- `coordinator`: スコープ固定、役割分担、handoff 管理、エスカレーションを担当する。
-- `editor`: スコープ内の実装・文書変更を担当する。
-- `change_reviewer`: 実装の各チャンクを逐次レビューし、次チャンクに進めるか判断する。
-- `final_reviewer`: editor と独立した最終レビューを行う。
-- `verifier`: `scripts/ci/pre_review.sh` や `make ci` を実行し、検証結果を残す。
-- `auditor`: 証跡を `reports/agents/<run-id>/` に集約し、クローズアウトを記録する。
+- 常時ロールは `manager`, `manager_reviewer`, `designer`, `design_reviewer`, `implementer`, `change_reviewer`, `final_reviewer`, `verifier`, `auditor`。
+- 条件付きロールは `researcher`, `research_reviewer`, `scheduler`, `schedule_reviewer`, `infra_steward`, `infra_reviewer`。
+- `manager` が intent 取り込み、scope 固定、specialist activation、permission 判断、handoff 管理を統合して持つ。
+- `designer` は coding の前に必須で、`design_reviewer` の review と修正反映を通ってから `implementer` に渡す。
+- 各 execution role は reviewer の feedback を受けて修正してから次段へ進む。
+- repo を直接編集できるのは `implementer` だけ。
+- reviewer 群、researcher 群、scheduler 群、infra 群、verifier、auditor は artifact-only とし、`reports/agents/<run-id>/` 内の自分の成果物だけを更新する。
+- `implementer` と reviewer 群は private context を共有しない。
 
-## 条件付きの専門ロール
-
-- `researcher`: アルゴリズム調査、外部ドキュメント調査、インターネット検索を担当する。
-- `scheduler`: 大規模変更のマイルストーン、依存関係、順序管理を担当する。
-- `infra_steward`: CI、Docker、experiment runner、基盤自動化の保守と拡張を担当する。
-
-## コンテキスト分離
-
-- `editor` と `change_reviewer` は private context を共有しない。
-- `editor` と `final_reviewer` も private context を共有しない。
-- reviewer 側は `intent_brief.md`、`research_notes.md`、`schedule.md`、diff、検証結果のみを見る。
-
-## 標準アーティファクト
-
-各エージェント実行では、最初に以下を作成してください。
+## 実行入口
 
 ```bash
 python3 scripts/agent_tools/bootstrap_agent_run.py \
   --task "describe the task" \
-  --owner "<agent-or-human>"
+  --owner "<agent-or-human>" \
+  --workspace-root "$PWD"
 ```
 
-生成される標準ファイル:
+permission を確認したい場合:
 
-- `reports/agents/<run-id>/intent_brief.md`
-- `reports/agents/<run-id>/decision_log.md`
-- `reports/agents/<run-id>/review_log.md`
-- `reports/agents/<run-id>/team_manifest.yaml`
-- `reports/agents/<run-id>/verification.txt`
-- `reports/agents/<run-id>/retrospective.md`
+```bash
+python3 scripts/agent_tools/validate_role_write_scope.py \
+  --report-dir reports/agents/<run-id> \
+  --workspace-root "$PWD" \
+  --report-snapshot-out /tmp/agent-report-before.json \
+  --workspace-snapshot-out /tmp/agent-workspace-before.json
+```
 
-## 運用方針
-
-- 各作業はワークツリー単位で行い、`WORKTREE_SCOPE.md` がない場合は開始しない。
-- 変更は小さく分割し、handoff ごとに根拠と未解決事項を残す。
-- `main` へ直接 push しない。
-- Markdown を編集した場合は `mdformat` を実行する。
-- close 前に検証を通し、結果を `verification.txt` に残す。
-
-## Reviewer チェックリスト
-
-- [ ] `python -m pyright ./python/jax_util` が通る
-- [ ] `python -m pytest python/tests/ -q` が通る
-- [ ] `python -m pydocstyle python/jax_util` の結果を確認した
-- [ ] `python -m ruff check python/jax_util --select E,F,I,D,UP` の結果を確認した
-- [ ] 仕様変更がある場合、関連ドキュメントを更新した
-- [ ] スコープ外変更や未解決リスクを `decision_log.md` に残した
-
-再審査が必要な場合は `review:needs-revision` を付与し、改善箇所を具体的に指摘してください。
-
-## 議論と監査
-
-- 重要な意思決定は `decision_log.md` に残す。
-- チーム間の議論が必要な場合は `.github/agents/discussion.md` に要点を残す。
-- クローズ時には `retrospective.md` を更新する。
+```bash
+python3 scripts/agent_tools/validate_role_write_scope.py \
+  --role final_reviewer \
+  --report-dir reports/agents/<run-id> \
+  --report-snapshot-in /tmp/agent-report-before.json \
+  --workspace-snapshot-in /tmp/agent-workspace-before.json \
+  --workspace-root "$PWD"
+```
