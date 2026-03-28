@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 from typing import Any, Mapping
 
-from jax_util.experiment_runner import FullResourceEstimate
+from experiment_runner import FullResourceEstimate
 
 from .runner_config import SmolyakExperimentConfig
 

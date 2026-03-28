@@ -14,7 +14,7 @@
 | **関数型最適化** | `functional/protocols.py` | Function 型の最適化 | base |
 | **ベクトル最適化** | `optimizers/protocols.py` | Vector 型の最適化 | base |
 | **NN 最適化** | `neuralnetwork/protocols.py` | PyTree 型の最適化 | base |
-| **実験実行** | `experiment_runner/protocols.py` | 実行制御・リソース管理 | 独立 |
+| **実験実行** | `python/experiment_runner/protocols.py` | 実行制御・リソース管理 | 独立 |
 
 ---
 
@@ -186,7 +186,7 @@ class NeuralNetworkProblem(Protocol):
 
 ---
 
-## ⚡ Layer 5: 実験実行 (`experiment_runner/protocols.py`)
+## ⚡ Layer 5: 実験実行 (`python/experiment_runner/protocols.py`)
 
 ### 独立プロトコル（他に依存しない）
 

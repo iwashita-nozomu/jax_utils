@@ -23,7 +23,7 @@ PYTHON_ROOT = WORKSPACE_ROOT / "python"
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
-from jax_util.experiment_runner import (
+from experiment_runner import (
     CHILD_COMPLETE_PREFIX,
     WorkerSlot,
     append_jsonl_record,

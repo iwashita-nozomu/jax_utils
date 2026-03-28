@@ -1,14 +1,14 @@
 **実験ランナー使い方（サマリ）**
 
 - **目的**: `StandardRunner` / `StandardScheduler` 系を使って実験ケースを並列実行するための軽量フレームワーク。
-- **主なモジュール**: `python/jax_util/experiment_runner/protocols.py`, `python/jax_util/experiment_runner/runner.py`, `python/jax_util/experiment_runner/gpu_runner.py`, `python/jax_util/experiment_runner/resource_scheduler.py`。
+- **主なモジュール**: `python/experiment_runner/protocols.py`, `python/experiment_runner/runner.py`, `python/experiment_runner/gpu_runner.py`, `python/experiment_runner/resource_scheduler.py`, `python/experiment_runner/subprocess_scheduler.py`。
 
 **基本的な使い方**
 
 - **Simple FIFO 実行（CPU）**:
 
 ```python
-from jax_util.experiment_runner.runner import (
+from experiment_runner.runner import (
     StandardWorker, StandardScheduler, StandardRunner, StandardResourceCapacity
 )
 

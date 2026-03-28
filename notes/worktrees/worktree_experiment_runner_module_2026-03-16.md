@@ -66,7 +66,7 @@
 
 ### Decision
 
-- 最終配置は `python/jax_util/experiment_runner/` にする
+- 最終配置は `python/experiment_runner/` にする
 - `smolyak_scaling` から先に使い始めて、runner 共通部として育てる
 - 最初の目標は
   - `smolyak_scaling`
@@ -88,7 +88,7 @@
 
 ### Decision
 
-- 最終的な切り出し先は `python/jax_util/experiment_runner/` に統一した
+- 最終的な切り出し先は `python/experiment_runner/` に統一した
 - host は
   - case queue
   - free worker slot
@@ -106,8 +106,8 @@
 ### Source
 
 - 実装先:
-  - `/workspace/.worktrees/work-experiment-runner-20260316/python/jax_util/experiment_runner/subprocess_scheduler.py`
-  - `/workspace/.worktrees/work-experiment-runner-20260316/python/jax_util/experiment_runner/__init__.py`
+  - `/workspace/.worktrees/work-experiment-runner-20260316/python/experiment_runner/subprocess_scheduler.py`
+  - `/workspace/.worktrees/work-experiment-runner-20260316/python/experiment_runner/__init__.py`
   - `/workspace/.worktrees/work-experiment-runner-20260316/experiments/functional/smolyak_scaling/run_smolyak_scaling.py`
 
 ### Interpretation
@@ -122,7 +122,7 @@
 
 - `pytest -q python/tests/experiment_runner/test_subprocess_scheduler.py -s`
 - `/bin/python3 python/tests/experiment_runner/test_subprocess_scheduler.py`
-- `pyright python/jax_util/experiment_runner python/tests/experiment_runner experiments/functional/smolyak_scaling/run_smolyak_scaling.py`
+- `pyright python/experiment_runner python/tests/experiment_runner experiments/functional/smolyak_scaling/run_smolyak_scaling.py`
 - 出力:
   - `selected_gpu_indices: [0, 1]`
   - `worker_labels: ['gpu-0-w0', 'gpu-1-w0']`
@@ -172,7 +172,7 @@
 - branch:
   - `work/experiment-runner-module-20260316`
 - final landing place:
-  - `python/jax_util/experiment_runner/`
+  - `python/experiment_runner/`
 - main changes:
   - host scheduler / child execution の分離
   - JSONL 逐次保存

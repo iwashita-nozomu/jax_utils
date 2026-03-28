@@ -6,7 +6,7 @@
 ## Source
 
 - 当日の worktree で `experiment_runner` と `experiments/smolyak_experiment/` を接続して行った smoke / small run の観測。
-- 実装本体は現在 [experiment_runner](/workspace/python/jax_util/experiment_runner) と [smolyak_experiment](/workspace/experiments/smolyak_experiment) に統合済み。
+- 実装本体は現在 [experiment_runner](/workspace/python/experiment_runner) と [smolyak_experiment](/workspace/experiments/smolyak_experiment) に統合済み。
 
 ## Summary
 
@@ -22,9 +22,9 @@
 
 ## Implementation Carry-Over
 
-- spawn context と picklable check は [jax_context.py](/workspace/python/jax_util/experiment_runner/jax_context.py) と [runner.py](/workspace/python/jax_util/experiment_runner/runner.py) に反映済み。
-- 環境変数の反映は [context_utils.py](/workspace/python/jax_util/experiment_runner/context_utils.py) に分離済み。
-- host memory / GPU slot の同時監視は [resource_scheduler.py](/workspace/python/jax_util/experiment_runner/resource_scheduler.py) に統合済み。
+- spawn context と picklable check は [jax_context.py](/workspace/python/experiment_runner/jax_context.py) と [runner.py](/workspace/python/experiment_runner/runner.py) に反映済み。
+- 環境変数の反映は [context_utils.py](/workspace/python/experiment_runner/context_utils.py) に分離済み。
+- host memory / GPU slot の同時監視は [resource_scheduler.py](/workspace/python/experiment_runner/resource_scheduler.py) に統合済み。
 
 ## Consideration
 

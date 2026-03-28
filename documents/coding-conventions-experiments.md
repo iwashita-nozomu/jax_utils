@@ -8,7 +8,7 @@
 - 対象は `experiments/` 配下の実験コードと benchmark コードです。
 - 対象には、実験実行スクリプト、レポート生成スクリプト、結果保存ディレクトリを含みます。
 - 実験コードそのものは `main` に置いてよいですが、生成物は code と分けて扱います。
-- topic 固有の helper module は `experiments/` に置き、再利用する runtime は `python/jax_util/experiment_runner/` に分けます。
+- topic 固有の helper module は `experiments/` に置き、再利用する runtime は `python/experiment_runner/` に分けます。
 
 ## 2. ディレクトリ構成
 

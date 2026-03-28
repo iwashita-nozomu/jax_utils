@@ -4,7 +4,7 @@
 
 ## 要約
 
-- 再利用できる汎用 runtime は `python/jax_util/experiment_runner/` に置きます。
+- 再利用できる汎用 runtime は `python/experiment_runner/` に置きます。
 - topic 固有のケース生成、設定、集計、実行スクリプトは `experiments/` 配下に置きます。
 - 長時間実行の生成物は topic ごとの `results/` に集約し、ライブラリ本体へ混ぜません。
 
@@ -12,7 +12,7 @@
 
 ### 1. 役割分担
 
-- `python/jax_util/experiment_runner/` は、topic 非依存の実験実行基盤を置く場所とします。
+- `python/experiment_runner/` は、topic 非依存の実験実行基盤を置く場所とします。
 - ここには、subprocess 実行、resource scheduling、GPU 環境変数の受け渡し、context の整形のような汎用機能だけを置きます。
 - 特定 topic に閉じたケース生成、テスト関数選択、結果集計、CLI 既定値は `experiments/` 側へ置きます。
 
@@ -45,7 +45,7 @@ experiments/functional/smolyak_scaling/
 
 ### 4. どこへ何を置くか
 
-- topic をまたいで再利用する protocol や scheduler は `python/jax_util/experiment_runner/` に置きます。
+- topic をまたいで再利用する protocol や scheduler は `python/experiment_runner/` に置きます。
 - その topic のためだけに存在する `cases.py`、`runner_config.py`、`results_aggregator.py` は `experiments/<topic>/` に置きます。
 - 可視化や report rendering は、topic 固有なら experiment ディレクトリに同居させます。
 - 長時間実行で生成される JSON、JSONL、HTML、SVG、ログは `results/` に集約します。
@@ -66,7 +66,7 @@ experiments/functional/smolyak_scaling/
 ## 補足
 
 - `python/experiment/` という別の top-level package は、現時点では新設しません。
-- 現在の repo では、汎用層はすでに `python/jax_util/experiment_runner/` にあるため、そこへ責務を集約します。
+- 現在の repo では、汎用層はすでに `python/experiment_runner/` にあるため、そこへ責務を集約します。
 
 ## 更新手順
 

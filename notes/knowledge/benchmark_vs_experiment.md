@@ -20,7 +20,7 @@
 
 - benchmark は topic に近い `experiments/` 配下に置く。
 - topic 固有の experiment helper は `experiments/<topic>/` または `experiments/<area>/<topic>/` に置く。
-- 汎用の実行基盤は `python/jax_util/experiment_runner/` に置く。
+- 汎用の実行基盤は `python/experiment_runner/` に置く。
 
 ## 判断の目安
 

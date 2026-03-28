@@ -69,7 +69,8 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 ### パッケージ管理
 
 - テストやスクリプトは `PYTHONPATH=/workspace/python` を基本とします。
-- import パスは `jax_util.*` で統一します。
+- ライブラリ本体の import パスは `jax_util.*` を基本とします。
+- 実験実行基盤は standalone module のため、`experiment_runner.*` を使います。
 
 ## 4. サブモジュールの位置づけ
 
@@ -80,7 +81,7 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 | `python/jax_util/optimizers`        | 安定     | `solvers` を利用する最適化アルゴリズム。                  |
 | `python/jax_util/hlo`               | 安定     | HLO ダンプと解析補助。                                    |
 | `python/jax_util/neuralnetwork`     | 実験段階 | forward / train の整理中。                                |
-| `python/jax_util/experiment_runner` | 実験段階 | host/child 実行、worker slot 管理、途中結果保存の共通部。 |
+| `python/experiment_runner`         | 実験段階 | host/child 実行、worker slot 管理、途中結果保存の共通部。 |
 | `python/jax_util/solvers/archive`   | 保管     | 現在使わないアルゴリズムの退避先。                        |
 | `python/tests`                      | 安定     | 検証とログ出力。                                          |
 | `scripts`                           | 安定     | テスト・ログ・依存解析の補助。                            |

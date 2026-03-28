@@ -1,6 +1,6 @@
 # `experiment_runner` 終了コード
 
-この文書は、`python/jax_util/experiment_runner/protocols.py` における
+この文書は、`python/experiment_runner/protocols.py` における
 `Worker.__call__(case, context) -> int` の意味を整理します。
 
 ## 1. 基本方針

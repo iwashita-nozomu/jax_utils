@@ -38,7 +38,7 @@ select = ["E", "F", "I", "D", "UP"]
 typeCheckingMode = "strict"
 
 # 既定の baseline は通常運用する実装モジュールに限定します。
-include = ["./python/jax_util"]
+include = ["./python/jax_util", "./python/experiment_runner"]
 exclude = [
   "**/.*",
   "**/node_modules",
@@ -61,7 +61,7 @@ exclude = [
 ignore = ["./python/tests"]
 
 # ローカルパッケージ解決のため、python を追加します。
-extraPaths = ["./python", "./python/jax_util"]
+extraPaths = ["./python", "./python/jax_util", "./python/experiment_runner"]
 stubPath = "./python/typings"
 
 
@@ -76,8 +76,8 @@ reportMissingTypeStubs = "warning"
 # D102: パブリックメソッド docstring 必須
 # D103: 関数 docstring 必須
 # D104-D105: パッケージ/Magic method は除外
-match = "python/jax_util/.*\\.py"
-match_dir = "python/jax_util"
+match = "python/(jax_util|experiment_runner)/.*\\.py"
+match_dir = "python"
 # プライベート関数 (_prefix) の docstring チェックは除外
 ignore = ["D104", "D105", "D107"]
 

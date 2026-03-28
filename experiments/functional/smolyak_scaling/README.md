@@ -30,7 +30,7 @@
   - ホスト scheduler と child mode の両方を持ちます。
 - `render_smolyak_scaling_report.py`
   - 結果 JSON から、誤差・時間・メモリ・failure kind・frontier をまとめた可視化レポートを生成するスクリプトです。
-- `python/jax_util/experiment_runner/`
+- `python/experiment_runner/`
   - host/child 実行、JSONL 追記、worker slot 管理の共通部品です。
 - `python/tests/experiment_runner/test_subprocess_scheduler.py`
   - 2 GPU を使う high-load scheduler smoke test です。

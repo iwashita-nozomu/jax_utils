@@ -11,6 +11,7 @@ documents/design/
 ├── README.md (このファイル) ← 最上位ナビゲーション
 ├── protocols.md ← 全体の Protocol 設計
 ├── base_components.md ← BASE層の型・Protocol・クラス設計
+├── experiment_runner.md ← standalone experiment runner の設計
 │
 └── jax_util/
     ├── README.md ← jax_util 全体ナビゲーション
@@ -19,7 +20,6 @@ documents/design/
     ├── optimizers.md
     ├── functional.md
     ├── neuralnetwork.md
-    ├── experiment_runner.md
     └── hlo.md
 ```
 
@@ -54,8 +54,13 @@ documents/design/
 | optimizers | [optimizers.md](./jax_util/optimizers.md) | 最適化アルゴリズム |
 | functional | [functional.md](./jax_util/functional.md) | 関数型最適化 |
 | neuralnetwork | [neuralnetwork.md](./jax_util/neuralnetwork.md) | NN の層別訓練 |
-| experiment_runner | [experiment_runner.md](./jax_util/experiment_runner.md) | 実験実行制御 |
 | hlo | [hlo.md](./jax_util/hlo.md) | HLO 解析・最適化 |
+
+**独立モジュール設計**:
+
+| モジュール | ファイル | 責務 |
+|-----------|---------|------|
+| experiment_runner | [experiment_runner.md](../experiment_runner.md) | 実験実行制御 |
 
 ---
 

@@ -23,7 +23,7 @@ if str(PYTHON_ROOT) not in sys.path:
 if str(WORKSPACE_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKSPACE_ROOT))
 
-from jax_util.experiment_runner import (  # noqa: E402
+from experiment_runner import (  # noqa: E402
     FullResourceCapacity,
     FullResourceEstimate,
     StandardFullResourceScheduler,
@@ -33,7 +33,7 @@ from jax_util.experiment_runner import (  # noqa: E402
     WORKER_PROTOCOL_ERROR_EXIT_CODE,
     apply_environment_variables,
 )
-from jax_util.experiment_runner.protocols import Worker  # noqa: E402
+from experiment_runner.protocols import Worker  # noqa: E402
 
 from experiments.smolyak_experiment import cases, runner_config  # noqa: E402
 
@@ -486,9 +486,17 @@ def main(
     final_json_file = output_dir / f"final_results_{run_id}.json"
 
     def context_builder(case: dict[str, Any]) -> TaskContext:
+        environment_variables: dict[str, str] = {}
+        if config.device == "cpu":
+            environment_variables["JAX_PLATFORMS"] = "cpu"
+            environment_variables["CUDA_VISIBLE_DEVICES"] = ""
+            environment_variables["NVIDIA_VISIBLE_DEVICES"] = ""
+        else:
+            environment_variables["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
         return {
             "case_id": case["case_id"],
             "jsonl_path": str(jsonl_file),
+            "environment_variables": environment_variables,
         }
 
     def progress(completed: int, total: int, elapsed: float, running: int) -> None:
