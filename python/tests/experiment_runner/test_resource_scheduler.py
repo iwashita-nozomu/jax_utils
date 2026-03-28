@@ -139,12 +139,13 @@ class FullResourceRecordingTask:
         started_at = time.time()
         time.sleep(_sleep_seconds(case))
         finished_at = time.time()
+        env_vars = cast(dict[str, str], context.get("environment_variables", {}))
 
         record: dict[str, object] = {
             "case_id": case_id,
             "pid": os.getpid(),
-            "gpu_ids": context.get("gpu_ids", ""),
-            "cuda_visible_devices": context.get("CUDA_VISIBLE_DEVICES", ""),
+            "gpu_ids": env_vars.get("gpu_ids", ""),
+            "cuda_visible_devices": env_vars.get("CUDA_VISIBLE_DEVICES", ""),
             "started_at": started_at,
             "finished_at": finished_at,
         }
@@ -175,16 +176,16 @@ def _run_detected_full_resource_capacity() -> None:
     )
 
     assert capacity.max_workers == 12
-    assert capacity.host_memory_bytes == 4096 * 1024
+    assert capacity.host_memory_bytes == int(4096 * 1024 * 0.8)
     assert capacity.gpu_devices == (
         GPUDeviceCapacity(
             gpu_id=2,
-            memory_bytes=24 * 1024 * 1024 * 1024,
+            memory_bytes=int(24 * 1024 * 1024 * 1024 * 0.8),
             max_slots=2,
         ),
         GPUDeviceCapacity(
             gpu_id=5,
-            memory_bytes=48 * 1024 * 1024 * 1024,
+            memory_bytes=int(48 * 1024 * 1024 * 1024 * 0.8),
             max_slots=2,
         ),
     )
@@ -195,8 +196,8 @@ def _run_detected_full_resource_capacity() -> None:
             (1, 24 * 1024 * 1024 * 1024),
         ],
     ) == (
-        GPUDeviceCapacity(gpu_id=0, memory_bytes=16 * 1024 * 1024 * 1024, max_slots=1),
-        GPUDeviceCapacity(gpu_id=1, memory_bytes=24 * 1024 * 1024 * 1024, max_slots=1),
+        GPUDeviceCapacity(gpu_id=0, memory_bytes=int(16 * 1024 * 1024 * 1024 * 0.8), max_slots=1),
+        GPUDeviceCapacity(gpu_id=1, memory_bytes=int(24 * 1024 * 1024 * 1024 * 0.8), max_slots=1),
     )
 
     print(
@@ -253,15 +254,15 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
     second_case, second_context = second_job
 
     assert _case_id(first_case) == 0
-    assert first_context["gpu_ids"] == "0,1"
-    assert first_context["CUDA_VISIBLE_DEVICES"] == "0,1"
-    assert first_context["NVIDIA_VISIBLE_DEVICES"] == "0,1"
-    assert first_context["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
+    assert first_context["environment_variables"]["gpu_ids"] == "0,1"
+    assert first_context["environment_variables"]["CUDA_VISIBLE_DEVICES"] == "0,1"
+    assert first_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "0,1"
+    assert first_context["environment_variables"]["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
     assert _case_id(second_case) == 2
-    assert second_context["gpu_ids"] == "2"
-    assert second_context["gpu_id"] == "2"
-    assert second_context["NVIDIA_VISIBLE_DEVICES"] == "2"
-    assert second_context["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
+    assert second_context["environment_variables"]["gpu_ids"] == "2"
+    assert second_context["environment_variables"]["gpu_id"] == "2"
+    assert second_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "2"
+    assert second_context["environment_variables"]["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
 
     scheduler.on_finish(first_case, first_context, SUCCESS_EXIT_CODE)
     third_job = scheduler.next_case()
@@ -269,8 +270,8 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
     assert third_job is not None
     third_case, third_context = third_job
     assert _case_id(third_case) == 1
-    assert third_context["gpu_ids"] == "0,1"
-    assert third_context["NVIDIA_VISIBLE_DEVICES"] == "0,1"
+    assert third_context["environment_variables"]["gpu_ids"] == "0,1"
+    assert third_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "0,1"
 
     scheduler.on_finish(second_case, second_context, WORKER_PROTOCOL_ERROR_EXIT_CODE)
     scheduler.on_finish(third_case, third_context, SUCCESS_EXIT_CODE)
@@ -289,7 +290,11 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
                 "source_file": SOURCE_FILE,
                 "test": "test_standard_full_resource_scheduler_assigns_and_releases_resources",
                 "gpu_sequences": [
-                    completion.context.get("gpu_ids", "") for completion in scheduler.completions
+                    cast(
+                        dict[str, str],
+                        completion.context.get("environment_variables", {}),
+                    ).get("gpu_ids", "")
+                    for completion in scheduler.completions
                 ],
             },
             ensure_ascii=True,

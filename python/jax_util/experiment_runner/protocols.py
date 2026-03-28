@@ -6,7 +6,7 @@
 
 from __future__ import annotations
 
-from typing import Callable, Protocol, TypeAlias, TypeVar
+from typing import Any, Callable, Protocol, TypeAlias, TypeVar
 
 
 T = TypeVar("T")
@@ -17,15 +17,15 @@ __all__ = [
     "ResourceEstimate",
     "ResourceCapacity",
     "Worker",
-    "ResourceEstimatingWorker",
     "Scheduler",
     "Runner",
     "SUCCESS_EXIT_CODE",
     "WORKER_PROTOCOL_ERROR_EXIT_CODE",
 ]
 
-# `TaskContext` はワーカーへ渡す環境や設定を表す辞書です（文字列値のみを想定）。
-TaskContext: TypeAlias = dict[str, str]
+# `TaskContext` はワーカーへ渡す環境や設定を表す。
+# 環境変数辞書のような構造化データも流せるよう Any を許容する。
+TaskContext: TypeAlias = dict[str, Any]
 
 
 class ResourceEstimate(Protocol):
@@ -53,10 +53,6 @@ class Worker(Protocol[T, U]):
 
     def __call__(self, case: T, context: TaskContext) -> int: ...
 
-
-class ResourceEstimatingWorker(Worker[T, U], Protocol[T, U]):
-    """`resource_estimate(case)` を提供するワーカーの拡張プロトコル。"""
-
     def resource_estimate(self, case: T) -> ResourceEstimate: ...
 
 
@@ -65,6 +61,9 @@ class Scheduler(Protocol[T]):
 
     @property
     def resource_capacity(self) -> ResourceCapacity: ...
+
+    @property
+    def completions(self) -> list[Any]: ...
 
     def next_case(self) -> tuple[T, TaskContext] | None: ...
 

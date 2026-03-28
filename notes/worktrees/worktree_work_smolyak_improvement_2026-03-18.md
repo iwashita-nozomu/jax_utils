@@ -35,3 +35,10 @@
 
 - `main` へ experiment-runner 関連のテスト・ドキュメントを統合した。
 - ワークツリー運用の見直し（`.worktrees/` の管理）を確認した。
+
+## Addendum: 2026-03-28
+
+- この worktree で進んだ `experiment_runner` の一般化は、現在 [python/jax_util/experiment_runner](/workspace/python/jax_util/experiment_runner) に統合した。
+- `experiments/smolyak_experiment/` の実験コード、benchmark / experiment の境界、実験ディレクトリ構成の提案も main 側へ吸い上げた。
+- 長時間の medium / large run は、`results/*` branch の専用 worktree に逃がす方針で整理した。
+- worktree 側にあった `python/benchmark/` 試作は、そのままの path では採用せず、内容を規約と knowledge note に再配置した。

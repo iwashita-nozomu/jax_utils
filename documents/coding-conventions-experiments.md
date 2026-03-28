@@ -1,23 +1,26 @@
 # 実験環境の運用規約
 
-この文書は、`experiments/` 配下の実験コード・実験結果・実行環境の運用を対象にします。
+この文書は、`experiments/` 配下の実験コード・ベンチマーク・実験結果・実行環境の運用を対象にします。
 長時間実行と生成物の管理を安定させ、`main` のコード編集と衝突させないことを目的にします。
 
 ## 1. 対象
 
-- 対象は `experiments/` 配下の実験コードです。
+- 対象は `experiments/` 配下の実験コードと benchmark コードです。
 - 対象には、実験実行スクリプト、レポート生成スクリプト、結果保存ディレクトリを含みます。
 - 実験コードそのものは `main` に置いてよいですが、生成物は code と分けて扱います。
+- topic 固有の helper module は `experiments/` に置き、再利用する runtime は `python/jax_util/experiment_runner/` に分けます。
 
 ## 2. ディレクトリ構成
 
-- 実験は `experiments/<area>/<topic>/` の形で配置します。
+- 単独で完結する実験は `experiments/<topic>/`、area ごとに束ねる必要がある実験は `experiments/<area>/<topic>/` の形で配置します。
 - 各実験ディレクトリには、少なくとも次の 3 種類を分けて置きます。
   - 実行スクリプト
   - 結果整理・可視化スクリプト
   - `results/` ディレクトリ
 - `results/` には `.gitkeep` を置き、空ディレクトリでも構造を保ちます。
 - 実験コードは再実行可能なスクリプトとして保ち、手作業前提の手順を埋め込みません。
+- benchmark は topic に近い `experiments/` 配下へ置き、グローバルな `python/benchmark/` は既定にしません。
+- benchmark の短時間運用は `documents/conventions/python/20_benchmark_policy.md` を、topic ごとの配置規約は `documents/conventions/python/30_experiment_directory_structure.md` を参照します。
 
 ## 3. worktree とブランチ
 
@@ -48,6 +51,7 @@
 ## 5. 実行スクリプト
 
 - 実行スクリプトは CLI 引数で条件を変更できるようにします。
+- benchmark は短時間の前後比較を目的とし、長時間の多条件 sweep は experiment に分けます。
 - 少なくとも、次の切り替えは引数化します。
   - 次元レンジ
   - レベルレンジ

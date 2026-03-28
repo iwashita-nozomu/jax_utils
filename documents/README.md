@@ -60,6 +60,8 @@ ______________________________________________________________________
 #### 実験・試行段階
 
 - **[実験環境](./coding-conventions-experiments.md)** — HLO 採取・ベンチマーク
+- **[Benchmark 方針](./conventions/python/20_benchmark_policy.md)** — benchmark と experiment の境界
+- **[実験ディレクトリ構成](./conventions/python/30_experiment_directory_structure.md)** — `experiments/` と `experiment_runner` の責務分担
 - **[レビュー文書](./coding-conventions-reviews.md)** — AI レビュー・解析結果
 
 ______________________________________________________________________

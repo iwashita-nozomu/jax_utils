@@ -1,0 +1,35 @@
+# Benchmark vs Experiment
+
+性能計測を始める前に benchmark と experiment のどちらを選ぶかを素早く判断するためのメモです。
+
+## Benchmark を選ぶとき
+
+- 同じマシンで前後比較したい。
+- 数秒から数分で終わる結果が欲しい。
+- 条件数が少なく、partial 保存や再開を必要としない。
+- 実装変更の影響を小さく切り出して見たい。
+
+## Experiment を選ぶとき
+
+- dimension、level、dtype など複数条件をまとめて探索したい。
+- JSONL を逐次保存し、途中停止や失敗分類に備えたい。
+- timeout、OOM、worker failure を記録したい。
+- 可視化や最終集計を後段で再生成したい。
+
+## この repo での置き場
+
+- benchmark は topic に近い `experiments/` 配下に置く。
+- topic 固有の experiment helper は `experiments/<topic>/` または `experiments/<area>/<topic>/` に置く。
+- 汎用の実行基盤は `python/jax_util/experiment_runner/` に置く。
+
+## 判断の目安
+
+- 「実装変更の前後比較」なら benchmark。
+- 「条件 sweep と failure analysis」なら experiment。
+- 迷ったら、まず benchmark で局所差分を見て、必要なら experiment に拡張する。
+
+## 参照
+
+- [documents/conventions/python/20_benchmark_policy.md](../../documents/conventions/python/20_benchmark_policy.md)
+- [documents/conventions/python/30_experiment_directory_structure.md](../../documents/conventions/python/30_experiment_directory_structure.md)
+- [documents/coding-conventions-experiments.md](../../documents/coding-conventions-experiments.md)

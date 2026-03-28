@@ -131,8 +131,7 @@ if python3 -m pytest python/tests/ -q --tb=short \
   --ignore=python/tests/solvers/test_jax_debug.py \
   --ignore=python/tests/solvers/test_solver_internal_branches.py \
   --ignore=python/tests/functional/test_protocols_and_smolyak_helpers.py \
-  --ignore=python/tests/functional/test_smolyak.py \
-  --ignore=python/tests/experiment_runner/test_subprocess_scheduler_unit.py; then
+  --ignore=python/tests/functional/test_smolyak.py; then
     echo -e "${GREEN}✅ All tests passed${NC}"
     write_report "pytest=pass"
 else

@@ -10,6 +10,11 @@
 - [coding-conventions-solvers.md](../coding-conventions-solvers.md)
 - [coding-conventions-testing.md](../coding-conventions-testing.md)
 
+Python 補足規約:
+
+- [20_benchmark_policy.md](./python/20_benchmark_policy.md)
+- [30_experiment_directory_structure.md](./python/30_experiment_directory_structure.md)
+
 運用上の注意:
 
 - 新しい規約を追加する場合はこのファイルにリンクを追加してください。

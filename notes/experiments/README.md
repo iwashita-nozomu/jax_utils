@@ -2,6 +2,8 @@
 
 このディレクトリには、`main` から辿れる形で残しておきたい実験メモを置きます。
 
+Experiment と benchmark の使い分けは [benchmark_vs_experiment.md](../knowledge/benchmark_vs_experiment.md) を参照してください。
+
 実験メモは、原則として実験ごとに 1 ファイル以上を割り当てます。
 
 一つのファイルに unrelated な実験を混ぜず、

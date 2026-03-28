@@ -33,6 +33,7 @@ runner.run(worker)
   - 環境変数 `CUDA_VISIBLE_DEVICES` / `NVIDIA_VISIBLE_DEVICES` を設定して見える GPU を制御する。
   - `GPUResourceCapacity.from_environment()` と `StandardGPUScheduler` を使うと便利。
   - `gpu_runner.py` の `visible_gpu_ids_from_environment` が環境変数の解釈規則を提供する。
+  - `StandardFullResourceScheduler` を使う場合は、GPU 関連の環境変数は `TaskContext["environment_variables"]` に入り、worker 側で `apply_environment_variables(context)` を呼んで反映する。
 
 - **リソース自動検出**:
 

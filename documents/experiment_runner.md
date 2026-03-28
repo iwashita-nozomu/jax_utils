@@ -1,12 +1,11 @@
 # `experiment_runner` 設計方針
 
 この文書は、`python/jax_util/experiment_runner/` の最小設計を整理します。
-現在は [protocols.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/protocols.py) を正として、[runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/runner.py) の標準実装をそれに揃えます。
+現在の正本は [protocols.py](/workspace/python/jax_util/experiment_runner/protocols.py) と [runner.py](/workspace/python/jax_util/experiment_runner/runner.py) です。
 
 ## 1. 基本抽象
 
-`experiment_runner` では、`ResourceEstimate`、`ResourceCapacity`、`Worker[T, U]`、
-`Scheduler[T]`、`Runner[T, U]` を基本抽象とします。
+`experiment_runner` では、`ResourceEstimate`、`ResourceCapacity`、`Worker[T, U]`、`Scheduler[T]`、`Runner[T, U]` を基本抽象とします。
 
 ### 1.1 `ResourceEstimate`
 
@@ -43,7 +42,7 @@
 
 ## 2. 標準実装
 
-- [runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/runner.py) には `StandardWorker`、`StandardResourceCapacity`、`StandardCompletion`、`StandardScheduler`、`StandardRunner` を置きます。
+- [runner.py](/workspace/python/jax_util/experiment_runner/runner.py) には `StandardWorker`、`StandardResourceCapacity`、`StandardCompletion`、`StandardScheduler`、`StandardRunner` を置きます。
 - `StandardWorker` は `task(case, context)` を呼び、成功時は `0`、例外時は `1` を返します。
 - `StandardScheduler` は FIFO で case を返す最小 scheduler です。
 - `StandardScheduler` は optional な `context_builder` を受け取り、`TaskContext` の組み立てを標準機能として持ちます。
@@ -67,11 +66,12 @@
 
 - resource-aware な順序最適化は scheduler 側へ追加します。
 - GPU 固有差分が必要になっても、runner を増やすのではなく scheduler と resource 表現で吸収する方針です。
-- [gpu_runner.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/gpu_runner.py) には、環境から GPU 一覧を読み取り、1 プロセス 1 GPU を仮定する `GPUResourceCapacity` と `StandardGPUScheduler` を置きます。
-- [resource_scheduler.py](/workspace/.worktrees/work-experiment-runner-generalization-20260317/python/jax_util/experiment_runner/resource_scheduler.py) には、1 task = 1 process を前提に host memory と GPU ごとの slot / memory を同時に見る `FullResourceCapacity`、`FullResourceEstimate`、`StandardFullResourceScheduler` を置きます。
+- [gpu_runner.py](/workspace/python/jax_util/experiment_runner/gpu_runner.py) には、環境から GPU 一覧を読み取り、1 プロセス 1 GPU を仮定する `GPUResourceCapacity` と `StandardGPUScheduler` を置きます。
+- [resource_scheduler.py](/workspace/python/jax_util/experiment_runner/resource_scheduler.py) には、1 task = 1 process を前提に host memory と GPU ごとの slot / memory を同時に見る `FullResourceCapacity`、`FullResourceEstimate`、`StandardFullResourceScheduler` を置きます。
 - `StandardFullResourceScheduler` に渡す `estimate_builder` は、task 実装に隣接した関数、または `task.resource_estimate(case)` のような bound method として定義するのを基本にします。
 - `StandardFullResourceScheduler.from_worker(...)` を使うと、worker が持つ `resource_estimate(case)` をそのまま scheduler へ渡せます。
 - `FullResourceCapacity.from_system(...)` は、`max_workers` を CPU 数、`host_memory_bytes` を物理メモリ量、`gpu_devices` を可視 GPU とそのメモリ容量から自動検出する入口です。
-- 既存の GPU 実験コードとの整合のため、GPU を割り当てる scheduler は `CUDA_VISIBLE_DEVICES` に加えて `NVIDIA_VISIBLE_DEVICES` も `TaskContext` へ入れられるようにします。
-- JAX の GPU メモリ先取りを避けたい実験では、scheduler 初期化時に `disable_gpu_preallocation=True` を渡し、`XLA_PYTHON_CLIENT_PREALLOCATE=false` を `TaskContext` へ載せます。
+- GPU を割り当てる scheduler は `CUDA_VISIBLE_DEVICES` と `NVIDIA_VISIBLE_DEVICES` を `TaskContext["environment_variables"]` にまとめて載せ、worker 側で [context_utils.py](/workspace/python/jax_util/experiment_runner/context_utils.py) の `apply_environment_variables()` を呼んで反映します。
+- JAX の GPU メモリ先取りを避けたい実験では、scheduler 初期化時に `disable_gpu_preallocation=True` を渡し、`XLA_PYTHON_CLIENT_PREALLOCATE=false` を同じ `environment_variables` 経由で渡します。
 - 既存の multi-GPU 実験は fresh subprocess へ環境変数を入れてから JAX を使う流儀だったため、import 前の環境固定が重要な task では、将来的に subprocess runner 系も併用できる形を残します。
+- 現在は `jax_util` 配下に置いていますが、実験基盤として独立性が強くなった場合は standalone module へ切り出してよいです。その場合も、`Worker` / `Scheduler` / `Runner` / `TaskContext` の境界は保ち、experiment 側のコードから見える契約を先に安定化します。
