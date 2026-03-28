@@ -62,6 +62,8 @@ ______________________________________________________________________
 
 - **[レビュー手順](./documents/REVIEW_PROCESS.md)** — 統合方針・検査項目
 - **[チーム調整](./documents/AGENTS_COORDINATION.md)** — エージェント・ロール・手順
+- **[常設エージェントチーム](./agents/README.md)** — 意図理解・調査・編集・独立レビュー・基盤管理を含む共通チーム構成
+- **[タスク別 workflow 集](./agents/TASK_WORKFLOWS.md)** — 10 個の想定タスクと重複整理済み workflow family
 
 ### 🎓 設計・アーキテクチャ
 
@@ -111,6 +113,8 @@ README.md (ここ) ← 👈 入口
   └─ 🛠️ scripts/README.md (ツール導入)
   └─ 📓 notes/README.md (実験ナレッジ)
   └─ 👥 .github/AGENTS.md (チーム運用)
+  └─ 🤖 agents/README.md (常設チーム定義)
+  └─ 🗂️ agents/TASK_WORKFLOWS.md (タスク workflow カタログ)
 ```text
 
 **↑ 「📚」をクリック** → 各層の README.md で詳細ドキュメントへ
@@ -136,6 +140,8 @@ ______________________________________________________________________
 - [Python コーディング規約](./documents/coding-conventions-python.md)
 - [テスト規約](./documents/coding-conventions-testing.md)
 - [Markdown 記法統一](./documents/coding-conventions.md#markdown-%E6%9B%B8%E5%BC%8F%E4%BF%AE%E6%AD%A3%E3%83%AB%E3%83%BC%E3%83%AB)
+- [常設エージェントチーム](./agents/README.md)
+- [タスク別 workflow 集](./agents/TASK_WORKFLOWS.md)
 
 ### 実装開始の前に
 

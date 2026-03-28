@@ -1,0 +1,174 @@
+version: 2
+
+team:
+  id: jax_util_permanent_team
+  report_root: reports/agents
+  branch_prefix: agent
+  worktree_scope_required: true
+  default_runtime_policy: same_team_across_runtimes
+  task_catalog: agents/task_catalog.yaml
+
+always_on_roles:
+  - id: intent_analyst
+    owns:
+      - user_intent_capture
+      - acceptance_criteria
+      - ambiguity_tracking
+    required_outputs:
+      - intent_brief.md
+  - id: coordinator
+    owns:
+      - planning
+      - delegation
+      - escalation
+      - cross_role_handoffs
+    required_outputs:
+      - team_manifest.yaml
+      - decision_log.md
+  - id: editor
+    owns:
+      - code_and_docs_edits
+      - local_validation
+    required_outputs:
+      - decision_log.md
+  - id: change_reviewer
+    owns:
+      - milestone_review
+      - regression_review
+      - design_guardrails
+    required_outputs:
+      - review_log.md
+  - id: final_reviewer
+    owns:
+      - final_independent_review
+      - ship_blockers
+      - risk_summary
+    required_outputs:
+      - review_log.md
+  - id: verifier
+    owns:
+      - ci_execution
+      - quality_gates
+    required_outputs:
+      - verification.txt
+  - id: auditor
+    owns:
+      - evidence_capture
+      - closeout
+      - retrospective
+    required_outputs:
+      - retrospective.md
+
+specialist_roles:
+  - id: researcher
+    activation: internet_or_algorithm_research_needed
+    owns:
+      - external_research
+      - algorithm_survey
+      - source_collection
+    required_outputs:
+      - research_notes.md
+  - id: scheduler
+    activation: large_or_multi_stage_change
+    owns:
+      - milestone_plan
+      - dependency_tracking
+      - delivery_checkpoints
+    required_outputs:
+      - schedule.md
+  - id: infra_steward
+    activation: ci_experiment_or_platform_work
+    owns:
+      - experiment_runner
+      - ci_cd
+      - docker
+      - automation
+    required_outputs:
+      - infra_notes.md
+
+handoffs:
+  - from: intent_analyst
+    to: coordinator
+    gate: user intent and acceptance criteria written
+  - from: coordinator
+    to: researcher
+    gate: external research required
+  - from: coordinator
+    to: scheduler
+    gate: change is large enough to require milestones
+  - from: coordinator
+    to: infra_steward
+    gate: task touches CI, experiments, docker, or platform automation
+  - from: coordinator
+    to: editor
+    gate: scope locked and required specialist inputs attached
+  - from: editor
+    to: change_reviewer
+    gate: one implementation chunk is ready
+  - from: change_reviewer
+    to: editor
+    gate: review feedback resolved or escalated
+  - from: editor
+    to: final_reviewer
+    gate: implementation complete and self-check done
+  - from: final_reviewer
+    to: verifier
+    gate: blocking findings resolved or escalated
+  - from: verifier
+    to: auditor
+    gate: required checks executed and recorded
+
+context_policies:
+  - roles:
+      - editor
+      - change_reviewer
+    mode: isolated
+    share_only:
+      - intent_brief.md
+      - research_notes.md
+      - schedule.md
+      - review_log.md
+      - diff
+      - verification.txt
+    do_not_share:
+      - private_scratchpads
+      - hidden_chain_of_thought
+      - direct_session_memory
+  - roles:
+      - editor
+      - final_reviewer
+    mode: isolated
+    share_only:
+      - intent_brief.md
+      - research_notes.md
+      - schedule.md
+      - review_log.md
+      - diff
+      - verification.txt
+    do_not_share:
+      - private_scratchpads
+      - hidden_chain_of_thought
+      - direct_session_memory
+
+activation_rules:
+  - role: researcher
+    when: algorithm choice, internet lookup, or external verification is needed
+  - role: scheduler
+    when: task spans multiple milestones, modules, or long-running edits
+  - role: infra_steward
+    when: task touches CI, Docker, experiment runners, or platform automation
+
+quality_gates:
+  - scripts/ci/pre_review.sh
+  - make ci
+
+artifacts:
+  intent_brief: intent_brief.md
+  decision_log: decision_log.md
+  review_log: review_log.md
+  team_manifest: team_manifest.yaml
+  verification: verification.txt
+  retrospective: retrospective.md
+  research_notes: research_notes.md
+  schedule: schedule.md
+  infra_notes: infra_notes.md

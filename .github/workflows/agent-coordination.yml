@@ -1,54 +1,98 @@
-name: Agent Coordination (exhaustive)
+name: Agent Coordination
 
 on:
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Short task summary for the agent team run
+        required: true
+        default: manual-agent-run
+      owner:
+        description: Human or agent owning the run
+        required: true
+        default: github-actions
 
 jobs:
   coordinator:
     runs-on: ubuntu-latest
+    outputs:
+      run_id: ${{ steps.bootstrap.outputs.run_id }}
+      report_dir: ${{ steps.bootstrap.outputs.report_dir }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+      - name: Bootstrap agent run
+        id: bootstrap
+        run: |
+          python3 scripts/agent_tools/bootstrap_agent_run.py \
+            --task "${{ inputs.task }}" \
+            --owner "${{ inputs.owner }}" > bootstrap.txt
+          cat bootstrap.txt
+          run_id="$(grep '^RUN_ID=' bootstrap.txt | cut -d= -f2-)"
+          echo "run_id=${run_id}" >> "$GITHUB_OUTPUT"
+          echo "report_dir=reports/agents/${run_id}" >> "$GITHUB_OUTPUT"
       - name: Announce
         run: |
-          echo "Agent coordinator: prepare tasks and notify reviewers"
+          echo "Agent coordinator: run ${{ steps.bootstrap.outputs.run_id }}"
+      - name: Upload bootstrap bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-run-bootstrap-${{ steps.bootstrap.outputs.run_id }}
+          path: ${{ steps.bootstrap.outputs.report_dir }}
 
-  reviewer:
+  verifier:
     needs: coordinator
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Install Python and deps
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]" || true
           if [ -f docker/requirements.txt ]; then pip install -r docker/requirements.txt || true; fi
-      - name: Run static checks
+      - name: Download bootstrap bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-run-bootstrap-${{ needs.coordinator.outputs.run_id }}
+          path: ${{ needs.coordinator.outputs.report_dir }}
+      - name: Run pre-review checks
         run: |
-          python -m pip install pyright pytest || true
-          pyright || true
-      - name: Run tests
-        run: |
-          python -m pytest -q || true
-      - name: List changed files
-        run: git --no-pager diff --name-only origin/main..HEAD || true
+          export AGENT_REPORT_DIR="${{ needs.coordinator.outputs.report_dir }}"
+          bash scripts/ci/pre_review.sh
+      - name: Upload verification bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-run-verification-${{ needs.coordinator.outputs.run_id }}
+          path: ${{ needs.coordinator.outputs.report_dir }}
 
-  integrator:
-    needs: [coordinator, reviewer]
+  auditor:
+    needs: [coordinator, verifier]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Prepare integration artifacts
+      - name: Download verification bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: agent-run-verification-${{ needs.coordinator.outputs.run_id }}
+          path: ${{ needs.coordinator.outputs.report_dir }}
+      - name: Append audit note
         run: |
-          echo "Integrator: create integration plan and run tests"
-          git --no-pager log -n 5 --pretty=oneline
-          python -m pytest -q || true
-      - name: Upload reports
-        run: |
-          echo "Upload test and static analysis reports (to be implemented)"
-
+          {
+            echo ""
+            echo "audit_note=artifact collection completed in GitHub Actions"
+          } >> "${{ needs.coordinator.outputs.report_dir }}/verification.txt"
+      - name: Upload audit bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-run-audit-${{ needs.coordinator.outputs.run_id }}
+          path: ${{ needs.coordinator.outputs.report_dir }}

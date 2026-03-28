@@ -1,0 +1,189 @@
+version: 1
+
+workflow_families:
+  - id: scoped_correction
+    name: Scoped Correction
+    roles:
+      always_on:
+        - intent_analyst
+        - coordinator
+        - editor
+        - change_reviewer
+        - final_reviewer
+        - verifier
+        - auditor
+      specialists: []
+    tasks:
+      - T1
+      - T5
+      - T9
+  - id: research_driven_change
+    name: Research-Driven Change
+    roles:
+      always_on:
+        - intent_analyst
+        - coordinator
+        - editor
+        - change_reviewer
+        - final_reviewer
+        - verifier
+        - auditor
+      specialists:
+        - researcher
+    tasks:
+      - T2
+      - T8
+  - id: large_delivery
+    name: Large Delivery
+    roles:
+      always_on:
+        - intent_analyst
+        - coordinator
+        - editor
+        - change_reviewer
+        - final_reviewer
+        - verifier
+        - auditor
+      specialists:
+        - scheduler
+    tasks:
+      - T3
+      - T4
+  - id: platform_and_infra
+    name: Platform and Infra
+    roles:
+      always_on:
+        - intent_analyst
+        - coordinator
+        - editor
+        - change_reviewer
+        - final_reviewer
+        - verifier
+        - auditor
+      specialists:
+        - researcher
+        - scheduler
+        - infra_steward
+    tasks:
+      - T6
+      - T7
+      - T10
+
+tasks:
+  - id: T1
+    name: solver / optimizer の局所バグ修正
+    family: scoped_correction
+    specialists: []
+    steps:
+      - intent_brief を作成
+      - scope を局所化
+      - editor が修正
+      - change_reviewer が chunk review
+      - final_reviewer が独立 review
+      - verifier が対象 test を実行
+  - id: T2
+    name: アルゴリズム改善のための外部調査つき実装
+    family: research_driven_change
+    specialists:
+      - researcher
+    steps:
+      - intent_brief を作成
+      - researcher が外部調査
+      - coordinator が採用案を決定
+      - editor が実装
+      - reviewer 群が research と diff を review
+      - verifier が test と benchmark を実行
+  - id: T3
+    name: base / solvers / optimizers をまたぐ大規模 refactor
+    family: large_delivery
+    specialists:
+      - scheduler
+    steps:
+      - refactor の goal / non-goal を定義
+      - scheduler が milestone を作成
+      - editor が chunk ごとに変更
+      - change_reviewer が逐次 review
+      - final_reviewer が設計整合を確認
+      - verifier が主要 CI を実行
+  - id: T4
+    name: 新 API / 新機能の追加
+    family: large_delivery
+    specialists:
+      - scheduler
+    steps:
+      - API contract を定義
+      - scheduler が実装順序を決定
+      - editor が code / test / docs を更新
+      - reviewer 群が compatibility を review
+      - verifier が CI を実行
+  - id: T5
+    name: CI failure / flaky test の切り分けと修正
+    family: scoped_correction
+    specialists: []
+    steps:
+      - failure symptom を固定
+      - cause を切り分け
+      - editor が修正
+      - reviewer 群が過剰修正を防ぐ
+      - verifier が failing command を再実行
+  - id: T6
+    name: experiment_runner の拡張や運用改善
+    family: platform_and_infra
+    specialists:
+      - scheduler
+      - infra_steward
+    steps:
+      - 運用課題を明文化
+      - infra_steward が infra surface を整理
+      - scheduler が rollout を設計
+      - editor が runner と docs を更新
+      - reviewer 群が運用 regression を確認
+      - verifier が runner 系 test を実行
+  - id: T7
+    name: Docker / GitHub Actions / 自動化基盤の拡張
+    family: platform_and_infra
+    specialists:
+      - infra_steward
+    steps:
+      - desired workflow を定義
+      - infra_steward が対象 infra を整理
+      - editor が workflow / Docker / scripts を更新
+      - reviewer 群が運用リスクを確認
+      - verifier が構文と dry-run 相当を確認
+  - id: T8
+    name: 性能ボトルネック調査と benchmark 主導の最適化
+    family: research_driven_change
+    specialists:
+      - researcher
+      - scheduler
+    steps:
+      - target metric を定義
+      - researcher が候補手法を調査
+      - scheduler が計測順序を作る
+      - editor が測定と最適化を実装
+      - reviewer 群が妥当性を確認
+      - verifier が benchmark を実行
+  - id: T9
+    name: 実装変更に追随する設計文書・README・テスト整合
+    family: scoped_correction
+    specialists: []
+    steps:
+      - 変更対象 doc/test 範囲を定義
+      - editor が docs と tests を更新
+      - reviewer 群が内容整合と可読性を確認
+      - verifier が markdown formatting と test を確認
+  - id: T10
+    name: 依存更新、runtime 互換性対応、JAX 周辺 upgrade
+    family: platform_and_infra
+    specialists:
+      - researcher
+      - scheduler
+      - infra_steward
+    steps:
+      - upgrade の動機と互換性要件を定義
+      - researcher が upstream breaking changes を調査
+      - infra_steward が infra impact を整理
+      - scheduler が rollout を段階化
+      - editor が code / deps / docs を更新
+      - reviewer 群が migration risk を確認
+      - verifier が full CI を実行
