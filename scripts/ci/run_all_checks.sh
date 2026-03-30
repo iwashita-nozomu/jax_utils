@@ -4,7 +4,7 @@ set -euo pipefail
 # ═══════════════════════════════════════════════════════════════════════════
 # 統合 CI スクリプト
 #
-# 用途: pytest + pyright + ruff を一括実行してプロジェクト品質を検証
+# 用途: pytest + pyright + pydocstyle + ruff を一括実行してプロジェクト品質を検証
 #
 # 使用方法:
 #   bash scripts/ci/run_all_checks.sh           # 全テスト・解析実行
@@ -26,7 +26,7 @@ set -euo pipefail
 # 関連ドキュメント:
 #   - scripts/ci/README.md: ローカル CI 実行ガイド
 #   - documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト3: テスト実行
-#   - .github/workflows/ci.yml: GitHub Actions ワークフロー
+#   - .github/workflows/ci.yml: GitHub Actions ワークフロー（同等チェックを直接実行）
 #
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -74,10 +74,11 @@ echo ""
 
 # 2. pyright 実行
 echo "2️⃣  pyright を実行中..."
-if python -m pyright python/ 2>&1 | grep -q "0 errors"; then
+if python -m pyright python/ 2>&1; then
   echo "✅ pyright 成功"
 else
-  echo "⚠️  pyright 警告あり（エラーで止めない）"
+  echo "❌ pyright 失敗"
+  EXIT_CODE=1
 fi
 echo ""
 
@@ -86,7 +87,8 @@ echo "3️⃣  pydocstyle を実行中... (Docstring チェック)"
 if python -m pydocstyle python/jax_util/ 2>&1; then
   echo "✅ pydocstyle 成功"
 else
-  echo "⚠️  pydocstyle エラーあり（詳細: documents/DOCSTRING_GUIDE.md を参照）"
+  echo "❌ pydocstyle 失敗（詳細: documents/DOCSTRING_GUIDE.md を参照）"
+  EXIT_CODE=1
 fi
 echo ""
 
@@ -99,17 +101,11 @@ if [ $QUICK_MODE -eq 0 ]; then
   echo "   - UP: Python 最新構文チェック"
   echo ""
   
-  RUFF_ERRORS=$(python -m ruff check python/ --select D,E,F,I,UP 2>&1)
-  
-  if echo "$RUFF_ERRORS" | grep -q "error:"; then
-    echo "   $RUFF_ERRORS" | head -30
-    echo "❌ ruff エラーで CI 失敗"
-    EXIT_CODE=1
-  elif [ -z "$RUFF_ERRORS" ] || echo "$RUFF_ERRORS" | grep -q "All checks passed"; then
+  if python -m ruff check python/ --select D,E,F,I,UP 2>&1; then
     echo "✅ ruff 成功"
   else
-    echo "⚠️  ruff 警告あり（詳細: ruff check python/ --show）"
-    echo "$RUFF_ERRORS" | head -20
+    echo "❌ ruff 失敗"
+    EXIT_CODE=1
   fi
   echo ""
 fi

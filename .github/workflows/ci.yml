@@ -46,7 +46,6 @@ jobs:
 
       - name: Run code quality checks
         run: python -m ruff check ./python --select E,F,I,D,UP
-        continue-on-error: true
 
       - name: Upload coverage report
         if: always()

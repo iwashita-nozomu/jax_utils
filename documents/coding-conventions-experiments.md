@@ -39,6 +39,8 @@
 - worktree を削除する前に、その worktree にしか残っていない知見を `main` の `./notes/worktrees/` へ吸い出して整理します。
 - 吸い出しでは、少なくとも branch 名、worktree の用途、関連結果、主要な観測、次の `Idea:` を残します。
 - 実験 branch と results branch は、`main` の `./notes/branches/README.md` から参照できるようにし、関連する experiment note や worktree note への入口を置きます。
+- 実験 worktree では、scope 更新、条件変更、run 開始/停止、partial/final JSON 採用、統合判断を action log に逐次記録します。
+- action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とし、worktree 内でも同じ相対パスで下書きします。
 
 ## 4. 生成物の扱い
 
@@ -87,6 +89,7 @@
 - `./notes/experiments/` に一度残した過去の実験メモ本文は、原則として書き換えません。
 - 追加の知見や訂正は、既存本文を直さず `Addendum:` や `Correction:` として追記するか、新しい日付付きメモを作って参照します。
 - `./notes/experiments/` のタイトルは日付ではなく実験トピックを主にし、日付は副情報として扱います。
+- 実験メモには、最低でも source branch、source JSON/JSONL、`main` に持ち帰った final JSON、主要観測、次の action を同じファイル内に残します。
 - 削除した worktree の固有メモは `main` の `./notes/worktrees/` へ残し、worktree 自体を消しても判断の流れを追えるようにします。
 - 日付依存の強い実験ログや途中判断は `main` の `./diary/` に残してよいです。
 - `./notes/experiments/` や `./notes/themes/` から final JSON や図へ張るリンクは、できるだけ相対パスで書きます。

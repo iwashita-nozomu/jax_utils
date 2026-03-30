@@ -9,31 +9,32 @@ ______________________________________________________________________
 ### 1. 環境構築
 
 ```bash
-# 環境変数・ワークツリー自動設定
-bash scripts/setup_worktree.sh my-feature-name "機能説明"
+# branch 名を明示して worktree 作成
+bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
 
 # ワークツリーに移動
-cd .worktrees/my-feature-name
+cd .worktrees/work-my-feature-YYYYMMDD
 ```
 
 **⚠️ 注意**: ローカル仮想環境（`.venv`, `venv` など）の作成は **禁止** です。Docker 環境を使用してください。詳細は [documents/coding-conventions-project.md](./documents/coding-conventions-project.md#3-docker%E7%92%B0%E5%A2%83%E3%81%AE%E6%96%B9%E9%87%9D) を参照。
 
-## 2. 最初のコミット
+### 2. 最初のコミット
 
-````bash
+```bash
 # スコープ確認・編集
 vim WORKTREE_SCOPE.md
 git add WORKTREE_SCOPE.md && git commit -m "chore(worktree): initialize scope"
-```text
+git push -u origin work/my-feature-YYYYMMDD
+```
 
-## 3. 実装テスト
+### 3. 実装テスト
 
 ```bash
 # 単体テスト + 型チェック + リント統一実行
 make ci
 # または
 bash scripts/ci/run_all_checks.sh
-```yaml
+```
 
 📖 **詳細:** [QUICK_START.md](./QUICK_START.md) / [ワークツリー完全ガイド](./documents/worktree-lifecycle.md)
 
@@ -118,7 +119,7 @@ README.md (ここ) ← 👈 入口
   └─ 🧭 agents/agents_config.json (チーム正本)
   └─ 💬 agents/COMMUNICATION_PROTOCOL.md (通信規約)
   └─ 🗂️ agents/TASK_WORKFLOWS.md (タスク workflow カタログ)
-```text
+```
 
 **↑ 「📚」をクリック** → 各層の README.md で詳細ドキュメントへ
 
@@ -178,7 +179,7 @@ git clone → setup_worktree → WORKTREE_SCOPE 編集
 ドキュメント更新 (mdformat) → コミット
    ↓
 統合ブランチへ merge → GitHub Actions
-```yaml
+```
 
 ______________________________________________________________________
 
@@ -186,7 +187,7 @@ ______________________________________________________________________
 
 | 項目             | 値                       |
 | ---------------- | ------------------------ |
-| **言語**         | Python 3.9+              |
+| **言語**         | Python 3.10+             |
 | **主要依存**     | JAX, Equinox, scipy      |
 | **テスト**       | pytest, pyright, ruff    |
 | **マークダウン** | mdformat, markdownlint   |
@@ -208,4 +209,3 @@ ______________________________________________________________________
 - **Development:** `pip install -e ".[dev]"` → `pytest` → `ruff check .`
 - **HLO Analysis:** `python scripts/hlo/summarize_hlo_jsonl.py <file.jsonl>`
 - **Notes:** [notes/README.md](./notes/README.md) 参照
-````

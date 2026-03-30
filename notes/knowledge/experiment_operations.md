@@ -26,6 +26,7 @@
 - 削除前に `notes/worktrees/` へ吸い出す。
 - 少なくとも、用途、主要結果、分かったこと、次の案を書く。
 - 過去の note 本文は原則書き換えず、必要なら追記で補う。
+- 実験中の一挙手一投足は action log として逐次残し、削除前に要約へ圧縮する。
 
 ## 監視
 
@@ -46,6 +47,7 @@
 
 - ワークツリー作成前に `git fetch origin main` を実行する。
 - `scripts/setup_worktree.sh` で作られた `WORKTREE_SCOPE.md` を埋める。
+- `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を action log の正本にする。
 - 実験・実装を main に取り込む前に、関連ユニットテストをワークツリーで実行する。
 - ドキュメント更新はコード変更と同時に持ち帰る。
 - 依存が増える変更では `docker/requirements.txt` と `docker/Dockerfile` を同時に更新する。

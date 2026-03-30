@@ -8,7 +8,7 @@
 - ✅ **使用方法の確認** — 各ツール・チェックリストの読み方
 - ✅ **詳細の参照先** — 掘り下げたいときは TOOLS_DIRECTORY.md へ
 
-⚠️ **注意：** スクリプト実装の詳細は [`scripts/README.md`](../../scripts/README.md) を参照してください。
+⚠️ **注意：** スクリプト実装の詳細と正本の引数仕様は [`scripts/README.md`](../../scripts/README.md) を参照してください。
 
 ______________________________________________________________________
 
@@ -18,7 +18,7 @@ ______________________________________________________________________
 
 **ツール・スクリプト詳細目録**
 
-- 全ツール・スクリプト（20個）の用途・使用法を説明
+- 全ツール・スクリプト（24個）の用途・使用法を説明
 - カテゴリ別分類（Git管理、ドキュメント処理、設計管理など）
 - ツール依存関係グラフ
 - 使用フロー別ガイド（5種）
@@ -98,11 +98,11 @@ ______________________________________________________________________
 
 #### run_all_checks.sh（★推奨: 統合テスト）
 
-**用途:** pytest + pyright + ruff を一括実行
+**用途:** pytest + pyright + pydocstyle + ruff を一括実行
 
 **実行方法:**
 
-```bash
+`````bash
 # 標準実行（全チェック）
 bash scripts/ci/run_all_checks.sh
 
@@ -117,6 +117,7 @@ bash scripts/ci/run_all_checks.sh --verbose
 
 1. `pytest python/tests/` — ユニット・統合テスト
 1. `pyright python/` — Python 型チェック
+1. `pydocstyle python/jax_util/` — Docstring 検証
 1. `ruff check python/` — リント・スタイルチェック
 
 **戻り値:**
@@ -141,18 +142,18 @@ git commit -m "feat: new feature"
 
 # 4. リモート push
 git push origin branch-name
-```text
+```
 
 ## GitHub Actions との関係
 
-`.github/workflows/ci.yml` はこのスクリプト（`run_all_checks.sh`）を呼び出します：
+`.github/workflows/ci.yml` は `run_all_checks.sh` と同等のコマンドを直接実行します：
 
 ```yaml
 - name: Run all checks
-  run: bash scripts/ci/run_all_checks.sh
-```yaml
+  run: python -m pytest ...
+```
 
-**つまり:** ローカルで成功 = リモート CI でも成功（高確率）
+**つまり:** `run_all_checks.sh` を通してローカルで成功すれば、GitHub Actions の主要チェックとも揃います。
 
 ### トラブルシューティング
 
@@ -164,7 +165,7 @@ pytest python/tests/test_module.py::TestClass::test_method -v
 
 # 失敗情報を詳しく表示
 pytest python/tests/ -v --tb=long
-```yaml
+```
 
 詳細: [FILE_CHECKLIST_OPERATIONS.md#チェックリスト3](../FILE_CHECKLIST_OPERATIONS.md)
 
@@ -176,7 +177,7 @@ pyright python/ 2>&1 | grep "error"
 
 # 特定モジュールのみチェック
 pyright python/jax_util/solvers/
-```text
+```
 
 ## ruff エラー修正
 
@@ -186,7 +187,7 @@ ruff check --fix python/
 
 # 修正内容確認
 git diff python/
-```text
+```
 
 ## 依存パッケージが不足の場合
 
@@ -200,7 +201,7 @@ pip install -r docker/requirements.txt
 # または Docker 使用
 docker build -t jax-util -f docker/Dockerfile .
 docker run --rm -v $(pwd):/workspace -w /workspace jax-util bash scripts/ci/run_all_checks.sh
-```text
+```
 
 ## カスタマイズ
 
@@ -210,7 +211,7 @@ docker run --rm -v $(pwd):/workspace -w /workspace jax-util bash scripts/ci/run_
 
 ```bash
 export PYTHONPATH="/workspace/python:${PYTHONPATH:-}"
-```yaml
+```
 
 参照: [coding-conventions-project.md](../coding-conventions-project.md)
 
@@ -222,7 +223,7 @@ ______________________________________________________________________
 | ------------------------ | --------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | **Git初期化**            | `git_config.sh` / `git_init.sh` / `git_repo_init.sh`                                                      | `scripts/`                    |
 | **規約表示**             | `view_conventions.sh` / `read_conventions.sh`                                                             | `scripts/`                    |
-| **ワークツリー**         | `create_worktree.sh` / `setup_worktree.sh`                                                                | `scripts/tools/` / `scripts/` |
+| **ワークツリー**         | `setup_worktree.sh` / `create_worktree.sh`                                                                | `scripts/` / `scripts/tools/` |
 | **テスト実行**           | `run_pytest_with_logs.sh`                                                                                 | `scripts/`                    |
 | **ドキュメント処理**     | `format_markdown.py` / `audit_and_fix_links.py` / `fix_markdown_docs.py`                                  | `scripts/tools/`              |
 | **設計管理**             | `organize_designs.py` / `find_redundant_designs.py` / `find_similar_designs.py` / `tfidf_similar_docs.py` | `scripts/tools/`              |
@@ -251,7 +252,7 @@ ______________________________________________________________________
 推奨コマンド：
 
 ````bash
-bash scripts/tools/create_worktree.sh my-feature-name
+bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
 ```yaml
 
 ### Q: テストを実行してログを保存したいのですが？
@@ -290,7 +291,7 @@ python scripts/tools/tfidf_similar_docs.py
 
 **A:** [WORKTREE_TOOL_UNIFICATION.md](./WORKTREE_TOOL_UNIFICATION.md) で詳しく説明しています。
 
-**現在の推奨:** `scripts/tools/create_worktree.sh` を使用してください。
+**現在の推奨:** `scripts/setup_worktree.sh` を使用してください。`scripts/tools/create_worktree.sh` は互換ラッパーです。
 
 ______________________________________________________________________
 
@@ -342,4 +343,4 @@ ______________________________________________________________________
 | 日付       | 変更事項                                               |
 | ---------- | ------------------------------------------------------ |
 | 2026-03-19 | 初期版作成。ツール目録・チェックリスト・統一提案を整備 |
-````
+`````

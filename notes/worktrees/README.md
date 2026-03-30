@@ -8,6 +8,13 @@
 - 実験 branch や tuning branch の一時的な判断を、後で参照できる形にする
 - worktree 自体は消しても、判断の履歴は失わないようにする
 
+## Action Log
+
+- このディレクトリの note は、carry-over 用 summary であると同時に worktree の action log の正本です。
+- scope 更新、編集開始、テスト実行、実験開始/停止、最終判断は append-only で追記します。
+- 1 行でよいので、何をしたか、何を見たか、次に何をするかが追える形にします。
+- worktree 内で先に書く場合も、最終配置と同じ相対パスに置きます。
+
 ## What To Extract
 
 最低限、次を整理してから worktree を消します。
@@ -32,6 +39,14 @@
 
 - worktree note はリンク集だけで終わらせず、その file 単体で branch の役割、主要変更、重要結果、最終判断が読めるようにします。
 - 詳細ログや raw 結果へのリンクは補助として置きますが、核心の結論は本文に残します。
+
+## Recommended Sections
+
+- `Summary:`
+- `Action Log:`
+- `Observations:`
+- `Carry-Over Targets:`
+- `Idea:` / `Interpretation:` / `Consideration:`
 
 ## Notes
 

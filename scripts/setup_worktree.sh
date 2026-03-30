@@ -9,16 +9,17 @@ set -euo pipefail
 #
 # 【使用方法】
 #   1. 標準的な使い方（デフォルトパス）
-#      bash scripts/setup_worktree.sh my-feature
-#      → ブランチ: work/my-feature-<YYYYMMDD> (※注: 本スクリプトは日付1付与しない)
-#      → ワークツリー: .worktrees/my-feature
+#      bash scripts/setup_worktree.sh work/my-feature-20260330
+#      → ブランチ: work/my-feature-20260330
+#      → ワークツリー: .worktrees/work-my-feature-20260330
 #
 #   2. カスタムワークツリーパス指定
-#      bash scripts/setup_worktree.sh feature-xyz .worktrees/custom-path
-#      → ワークツリー: .worktrees/custom-path
+#      bash scripts/setup_worktree.sh results/smolyak-validation-20260328 \
+#        .worktrees/results-smolyak-validation-20260328
+#      → ワークツリー: .worktrees/results-smolyak-validation-20260328
 #
 # 【前提条件】
-#   - リポジトリが clean 状態（git status: 何も表示されない）
+#   - リポジトリが clean 状態であることを推奨
 #   - main ブランチが存在
 #   - origin と接続可能（git fetch 可能）
 #
@@ -48,7 +49,8 @@ if [ -z "$BRANCH" ]; then
   echo "Usage: $0 <branch-name> [worktree-path]" >&2
   exit 2
 fi
-WT_PATH=${2:-.worktrees/${BRANCH}}
+DEFAULT_WT_PATH=".worktrees/${BRANCH//\//-}"
+WT_PATH=${2:-$DEFAULT_WT_PATH}
 
 echo "Using branch: $BRANCH"
 echo "Worktree path: $WT_PATH"

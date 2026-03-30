@@ -21,7 +21,7 @@ ______________________________________________________________________
 
 #### ステップ1: 規約確認（5分以内）
 
-```bash
+````bash
 # 1-1. プロジェクト全体ガイド表示
 bash scripts/guide.sh
 
@@ -43,14 +43,11 @@ cat documents/coding-conventions-project.md
 ## ステップ2: ワークツリー作成（3分）
 
 ```bash
-# 2-1. 推奨: create_worktree.sh を使用
-bash scripts/tools/create_worktree.sh my-feature-name
-
-# OR 従来方式: setup_worktree.sh を使用
-# bash scripts/setup_worktree.sh my-feature-name "機能説明"
+# 2-1. 推奨: setup_worktree.sh を使用
+bash scripts/setup_worktree.sh work/my-feature-name-YYYYMMDD
 
 # 2-2. ワークツリー移動
-cd .worktrees/my-feature-name
+cd .worktrees/work-my-feature-name-YYYYMMDD
 ```yaml
 
 **確認項目:**
@@ -69,15 +66,17 @@ vim WORKTREE_SCOPE.md
 #   - Branch: correct?
 #   - Purpose: 今回の作業目的
 #   - Editable Directories: 編集対象ディレクトリ
+#   - Working Notes During Execution: 作業ログの置き場
 #   - Required Checks: 実行必須テスト
 #   - Special Rules: 特別な指定事項
 ```yaml
 
 **確認項目:**
 
-- [ ] `Branch` が正しい（work/my-feature-name-YYYYMMDD）
+- [ ] `Branch` が正しい（例: `work/my-feature-name-YYYYMMDD`）
 - [ ] `Purpose` に日本語で作業内容記述
 - [ ] `Editable Directories` が具体的
+- [ ] 作業ログの置き場が明記されている
 - [ ] `Required Checks` にテスト・チェック項目を記載
 
 ## ステップ4: 最初のコミット（3分）
@@ -645,14 +644,13 @@ ______________________________________________________________________
 
 **現状:**
 
-- 両方共存（要統一）
-- 機能がほぼ重複
+- `scripts/setup_worktree.sh` が正本
+- `scripts/tools/create_worktree.sh` は互換ラッパー
 
 **推奨:**
 
-- `scripts/tools/create_worktree.sh` を標準使用
-- `scripts/setup_worktree.sh` は廃止予定
-- または、`setup_worktree.sh` を `create_worktree.sh` へのシンボリックリンクに変更
+- 新規の呼び出しは `scripts/setup_worktree.sh` を使う
+- branch 名は `work/<topic>-YYYYMMDD` や `results/<topic>` のように明示する
 
 ### 問題: テスト失敗時のデバッグ方法
 
@@ -700,3 +698,4 @@ ______________________________________________________________________
 - [documents/coding-conventions-project.md](./coding-conventions-project.md) — プロジェクト運用規約
 - [documents/worktree-lifecycle.md](./worktree-lifecycle.md) — ワークツリー管理規約
 - [.github/workflows/](../.github/workflows/) — CI/CD ワークフロー
+````

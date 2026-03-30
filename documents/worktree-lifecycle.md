@@ -36,6 +36,7 @@
   - 原則変更しないディレクトリ
   - 参照必須の文書
   - `main` に持ち帰る予定の `notes/` の置き場
+  - 作業中に追記する action log の置き場
   - その worktree 固有の追加ルール
 - テンプレートは [WORKTREE_SCOPE_TEMPLATE.md](/workspace/documents/WORKTREE_SCOPE_TEMPLATE.md) を使う
 
@@ -46,6 +47,14 @@
 - worktree ごとに目的外の変更を混ぜない
 - 実験固有のコード変更は、まず対応する results worktree で確認してから `main` へ戻す
 - `main` に先に入れるのは、共通コードや規約更新のような実験非依存の変更に限る
+- 作業中の「一挙手一投足」は、必ず 1 か所の append-only な action log に残す
+- action log は、意味のある単位ごとに短く追記する
+  - 例: scope 更新、編集開始、テスト実行、実験開始、実験停止、carry-over 判断、branch 統合
+- action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とする
+- worktree 内で下書きするときも、最終配置と同じ相対パスに置く
+  - 例: `.worktrees/<name>/notes/worktrees/worktree_<topic>_YYYY-MM-DD.md`
+  - 例: `.worktrees/<name>/notes/experiments/<topic>.md`
+  - 例: `.worktrees/<name>/notes/branches/<branch_topic>.md`
 
 ## 6. notes / diary / 実験結果の扱い
 
@@ -58,17 +67,18 @@
 - 後から図や集計を再生成したい実験は、最低限の final JSON を `notes/experiments/results/` に持ち帰る
 - 巨大な raw JSONL、HTML、SVG、ログは原則として results branch に残し、`main` へ常設しない
 - `main` の note から raw 結果を参照するときは、本文の核心をリンク先へ逃がさず、必要最小限の JSON と要約を `main` 側にも残す
-- 最新の結果は必ずmainに持ち帰る。ファイルサイズは気にしない
+- `main` へ持ち帰るのは、再解析に必要な最小 final JSON と、その意味を説明する note を原則とする
 - worktree を削除する前に、残すべき `notes/` は `main` 側へ commit 済み、または `main` に merge 済みでなければならない
 
 ## 7. worktree を閉じる前のチェック
 
 - その worktree で得た知見を `notes/` のどこへ残すか決めたか
+- action log が途中で途切れず、何をして何をやめたか追えるか
 - `main` に残すべき要約・観測・判断を `notes/` へ反映したか
 - `diary/` に残すべき日付依存ログを分けたか
 - `notes/experiments/results/` に持ち帰る final JSON を選んだか
 - raw 結果を results branch に残すか、不要として捨てるかを決めたか
-- branchの結果は必ずmainに持ちかえり、図、数式を用いて整理する
+- branch の結果を `main` にどう要約するか決め、必要なら図や数式を note 側で整理したか
 
 ## 8. 削除前の整理
 
@@ -79,10 +89,12 @@
   - branch 名
   - worktree の用途
   - 関連する結果やログ
+  - action log の要約
   - 主要な観測
   - 次の `Idea:` / `Interpretation:` / `Consideration:`
   - `WORKTREE_SCOPE.md` があった場合は、その制約と実際の運用差分
 - 実験 worktree の場合は、`notes/experiments/` と `notes/experiments/results/` の更新要否も確認する
+- branch の入口は `notes/branches/` に置き、関連 note と raw 結果の所在を 1 か所から辿れるようにする
 - 公開や再利用を前提とする図は、必要なら `notes/assets/` に持ち帰る
 
 ## 9. 削除の条件
@@ -98,3 +110,14 @@
 - `git worktree list` で一覧から消えたことを確認する
 - 関連する branch と note の入口を `main` から辿れる状態にしておく
 - 追加の作業が出たら、新しい worktree を切る
+
+## 11. 推奨ワークフロー
+
+1. `scripts/setup_worktree.sh <branch-name> [worktree-path]` で worktree を切る
+1. `WORKTREE_SCOPE.md` を埋め、action log と carry-over target を決める
+1. `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を開き、作業開始を記録する
+1. コード編集、テスト、実験、停止判断のたびに action log を追記する
+1. 実験の意味ある観測は `notes/experiments/<topic>.md` に整理する
+1. `main` に残す最小 final JSON を `notes/experiments/results/` に選ぶ
+1. `notes/branches/<branch_topic>.md` から、scope、note、result の入口を整える
+1. `main` に carry-over を取り込んでから worktree を削除する

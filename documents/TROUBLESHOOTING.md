@@ -10,9 +10,9 @@ ______________________________________________________________________
 
 #### **Python がインストールされていない / バージョンが古い**
 
-**症状：** `python3: command not found` または `Python 3.9+` が必要
+**症状：** `python3: command not found` または `Python 3.10+` が必要
 
-```bash
+`````bash
 # 1. Python バージョン確認
 python3 --version
 
@@ -52,8 +52,8 @@ fatal: cannot create worktree with file '...'
 ls -la .worktrees/
 
 # 削除して再作成
-rm -rf .worktrees/my-feature-name/
-bash scripts/setup_worktree.sh my-feature-name "description"
+rm -rf .worktrees/work-my-feature-YYYYMMDD/
+bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
 ```text
 
 **参照：** [ワークツリーライフサイクル](./worktree-lifecycle.md)
@@ -250,8 +250,8 @@ git worktree list
 
 # 3. 必要に応じて削除して再作成
 cd ../..  # ルートに戻る
-git worktree remove .worktrees/my-feature-name/
-bash scripts/setup_worktree.sh my-feature-name "description"
+git worktree remove .worktrees/work-my-feature-YYYYMMDD/
+bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
 ```text
 
 **参照：** [ワークツリー規約](./WORKTREE_SCOPE_TEMPLATE.md)
@@ -401,7 +401,7 @@ image: python:3.11
 steps:
   - run: pytest
 ```text
-````
+`````
 
 **規約：** [Markdown 規約](./coding-conventions.md)
 
@@ -411,7 +411,7 @@ ______________________________________________________________________
 
 **A:**
 
-```python
+````python
 # 問題のコード
 def compute(x):
     return jnp.sum(x)
@@ -534,3 +534,4 @@ ______________________________________________________________________
 1. **[documents/README.md](./README.md)** の目的別ナビゲーションで、該当ドキュメントを探す
 1. **スタッフに相談** — AGENTS.md を参照
 1. **既知の問題をスキャン** — DOCUMENT_RESTRUCTURING_PROPOSAL.md 参照
+````

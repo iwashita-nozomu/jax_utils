@@ -59,6 +59,16 @@ ______________________________________________________________________
 - worktree を削除する前に、残すべき `notes/` は `main` に commit 済み、または `main` に merge 済みでなければなりません。
 - `results/*` branch に raw 結果を残す場合でも、`main` から辿るための report や extraction note は `notes/` 側へ持ち帰ります。
 
+## Action Log Rule
+
+- worktree 上の意味ある操作は、1 か所の append-only な note に逐次残します。
+- 既定の action log 置き場は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` です。
+- scope 更新、編集開始、テスト実行、実験開始/停止、branch 統合判断のような節目は必ず追記します。
+- worktree 内でも、最終的に `main` に持ち帰るのと同じ相対パスへ書きます。
+  - 例: `.worktrees/<name>/notes/worktrees/worktree_<topic>_YYYY-MM-DD.md`
+  - 例: `.worktrees/<name>/notes/experiments/<topic>.md`
+  - 例: `.worktrees/<name>/notes/branches/<branch_topic>.md`
+
 ## Format
 
 - `notes/` の文書は Markdown で書きます。

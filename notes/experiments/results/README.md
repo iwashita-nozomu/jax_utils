@@ -5,6 +5,7 @@
 - 目的は、後から別の図や集計を再生成できるようにすることです。
 - raw な JSONL、巨大ログ、途中経過の全ファイルまでは置きません。
 - branch を代表する final JSON、あるいは partial でも再解析価値の高い JSON を選んで置きます。
+- 何を `main` に残し、何を results branch に残したかは、対応する note と branch summary から辿れるようにします。
 
 各 JSON について、対応する note から
 

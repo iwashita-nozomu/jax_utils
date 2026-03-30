@@ -19,7 +19,7 @@
 
 **問題点:**
 
-- 重複・役割混在（`setup_worktree.sh` / `create_worktree.sh`）
+- 入口が二つ見える（`setup_worktree.sh` / `create_worktree.sh`）
 - ドキュメント化が不十分
 - 前提・依存関係が不明確
 - 実行順序・チェックリストが不足
@@ -76,34 +76,34 @@
 
 ### 3. ワークツリー・ブランチ管理
 
-#### 3.1 `scripts/setup_worktree.sh` ⚠️ 要統一
+#### 3.1 `scripts/setup_worktree.sh`
 
 - **用途:** ワークツリー・ブランチをセットアップして規約に従う
-- **実行:** `bash scripts/setup_worktree.sh <branch-name> [説明]`
-- **前提:** リポジトリが `main` ブランチで clean
+- **実行:** `bash scripts/setup_worktree.sh <branch-name> [worktree-path]`
+- **前提:** リポジトリが `main` ブランチで clean であることを推奨
 - **依存:** `git_config.sh`（スコープテンプレート読み込み）
-- **入力:** ブランチ名、オプション説明文
+- **入力:** ブランチ名、オプション worktree path
 - **出力:** ワークツリー作成、`WORKTREE_SCOPE.md` 自動生成
 - **例:**
   ```bash
-  bash scripts/setup_worktree.sh protocol-improvements "Protocol改善"
+  bash scripts/setup_worktree.sh work/protocol-improvements-20260330
   ```
+- **既定パス:** `.worktrees/<branch-name の / を - に置換>`
 
-#### 3.2 `scripts/tools/create_worktree.sh` ⚠️ 要統一
+#### 3.2 `scripts/tools/create_worktree.sh`
 
-- **用途:** `setup_worktree.sh` と同様（ブランチ・ワークツリー作成）
+- **用途:** `setup_worktree.sh` への互換ラッパー
 - **実行:** `bash scripts/tools/create_worktree.sh <branch-name> [WT_PATH]`
-- **前提:** リポジトリが clean
-- **依存:** なし（独立）
+- **前提:** `scripts/setup_worktree.sh` が存在
+- **依存:** `scripts/setup_worktree.sh`
 - **入力:** ブランチ名、オプションワークツリーパス
-- **出力:** ワークツリー作成、スコープテンプレート自動コピー
-- **差異:** 相対パスかワークツリー場所の指定可（`setup_worktree.sh` より柔軟）
+- **出力:** `setup_worktree.sh` と同一
+- **差異:** 実装差分は持たず、旧呼び出しを壊さないための入口
 
 **推奨:**
 
-- 実装が重複している（両方ともワークツリー作成・スコープ自動配置）
-- **統一方針:** `scripts/tools/create_worktree.sh` を標準にし、`scripts/setup_worktree.sh` は廃止予定ラッパーとするか、
-  またはドキュメントで「`scripts/tools/create_worktree.sh` を使用」と統一
+- 正本は `scripts/setup_worktree.sh`
+- `scripts/tools/create_worktree.sh` は互換用
 
 #### 3.3 `scripts/guide.sh`
 
@@ -266,14 +266,15 @@ ______________________________________________________________________
 
 ## ツール依存関係グラフ
 
-```text
+````text
 main ブランチ
   ↓
 git_init.sh
   ├→ git_config.sh
   └→ [プロジェクト初期化]
       ↓
-      ├─ setup_worktree.sh OR create_worktree.sh
+      ├─ setup_worktree.sh
+      │   └→ create_worktree.sh は互換ラッパー
       │   ├→ WORKTREE_SCOPE_TEMPLATE.md テンプレート読込
       │   └→ ワークツリー作成
       │
@@ -309,7 +310,7 @@ cd /workspace
 bash scripts/view_conventions.sh
 
 # 3. ワークツリー・ブランチ作成
-bash scripts/tools/create_worktree.sh my-feature "新機能実装"
+bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
 
 # 4. ワークツリーに移動
 cd .worktrees/my-feature
@@ -379,7 +380,7 @@ ______________________________________________________________________
 
 | ファイル                                              | 問題                                      | 推奨                                                            |
 | ----------------------------------------------------- | ----------------------------------------- | --------------------------------------------------------------- |
-| `scripts/setup_worktree.sh`                           | `scripts/tools/create_worktree.sh` と重複 | 統一：`create_worktree.sh` を標準化、もしくはシンボリックリンク |
+| `scripts/setup_worktree.sh`                           | 旧入口と正本の二重導線                    | 正本に固定し、`create_worktree.sh` は互換ラッパーとして維持     |
 | `scripts/view_conventions.sh` + `read_conventions.sh` | 役割が曖昧                                | 用途を明確化、統一推奨                                          |
 
 ### 優先度2: ドキュメント充実
@@ -398,8 +399,9 @@ ______________________________________________________________________
 
 ## 次ステップ
 
-1. **統一決定:** `setup_worktree.sh` vs `create_worktree.sh` をどちらに統一するか決定
+1. **導線維持:** `setup_worktree.sh` を正本、`create_worktree.sh` を互換入口として保つ
 1. **個別ドキュメント:** 各ツール用 README を作成
 1. **チェックリスト充実:** 作業フロー別チェックリスト拡充（別ファイル）
 1. **CI 統合:** GitHub Actions での定期実行設定
 1. **廃止計画:** 不要ツール・スクリプトの削除予定表作成
+````

@@ -52,6 +52,7 @@ Experiment と benchmark の使い分けは [benchmark_vs_experiment.md](../know
 - 主要な観測値
 - 定性的な結論
 - 次の課題
+- 実験中に何を走らせ、どこで条件を変えたかの action log
 
 文献から得た記述は、対象文献を具体的に明示します。
 
@@ -60,3 +61,8 @@ Experiment と benchmark の使い分けは [benchmark_vs_experiment.md](../know
 - `main` へ持ち帰る final JSON は `notes/experiments/results/` に置きます。
 - raw な JSONL や大量ログまでは持ち込まず、後段の図再生成に必要な最小限の JSON を選びます。
 - note 本文からは、その JSON へのリンクを必ず張ります。
+
+## In-Worktree Drafting
+
+- worktree で実験を進めるときも、最終的に `main` に置くのと同じ `notes/experiments/<topic>.md` へ追記します。
+- 詳細な一挙手一投足は `notes/worktrees/` の action log に残し、この note には実験として意味のある条件変更と観測を要約します。

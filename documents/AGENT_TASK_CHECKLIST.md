@@ -1,10 +1,10 @@
 # 📋 エージェントタスク実装可能性チェックシート
 
-**最終確認日**: 2026-03-20  
-**確認者**: AI Agent  
+**最終確認日**: 2026-03-20\
+**確認者**: AI Agent\
 **公開ステータス**: ✅ **チーム全員対応可能**
 
----
+______________________________________________________________________
 
 ## 使用方法
 
@@ -17,181 +17,189 @@
 [各ページをチェック→ ✅/❌/⚠️ でマーク]
 ```
 
----
+______________________________________________________________________
 
 ## Phase 1: 基本環境検証
 
 ### K-1: Python 環境
 
 - [x] Python 3.8+ インストール確認
+
   - 確認コマンド: `python --version`
   - 結果: ✅ Python 3.10+ 環境確認済み (Docker)
-  
+
 - [x] pip インストール確認
+
   - 確認コマンド: `pip --version`
   - 結果: ✅ pip 24.x 確認済み
 
 - [x] jax_util パッケージ インストール確認
+
   - 確認コマンド: `python -c "import jax_util; print('OK')"`
   - 結果: ✅ インストール可能確認済み
 
 ### K-2: Git 環境
 
 - [x] Git インストール確認
+
   - 確認コマンド: `git --version`
   - 結果: ✅ git 2.x 確認済み
 
 - [x] リポジトリ初期化
+
   - 確認コマンド: `git log --oneline | head -1`
   - 結果: ✅ リポジトリ初期化済み
 
 - [x] ワークツリー機能確認
+
   - 確認コマンド: `git worktree list`
   - 結果: ✅ ワークツリー作成可能確認済み
 
 ### K-3: ドキュメント環境
 
 - [x] Markdown ファイル存在確認
+
   - 確認コマンド: `find documents -name "*.md" | wc -l`
   - 結果: ✅ 47 ファイル存在確認
 
 - [x] リント・フォーマットツール確認
+
   - 確認コマンド: `which mdformat ruff pyright`
   - 結果: ✅ すべてインストール確認
 
----
+______________________________________________________________________
 
 ## Phase 2: ドキュメント充足度検証
 
 ### D-1: 初心者向けドキュメント
 
-| ドキュメント | 確認項目 | 状態 | 備考 |
-|---|---|---|---|
-| root/README.md | クイックスタート section 存在 | ✅ | 30+ 行 |
-| | ドキュメント構成図 存在 | ✅ | Visual tree |
-| | よく使うコマンド table | ✅ | 7 commands |
-| documents/README.md | Hub structure 存在 | ✅ | 5-layer |
-| | クイックアクセス table | ✅ | 6 workflows |
-| | ナビゲーション明確 | ✅ | Category links |
-| QUICK_START.md | セットアップ手順 | ✅ | 3 steps |
-| | 推定時間記載 | ✅ | 5-15 min |
+| ドキュメント        | 確認項目                      | 状態 | 備考           |
+| ------------------- | ----------------------------- | ---- | -------------- |
+| root/README.md      | クイックスタート section 存在 | ✅   | 30+ 行         |
+|                     | ドキュメント構成図 存在       | ✅   | Visual tree    |
+|                     | よく使うコマンド table        | ✅   | 7 commands     |
+| documents/README.md | Hub structure 存在            | ✅   | 5-layer        |
+|                     | クイックアクセス table        | ✅   | 6 workflows    |
+|                     | ナビゲーション明確            | ✅   | Category links |
+| QUICK_START.md      | セットアップ手順              | ✅   | 3 steps        |
+|                     | 推定時間記載                  | ✅   | 5-15 min       |
 
 ### D-2: コーディング規約ドキュメント
 
-| カテゴリ | ファイル | 確認項目 | 状態 |
-|---|---|---|---|
-| Python 共通 | 01_scope.md | スコープ定義 | ✅ |
-| | 02_type_aliases.md | Type aliases | ✅ |
-| | 04_type_annotations.md | 型注釈ガイド | ✅ |
-| | 07_type_checker.md | PyRight ガイド | ✅ |
-| | 15_jax_rules.md | JAX 規約 | ✅ |
-| Python 詳細 | 06_comments.md | コメント規約 | ✅ |
-| | 08_composition.md | Protocol 定義 | ✅ |
-| | 09_file_roles.md | ファイル役割 | ✅ |
-| | 11_naming.md | ネーミング規約 | ✅ |
-| Common | 03_comments.md | 日本語コメント | ✅ |
-| | 05_docs.md | ドキュメント | ✅ |
+| カテゴリ    | ファイル               | 確認項目       | 状態 |
+| ----------- | ---------------------- | -------------- | ---- |
+| Python 共通 | 01_scope.md            | スコープ定義   | ✅   |
+|             | 02_type_aliases.md     | Type aliases   | ✅   |
+|             | 04_type_annotations.md | 型注釈ガイド   | ✅   |
+|             | 07_type_checker.md     | PyRight ガイド | ✅   |
+|             | 15_jax_rules.md        | JAX 規約       | ✅   |
+| Python 詳細 | 06_comments.md         | コメント規約   | ✅   |
+|             | 08_composition.md      | Protocol 定義  | ✅   |
+|             | 09_file_roles.md       | ファイル役割   | ✅   |
+|             | 11_naming.md           | ネーミング規約 | ✅   |
+| Common      | 03_comments.md         | 日本語コメント | ✅   |
+|             | 05_docs.md             | ドキュメント   | ✅   |
 
 ### D-3: テスト・CI ドキュメント
 
-| ドキュメント | 確認項目 | 状態 |
-|---|---|---|
-| coding-conventions-testing.md | ユニットテスト | ✅ |
-| | 統合テスト | ✅ |
-| | テストカバレッジ | ✅ |
-| tools/README.md | CI introduction | ✅ |
-| | CI script guide | ✅ |
-| | Troubleshooting | ✅ |
-| TROUBLESHOOTING.md | pytest 失敗診断 | ✅ |
-| | pyright エラー解決 | ✅ |
-| | ruff 修正ガイド | ✅ |
-| | 10+ FAQ items | ✅ |
+| ドキュメント                  | 確認項目           | 状態 |
+| ----------------------------- | ------------------ | ---- |
+| coding-conventions-testing.md | ユニットテスト     | ✅   |
+|                               | 統合テスト         | ✅   |
+|                               | テストカバレッジ   | ✅   |
+| tools/README.md               | CI introduction    | ✅   |
+|                               | CI script guide    | ✅   |
+|                               | Troubleshooting    | ✅   |
+| TROUBLESHOOTING.md            | pytest 失敗診断    | ✅   |
+|                               | pyright エラー解決 | ✅   |
+|                               | ruff 修正ガイド    | ✅   |
+|                               | 10+ FAQ items      | ✅   |
 
 ### D-4: ワークツリー・運用ドキュメント
 
-| ドキュメント | 確認項目 | 状態 |
-|---|---|---|
-| WORKTREE_SCOPE_TEMPLATE.md | テンプレート完全性 | ✅ |
-| | セクション 5+ | ✅ |
-| worktree-lifecycle.md | ライフサイクル説明 | ✅ |
-| | 操作手順明確 | ✅ |
-| FILE_CHECKLIST_OPERATIONS.md | チェックリスト 8 個 | ✅ |
-| | 各項目 5+ 個 | ✅ |
-| BRANCH_SCOPE.md | Git workflow | ✅ |
-| | Conflict 解決 | ✅ |
+| ドキュメント                 | 確認項目            | 状態 |
+| ---------------------------- | ------------------- | ---- |
+| WORKTREE_SCOPE_TEMPLATE.md   | テンプレート完全性  | ✅   |
+|                              | セクション 5+       | ✅   |
+| worktree-lifecycle.md        | ライフサイクル説明  | ✅   |
+|                              | 操作手順明確        | ✅   |
+| FILE_CHECKLIST_OPERATIONS.md | チェックリスト 8 個 | ✅   |
+|                              | 各項目 5+ 個        | ✅   |
+| BRANCH_SCOPE.md              | Git workflow        | ✅   |
+|                              | Conflict 解決       | ✅   |
 
 ### D-5: レビュー・設計ドキュメント
 
-| ドキュメント | 確認項目 | 状態 |
-|---|---|---|
-| REVIEW_PROCESS.md | チェックリスト完全 | ✅ |
-| | 優先度ガイド | ✅ |
-| design/jax_util/ | 5 個のサブテンプレ | ✅ |
-| | base_components.md | ✅ |
-| | hlo.md (HLO guide) | ✅ |
-| | solvers.md | ✅ |
-| | optimizers.md | ✅ |
-| AGENTS_COORDINATION.md | ロール定義 | ✅ |
-| | チーム構成 | ✅ |
+| ドキュメント           | 確認項目           | 状態 |
+| ---------------------- | ------------------ | ---- |
+| REVIEW_PROCESS.md      | チェックリスト完全 | ✅   |
+|                        | 優先度ガイド       | ✅   |
+| design/jax_util/       | 5 個のサブテンプレ | ✅   |
+|                        | base_components.md | ✅   |
+|                        | hlo.md (HLO guide) | ✅   |
+|                        | solvers.md         | ✅   |
+|                        | optimizers.md      | ✅   |
+| AGENTS_COORDINATION.md | ロール定義         | ✅   |
+|                        | チーム構成         | ✅   |
 
----
+______________________________________________________________________
 
 ## Phase 3: ツール実装検証
 
 ### T-1: Markdown 検証ツール
 
-| ツール | ファイル | 確認項目 | 状態 | 動作確認 |
-|---|---|---|---|---|
-| Linter | check_markdown_lint.py | 実装完了 | ✅ | ✅ Tested |
-| | | 7 ルール対応 | ✅ | MD001/040 等 |
-| | | JSON output | ✅ | --check option |
-| Header fixer | fix_markdown_headers.py | MD001 自動修正 | ✅ | ✅ Tested |
-| | | 対話型修正 | ✅ | Preview mode |
-| Code fixer | fix_markdown_code_blocks.py | MD040 自動修正 | ✅ | ✅ Tested |
-| | | AI 推論機能 | ✅ | Language detect |
+| ツール       | ファイル                    | 確認項目       | 状態 | 動作確認        |
+| ------------ | --------------------------- | -------------- | ---- | --------------- |
+| Linter       | check_markdown_lint.py      | 実装完了       | ✅   | ✅ Tested       |
+|              |                             | 7 ルール対応   | ✅   | MD001/040 等    |
+|              |                             | JSON output    | ✅   | --check option  |
+| Header fixer | fix_markdown_headers.py     | MD001 自動修正 | ✅   | ✅ Tested       |
+|              |                             | 対話型修正     | ✅   | Preview mode    |
+| Code fixer   | fix_markdown_code_blocks.py | MD040 自動修正 | ✅   | ✅ Tested       |
+|              |                             | AI 推論機能    | ✅   | Language detect |
 
 ### T-2: ドキュメント分析ツール
 
-| ツール | ファイル | 確認項目 | 状態 | 動作確認 |
-|---|---|---|---|---|
-| Link audit | audit_and_fix_links.py | リンク監査 | ✅ | ✅ 実行可能 |
-| | | 自動修正 | ✅ | Safe mode |
-| Similarity detect | find_similar_documents.py | 重複検出 | ✅ | ✅ TF-IDF |
-| | | スコア出力 | ✅ | Ranking |
-| Design duplicate | find_similar_designs.py | 設計重複検出 | ✅ | ✅ Implemented |
-| | | 統合提案 | ✅ | Output format |
+| ツール            | ファイル                  | 確認項目     | 状態 | 動作確認       |
+| ----------------- | ------------------------- | ------------ | ---- | -------------- |
+| Link audit        | audit_and_fix_links.py    | リンク監査   | ✅   | ✅ 実行可能    |
+|                   |                           | 自動修正     | ✅   | Safe mode      |
+| Similarity detect | find_similar_documents.py | 重複検出     | ✅   | ✅ TF-IDF      |
+|                   |                           | スコア出力   | ✅   | Ranking        |
+| Design duplicate  | find_similar_designs.py   | 設計重複検出 | ✅   | ✅ Implemented |
+|                   |                           | 統合提案     | ✅   | Output format  |
 
 ### T-3: コード生成ツール
 
-| ツール | ファイル | 確認項目 | 状態 | 動作確認 |
-|---|---|---|---|---|
-| Template gen | create_design_template.py | テンプレート生成 | ✅ | ✅ 実行可能 |
-| | | カスタマイズ | ✅ | Params option |
-| Org tools | organize_designs.py, etc | 設計整理 | ✅ | ✅ 複数 |
+| ツール       | ファイル                  | 確認項目         | 状態 | 動作確認      |
+| ------------ | ------------------------- | ---------------- | ---- | ------------- |
+| Template gen | create_design_template.py | テンプレート生成 | ✅   | ✅ 実行可能   |
+|              |                           | カスタマイズ     | ✅   | Params option |
+| Org tools    | organize_designs.py, etc  | 設計整理         | ✅   | ✅ 複数       |
 
 ### T-4: テスト・CI ツール
 
-| ツール | ファイル | 確認項目 | 状態 | 動作確認 |
-|---|---|---|---|---|
-| CI main | run_all_checks.sh | 3 checker 実行 | ✅ | ✅ pytest/pyright/ruff |
-| | | 終了コード正確 | ✅ | 0=success |
-| Pytest runner | run_pytest_with_logs.sh | ログ記録 | ✅ | ✅ JSON format |
-| | | タイムスタンプ | ✅ | YYYYMMDD-HHMMSS |
-| HLO analysis | summarize_hlo_jsonl.py | JSON 集計 | ✅ | ✅ 実行可能 |
-| | | 統計出力 | ✅ | Mean/std calc |
+| ツール        | ファイル                | 確認項目       | 状態 | 動作確認                          |
+| ------------- | ----------------------- | -------------- | ---- | --------------------------------- |
+| CI main       | run_all_checks.sh       | 4 checker 実行 | ✅   | ✅ pytest/pyright/pydocstyle/ruff |
+|               |                         | 終了コード正確 | ✅   | 0=success                         |
+| Pytest runner | run_pytest_with_logs.sh | ログ記録       | ✅   | ✅ JSON format                    |
+|               |                         | タイムスタンプ | ✅   | YYYYMMDD-HHMMSS                   |
+| HLO analysis  | summarize_hlo_jsonl.py  | JSON 集計      | ✅   | ✅ 実行可能                       |
+|               |                         | 統計出力       | ✅   | Mean/std calc                     |
 
 ### T-5: ワークツリー・運用ツール
 
-| ツール | ファイル | 確認項目 | 状態 | 動作確認 |
-|---|---|---|---|---|
-| Setup worktree | setup_worktree.sh | 自動作成 | ✅ | ✅ 実行可能 |
-| | | 命名規則 | ✅ | work-{name}-{date} |
-| Guide tool | guide.sh | 状況表示 | ✅ | ✅ Info display |
-| Scope checker | check_worktree_scopes.sh | 規約チェック | ✅ | ✅ Validation |
-| Git setup | git_*.sh (3 files) | 初期化スクリプト | ✅ | ✅ All OK |
-| Conventions | view_conventions.sh, read_* | 規約表示 | ✅ | ✅ 表示機能 |
+| ツール         | ファイル                      | 確認項目         | 状態 | 動作確認                                          |
+| -------------- | ----------------------------- | ---------------- | ---- | ------------------------------------------------- |
+| Setup worktree | setup_worktree.sh             | 自動作成         | ✅   | ✅ 実行可能                                       |
+|                |                               | 命名規則         | ✅   | branch 名を明示し、既定 path は `/` を `-` に置換 |
+| Guide tool     | guide.sh                      | 状況表示         | ✅   | ✅ Info display                                   |
+| Scope checker  | check_worktree_scopes.sh      | 規約チェック     | ✅   | ✅ Validation                                     |
+| Git setup      | git\_\*.sh (3 files)          | 初期化スクリプト | ✅   | ✅ All OK                                         |
+| Conventions    | view_conventions.sh, read\_\* | 規約表示         | ✅   | ✅ 表示機能                                       |
 
----
+______________________________________________________________________
 
 ## Phase 4: 動線検証（Path-by-Path）
 
@@ -361,7 +369,7 @@ Weekly automation:
 💾 Path E 検証結果: ✅ 7/10 完全実装, ⚠️ 3/10 将来改善
 ```
 
----
+______________________________________________________________________
 
 ## Phase 5: リソース不足エリア
 
@@ -370,6 +378,7 @@ Weekly automation:
 **現状**: ❌ 実装なし
 
 **必要なリソース**:
+
 ```python
 scripts/tools/docstring_to_md.py
 ├─ Input: Python ファイル（Google format docstring）
@@ -383,13 +392,14 @@ scripts/tools/docstring_to_md.py
 
 **参考**: docs.py library, sphinx.ext.autodoc
 
----
+______________________________________________________________________
 
 ### G-2: Task 49 - パフォーマンス回帰検出
 
 **現状**: ⚠️ 部分実装（HLO 基盤あり）
 
 **必要なリソース**:
+
 ```python
 scripts/hlo/detect_performance_regression.py
 ├─ Input: HLO JSON logs (multiple runs)
@@ -403,13 +413,14 @@ scripts/hlo/detect_performance_regression.py
 
 **参考**: summarize_hlo_jsonl.py (existing)
 
----
+______________________________________________________________________
 
 ### G-3: Task 50 - エラーパターン学習
 
 **現状**: ⚠️ 部分実装（TROUBLESHOOTING.md に手動記載）
 
 **必要なリソース**:
+
 ```python
 scripts/tools/error_pattern_learner.py
 ├─ Input: TROUBLESHOOTING.md (structured)
@@ -424,7 +435,7 @@ scripts/tools/error_pattern_learner.py
 
 **参考**: TROUBLESHOOTING.md structure (existing)
 
----
+______________________________________________________________________
 
 ## Phase 6: チーム準備度チェック
 
@@ -470,7 +481,7 @@ scripts/tools/error_pattern_learner.py
 
 **確認方法**: 24 時間連続実行テスト
 
----
+______________________________________________________________________
 
 ## Phase 7: 段階的ロールアウト計画
 
@@ -518,23 +529,26 @@ Ongoing:
   - 月次レトロスペクティブ
 ```
 
----
+______________________________________________________________________
 
 ## Phase 8: 最終確認チェックリスト
 
 ### F-1: 文書完成度
 
 - [x] AGENT_TASK_MAP.md 完成
+
   - 50 タスク詳細記載 ✅
   - 5 Path 説明 ✅
   - 動線マップ付記 ✅
 
 - [x] AGENT_TASK_VALIDATION_REPORT.md 完成
+
   - リソース検証表 ✅
   - 動線テスト結果 ✅
   - 推奨実装タスク ✅
 
 - [x] このチェックシート完成
+
   - 47 ドキュメント検証 ✅
   - 29 ツール検証 ✅
   - 5 Path 検証 ✅
@@ -542,16 +556,19 @@ Ongoing:
 ### F-2: リソース完成度
 
 - [x] 参考ドキュメント
+
   - 47/47 ファイル存在確認 ✅
   - リンク有効性確認 ✅
   - コンテンツ充実度確認 ✅
 
 - [x] ツール・スクリプト
+
   - 26/29 ツール実装確認 ✅
   - 動作テスト完了 ✅
   - 実行可能性確認 ✅
 
 - [x] ドキュメント品質
+
   - Markdown リント合格 ✅
   - リンク整合性確認 ✅
   - 読みやすさ確認 ✅
@@ -559,24 +576,28 @@ Ongoing:
 ### F-3: チーム準備度
 
 - [ ] 初心者向け説明会実施
-  - 実施日: ___________
-  - 参加者: ___________
-  - フィードバック: ___________
+
+  - 実施日: \_\_\_\_\_\_\_\_\_\_\_
+  - 参加者: \_\_\_\_\_\_\_\_\_\_\_
+  - フィードバック: \_\_\_\_\_\_\_\_\_\_\_
 
 - [ ] 実装者向け説明会実施
-  - 実施日: ___________
-  - 参加者: ___________
-  - フィードバック: ___________
+
+  - 実施日: \_\_\_\_\_\_\_\_\_\_\_
+  - 参加者: \_\_\_\_\_\_\_\_\_\_\_
+  - フィードバック: \_\_\_\_\_\_\_\_\_\_\_
 
 - [ ] テック・リード向け説明会実施
-  - 実施日: ___________
-  - 参加者: ___________
-  - フィードバック: ___________
+
+  - 実施日: \_\_\_\_\_\_\_\_\_\_\_
+  - 参加者: \_\_\_\_\_\_\_\_\_\_\_
+  - フィードバック: \_\_\_\_\_\_\_\_\_\_\_
 
 - [ ] 管理者向け説明会実施
-  - 実施日: ___________
-  - 参加者: ___________
-  - フィードバック: ___________
+
+  - 実施日: \_\_\_\_\_\_\_\_\_\_\_
+  - 参加者: \_\_\_\_\_\_\_\_\_\_\_
+  - フィードバック: \_\_\_\_\_\_\_\_\_\_\_
 
 ### F-4: 公開準備
 
@@ -586,19 +607,19 @@ Ongoing:
 - [ ] 月次推進体制構築
 - [ ] 月次レビュー日程設定
 
----
+______________________________________________________________________
 
 ## 最終署名
 
-| 役割 | 確認者 | 日付 | サイン |
-|---|---|---|---|
-| 作成者（AI Agent） | GitHub Copilot | 2026-03-20 | ✅ |
-| ドキュメント検証 | (予定) | __________ | ____ |
-| ツール検証 | (予定) | __________ | ____ |
-| プロジェクト管理者 | (予定) | __________ | ____ |
+| 役割               | 確認者         | 日付                 | サイン   |
+| ------------------ | -------------- | -------------------- | -------- |
+| 作成者（AI Agent） | GitHub Copilot | 2026-03-20           | ✅       |
+| ドキュメント検証   | (予定)         | \_\_\_\_\_\_\_\_\_\_ | \_\_\_\_ |
+| ツール検証         | (予定)         | \_\_\_\_\_\_\_\_\_\_ | \_\_\_\_ |
+| プロジェクト管理者 | (予定)         | \_\_\_\_\_\_\_\_\_\_ | \_\_\_\_ |
 
----
+______________________________________________________________________
 
-**チェックシート完成日**: 2026-03-20  
-**ステータス**: ✅ **公開準備完了**  
+**チェックシート完成日**: 2026-03-20\
+**ステータス**: ✅ **公開準備完了**\
 **推奨ロールアウト**: 本日中にチーム内告知

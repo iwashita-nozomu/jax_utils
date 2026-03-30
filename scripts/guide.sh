@@ -37,24 +37,24 @@ cat << 'EOF'
 【ステップ2】 ワークツリーの作成
 
   ✓ 実行コマンド:
-    bash scripts/setup_worktree.sh <branch-name> [description]
+    bash scripts/setup_worktree.sh <branch-name> [worktree-path]
 
   ✓ 例:
-    bash scripts/setup_worktree.sh protocol-improvements \
-      "Protocol型アノテーション改善"
+    bash scripts/setup_worktree.sh work/protocol-improvements-20260330
     
-    bash scripts/setup_worktree.sh train-api-refactor \
-      "train.pyのAPI改善"
+    bash scripts/setup_worktree.sh results/smolyak-validation-20260328 \
+      .worktrees/results-smolyak-validation-20260328
 
   ✓ 自動作成される内容:
-    • ブランチ: work/<branch-name>-<YYYYMMDD>
-    • ワークツリー: .worktrees/<branch-name>-<YYYYMMDD>
+    • ブランチ: 指定した branch 名をそのまま使用
+    • ワークツリー: 既定では .worktrees/<branch-name を /→- に置換>
+      例: work/my-feature-20260330 → .worktrees/work-my-feature-20260330
 
 ════════════════════════════════════════════════════════════════════════════
 
 【ステップ3】 ワークツリーで作業開始
 
-  cd .worktrees/<branch-name>-<YYYYMMDD>
+  cd .worktrees/work-feature-xyz-20260330
   
   # 規約確認（オプション）
   bash ../scripts/view_conventions.sh
@@ -65,7 +65,7 @@ cat << 'EOF'
 
   git add -A
   git commit -m "category: 説明"
-  git push origin work/<branch-name>-<YYYYMMDD>
+  git push -u origin <branch-name>
 
   📌 コミットメッセージ例:
     • feat: 新機能追加
@@ -79,10 +79,10 @@ cat << 'EOF'
 【ステップ5】 ワークツリーのクリーンアップ
 
   # ワークツリーを削除
-  git worktree remove .worktrees/<branch-name>-<YYYYMMDD>
+  git worktree remove .worktrees/work-feature-xyz-20260330
 
   # ローカルブランチを削除（マージ後）
-  git branch -d work/<branch-name>-<YYYYMMDD>
+  git branch -d <branch-name>
 
 ════════════════════════════════════════════════════════════════════════════
 
@@ -127,10 +127,10 @@ cat << 'EOF'
   bash scripts/view_conventions.sh
 
   # 2. ワークツリー作成
-  bash scripts/setup_worktree.sh feature-xyz "新機能XYZ実装"
+  bash scripts/setup_worktree.sh work/feature-xyz-20260330
 
   # 3. ワークツリーに移動
-  cd .worktrees/feature-xyz-20260318
+  cd .worktrees/work-feature-xyz-20260330
 
   # 4. 作業実施
   # ... ファイル編集 ...
@@ -143,11 +143,11 @@ cat << 'EOF'
   git commit -m "feat: 新機能XYZ実装完了"
 
   # 7. プッシュ
-  git push origin work/feature-xyz-20260318
+  git push -u origin work/feature-xyz-20260330
 
   # 8. クリーンアップ（マージ後）
-  git worktree remove .worktrees/feature-xyz-20260318
-  git branch -d work/feature-xyz-20260318
+  git worktree remove .worktrees/work-feature-xyz-20260330
+  git branch -d work/feature-xyz-20260330
 
 ════════════════════════════════════════════════════════════════════════════
 
