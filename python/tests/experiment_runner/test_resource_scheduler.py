@@ -15,6 +15,7 @@ if str(PYTHON_ROOT) not in sys.path:
 
 from experiment_runner.resource_scheduler import (
     GPUDeviceCapacity,
+    GPUEnvironmentConfig,
     FullResourceCapacity,
     FullResourceEstimate,
     StandardFullResourceScheduler,
@@ -258,6 +259,8 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
     assert first_context["environment_variables"]["CUDA_VISIBLE_DEVICES"] == "0,1"
     assert first_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "0,1"
     assert first_context["environment_variables"]["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
+    assert "TF_GPU_ALLOCATOR" not in first_context["environment_variables"]
+    assert "XLA_PYTHON_CLIENT_ALLOCATOR" not in first_context["environment_variables"]
     assert _case_id(second_case) == 2
     assert second_context["environment_variables"]["gpu_ids"] == "2"
     assert second_context["environment_variables"]["gpu_id"] == "2"
@@ -305,6 +308,83 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
 
 def test_standard_full_resource_scheduler_assigns_and_releases_resources() -> None:
     _run_standard_full_resource_scheduler_assigns_and_releases_resources()
+
+
+def test_standard_full_resource_scheduler_applies_explicit_gpu_environment_config() -> None:
+    scheduler = StandardFullResourceScheduler(
+        resource_capacity=FullResourceCapacity(
+            max_workers=1,
+            host_memory_bytes=128,
+            gpu_devices=(GPUDeviceCapacity(gpu_id=3, memory_bytes=64, max_slots=1),),
+        ),
+        cases=[
+            {
+                "case_id": 10,
+                "host_memory_bytes": 16,
+                "gpu_count": 1,
+                "gpu_memory_bytes": 8,
+            }
+        ],
+        estimate_builder=_resource_estimate,
+        gpu_environment_config=GPUEnvironmentConfig(
+            memory_fraction=0.4,
+            xla_client_allocator="platform",
+            tf_gpu_allocator="cuda_malloc_async",
+            use_cuda_host_allocator=False,
+        ),
+    )
+
+    job = scheduler.next_case()
+    assert job is not None
+    _, context = job
+    env_vars = cast(dict[str, str], context["environment_variables"])
+
+    assert env_vars["gpu_ids"] == "3"
+    assert env_vars["gpu_id"] == "3"
+    assert env_vars["XLA_PYTHON_CLIENT_MEM_FRACTION"] == "0.4"
+    assert env_vars["XLA_PYTHON_CLIENT_ALLOCATOR"] == "platform"
+    assert env_vars["TF_GPU_ALLOCATOR"] == "cuda_malloc_async"
+    assert env_vars["XLA_PYTHON_CLIENT_USE_CUDA_HOST_ALLOCATOR"] == "false"
+    assert "XLA_PYTHON_CLIENT_PREALLOCATE" not in env_vars
+
+
+def test_standard_full_resource_scheduler_preserves_context_builder_environment_variables() -> None:
+    scheduler = StandardFullResourceScheduler(
+        resource_capacity=FullResourceCapacity(
+            max_workers=1,
+            host_memory_bytes=128,
+            gpu_devices=(GPUDeviceCapacity(gpu_id=5, memory_bytes=64, max_slots=1),),
+        ),
+        cases=[
+            {
+                "case_id": 20,
+                "host_memory_bytes": 16,
+                "gpu_count": 1,
+                "gpu_memory_bytes": 8,
+            }
+        ],
+        estimate_builder=_resource_estimate,
+        context_builder=lambda case: {
+            "case_label": f"case-{cast(int, case['case_id'])}",
+            "environment_variables": {
+                "EXPERIMENT_NAME": "allocator-sweep",
+                "CUDA_VISIBLE_DEVICES": "should-be-overridden",
+            },
+        },
+        gpu_environment_config=GPUEnvironmentConfig(memory_fraction=0.4),
+    )
+
+    job = scheduler.next_case()
+    assert job is not None
+    _, context = job
+    env_vars = cast(dict[str, str], context["environment_variables"])
+
+    assert context["case_label"] == "case-20"
+    assert env_vars["EXPERIMENT_NAME"] == "allocator-sweep"
+    assert env_vars["CUDA_VISIBLE_DEVICES"] == "5"
+    assert env_vars["NVIDIA_VISIBLE_DEVICES"] == "5"
+    assert env_vars["gpu_id"] == "5"
+    assert env_vars["XLA_PYTHON_CLIENT_MEM_FRACTION"] == "0.4"
 
 
 def _run_standard_full_resource_scheduler_with_runner(tmp_path: Path) -> None:
@@ -365,7 +445,7 @@ def _run_standard_full_resource_scheduler_with_runner(tmp_path: Path) -> None:
     assert sorted(_case_id(record) for record in records) == [0, 1, 2, 3]
     assert len({cast(int, record["pid"]) for record in records}) >= 2
     assert _has_parallel_overlap(records)
-    assert elapsed_seconds < 0.95
+    assert elapsed_seconds < 1.35
     assert len(scheduler.completions) == 4
 
     for midpoint in _midpoints(records):

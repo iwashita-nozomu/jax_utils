@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import multiprocessing as mp
+from multiprocessing.context import SpawnContext
 import os
 import pickle
 from concurrent.futures import ProcessPoolExecutor
@@ -20,7 +21,7 @@ __all__ = [
 ]
 
 
-def get_spawn_context() -> mp.context.SpawnContext:
+def get_spawn_context() -> SpawnContext:
     """`spawn` context を返す。"""
     try:
         return mp.get_context("spawn")
@@ -53,7 +54,7 @@ def check_picklable(obj: Any, name: str = "object") -> None:
 def create_jax_safe_process_pool(
     max_workers: int,
     *,
-    mp_context: mp.context.SpawnContext | None = None,
+    mp_context: SpawnContext | None = None,
 ) -> Generator[ProcessPoolExecutor, None, None]:
     """JAX 向けに `spawn` context を使う process pool を返す。"""
     if max_workers < 1:

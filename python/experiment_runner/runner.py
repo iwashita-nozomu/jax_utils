@@ -3,20 +3,21 @@
 軽量な抽象（`StandardScheduler` / `StandardRunner` / `StandardWorker`）を提供します。
 実装は並列実行と完了ハンドリングの単純な契約に従います。
 
-JAX fork() 互換性: StandardRunner は spawn コンテキストでワーカープロセスを起動
-することで、fork() ベースの multiprocessing 問題を回避できます。
-use_spawn_context=True（デフォルト）で有効です。
+JAX fork() 互換性: StandardRunner は spawn コンテキストで child process を起動し、
+ケースごとに fresh process で worker を実行します。これにより、`CUDA_VISIBLE_DEVICES`
+や `JAX_PLATFORMS` のような import-sensitive な環境変数がケース間で汚染されるのを
+避けます。
 """
 
 from __future__ import annotations
 
-from concurrent.futures import FIRST_COMPLETED, Future, ProcessPoolExecutor, wait
+from multiprocessing.connection import Connection, wait as wait_for_connections
 import traceback
 import time
 from dataclasses import dataclass
-from typing import Callable, Generic, TypeVar
+from typing import Any, Callable, Generic, TypeVar, cast
 
-from .jax_context import check_picklable, create_jax_safe_process_pool
+from .jax_context import check_picklable, get_spawn_context
 from .protocols import (
     ResourceEstimate,
     Scheduler,
@@ -71,6 +72,8 @@ class StandardWorker(Generic[T, U]):
     def resource_estimate(self, case: T) -> ResourceEstimate:
         # NOTE: _resource_estimator は Worker インスタンスが from_worker()
         #       で生成される場合のみ呼び出される。そのため常に None ではない。
+        if self._resource_estimator is None:
+            raise ValueError("resource_estimator is not configured for this worker.")
         return self._resource_estimator(case)
 
 
@@ -88,6 +91,34 @@ class StandardCompletion(Generic[T]):
     case: T
     context: TaskContext
     exit_code: int
+
+
+@dataclass
+class _RunningProcess(Generic[T]):
+    case: T
+    context: TaskContext
+    process: Any
+    receiver: Connection
+
+
+def _run_worker_in_child(
+    sender: Connection,
+    worker: Worker[T, U],
+    case: T,
+    context: TaskContext,
+) -> None:
+    """Execute one worker invocation in a fresh spawned child process."""
+    exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
+    try:
+        exit_code = int(worker(case, context))
+    except Exception:
+        traceback.print_exc()
+    try:
+        sender.send(exit_code)
+    except (BrokenPipeError, OSError):
+        pass
+    finally:
+        sender.close()
 
 
 class StandardScheduler(Generic[T]):
@@ -116,6 +147,10 @@ class StandardScheduler(Generic[T]):
     @property
     def resource_capacity(self) -> StandardResourceCapacity:
         return self._resource_capacity
+
+    @property
+    def total_case_count(self) -> int:
+        return len(self.completions) + len(self._pending_cases)
 
     def _build_context(self, case: T) -> TaskContext:
         if self._context_builder is None:
@@ -146,8 +181,8 @@ class StandardScheduler(Generic[T]):
 class StandardRunner(Generic[T, U]):
     """スケジューラとワーカーを使ってケースを並列実行するランナー。
 
-    - spawn コンテキストで ProcessPoolExecutor を起動（CPU-only でも）
-    - JAX fork() 互換性問題を完全に回避
+    - spawn コンテキストでケースごとに fresh child process を起動
+    - GPU / JAX の import-sensitive な環境変数がケース間で漏れない
     - 完了ごとに `scheduler.on_finish` を呼び、次のケースを投入する。
     - プログレス報告コールバックをサポート
     """
@@ -173,8 +208,8 @@ class StandardRunner(Generic[T, U]):
     def run(self, worker: Worker[T, U]) -> None:
         """ケースを並列実行する。
 
-        spawn コンテキストで ProcessPoolExecutor を起動し、
-        JAX fork() 互換性を確保しながら並列実行する。
+        spawn コンテキストで fresh child process を起動し、
+        JAX の import-sensitive な process state をケース単位で分離する。
 
         Parameters
         ----------
@@ -184,76 +219,100 @@ class StandardRunner(Generic[T, U]):
         Raises
         ------
         ValueError
-            ワーカーが pickle 化不可能な場合。ProcessPoolExecutor で
+            ワーカーが pickle 化不可能な場合。spawn child process へ
             別プロセスに送出できる必要があります。
         """
         # ワーカーが pickle 化可能であることを確認
         check_picklable(worker, name="Worker")
+        self._execute_with_spawned_processes(worker, self._resolve_total_cases())
 
-        # 総ケース数をここで計算（scheduler の種類に依存しない抽象的方法）
-        # 既完了分 + 未実行分を合算
+    def _resolve_total_cases(self) -> int:
+        total_case_count = getattr(self.scheduler, "total_case_count", None)
+        if isinstance(total_case_count, int) and total_case_count >= 0:
+            return total_case_count
+
         total_cases = len(self.scheduler.completions)
-        pending_count = 0
-
-        # scheduler の属性で未実行ケース数を取得（StandardScheduler と
-        # StandardFullResourceScheduler の両方に対応）
         if hasattr(self.scheduler, "_pending_cases"):
-            # StandardScheduler の場合
-            pending_count = len(self.scheduler._pending_cases)  # type: ignore[attr-defined]
-        elif hasattr(self.scheduler, "_pending_entries"):
-            # StandardFullResourceScheduler の場合
-            pending_count = len(self.scheduler._pending_entries)  # type: ignore[attr-defined]
+            return total_cases + len(self.scheduler._pending_cases)  # type: ignore[attr-defined]
+        if hasattr(self.scheduler, "_pending_entries"):
+            return total_cases + len(self.scheduler._pending_entries)  # type: ignore[attr-defined]
+        return total_cases
 
-        total_cases += pending_count
-
-        # 常に spawn コンテキストで executor を起動
-        with create_jax_safe_process_pool(
-            max_workers=self.scheduler.resource_capacity.max_workers
-        ) as ex:
-            self._execute_with_executor(ex, worker, total_cases)
-
-    def _execute_with_executor(
+    def _execute_with_spawned_processes(
         self,
-        executor: ProcessPoolExecutor,
         worker: Worker[T, U],
         total_cases: int,
     ) -> None:
         """
-        Executor を使用してケースを実行する。
+        spawn child process を使用してケースを実行する。
 
         プログレスコールバックが登録されている場合は、
         ケース完了ごとに進捗状況を報告する。
 
         Parameters
         ----------
-        executor : ProcessPoolExecutor
-            実行用の Executor
         worker : Worker[T, U]
             各ケースを実行するワーカー
         total_cases : int
             全体のケース数（既完了 + 未実行）
         """
-        running: dict[Future[int], tuple[T, TaskContext]] = {}
+        max_workers = self.scheduler.resource_capacity.max_workers
+        spawn_context = get_spawn_context()
+        running: dict[Connection, _RunningProcess[T]] = {}
         start_time = time.time()
 
         while not self.scheduler.is_completed() or running:
-            # 新しいケースを投入できるまで試行
-            while True:
+            # max_workers 本まで fresh child process を起動する。
+            while len(running) < max_workers:
                 job = self.scheduler.next_case()
                 if job is None:
                     break
                 case, context = job
-                fut = executor.submit(worker, case, context)
-                running[fut] = job
+                receiver, sender = spawn_context.Pipe(duplex=False)
+                process = spawn_context.Process(
+                    target=_run_worker_in_child,
+                    args=(sender, worker, case, context),
+                )
+                process.start()
+                sender.close()
+                running[receiver] = _RunningProcess(
+                    case=case,
+                    context=context,
+                    process=process,
+                    receiver=receiver,
+                )
 
             if not running:
                 continue
 
-            # 最初に完了したタスクを待つ
-            done, _ = wait(running, return_when=FIRST_COMPLETED)
-            for fut in done:
-                case, context = running.pop(fut)
-                self.scheduler.on_finish(case, context, fut.result())
+            ready_receivers = cast(
+                list[Connection],
+                wait_for_connections(list(running.keys()), timeout=0.1),
+            )
+            if not ready_receivers:
+                ready_receivers = [
+                    receiver
+                    for receiver, child in running.items()
+                    if not child.process.is_alive()
+                ]
+                if not ready_receivers:
+                    continue
+
+            for receiver in ready_receivers:
+                child = running.pop(receiver)
+                exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
+                try:
+                    exit_code = int(receiver.recv())
+                except (EOFError, OSError, TypeError, ValueError):
+                    exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
+                finally:
+                    receiver.close()
+                    child.process.join()
+
+                if child.process.exitcode not in {0, None}:
+                    exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
+
+                self.scheduler.on_finish(child.case, child.context, exit_code)
 
                 # プログレス報告を実行
                 if self.progress_callback is not None:
