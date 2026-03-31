@@ -9,6 +9,7 @@
 - 対象には、実験実行スクリプト、レポート生成スクリプト、結果保存ディレクトリを含みます。
 - 実験コードそのものは `main` に置いてよいですが、生成物は code と分けて扱います。
 - topic 固有の helper module は `experiments/` に置き、再利用する runtime は `python/experiment_runner/` に分けます。
+- 実験コードは 1 回の fresh 実行で対象レンジを完走する前提で書き、resume や途中 run の継ぎ足しを正規運用にしません。
 
 ## 2. ディレクトリ構成
 
@@ -19,6 +20,7 @@
   - `results/` ディレクトリ
 - `results/` には `.gitkeep` を置き、空ディレクトリでも構造を保ちます。
 - 実験コードは再実行可能なスクリプトとして保ち、手作業前提の手順を埋め込みません。
+- 1 回の run は 1 つの run_id と 1 つの出力先に閉じた完全実行として扱います。
 - benchmark は topic に近い `experiments/` 配下へ置き、グローバルな `python/benchmark/` は既定にしません。
 - benchmark の短時間運用は `documents/conventions/python/20_benchmark_policy.md` を、topic ごとの配置規約は `documents/conventions/python/30_experiment_directory_structure.md` を参照します。
 
@@ -39,7 +41,8 @@
 - worktree を削除する前に、その worktree にしか残っていない知見を `main` の `./notes/worktrees/` へ吸い出して整理します。
 - 吸い出しでは、少なくとも branch 名、worktree の用途、関連結果、主要な観測、次の `Idea:` を残します。
 - 実験 branch と results branch は、`main` の `./notes/branches/README.md` から参照できるようにし、関連する experiment note や worktree note への入口を置きます。
-- 実験 worktree では、scope 更新、条件変更、run 開始/停止、partial/final JSON 採用、統合判断を action log に逐次記録します。
+- 実験 worktree では、scope 更新、条件変更、run 開始/停止、final JSON 採用、統合判断を action log に逐次記録します。
+- 実験 worktree では、中断理由と fresh run への切り替え判断も action log に逐次記録します。
 - action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とし、worktree 内でも同じ相対パスで下書きします。
 
 ## 4. 生成物の扱い
@@ -49,10 +52,12 @@
 - `latest.json` と `latest_report/` は、直近結果への入口として置いてよいです。
 - `latest.json` は `main` ではノイズにしないよう扱い、results ブランチ側で必要に応じて更新します。
 - 空ログや途中失敗だけを示すログは、継続的な参照価値がない限り commit しません。
+- 途中停止した run の JSONL や partial 集計は診断用の補助出力であり、正規の再開点として使いません。
 
 ## 5. 実行スクリプト
 
 - 実行スクリプトは CLI 引数で条件を変更できるようにします。
+- 実行スクリプトは、指定した条件集合を 1 回で最後まで走り切る責務を持たせます。
 - benchmark は短時間の前後比較を目的とし、長時間の多条件 sweep は experiment に分けます。
 - 少なくとも、次の切り替えは引数化します。
   - 次元レンジ
@@ -66,6 +71,8 @@
 - 実行結果は JSON として保存し、出力パスを最後に標準出力へ出します。
 - 長時間実験では、最終 JSON に加えて case 単位の JSONL を逐次保存します。
 - JSONL は case 完了時点で追記し、競合を避ける排他制御を入れます。
+- JSONL の役割は run 中の progress 記録と failure 診断であり、途中停止後の resume 入力にはしません。
+- run が途中で止まった場合は、その run を完了扱いにせず、新しい run_id と新しい出力先で 0 から再実行します。
 - 失敗ケースは握りつぶさず、GPU OOM、host OOM、timeout、worker 異常終了を区別できる範囲で記録します。
 - 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
 
@@ -84,6 +91,7 @@
 - 巨大な JSON、画像、ログは `main` へ常設しません。
 - 実験の所在、branch 名、定性的な考察は `main` の `./notes/experiments/` に残してよいです。
 - ただし、後から図や集計を再生成できるよう、各 branch の最終結果として必要最小限の JSON は `main` の `./notes/experiments/results/` へ持ち帰ります。
+- `main` に持ち帰る JSON は完走した run の final JSON を原則とし、途中停止 partial run は carry-over の正本にしません。
 - `./notes/experiments/` のメモは、原則として実験ごとに分け、複数の unrelated な実験を 1 ファイルへ混ぜません。
 - `./notes/experiments/` では、文献由来の内容に対象文献を明示し、`Idea:`、`Interpretation:`、`Consideration:` などで自前の発案や考察を区別します。
 - `./notes/experiments/` に一度残した過去の実験メモ本文は、原則として書き換えません。

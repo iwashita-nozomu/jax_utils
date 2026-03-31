@@ -16,7 +16,7 @@
 - 同じ積分問題を `fori_loop` で `100` 回解いて、平均積分時間を計測します。
 - `SmolyakIntegrator(dtype=...)` を切り替えて複数の float 精度を比較できます。
 - 各ケースについて、誤差平均、誤差分散、点数、保持サイズ、デバイスメモリ統計、RSS、積分器初期化時間、転送時間、実行時間を JSON に保存します。
-- 各ケースは終了時に JSONL へ 1 行ずつ追記されるので、途中停止しても部分結果を回収できます。
+- 各ケースは終了時に JSONL へ 1 行ずつ追記され、run 中の progress と failure 診断を残します。
 - ホストプロセスはケース列と GPU 空き slot だけを管理し、各ケースはサブプロセスへ `case + run_config + GPU slot` を渡して実行します。
 - サブプロセスは JSONL へ結果を追記してから、stdout の completion message でホストへ明示的に終了を返します。
 - GPU 実験では `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
@@ -38,12 +38,13 @@
 - `results/`
   - 実行結果を保存するディレクトリです。
   - `<run>.jsonl` は case 単位の逐次保存結果です。
+  - 途中停止した場合でも同じ `<run>.jsonl` へ継ぎ足さず、新しい run を 0 からやり直します。
 
 ## Usage
 
 CPU で小さめのレンジを確認する例です。
 
-```bash
+````bash
 PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_scaling/run_smolyak_scaling.py \
   --platform cpu \
   --dimensions 8:16:4 \
@@ -84,3 +85,11 @@ PYTHONPATH=/workspace/python python3 /workspace/experiments/functional/smolyak_s
 python3 /workspace/experiments/functional/smolyak_scaling/render_smolyak_scaling_report.py \
   --input /workspace/experiments/functional/smolyak_scaling/results/latest.json
 ```text
+
+## Run Policy
+
+- 実験は 1 回の fresh 実行で指定レンジを完走させます。
+- JSONL は progress 記録であり、resume のための canonical input ではありません。
+- 途中で止まった run は診断用に残してよいですが、正規結果として継続しません。
+- 再実行するときは、新しい出力先で 0 から実行します。
+````

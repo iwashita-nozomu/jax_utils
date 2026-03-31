@@ -6,15 +6,17 @@
 
 - 同じマシンで前後比較したい。
 - 数秒から数分で終わる結果が欲しい。
-- 条件数が少なく、partial 保存や再開を必要としない。
+- 条件数が少なく、1 回の fresh 実行で完走できる。
 - 実装変更の影響を小さく切り出して見たい。
 
 ## Experiment を選ぶとき
 
 - dimension、level、dtype など複数条件をまとめて探索したい。
-- JSONL を逐次保存し、途中停止や失敗分類に備えたい。
+- JSONL を逐次保存し、run 内 progress と失敗分類を残したい。
 - timeout、OOM、worker failure を記録したい。
 - 可視化や最終集計を後段で再生成したい。
+
+Experiment でも canonical な運用は resume ではなく fresh run です。途中で止まったら、停止理由を残して 0 から再実行します。
 
 ## この repo での置き場
 

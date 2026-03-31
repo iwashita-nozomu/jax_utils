@@ -5,7 +5,7 @@
 ## 要約
 
 - ベンチマークは、同一環境での前後比較を素早く行うための計測です。
-- 長時間の条件探索や途中再開が必要なものは、ベンチマークではなく experiment として扱います。
+- 長時間の条件探索や run 内 progress 記録が必要なものは、ベンチマークではなく experiment として扱います。
 - 置き場は現在の repo 構成に合わせ、対象 topic に近い `experiments/` 配下を原則とします。
 
 ## 規約
@@ -14,7 +14,7 @@
 
 - ベンチマークの目的は、実装変更の前後比較、基本的なスケーリング確認、性能退行の早期検知です。
 - ベンチマークは、単一マシン上で再現しやすい小規模から中規模の計測に限ります。
-- 複数条件の大規模 sweep、途中停止からの再開、長時間の JSONL 蓄積が必要なものは experiment に分けます。
+- 複数条件の大規模 sweep、長時間の JSONL 蓄積、failure kind の分類が必要なものは experiment に分けます。
 
 ### 2. 配置
 
@@ -37,6 +37,7 @@
 - 個々の benchmark は秒から数十秒、全体でも数分以内を目安にします。
 - 開発中に繰り返し回す用途を優先し、長時間化した時点で experiment へ分割します。
 - benchmark では timeout 回復や partial 保存を必須にしません。
+- benchmark が途中で止まった場合は、同じ出力へ継ぎ足さず fresh run でやり直します。
 
 ### 5. 出力
 
@@ -47,7 +48,7 @@
 ### 6. Benchmark と Experiment の境界
 
 - 「数分以内に終わる前後比較」「同一条件の基本スケーリング」は benchmark とします。
-- 「多数条件の sweep」「途中停止前提」「failure kind の分類」「JSONL 逐次保存」は experiment とします。
+- 「多数条件の sweep」「failure kind の分類」「JSONL 逐次保存」は experiment とします。
 - 詳細な使い分けは [notes/knowledge/benchmark_vs_experiment.md](../../../notes/knowledge/benchmark_vs_experiment.md) を参照します。
 
 ## 更新手順

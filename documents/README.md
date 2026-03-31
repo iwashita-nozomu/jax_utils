@@ -2,6 +2,8 @@
 
 > jax_util プロジェクトの全階層・全分野向けドキュメント入口
 
+`documents/` には正本だけを残します。履歴用の proposal / report / summary / `.bak` は置かず、過去状態は Git 履歴で追います。
+
 ______________________________________________________________________
 
 ## 🎯 目的別ナビゲーション
@@ -145,7 +147,6 @@ documents/ (ここ) ← 📍 ハブ
 
  ❓ ヘルプ・参考
    ├─ TROUBLESHOOTING.md ← エラー解決
-   ├─ DOCUMENT_RESTRUCTURING_PROPOSAL.md (構造改善提案)
    └─ reviews/ (AI レビュー・解析)
 ```
 

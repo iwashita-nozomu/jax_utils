@@ -2,7 +2,7 @@
 """
 find_similar_documents.py
 
-Detect similar markdown documents under `documents/` (excluding templates and .bak)
+Detect similar markdown documents under `documents/` (excluding templates and legacy backup files)
 and produce a report plus simple merge-draft files for manual review.
 
 Usage:
@@ -10,7 +10,7 @@ Usage:
 
 Outputs:
   - reports/similar_documents_report.txt
-  - documents/merge_candidates/*.md (drafts)
+  - reports/merge_candidates/*.md (drafts)
 """
 from pathlib import Path
 import difflib
@@ -82,7 +82,7 @@ def main():
     ROOT = Path('.').resolve()
     DOC_ROOT = ROOT / 'documents'
     REPORT = ROOT / 'reports' / 'similar_documents_report.txt'
-    MERGE_DIR = DOC_ROOT / 'merge_candidates'
+    MERGE_DIR = ROOT / 'reports' / 'merge_candidates'
 
     files = read_files(DOC_ROOT)
     texts = {f: normalize_text(f.read_text(encoding='utf-8')) for f in files}

@@ -58,6 +58,8 @@ ______________________________________________________________________
 - `main` に残したい要約・観測・判断のうち、規約・レビュー・実コードに属さないものは `notes/` に置きます。
 - worktree を削除する前に、残すべき `notes/` は `main` に commit 済み、または `main` に merge 済みでなければなりません。
 - `results/*` branch に raw 結果を残す場合でも、`main` から辿るための report や extraction note は `notes/` 側へ持ち帰ります。
+- `main` に持ち帰る実験結果は、原則として完走した fresh run の final JSON と要約 note に限ります。
+- 途中停止した partial run は診断材料として扱い、resume 前提の正本にはしません。
 
 ## Action Log Rule
 

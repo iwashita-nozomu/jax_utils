@@ -49,14 +49,13 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-### 3. [WORKTREE_TOOL_UNIFICATION.md](./WORKTREE_TOOL_UNIFICATION.md)（参考）
+### 3. [scripts/README.md](../../scripts/README.md)（参考）
 
-**ツール統一提案：setup_worktree.sh vs create_worktree.sh**
+**スクリプト実装詳細**
 
-- 現状問題分析
-- 統一方針の提案
-- 実装手順・テストチェックリスト
-- 決定フロー
+- 正本の引数仕様
+- 互換ラッパーの扱い
+- 実装上の注意点
 
 **対象:** プロジェクト管理者\
 **読む時期:** ツール統一検討時\
@@ -80,7 +79,7 @@ ______________________________________________________________________
 ### 管理者向け
 
 1. [FILE_CHECKLIST_OPERATIONS.md](../FILE_CHECKLIST_OPERATIONS.md) — チェックリスト7・8（10～30分）
-1. [WORKTREE_TOOL_UNIFICATION.md](./WORKTREE_TOOL_UNIFICATION.md) — 統一方針検討（10分）
+1. [../../scripts/README.md](../../scripts/README.md) — worktree script の正本を確認（10分）
 
 ______________________________________________________________________
 
@@ -289,7 +288,7 @@ python scripts/tools/tfidf_similar_docs.py
 
 ### Q: setup_worktree.sh と create_worktree.sh の違いは？
 
-**A:** [WORKTREE_TOOL_UNIFICATION.md](./WORKTREE_TOOL_UNIFICATION.md) で詳しく説明しています。
+**A:** [../../scripts/README.md](../../scripts/README.md) と [../worktree-lifecycle.md](../worktree-lifecycle.md) を参照してください。
 
 **現在の推奨:** `scripts/setup_worktree.sh` を使用してください。`scripts/tools/create_worktree.sh` は互換ラッパーです。
 

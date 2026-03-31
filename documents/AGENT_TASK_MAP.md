@@ -123,11 +123,11 @@ ______________________________________________________________________
 | 32  | ワークツリー削除・クリーンアップ | ワークツリー | L2     | 15 分 | [FILE_CHECKLIST_OPERATIONS.md](./FILE_CHECKLIST_OPERATIONS.md#%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%E3%83%AA%E3%82%B9%E3%83%886) |
 | 33  | ワークツリー規約チェック         | ワークツリー | L2     | 10 分 | [check_worktree_scopes.sh](../scripts/tools/check_worktree_scopes.sh)                                                           |
 | 34  | ドキュメント品質チェック         | ドキュメント | L2     | 20 分 | [FILE_CHECKLIST_OPERATIONS.md](./FILE_CHECKLIST_OPERATIONS.md#%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%E3%83%AA%E3%82%B9%E3%83%888) |
-| 35  | README.md 統合・整理             | ドキュメント | L3     | 90 分 | [DOCUMENT_RESTRUCTURING_PROPOSAL.md](./DOCUMENT_RESTRUCTURING_PROPOSAL.md)                                                      |
+| 35  | README.md 統合・整理             | ドキュメント | L3     | 90 分 | [README.md](./README.md)                                                                                                        |
 | 36  | ツール追加・管理                 | 環境設定     | L3     | 40 分 | [tools/README.md](./tools/README.md)                                                                                            |
 | 37  | CI パイプライン管理              | テスト       | L3     | 50 分 | [run_all_checks.sh](../scripts/ci/run_all_checks.sh)                                                                            |
 | 38  | チーム調整・ロール定義           | 運用         | L3     | 60 分 | [AGENTS_COORDINATION.md](./AGENTS_COORDINATION.md)                                                                              |
-| 39  | ドキュメント整理（改善提案）     | ドキュメント | L3     | 60 分 | [DOCUMENT_RESTRUCTURING_PROPOSAL.md](./DOCUMENT_RESTRUCTURING_PROPOSAL.md)                                                      |
+| 39  | ドキュメント整理（改善提案）     | ドキュメント | L3     | 60 分 | [README.md](./README.md)                                                                                                        |
 | 40  | レビュー手順・基準設定           | レビュー     | L3     | 45 分 | [REVIEW_PROCESS.md](./REVIEW_PROCESS.md)                                                                                        |
 
 ### AI エージェント向け（10 タスク）

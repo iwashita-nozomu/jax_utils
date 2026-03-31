@@ -19,6 +19,10 @@
 - レビュー報告と実装進捗報告は `./reviews/` に置きます。
 - 軽量なメモと実験の考察は `./notes/` に置きます。
 - 日付ごとの作業ログは `./diary/` に置きます。
+- `./documents/` には正本だけを残し、proposal / report / summary / `.bak` のような履歴物は常設しません。
+- 一時的な分析や履歴を残したい場合は、新しいファイルを増やさず Git 履歴で追います。
+- 正本に昇格させる内容は、既存の canonical document へ統合してから元ファイルを削除します。
+- agent team の role 一覧と team shape は `agents/README.md` だけに要約を残し、`documents/AGENTS_COORDINATION.md` や `.github/AGENTS.md` へ再掲しません。
 - `./notes/experiments/` のメモは実験ごとに分けます。
 - 削除予定の worktree から吸い出したメモは `./notes/worktrees/` に置きます。
 - `./diary/` は日付ファイルへ逐次追記する運用を基本とします。
@@ -74,22 +78,22 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 
 ## 4. サブモジュールの位置づけ
 
-| パス                                | 状態     | 役割                                                      |
-| ----------------------------------- | -------- | --------------------------------------------------------- |
-| `python/jax_util/base`              | 安定     | 型・定数・作用素の基盤。                                  |
-| `python/jax_util/solvers`           | 安定     | 数値ソルバと関連ユーティリティ。                          |
-| `python/jax_util/optimizers`        | 安定     | `solvers` を利用する最適化アルゴリズム。                  |
-| `python/jax_util/hlo`               | 安定     | HLO ダンプと解析補助。                                    |
-| `python/jax_util/neuralnetwork`     | 実験段階 | forward / train の整理中。                                |
-| `python/experiment_runner`         | 実験段階 | host/child 実行、worker slot 管理、途中結果保存の共通部。 |
-| `python/jax_util/solvers/archive`   | 保管     | 現在使わないアルゴリズムの退避先。                        |
-| `python/tests`                      | 安定     | 検証とログ出力。                                          |
-| `scripts`                           | 安定     | テスト・ログ・依存解析の補助。                            |
-| `experiments`                       | 実験運用 | 長時間実験、結果整理、レポート生成。                      |
-| `reviews`                           | 安定     | Git 管理するレビュー報告と進捗文書。                      |
-| `notes`                             | 安定     | 実験メモ、考察。                                          |
-| `diary`                             | 安定     | 日付ごとの作業ログ。                                      |
-| `documents`                         | 安定     | 規約と設計書の一次情報源。                                |
+| パス                              | 状態     | 役割                                                              |
+| --------------------------------- | -------- | ----------------------------------------------------------------- |
+| `python/jax_util/base`            | 安定     | 型・定数・作用素の基盤。                                          |
+| `python/jax_util/solvers`         | 安定     | 数値ソルバと関連ユーティリティ。                                  |
+| `python/jax_util/optimizers`      | 安定     | `solvers` を利用する最適化アルゴリズム。                          |
+| `python/jax_util/hlo`             | 安定     | HLO ダンプと解析補助。                                            |
+| `python/jax_util/neuralnetwork`   | 実験段階 | forward / train の整理中。                                        |
+| `python/experiment_runner`        | 実験段階 | host/child 実行、worker slot 管理、run 内 progress 記録の共通部。 |
+| `python/jax_util/solvers/archive` | 保管     | 現在使わないアルゴリズムの退避先。                                |
+| `python/tests`                    | 安定     | 検証とログ出力。                                                  |
+| `scripts`                         | 安定     | テスト・ログ・依存解析の補助。                                    |
+| `experiments`                     | 実験運用 | 長時間実験、結果整理、レポート生成。                              |
+| `reviews`                         | 安定     | Git 管理するレビュー報告と進捗文書。                              |
+| `notes`                           | 安定     | 実験メモ、考察。                                                  |
+| `diary`                           | 安定     | 日付ごとの作業ログ。                                              |
+| `documents`                       | 安定     | 規約と設計書の一次情報源。                                        |
 
 ## 5. 共通ルール
 
@@ -107,6 +111,7 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 - 安定サブモジュールの API を変えるときは `documents/design/jax_util/` の対応ファイルを更新します。
 - 文書は参照の一覧ではなく、責務ごとのまとまりとして編成します。
 - 実装パスへの参照は、実装上の制約を明示する必要がある場合に限ります。
+- `.bak`、日付付き report、proposal、completion summary を `documents/` の正本として残しません。
 
 ## 7. タスク運用
 
@@ -128,3 +133,5 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 - `main` で先に変更するのは、実験固有ではない共通コードや規約更新に限ります。
 - 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
 - `main` には再生成可能なコード・文書・最小限の雛形だけを置き、大きな JSON・画像・ログを常設しません。
+- 実験 run は 1 回の fresh 実行で完走する前提で書き、途中停止した run を再開しません。
+- 途中で止まった場合は、partial 出力を正規結果として継ぎ足さず、新しい run_id と新しい出力先で 0 から再実行します。

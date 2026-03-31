@@ -48,6 +48,7 @@
 - 実験固有のコード変更は、まず対応する results worktree で確認してから `main` へ戻す
 - `main` に先に入れるのは、共通コードや規約更新のような実験非依存の変更に限る
 - 作業中の「一挙手一投足」は、必ず 1 か所の append-only な action log に残す
+- 実験 run は 1 回の fresh 実行で完走させる前提とし、途中停止した run をそのまま再開しない
 - action log は、意味のある単位ごとに短く追記する
   - 例: scope 更新、編集開始、テスト実行、実験開始、実験停止、carry-over 判断、branch 統合
 - action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とする
@@ -68,6 +69,7 @@
 - 巨大な raw JSONL、HTML、SVG、ログは原則として results branch に残し、`main` へ常設しない
 - `main` の note から raw 結果を参照するときは、本文の核心をリンク先へ逃がさず、必要最小限の JSON と要約を `main` 側にも残す
 - `main` へ持ち帰るのは、再解析に必要な最小 final JSON と、その意味を説明する note を原則とする
+- 途中停止した partial run は carry-over の正本にせず、必要なら停止理由の診断材料として results branch 側へ残す
 - worktree を削除する前に、残すべき `notes/` は `main` 側へ commit 済み、または `main` に merge 済みでなければならない
 
 ## 7. worktree を閉じる前のチェック
@@ -79,6 +81,7 @@
 - `notes/experiments/results/` に持ち帰る final JSON を選んだか
 - raw 結果を results branch に残すか、不要として捨てるかを決めたか
 - branch の結果を `main` にどう要約するか決め、必要なら図や数式を note 側で整理したか
+- run が途中停止した場合に、停止理由を action log に記録し、次回は fresh run に切り替えると決めたか
 
 ## 8. 削除前の整理
 
@@ -117,6 +120,7 @@
 1. `WORKTREE_SCOPE.md` を埋め、action log と carry-over target を決める
 1. `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を開き、作業開始を記録する
 1. コード編集、テスト、実験、停止判断のたびに action log を追記する
+1. run が止まったら partial を継がず、理由を記録して fresh run を切り直す
 1. 実験の意味ある観測は `notes/experiments/<topic>.md` に整理する
 1. `main` に残す最小 final JSON を `notes/experiments/results/` に選ぶ
 1. `notes/branches/<branch_topic>.md` から、scope、note、result の入口を整える

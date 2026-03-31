@@ -6,7 +6,6 @@ Features:
 - Ensure a top-level H1 exists (insert from filename if missing)
 - Remove trailing whitespace on lines
 - Ensure a single blank line after header lines
-- Create a .bak backup before modifying
 
 Usage:
   python3 scripts/tools/fix_markdown_docs.py [--apply]
@@ -65,8 +64,6 @@ def process_file(path: Path, apply: bool) -> bool:
     new_text = fix_markdown_text(text, title)
     if new_text != text:
         if apply:
-            bak = path.with_suffix(path.suffix + ".bak")
-            bak.write_text(text, encoding="utf-8")
             path.write_text(new_text, encoding="utf-8")
             print(f"Fixed: {path}")
         else:

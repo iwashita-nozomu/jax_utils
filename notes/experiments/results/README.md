@@ -4,8 +4,9 @@
 
 - 目的は、後から別の図や集計を再生成できるようにすることです。
 - raw な JSONL、巨大ログ、途中経過の全ファイルまでは置きません。
-- branch を代表する final JSON、あるいは partial でも再解析価値の高い JSON を選んで置きます。
+- branch を代表する完走 run の final JSON を選んで置きます。
 - 何を `main` に残し、何を results branch に残したかは、対応する note と branch summary から辿れるようにします。
+- 途中停止した partial run は診断用の branch artifact に留め、`main` の canonical archive には置きません。
 
 各 JSON について、対応する note から
 
@@ -15,6 +16,11 @@
 - その JSON を持ち帰った理由
 
 が辿れるようにします。
+
+## Legacy Exception
+
+下の file は、この規約を固める前に持ち帰られた historical exception です。
+今後は同様の partial JSON をこの archive に追加しません。
 
 ## Current Files
 

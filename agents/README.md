@@ -12,6 +12,12 @@ This directory defines the repo's long-lived agent team.
 
 Keep detailed role logic in the canonical sources above. Other docs should link back here instead of duplicating role definitions.
 
+## Human-Facing Canonical Summary
+
+`agents/README.md` is the only human-facing summary that may restate the team shape.
+Other docs should link here and to the machine-readable/runtime canon below instead of
+copying role lists or handoff details.
+
 ## Team Shape
 
 - Always-on roles: `manager`, `manager_reviewer`, `designer`, `design_reviewer`, `implementer`, `change_reviewer`, `final_reviewer`, `verifier`, `auditor`
@@ -66,6 +72,8 @@ python3 scripts/agent_tools/validate_role_write_scope.py \
 - GitHub Actions models the handoff spine with reviewer-return loops and can activate specialists through workflow inputs when a run needs them.
 - Treat `agents/agents_config.json` as the single source of truth for roles, handoffs, and write policies.
 - Treat `agents/COMMUNICATION_PROTOCOL.md` as the single source of truth for handoff, review, response, and escalation messages.
+- Treat this file as the only human-facing summary of role lists and team shape.
+- Keep `documents/AGENTS_COORDINATION.md` and `.github/AGENTS.md` as thin entrypoints that link here instead of repeating the team definition.
 - Keep repo edits inside `WORKTREE_SCOPE.md` editable directories whenever `implementer` is active.
 - Capture both a report-dir snapshot and a workspace-change snapshot before an artifact-only role runs, then validate against both after the role writes.
 - Record scope, risk, and acceptance decisions in the report bundle.

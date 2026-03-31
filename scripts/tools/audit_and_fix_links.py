@@ -11,8 +11,6 @@ Actions:
 
 Usage:
   python3 scripts/tools/audit_and_fix_links.py [--apply]
-
-Conservative: creates `.bak` before modifying files.
 """
 from pathlib import Path
 import re
@@ -80,7 +78,7 @@ def main():
             # try to find candidate by basename
             basename = Path(target_path).name
             candidates = name_index.get(basename, [])
-            # filter out .bak files
+            # filter out legacy backup files if they still exist
             candidates = [c for c in candidates if not str(c).endswith('.bak')]
             if len(candidates) == 1:
                 new_rel = relpath(md, candidates[0])
@@ -94,8 +92,6 @@ def main():
         if replacements:
             new_text = replace_link_targets(text, replacements)
             if args.apply:
-                bak = md.with_suffix(md.suffix + '.bak')
-                bak.write_text(text, encoding='utf-8')
                 md.write_text(new_text, encoding='utf-8')
                 fixes_made += 1
             else:

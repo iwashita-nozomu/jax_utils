@@ -37,7 +37,7 @@ set -euo pipefail
 # 【関連ドキュメント】
 #   - documents/FILE_CHECKLIST_OPERATIONS.md: チェックリスト1（新規ブランチ開始）
 #   - documents/tools/TOOLS_DIRECTORY.md: ツール詳細目録
-#   - documents/tools/WORKTREE_TOOL_UNIFICATION.md: 結合分析・推奨ツール
+#   - documents/worktree-lifecycle.md: worktree 運用の正本
 #
 # ═══════════════════════════════════════════════════════════════════════════
 

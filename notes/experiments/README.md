@@ -54,6 +54,8 @@ Experiment と benchmark の使い分けは [benchmark_vs_experiment.md](../know
 - 次の課題
 - 実験中に何を走らせ、どこで条件を変えたかの action log
 
+途中停止した partial run を正式結果として扱わず、必要なら停止理由と再実行判断だけを note に残します。
+
 文献から得た記述は、対象文献を具体的に明示します。
 
 ## Final JSON
@@ -61,6 +63,7 @@ Experiment と benchmark の使い分けは [benchmark_vs_experiment.md](../know
 - `main` へ持ち帰る final JSON は `notes/experiments/results/` に置きます。
 - raw な JSONL や大量ログまでは持ち込まず、後段の図再生成に必要な最小限の JSON を選びます。
 - note 本文からは、その JSON へのリンクを必ず張ります。
+- carry-over の正本は完走した run の final JSON を原則とし、partial run の JSON は持ち帰り対象にしません。
 
 ## In-Worktree Drafting
 

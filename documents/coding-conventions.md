@@ -15,6 +15,12 @@
 
 **必須ルール: md ファイル編集後は必ず `mdformat` ツールで書式を直してください。**
 
+### Canonical Only
+
+- `documents/` と `scripts/` の Markdown には正本だけを残します。
+- `.bak`、proposal、report、summary のような履歴用ファイルを常設しません。
+- 履歴を残したい場合は Git 履歴を使い、必要な内容だけを既存の正本へ統合します。
+
 ### 実行方法
 
 ````bash

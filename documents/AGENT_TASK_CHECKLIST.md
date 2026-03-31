@@ -329,10 +329,10 @@ Regular maintenance (40 min):
   ├─ Task 32 (Cleanup): ✅ FILE_CHECKLIST_OPERATIONS.md
   ├─ Task 36 (Tool management): ✅ tools/README.md
   ├─ Task 37 (CI management): ✅ run_all_checks.sh
-  └─ Task 39 (Doc improvement): ✅ DOCUMENT_RESTRUCTURING_PROPOSAL.md
+  └─ Task 39 (Doc improvement): ✅ documents/README.md
 
 Large-scale improvements (90+ min):
-  ├─ Task 35 (README refactor): ✅ DOCUMENT_RESTRUCTURING_PROPOSAL.md
+  ├─ Task 35 (README refactor): ✅ documents/README.md
   ├─ Task 38 (Team coordination): ✅ AGENTS_COORDINATION.md
   └─ Task 40 (Review standards): ✅ REVIEW_PROCESS.md
 
