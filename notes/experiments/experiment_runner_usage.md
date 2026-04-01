@@ -1,12 +1,83 @@
 # Experiment Runner Usage
 
 この note は、`python/experiment_runner/` を実験コードからどう使うかを、実務向けにまとめた利用ガイドです。
+API の使い方だけでなく、現状把握、small run、正式 run、note 化までの汎用的な進め方もここで扱います。
 
 対象 reader は次です。
 
 - 新しく `experiment_runner` を使い始める人
 - `main` へ持ち帰った後に既存実験を移植する人
 - GPU 実験で env 設定と runner の責務を切り分けたい人
+
+研究の問い、比較設計、実験 note の体裁は次を正本にします。
+
+- [research-workflow.md](/workspace/documents/research-workflow.md)
+- [experiment-report-style.md](/workspace/documents/experiment-report-style.md)
+
+## 0. 現状把握から始める
+
+新しい実験を始めるときは、いきなり long run を投げず、まず現状を固定します。
+
+### 0.1 最初に固定すること
+
+少なくとも次の 4 つを run 前に 1 回言語化します。
+
+- `Question:`
+  - 何を確かめたいか。速度、精度、メモリ、failure pattern のどれを見たいか。
+- `Comparison Target:`
+  - main 実装、旧 script、別 scheduler、別 allocator 設定のどれと比べるか。
+- `Metrics:`
+  - 何を JSON と note に残すか。少なくとも時間、成功率、failure kind、主要誤差を含めます。
+- `Stop Condition:`
+  - smoke が通ればよいのか、verified run まで必要か、正式な比較表を作るのか。
+
+ここが曖昧なまま実験を始めると、
+
+- debug run と正式 run が混ざる
+- partial run を結論に使ってしまう
+- 比較条件が毎回ずれる
+
+という問題が起きやすいです。
+
+### 0.2 run 前に確認するもの
+
+新しい topic でも既存 topic でも、まず次を確認します。
+
+- topic の `README.md`
+  - 標準コマンド、出力先、carry-over 方針を確認する。
+- 直近の experiment note
+  - 既知の failure pattern、まだ言えないこと、再実行理由を確認する。
+- final JSON または JSONL schema
+  - 後段の集計や report 生成が何を前提にしているかを見る。
+- `git status --short`
+  - 生成物とコード変更を混ぜないため、作業ツリーの状態を先に確認する。
+
+`Interpretation:`
+現状把握の目的は「前回どこまで分かっていて、今回どこから再開するか」を固定することです。
+コードを書く前に context を揃えるほど、後から note が書きやすくなります。
+
+### 0.3 入口の決め方
+
+最初に、今回の run がどの種類かを決めます。
+
+- 通常の実験
+  - `StandardWorker`
+  - `StandardScheduler` または `StandardFullResourceScheduler`
+  - `StandardRunner`
+- host 側で pid / slot / stdout completion を直接見たい run
+  - `build_worker_slots()`
+  - `run_cases_with_subprocess_scheduler()`
+  - 必要なら `RuntimeMonitor`
+
+基準は次です。
+
+- worker を case ごとの fresh process として安全に回したい
+  - `StandardRunner` 系を先に検討する。
+- host で child process の状態を強く観測したい
+  - `subprocess_scheduler` を使う。
+
+1 case だけの debug run は許容されますが、正式な比較 evidence は、
+README と note に書いた protocol に従う fresh run だけに限定します。
 
 ## 1. 何を使い分けるか
 
@@ -427,6 +498,44 @@ results = run_cases_with_subprocess_scheduler(
 - scheduler / subprocess helper が組み立てる
 - JAX allocator 系は `GPUEnvironmentConfig` に寄せる
 
+### 8.4 実験の標準的な進め方
+
+`experiment_runner` を使う実験は、次の順番で進めるのを基本にします。
+
+1. 現状把握
+   - topic README、既存 note、final JSON を見て `Question:` と `Comparison Target:` を固定する。
+1. smoke
+   - 小さい CPU run か極小ケースで、import、pickle、JSONL 追記、集計導線だけを確認する。
+1. verified
+   - 本番に近い backend と env で、worker 数を絞った narrow run を通す。
+1. formal run
+   - case range、timeout、allocator 方針、出力先を固定した fresh run を 1 回で流す。
+1. note 化
+   - final JSON、raw JSONL、主要 figure、failure kind を note から辿れるようにする。
+
+`How to read this workflow:`
+smoke は「動くか」を見る段階であり、formal run は「比較できるか」を見る段階です。
+この 2 つを混ぜないことが、再現性と review のしやすさに直結します。
+
+### 8.5 どの段階で止めるか
+
+実験は、目的ごとに止めどころを変えてよいです。
+
+- runner 配線確認
+  - smoke が通れば十分です。
+- env / GPU slot / allocator 確認
+  - verified まで通してから判断します。
+- benchmark / 比較表 / report
+  - formal run と final JSON まで必要です。
+
+partial run は診断には使えますが、
+
+- 比較表の根拠
+- carry-over の正本
+- `main` に持ち帰る final JSON の代替
+
+には使いません。
+
 ## 9. テストの回し方
 
 通常:
@@ -475,6 +584,7 @@ scheduler の帳簿と実使用量がずれます。
 1. 実験コード側では runtime env を直接セットしない。
 1. JAX allocator 設定は `GPUEnvironmentConfig` に集約する。
 1. monitor を使う場合は `RuntimeMonitor` を入口にする。
+1. 新しい実験は、まずこの note の `0. 現状把握から始める` と `8.4 実験の標準的な進め方` に従って段階を切る。
 1. 新しい実験 script はまずこの note の CPU / GPU 最小例を土台にする。
 
 ## 12. 関連 note

@@ -84,3 +84,31 @@ python3 scripts/agent_tools/validate_role_write_scope.py \
 - Keep experiment outputs inside `WORKTREE_SCOPE.md` runtime output directories whenever `experimenter` is active.
 - Capture both a report-dir snapshot and a workspace-change snapshot before an artifact-only role runs, then validate against both after the role writes.
 - Record scope, risk, and acceptance decisions in the report bundle.
+
+## Template Library
+
+`agents/templates/` contains **17 standardized templates** used directly by `bootstrap_agent_run.py` and related runtime tools. Templates are **NOT referenced in documentation** by design—they are discovered and used dynamically by execution tools.
+
+**Template Inventory by Role:**
+
+| Template | Role | Purpose |
+|----------|------|---------|
+| `intent_brief.md` | manager | Task intake and scoping |
+| `design_brief.md` | designer | Design proposal brief |
+| `design_review.md` | design_reviewer | Design feedback and approval |
+| `research_notes.md` | researcher | Research findings and analysis |
+| `research_review.md` | research_reviewer | Research quality and fairness critique |
+| `experiment_log.md` | experimenter | Experiment setup, metrics, and execution log |
+| `experiment_report.md` | experimenter | Results, analysis, and conclusions |
+| `experiment_review.md` | experiment_reviewer | Quantitative rigor and overclaim check |
+| `change_review.md` | change_reviewer | Code quality and integration checklist |
+| `final_review.md` | final_reviewer | Go/no-go decision and sign-off |
+| `schedule.md` | scheduler | Timeline, dependencies, risk mitigation |
+| `schedule_review.md` | schedule_reviewer | Schedule feasibility and contingencies |
+| `infra_notes.md` | infra_steward | Infrastructure changes and rationale |
+| `infra_review.md` | infra_reviewer | Infrastructure impact assessment |
+| `management_review.md` | manager | Final integration and release notes |
+| `decision_log.md` | manager | Decision audit trail and context |
+| `retrospective.md` | manager | Post-execution lessons and next steps |
+
+**Usage:** Templates are loaded by name at runtime. No external documentation or cross-references needed.
