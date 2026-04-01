@@ -96,6 +96,25 @@ ______________________________________________________________________
   - **Custom Agents** — Code Reviewer, Experiment Executor など
   - **Environment & Secrets Management** — credential 安全管理
   - **Subagents & Task Distribution** — Sequential/Parallel/Branching ワークフロー
+  - **CLI エージェント・コマンドラインリファレンス** — Claude CLI / Copilot CLI / Cursor CLI / GitHub CLI
+
+---
+
+### 🛠️ **Skills ライブラリ — プロジェクト標準ワークフロー**
+
+> 既存ワークフロー（実験・コードレビュー・テスト）を Skill 化し、エージェントと連携
+
+- **[Skills 統合計画](../.github/SKILLS_INTEGRATION_PLAN.md)** — 全体 Skill 体系・実装ロードマップ
+  - Skill 1: `static-check` — 型・テスト・Docker 検証
+  - Skill 2: `code-review` — コード品質多層検証（A/B/C層）
+  - Skill 3: `run-experiment` — 実験実行・結果生成（5段階）
+  - Skill 4: `critical-review` — 実験学術的妥当性検証（Code/Results/Math）
+  - Skill 5: `research-workflow` — 長期研究・反復管理
+
+- **[Skills ライブラリ](../.github/skills/README.md)** — 全 5 Skill の使用ガイド・統合マップ
+  - 各 Skill の README + Template + Script
+  - CLI / GitHub Actions での実行方法
+  - 実装状況・次のステップ
 
 ______________________________________________________________________
 
