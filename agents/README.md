@@ -2,6 +2,8 @@
 
 This directory defines the repo's long-lived agent team.
 
+**🇯🇵 日本語ガイドが必要ですか？ → [USER_GUIDE_JA.md](./USER_GUIDE_JA.md)**
+
 ## Canonical Sources
 
 - Team definition and role permissions: `agents/agents_config.json`

@@ -2,202 +2,200 @@
 
 > JAX 向けユーティリティ・線形代数・最適化ソルバー統合ライブラリ
 
+**あなたは誰ですか？** → 下のボタンをクリック
+
 ______________________________________________________________________
 
-## 🚀 クイックスタート（5分）
+## 🎯 あなたの役割で選ぶ（3回のクリックで到達可能）
 
-### 1. 環境構築
+### 📚 **ドキュメント・ガイドが必要**
+
+👉 [documents/README.md](./documents/README.md)
+
+- 初心者セットアップ（環境・テスト・規約）
+- 実装ガイド（Python・テスト・デザイン）
+- レビュー・運用手順
+- よくある質問
+
+### 🛠️ **ツール・スクリプトを使いたい**
+
+👉 [scripts/README.md](./scripts/README.md)
+
+- ツール一覧（20+ スクリプト）
+- 使用方法・オプション
+- CI/CD コマンド
+- トラブルシューティング
+
+### 📓 **実験・ナレッジ・メモを見たい**
+
+👉 [notes/README.md](./notes/README.md)
+
+- 実験レポート・結果
+- 試行錯誤のメモ
+- チューニング記録
+- 開発ログ
+
+### 🤖 **エージェント（AI）として利用**
+
+👉 [agents/README.md](./agents/README.md) + [agents/TASK_WORKFLOWS.md](./agents/TASK_WORKFLOWS.md)
+
+- チームロール・権限
+- タスク別 workflow
+- 通信規約・handoff
+- 50 個のタスク完全ガイド（📖 [AGENT_TASK_MAP.md](./documents/AGENT_TASK_MAP.md)）
+
+### 🎓 **設計・アーキテクチャを深掘り**
+
+👉 [documents/design/README.md](./documents/design/README.md)
+
+- ソルバー・最適化アルゴリズム
+- 型システム・API 設計
+- モジュール依存関係
+
+______________________________________________________________________
+
+## ⚡ クイックコマンド（よく使うやつ）
 
 ```bash
-# branch 名を明示して worktree 作成
+# 環境セットアップ（1回目）
 bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
-
-# ワークツリーに移動
 cd .worktrees/work-my-feature-YYYYMMDD
+
+# テスト実行（毎回）
+make ci                         # 全テスト（30～60秒）
+make ci-quick                   # 軽量テスト（10秒）
+
+# ドキュメント修正
+mdformat documents/             # Markdown 書式修正
+
+# ツール実行例
+python scripts/check_convention_consistency.py  # 規約検証
+python scripts/docker_dependency_validator.py   # Docker 依存確認
 ```
 
-**⚠️ 注意**: ローカル仮想環境（`.venv`, `venv` など）の作成は **禁止** です。Docker 環境を使用してください。詳細は [documents/coding-conventions-project.md](./documents/coding-conventions-project.md#3-docker%E7%92%B0%E5%A2%83%E3%81%AE%E6%96%B9%E9%87%9D) を参照。
+⚠️ **注意**: ローカル仮想環境（`.venv`, `venv`）は禁止。Docker を使ってください。
 
-### 2. 最初のコミット
+______________________________________________________________________
 
-```bash
-# スコープ確認・編集
-vim WORKTREE_SCOPE.md
-git add WORKTREE_SCOPE.md && git commit -m "chore(worktree): initialize scope"
-git push -u origin work/my-feature-YYYYMMDD
+## 📋 ディレクトリ構成（サイト マップ）
+
+```
+/workspace
+├─ README.md ← 👈 ここ（入口）
+│
+├─ 📚 documents/
+│   ├─ README.md ← 【第2層】全ドキュメント・ガイド入口
+│   ├─ conventions/ ← 規約（Python・C++・共通）
+│   ├─ design/ ← アーキテクチャ・API・設計
+│   ├─ tools/ ← ツール・スクリプト詳細
+│   ├─ QUICK_START.md
+│   ├─ REVIEW_PROCESS.md
+│   └─ worktree-lifecycle.md
+│
+├─ 🛠️ scripts/
+│   ├─ README.md ← 【第2層】ツール・スクリプト入口
+│   ├─ agent_tools/ ← エージェント向け helper
+│   ├─ ci/ ← CI/CD スクリプト
+│   ├─ tools/ ← 検証・チェック ツール
+│   └─ *.sh ← 補助スクリプト
+│
+├─ 📓 notes/
+│   ├─ README.md ← 【第2層】実験・ナレッジ入口
+│   ├─ experiments/ ← 実験レポート
+│   ├─ worktrees/ ← worktree 削除予定メモ
+│   └─ knowledge/ ← 試行錯誤の記録
+│
+├─ 🤖 agents/
+│   ├─ README.md ← 【第2層】エージェント チーム入口
+│   ├─ agents_config.json ← チーム正本（ロール・権限）
+│   ├─ COMMUNICATION_PROTOCOL.md
+│   ├─ TASK_WORKFLOWS.md ← タスク workflow 集
+│   ├─ task_catalog.yaml
+│   └─ templates/ ← エージェント出力テンプレート
+│
+├─ 📖 python/
+│   ├─ jax_util/ ← メインライブラリ
+│   ├─ experiment_runner/ ← 実験実行基盤
+│   └─ tests/ ← テストスイート
+│
+├─ 🧪 experiments/
+│   ├─ functional/ ← 機能テスト・検証
+│   └─ smolyak_experiment/ ← Smolyak グリッド実験
+│
+└─ 📝 その他
+    ├─ docker/ ← Docker 環境・依存
+    ├─ reviews/ ← レビュー報告・進捗レポート
+    ├─ diary/ ← 日付別開発ログ
+    ├─ Makefile ← タスク自動化
+    └─ task.md ← TO-DO（Phase 別）
 ```
 
-### 3. 実装テスト
-
-```bash
-# 単体テスト + 型チェック + リント統一実行
-make ci
-# または
-bash scripts/ci/run_all_checks.sh
-```
-
-📖 **詳細:** [QUICK_START.md](./QUICK_START.md) / [ワークツリー完全ガイド](./documents/worktree-lifecycle.md)
-
-______________________________________________________________________
-
-## 📚 ドキュメント（目的別逆引き）
-
-### 👤 初心者向け
-
-- **[セットアップ＆ワークフロー](./QUICK_START.md)** — 最初の 30 分
-- **[ワークツリー規約](./documents/WORKTREE_SCOPE_TEMPLATE.md)** — スコープ定義テンプレート
-- **[チェックリスト（8フロー）](./documents/FILE_CHECKLIST_OPERATIONS.md)** — 新規/テスト/ドキュメント各業務手順
-
-### 👨‍💻 実装者向け
-
-- **[コーディング規約](./documents/conventions/README.md)** — 言語別・共通規約
-- **[Python 実装ガイド](./documents/coding-conventions-python.md)** — 型・関数・設計方針
-- **[テスト規約](./documents/coding-conventions-testing.md)** — ユニット・統合テスト
-
-### 🛠️ ツール・スクリプト
-
-- **[ツール一覧](./documents/tools/README.md)** — 20+ スクリプト・使用方法
-- **[ツール詳細リファレンス](./documents/tools/TOOLS_DIRECTORY.md)** — コマンド・オプション・フロー図
-
-### 🔧 レビュー・運用者向け
-
-- **[レビュー手順](./documents/REVIEW_PROCESS.md)** — 統合方針・検査項目
-- **[チーム調整](./documents/AGENTS_COORDINATION.md)** — エージェント運用の入口と権限モデル
-- **[常設エージェントチーム](./agents/README.md)** — design-first と reviewer pair を含む共通チーム構成
-- **[エージェント通信規約](./agents/COMMUNICATION_PROTOCOL.md)** — handoff・review・response・escalation の書き方
-- **[タスク別 workflow 集](./agents/TASK_WORKFLOWS.md)** — 10 個の想定タスクと重複整理済み workflow family
-
-### 🎓 設計・アーキテクチャ
-
-- **[プロジェクト設計](./documents/design/jax_util/README.md)** — モジュール依存図
-- **[ワークツリー構想図](./documents/conventions/README.md#%E5%9B%B3)** — 共通図表
-
-### 📓 実験・ナレッジ
-
-- **[実験メモ・結果](./notes/README.md)** — Smolyak・ベンチマーク・チューニング
-- **[開発ログ](./diary/README.md)** — 日付別の試行・発見
-
-### ❓ トラブルシューティング
-
-- **[よくある問題](./documents/TROUBLESHOOTING.md)** — エラー＆解決策
-
-______________________________________________________________________
-
-## 🎯 よく使うコマンド
-
-| 用途                      | コマンド                                         | 所要時間 |
-| ------------------------- | ------------------------------------------------ | -------- |
-| **CI 実行（全チェック）** | `make ci`                                        | 30～60秒 |
-| **クイック CI**           | `make ci-quick`                                  | 10秒     |
-| **Markdown 形式修正**     | `mdformat documents/`                            | 10秒     |
-| **マークダウンリント**    | `python scripts/tools/check_markdown_lint.py .`  | 10秒     |
-| **Markdown lint + fix**   | `python scripts/tools/fix_markdown_headers.py .` | 15秒     |
-| **Dev 環境セットアップ**  | `make dev-setup`                                 | 1～2分   |
-| **ツール一覧表示**        | `make tools-help`                                | 5秒      |
-
-______________________________________________________________________
-
-## 📖 ドキュメント構成（階層図）
-
-```text
-README.md (ここ) ← 👈 入口
-  └─ 📚 documents/README.md
-      ├─ 新規開発者向け
-      │  ├─ conventions/ (規約体系)
-      │  ├─ worktree-lifecycle.md
-      │  └─ coding-conventions-testing.md
-      ├─ 実装ガイド
-      │  ├─ tools/README.md
-      │  └─ FILE_CHECKLIST_OPERATIONS.md
-      ├─ 設計・仕様
-      ├─ 運用
-      └─ よくある問題 (NEW)
-  └─ 🛠️ scripts/README.md (ツール導入)
-  └─ 📓 notes/README.md (実験ナレッジ)
-  └─ 👥 .github/AGENTS.md (チーム運用)
-  └─ 🤖 agents/README.md (常設チーム入口)
-  └─ 🧭 agents/agents_config.json (チーム正本)
-  └─ 💬 agents/COMMUNICATION_PROTOCOL.md (通信規約)
-  └─ 🗂️ agents/TASK_WORKFLOWS.md (タスク workflow カタログ)
-```
-
-**↑ 「📚」をクリック** → 各層の README.md で詳細ドキュメントへ
-
-______________________________________________________________________
-
-## 🔗 ワンクリックリンク集
-
-### 急いでいる場合
-
-- [5分で環境構築](./QUICK_START.md)
-- [CI を実行するだけ](./scripts/ci/README.md)
-- [よくある質問](./documents/TROUBLESHOOTING.md)
-
-### ツール・スクリプト
-
-- [整体テンプレート](./documents/WORKTREE_SCOPE_TEMPLATE.md)
-- [マークダウン修正ツール](./documents/tools/README.md#markdown-%E3%83%84%E3%83%BC%E3%83%AB)
-- [テスト・ログ保存](./scripts/run_pytest_with_logs.sh)
-
-### 規約・ガイド
-
-- [Python コーディング規約](./documents/coding-conventions-python.md)
-- [テスト規約](./documents/coding-conventions-testing.md)
-- [Markdown 記法統一](./documents/coding-conventions.md#markdown-%E6%9B%B8%E5%BC%8F%E4%BF%AE%E6%AD%A3%E3%83%AB%E3%83%BC%E3%83%AB)
-- [常設エージェントチーム](./agents/README.md)
-- [エージェント通信規約](./agents/COMMUNICATION_PROTOCOL.md)
-- [タスク別 workflow 集](./agents/TASK_WORKFLOWS.md)
-
-### 実装開始の前に
-
-1. [ワークツリー規約](./documents/WORKTREE_SCOPE_TEMPLATE.md) を読む
-1. `.worktrees/*/WORKTREE_SCOPE.md` を編集
-1. `make ci` でテスト実行
-
-______________________________________________________________________
-
-## 🔄 主要フロー（チェックリスト）
-
-| フロー                  | ファイル                                                                                                               | 所要時間 |
-| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- | -------- |
-| **1. 新規開発ブランチ** | [チェック1](./documents/FILE_CHECKLIST_OPERATIONS.md#%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%E3%83%AA%E3%82%B9%E3%83%881) | 20分     |
-| **2. 実装テスト**       | [チェック3](./documents/FILE_CHECKLIST_OPERATIONS.md#%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%E3%83%AA%E3%82%B9%E3%83%883) | 30分     |
-| **3. ドキュメント更新** | [チェック4](./documents/FILE_CHECKLIST_OPERATIONS.md#%E3%83%81%E3%82%A7%E3%83%83%E3%82%AF%E3%83%AA%E3%82%B9%E3%83%884) | 15分     |
-| **4. 統合（main へ）**  | [チェック∞](./documents/FILE_CHECKLIST_OPERATIONS.md)                                                                  | 10分     |
-
-詳細は [FILE_CHECKLIST_OPERATIONS.md](./documents/FILE_CHECKLIST_OPERATIONS.md) を参照
-
-______________________________________________________________________
-
-## 💡 開発フロー（図解）
-
-```text
-git clone → setup_worktree → WORKTREE_SCOPE 編集
-   ↓
-実装＆テスト (make ci) → コミット
-   ↓
-ドキュメント更新 (mdformat) → コミット
-   ↓
-統合ブランチへ merge → GitHub Actions
-```
+**👉 3 階層ナビゲーション例:**
+- 第 1 層: 👆 上の「あなたの役割で選ぶ」を選択
+- 第 2 層: documents/README.md や scripts/README.md で詳細選択
+- 第 3 層: 実際のドキュメント・ガイドを参照
 
 ______________________________________________________________________
 
 ## 📊 プロジェクト情報
 
-| 項目             | 値                       |
-| ---------------- | ------------------------ |
-| **言語**         | Python 3.10+             |
-| **主要依存**     | JAX, Equinox, scipy      |
-| **テスト**       | pytest, pyright, ruff    |
-| **マークダウン** | mdformat, markdownlint   |
-| **ドキュメント** | 119 ファイル（構造化中） |
+| 項目             | 値                                 |
+| ---------------- | ---------------------------------- |
+| **言語**         | Python 3.10+, C++17           |
+| **主要依存**     | JAX, Equinox, scipy, numpy    |
+| **テスト**       | pytest, pyright, ruff         |
+| **ドキュメント** | Markdown (gdformat)           |
+| **自動化**       | Makefile, GitHub Actions, CI  |
+| **ドキュメント数** | 130+ ファイル（構造化）        |
+| **スクリプト**   | 20+ （解析・検証・自動化）     |
 
 ______________________________________________________________________
 
 ## 🆘 困ったら
 
-1. **[よくある質問](./documents/TROUBLESHOOTING.md)** を先に確認
+**該当する状況を選んでクリック:**
+
+| 状況 | 参照先 |
+|------|--------|
+| **セットアップできない** | [QUICK_START.md](./QUICK_START.md) / [worktree-lifecycle.md](./documents/worktree-lifecycle.md) |
+| **テストが失敗する** | [documents/TROUBLESHOOTING.md](./documents/TROUBLESHOOTING.md) / [coding-conventions-testing.md](./documents/coding-conventions-testing.md) |
+| **型エラーが出ている** | [coding-conventions-python.md](./documents/coding-conventions-python.md#型チェッカの活用) |
+| **ドキュメント修正方法** | [`mdformat` の使い方](./documents/coding-conventions.md#markdown-書式修正ルール) |
+| **エージェント向けガイド** | [agents/USER_GUIDE_JA.md](./agents/USER_GUIDE_JA.md) 🇯🇵 |
+| **ツールが見つからない** | [scripts/README.md](./scripts/README.md) / [documents/tools/README.md](./documents/tools/README.md) |
+| **Worktree・ブランチ管理** | [documents/worktree-lifecycle.md](./documents/worktree-lifecycle.md) / [documents/BRANCH_SCOPE.md](./documents/BRANCH_SCOPE.md) |
+| **レビュー・統合手順** | [documents/REVIEW_PROCESS.md](./documents/REVIEW_PROCESS.md) / [agents/COMMUNICATION_PROTOCOL.md](./agents/COMMUNICATION_PROTOCOL.md) |
+
+______________________________________________________________________
+
+## 🎬 次のステップ
+
+### **初心者向け**
+1. [QUICK_START.md](./QUICK_START.md) を 5 分で読む
+2. `bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD` を実行
+3. `make ci` でテストが通るか確認
+4. [documents/coding-conventions-python.md](./documents/coding-conventions-python.md) を読む
+
+### **実装者向け**
+1. 実装対象を [task.md](./task.md) から選ぶ
+2. `documents/conventions/` で規約確認
+3. [scripts/ci/](./scripts/ci/) で CI 実行方法確認
+4. ワークツリーで実装 → テスト → コミット
+
+### **レビュー・運用者向け**
+1. [documents/REVIEW_PROCESS.md](./documents/REVIEW_PROCESS.md) を読む
+2. [agents/README.md](./agents/README.md) でチームロール確認
+3. [agents/COMMUNICATION_PROTOCOL.md](./agents/COMMUNICATION_PROTOCOL.md) で通信規約確認
+
+### **エージェント（AI）向け**
+→ **[agents/USER_GUIDE_JA.md](./agents/USER_GUIDE_JA.md)** 🇯🇵 から始めてください
+
+______________________________________________________________________
+
+**最後に更新：** 2026-04-01  
+**スポンサー:** jax_util development team  
+**言語:** 日本語 • [English](./README_EN.md) (未翻訳)
+
 1. **[ツール一覧](./documents/tools/README.md)** で解決ツールを探す
 1. **[ワークフロー手順](./documents/FILE_CHECKLIST_OPERATIONS.md)** で対応フローを確認
 1. **[規約](./documents/conventions/README.md)** で実装・テスト方法を確認
