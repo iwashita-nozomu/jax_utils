@@ -1,0 +1,266 @@
+#!/usr/bin/env bash
+#
+# 統合コードレビューチェック実行スクリプト（v2.0）
+# スキルファイル section 12 の自動化スクリプトを一括実行
+# 
+# 用法:
+#   ./scripts/run_comprehensive_review.sh [--parallel] [--report]
+#
+# オプション:
+#   --parallel     ツールを並行実行（高速化）
+#   --report       実行後、JSON レポート生成
+#   --verbose      詳細ログを出力
+#
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="${SCRIPT_DIR%/*}"
+LOG_DIR="${PROJECT_ROOT}/logs"
+REPORT_DIR="${PROJECT_ROOT}/reports"
+
+# ファラメータ解析
+RUN_PARALLEL=false
+GENERATE_REPORT=false
+VERBOSE=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --parallel) RUN_PARALLEL=true; shift ;;
+        --report) GENERATE_REPORT=true; shift ;;
+        --verbose) VERBOSE=true; shift ;;
+        *) echo "Unknown option: $1"; exit 1 ;;
+    esac
+done
+
+# ログディレクトリ作成
+mkdir -p "$LOG_DIR"
+
+# タイムスタンプ
+START_TIME=$(date +%s)
+START_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+
+SUCCESS_COUNT=0
+FAILURE_COUNT=0
+
+# ロギング関数
+log_info() {
+    echo "[$(date '+%H:%M:%S')] ℹ️  $*" | tee -a "$LOG_DIR/comprehensive_review.log"
+}
+
+log_success() {
+    echo "[$(date '+%H:%M:%S')] ✅ $*" | tee -a "$LOG_DIR/comprehensive_review.log"
+    ((SUCCESS_COUNT++))
+}
+
+log_error() {
+    echo "[$(date '+%H:%M:%S')] ❌ $*" | tee -a "$LOG_DIR/comprehensive_review.log"
+    ((FAILURE_COUNT++))
+}
+
+log_info "================================================"
+log_info "🚀 Comprehensive Code Review Checks v2.0"
+log_info "Start time: $START_DATE"
+log_info "Parallel mode: $RUN_PARALLEL"
+log_info "================================================"
+
+# ===== Python Checks =====
+log_info ""
+log_info "【Python Checks】"
+
+# Pyright
+log_info "1/4️⃣ Type checking with pyright..."
+if python -m pyright python/jax_util --strict > "$LOG_DIR/pyright.log" 2>&1; then
+    log_success "pyright: OK"
+else
+    log_error "pyright: FAILED (see $LOG_DIR/pyright.log)"
+fi
+
+# Ruff
+log_info ""
+log_info "2/4️⃣ Style check with ruff..."
+if python -m ruff check python/jax_util > "$LOG_DIR/ruff.log" 2>&1; then
+    log_success "ruff: OK"
+else
+    log_error "ruff: FAILED (see $LOG_DIR/ruff.log)"
+fi
+
+# Pytest
+log_info ""
+log_info "3/4️⃣ Test execution..."
+if python -m pytest python/tests/ -v --tb=short > "$LOG_DIR/pytest.log" 2>&1; then
+    log_success "pytest: OK"
+else
+    log_error "pytest: FAILED (see $LOG_DIR/pytest.log)"
+fi
+
+# ===== Extended Skill Checks =====
+log_info ""
+log_info "【Extended Skill Checks】"
+
+if [ "$RUN_PARALLEL" = true ]; then
+    log_info "Running tools in parallel mode..."
+    
+    # Background jobs
+    python "$SCRIPT_DIR/check_doc_test_triplet.py" > "$LOG_DIR/triplet_check.log" 2>&1 &
+    PID_TRIPLET=$!
+    
+    python "$SCRIPT_DIR/check_convention_consistency.py" > "$LOG_DIR/convention_check.log" 2>&1 &
+    PID_CONVENTION=$!
+    
+    python "$SCRIPT_DIR/docker_dependency_validator.py" > "$LOG_DIR/docker_check.log" 2>&1 &
+    PID_DOCKER=$!
+    
+    python "$SCRIPT_DIR/requirement_sync_validator.py" > "$LOG_DIR/requirement_check.log" 2>&1 &
+    PID_REQUIREMENT=$!
+    
+    # Wait for all background jobs
+    if wait $PID_TRIPLET 2>/dev/null; then
+        log_success "triplet check: OK"
+    else
+        log_error "triplet check: FAILED"
+    fi
+    
+    if wait $PID_CONVENTION 2>/dev/null; then
+        log_success "convention check: OK"
+    else
+        log_error "convention check: FAILED"
+    fi
+    
+    if wait $PID_DOCKER 2>/dev/null; then
+        log_success "docker check: OK"
+    else
+        log_error "docker check: FAILED"
+    fi
+    
+    if wait $PID_REQUIREMENT 2>/dev/null; then
+        log_success "requirement check: OK"
+    else
+        log_error "requirement check: FAILED"
+    fi
+    
+else
+    # Sequential execution
+    log_info ""
+    log_info "4/4️⃣ Doc-Test-Code Triplet Check..."
+    if python "$SCRIPT_DIR/check_doc_test_triplet.py" > "$LOG_DIR/triplet_check.log" 2>&1; then
+        log_success "triplet check: OK"
+    else
+        log_error "triplet check: FAILED"
+    fi
+    
+    log_info ""
+    log_info "5️⃣/6️⃣ Convention Consistency Check..."
+    if python "$SCRIPT_DIR/check_convention_consistency.py" > "$LOG_DIR/convention_check.log" 2>&1; then
+        log_success "convention check: OK"
+    else
+        log_error "convention check: FAILED"
+    fi
+    
+    log_info ""
+    log_info "6️⃣/7️⃣ Docker Dependency Validation..."
+    if python "$SCRIPT_DIR/docker_dependency_validator.py" > "$LOG_DIR/docker_check.log" 2>&1; then
+        log_success "docker check: OK"
+    else
+        log_error "docker check: FAILED"
+    fi
+    
+    log_info ""
+    log_info "7️⃣/8️⃣ Requirement Sync Validation..."
+    if python "$SCRIPT_DIR/requirement_sync_validator.py" > "$LOG_DIR/requirement_check.log" 2>&1; then
+        log_success "requirement check: OK"
+    else
+        log_error "requirement check: FAILED"
+    fi
+fi
+
+# ===== Document Checks =====
+log_info ""
+log_info "【Document Checks】"
+
+log_info ""
+log_info "8️⃣ Markdown format check..."
+if command -v mdformat &> /dev/null; then
+    if mdformat --check documents/ > "$LOG_DIR/mdformat.log" 2>&1; then
+        log_success "mdformat: OK"
+    else
+        log_error "mdformat: FAILED (see $LOG_DIR/mdformat.log)"
+    fi
+else
+    log_info "mdformat not installed, skipping..."
+fi
+
+# ===== Summary =====
+END_TIME=$(date +%s)
+END_DATE=$(date '+%Y-%m-%d %H:%M:%S')
+ELAPSED=$((END_TIME - START_TIME))
+
+log_info ""
+log_info "================================================"
+log_info "✅ Review Complete!"
+log_info "================================================"
+log_info "Passed: $SUCCESS_COUNT"
+log_info "Failed: $FAILURE_COUNT"
+log_info "Elapsed: ${ELAPSED}s"
+log_info "End time: $END_DATE"
+log_info ""
+
+# Generate JSON report
+if [ "$GENERATE_REPORT" = true ]; then
+    mkdir -p "$REPORT_DIR"
+    REPORT_FILE="$REPORT_DIR/comprehensive_review_$(date +%Y%m%d_%H%M%S).json"
+    
+    cat > "$REPORT_FILE" << EOF
+{
+  "metadata": {
+    "title": "Comprehensive Code Review",
+    "start_time": "$START_DATE",
+    "end_time": "$END_DATE",
+    "elapsed_seconds": $ELAPSED,
+    "parallel_mode": $RUN_PARALLEL
+  },
+  "summary": {
+    "total": $((SUCCESS_COUNT + FAILURE_COUNT)),
+    "passed": $SUCCESS_COUNT,
+    "failed": $FAILURE_COUNT,
+    "pass_rate": $(echo "scale=2; $SUCCESS_COUNT * 100 / ($SUCCESS_COUNT + $FAILURE_COUNT)" | bc)%
+  },
+  "log_dir": "$LOG_DIR",
+  "report_file": "$REPORT_FILE"
+}
+EOF
+    
+    log_info "Report generated: $REPORT_FILE"
+fi
+
+log_info "Log directory: $LOG_DIR"
+
+# Exit with failure if any check failed
+if [ $FAILURE_COUNT -gt 0 ]; then
+    exit 1
+else
+    exit 0
+fi
+    fi
+else
+    echo "ℹ️ mdformat not installed (skipping)"
+fi
+
+# Summary
+echo ""
+echo "================================================"
+echo "📊 Final Report"
+echo "================================================"
+echo "✅ Passed: $SUCCESS_COUNT"
+echo "❌ Failed: $FAILURE_COUNT"
+echo "Total: $((SUCCESS_COUNT + FAILURE_COUNT))"
+
+if [ $FAILURE_COUNT -eq 0 ]; then
+    echo ""
+    echo "🎉 All checks passed!"
+    exit 0
+else
+    echo ""
+    echo "⚠️ Some checks failed. Please review above."
+    exit 1
+fi

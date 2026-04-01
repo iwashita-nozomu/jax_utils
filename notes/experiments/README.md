@@ -3,6 +3,7 @@
 このディレクトリには、`main` から辿れる形で残しておきたい実験メモを置きます。
 研究の問い、定式化、比較対象、段階的改造の正本は [documents/research-workflow.md](../../documents/research-workflow.md) を参照してください。
 準備、実装、静的チェック、実行、結果レポートの標準手順は [documents/experiment-workflow.md](../../documents/experiment-workflow.md) を参照してください。
+批判的レビューの観点は [documents/experiment-critical-review.md](../../documents/experiment-critical-review.md) を参照してください。
 実験レポートの構成と体裁は [documents/experiment-report-style.md](../../documents/experiment-report-style.md) を参照してください。
 
 Experiment と benchmark の使い分けは [benchmark_vs_experiment.md](../knowledge/benchmark_vs_experiment.md) を参照してください。

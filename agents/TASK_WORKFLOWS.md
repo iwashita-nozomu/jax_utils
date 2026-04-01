@@ -1,6 +1,7 @@
 # Agent Task Workflows
 
 この文書は、恒久的なエージェントチームで頻出すると想定される 10 個のタスクと、その workflow を定義するカタログです。
+実験主導タスクでの批判的レビュー観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を参照してください。
 
 ## 目的
 
@@ -57,12 +58,14 @@
 1. `designer` が review を受けて設計を修正する。
 1. `experimenter` が baseline run と比較プロトコルを記録する。
 1. `experiment_reviewer` が baseline の妥当性と比較公平性を批判的にレビューする。
+   レビュー観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を使う。
 1. `experimenter` が review を受けて experiment log を修正する。
 1. `implementer` が 1 つの change を実装する。
 1. `change_reviewer` が各 chunk を逐次レビューする。
 1. `implementer` が review を受けて修正する。
 1. `experimenter` が同じ比較プロトコルで再実行する。
 1. `experiment_reviewer` が result interpretation と overclaim をレビューする。
+   review では math validity、literature connection、evidence sufficiency、figure validity も確認する。
 1. `implementer` が experiment review を受けて必要なら修正し、必要なら前の 5 手順を反復する。
 1. `final_reviewer` が research と diff の整合を見る。
 1. `implementer` が final review を受けて必要なら修正する。
@@ -137,12 +140,14 @@
 1. `designer` が review を受けて設計を修正する。
 1. `experimenter` が現行 runner の baseline operation を記録する。
 1. `experiment_reviewer` が観測性、比較条件、run 完走性をレビューする。
+   review では [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) の relevant 項目を使う。
 1. `experimenter` が review を受けて baseline 記録を修正する。
 1. `implementer` が runner / scheduler / docs を更新する。
 1. `change_reviewer` が運用 regressions を確認する。
 1. `implementer` が review を受けて修正する。
 1. `experimenter` が同じ運用シナリオを再実行する。
 1. `experiment_reviewer` が regression と overclaim をレビューする。
+   必要なら report と code の両方を見て evidence sufficiency を確認する。
 1. `implementer` が experiment review を受けて必要なら修正する。
 1. `final_reviewer` が安全性と observability を見る。
 1. `implementer` が final review を受けて必要なら修正する。
@@ -183,12 +188,14 @@
 1. `designer` が review を受けて設計を修正する。
 1. `experimenter` が baseline benchmark を実行する。
 1. `experiment_reviewer` が metric 妥当性と比較条件をレビューする。
+   review では figure validity と literature connection も確認する。
 1. `experimenter` が review を受けて benchmark log を修正する。
 1. `implementer` が測定コードと最適化を入れる。
 1. `change_reviewer` が可読性や数値安定性を確認する。
 1. `implementer` が review を受けて修正する。
 1. `experimenter` が同じ benchmark を再実行する。
 1. `experiment_reviewer` が改善主張の妥当性をレビューする。
+   結論に必要な data と figure が揃っているかも確認する。
 1. `implementer` が experiment review を受けて必要なら修正する。
 1. `final_reviewer` が benchmark の妥当性を確認する。
 1. `implementer` が final review を受けて必要なら修正する。
