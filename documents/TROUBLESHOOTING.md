@@ -56,7 +56,7 @@ rm -rf .worktrees/work-my-feature-YYYYMMDD/
 bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
 ```text
 
-**参照：** [ワークツリーライフサイクル](./worktree-lifecycle.md)
+**参照：** [ワークツリーライフサイクル](worktree-lifecycle.md)
 
 ______________________________________________________________________
 
@@ -97,7 +97,7 @@ cat documents/coding-conventions-python.md
 python -m pylancer_refactor source.addTypeAnnotation
 ```text
 
-**参照：** [Python コーディング規約](./coding-conventions-python.md)
+**参照：** [Python コーディング規約](coding-conventions-python.md)
 
 ______________________________________________________________________
 
