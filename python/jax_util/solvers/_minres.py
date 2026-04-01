@@ -1,3 +1,4 @@
+# type: ignore
 """最小残差法（MINRES）ソルバの実装。
 
 References

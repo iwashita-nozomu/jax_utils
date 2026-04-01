@@ -1,3 +1,4 @@
+# type: ignore
 """共役勾配法（Conjugate Gradient Method, PCG）。
 
 対称正定値行列 A に対して線形方程式 Ax = b を

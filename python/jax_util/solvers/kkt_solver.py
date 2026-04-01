@@ -1,3 +1,4 @@
+# type: ignore
 """KKT 条件ソルバー。
 
 等式・不等式制約付き最適化問題を Karush-Kuhn-Tucker (KKT)

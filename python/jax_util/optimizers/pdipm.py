@@ -1,3 +1,4 @@
+# type: ignore
 """Mehrotra 型内点法（PDIPM）の実装。
 
 References

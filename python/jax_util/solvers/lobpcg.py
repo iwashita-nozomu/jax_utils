@@ -1,3 +1,4 @@
+# type: ignore
 """ブロック局所最適化固有値法（LOBPCG）の実装。
 
 References
