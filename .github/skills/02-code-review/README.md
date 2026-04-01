@@ -39,17 +39,38 @@ copilot --skill code-review --pr 42 --phase A
 copilot review --skill code-review https://github.com/user/repo/pull/42
 ```
 
-### ローカルテンプレート参照
+### スクリプト実装
+
+**Layer A コンポーネント** (基礎検証)
+
+| スクリプト | 目的 | コマンド |
+|----------|------|---------|
+| `layer_a_type_checker.py` | 型注釈検証 (pyright/mypy) | `python layer_a_type_checker.py --target-dir python` |
+| `layer_a_linting_checker.py` | スタイル・命名規則 (ruff/black) | `python layer_a_linting_checker.py --target-dir python` |
+| `layer_a_docstring_checker.py` | Docstring 検証 | `python layer_a_docstring_checker.py --target-dir python` |
+| `layer_a_test_coverage_checker.py` | テスト・カバレッジ (pytest/coverage) | `python layer_a_test_coverage_checker.py --test-dir python/tests` |
+
+**統合 CLI**
 
 ```bash
-# A 層チェックリスト確認
-cat .github/skills/02-code-review/checklist-a-layer.md
+# Layer A 全コンポーネント実行
+python .github/skills/02-code-review/run-review.py --phase A
 
-# B 層チェックリスト確認
-cat .github/skills/02-code-review/checklist-b-layer.md
+# 詳細出力
+python .github/skills/02-code-review/run-review.py --phase A --verbose
 
-# レポートテンプレート確認
-cat .github/skills/02-code-review/report-template.md
+# JSON 形式出力
+python .github/skills/02-code-review/run-review.py --phase A --json
+```
+
+**三点セット検証** (Layer C 先行実装)
+
+```bash
+# 実装 ⟺ Docstring ⟺ テスト の対応を検証
+python .github/skills/02-code-review/check_doc_test_triplet.py \
+  --target-dir python \
+  --test-dir python/tests \
+  --json
 ```
 
 ---
