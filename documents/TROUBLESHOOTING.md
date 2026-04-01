@@ -187,8 +187,8 @@ ______________________________________________________________________
 [Reference](../../../documents/coding-conventions.md)
 
 ✅ 正しい例（workspace ルートから相対）
-[Reference](./documents/coding-conventions.md)
-```text
+[Reference](documents/coding-conventions.md)
+```
 
 2. **ツールで自動修正**
 
