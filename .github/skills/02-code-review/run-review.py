@@ -30,6 +30,170 @@ class SkillCodeReview:
         self.verbose = verbose
         self.skill_dir = Path(".github/skills/02-code-review")
 
+    def run_layer_c(self) -> Dict:
+        """Layer C: 統合検証を実行。
+
+        対象:
+        - プロジェクト規約検証
+        - Doc-Test Triplet 検証
+
+        Returns:
+            Layer C 統合結果。
+        """
+        results = {
+            "layer": "C",
+            "phase": "統合検証",
+            "components": {},
+            "overall_status": "UNKNOWN",
+        }
+
+        # 1. Project Rules Checker
+        rules_cmd = [
+            "python3",
+            str(self.skill_dir / "layer_c_project_rules.py"),
+            "--json",
+        ]
+        try:
+            proc = subprocess.run(
+                rules_cmd,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            rules_result = json.loads(proc.stdout)
+            results["components"]["project_rules"] = rules_result
+        except Exception as e:
+            results["components"]["project_rules"] = {
+                "status": "ERROR",
+                "error": str(e),
+            }
+
+        # 2. Doc-Test Triplet Checker
+        triplet_cmd = [
+            "python3",
+            str(self.skill_dir / "check_doc_test_triplet.py"),
+            "--target-dir",
+            "python",
+            "--json",
+        ]
+        try:
+            proc = subprocess.run(
+                triplet_cmd,
+                capture_output=True,
+                text=True,
+                timeout=120,
+            )
+            triplet_result = json.loads(proc.stdout)
+            results["components"]["doc_test_triplet"] = triplet_result
+        except Exception as e:
+            results["components"]["doc_test_triplet"] = {
+                "status": "ERROR",
+                "error": str(e),
+            }
+
+        # 統合判定
+        statuses = [
+            r.get("status")
+            for r in results["components"].values()
+        ]
+        fail_count = sum(1 for s in statuses if s == "FAIL")
+        warn_count = sum(1 for s in statuses if s == "WARN")
+
+        if fail_count >= 1:
+            results["overall_status"] = "FAIL"
+        elif warn_count >= 1:
+            results["overall_status"] = "WARN"
+        else:
+            results["overall_status"] = "PASS"
+
+        return results
+
+    def run_layer_b(self, target_dir: str = "python") -> Dict:
+        """Layer B: 深度検証を実行。
+
+        対象:
+        - テストアーキテクチャ検証
+        - スタイル・ベストプラクティス検証
+
+        Args:
+            target_dir: 対象ディレクトリ。
+
+        Returns:
+            Layer B 統合結果。
+        """
+        results = {
+            "layer": "B",
+            "phase": "深度検証",
+            "components": {},
+            "overall_status": "UNKNOWN",
+        }
+
+        # 1. Test Architecture Checker
+        arch_cmd = [
+            "python3",
+            str(self.skill_dir / "layer_b_test_architecture.py"),
+            "--test-dir",
+            "python/tests",
+            "--json",
+        ]
+        try:
+            proc = subprocess.run(
+                arch_cmd,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            arch_result = json.loads(proc.stdout)
+            results["components"]["test_architecture"] = arch_result
+        except Exception as e:
+            results["components"]["test_architecture"] = {
+                "status": "ERROR",
+                "error": str(e),
+            }
+
+        # 2. Style & Best Practices Checker
+        style_cmd = [
+            "python3",
+            str(self.skill_dir / "layer_b_style_best_practices.py"),
+            "--target-dir",
+            target_dir,
+            "--json",
+        ]
+        try:
+            proc = subprocess.run(
+                style_cmd,
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            style_result = json.loads(proc.stdout)
+            results["components"]["style_best_practices"] = style_result
+        except Exception as e:
+            results["components"]["style_best_practices"] = {
+                "status": "ERROR",
+                "error": str(e),
+            }
+
+        # 統合判定
+        statuses = [
+            r.get("status")
+            for r in results["components"].values()
+        ]
+        fail_count = sum(1 for s in statuses if s == "FAIL")
+        warn_count = sum(1 for s in statuses if s == "WARN")
+        na_count = sum(1 for s in statuses if s == "N/A")
+
+        if fail_count >= 1:
+            results["overall_status"] = "FAIL"
+        elif warn_count >= 1:
+            results["overall_status"] = "WARN"
+        elif na_count == 2:
+            results["overall_status"] = "N/A"
+        else:
+            results["overall_status"] = "PASS"
+
+        return results
+
     def run_layer_a(self, target_dir: str = "python") -> Dict:
         """Layer A: 基礎検証を実行。
 
@@ -222,20 +386,11 @@ class SkillCodeReview:
         if phase in ["A", "all"]:
             results["phases"]["A"] = self.run_layer_a(target_dir)
 
-        # B/C は未実装（Week 2 後期で実装予定）
         if phase in ["B", "all"]:
-            results["phases"]["B"] = {
-                "layer": "B",
-                "phase": "深度検証",
-                "status": "NOT_IMPLEMENTED",
-            }
+            results["phases"]["B"] = self.run_layer_b(target_dir)
 
         if phase in ["C", "all"]:
-            results["phases"]["C"] = {
-                "layer": "C",
-                "phase": "統合検証",
-                "status": "NOT_IMPLEMENTED",
-            }
+            results["phases"]["C"] = self.run_layer_c()
 
         return results
 
