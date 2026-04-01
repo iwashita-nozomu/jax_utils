@@ -21,24 +21,25 @@ from datetime import datetime
 SCRIPT_DIR = Path(__file__).parent
 sys.path.insert(0, str(SCRIPT_DIR / "checkers"))
 
+# グローバルインポート
+try:
+    from type_checker import PyrightChecker, MypyChecker
+    from test_runner import TestRunner
+    from docker_validator import DockerValidator
+    from coverage_analyzer import CoverageAnalyzer
+except ImportError as e:
+    print(f"Error importing checkers: {e}")
+    sys.exit(1)
+
 
 def import_checkers():
     """チェッカーモジュールをインポート"""
-    try:
-        from type_checker import PyrightChecker, MypyChecker
-        from test_runner import TestRunner
-        from docker_validator import DockerValidator
-        from coverage_analyzer import CoverageAnalyzer
-        
-        return {
-            "type": (PyrightChecker, MypyChecker),
-            "test": TestRunner,
-            "docker": DockerValidator,
-            "coverage": CoverageAnalyzer,
-        }
-    except ImportError as e:
-        print(f"Error importing checkers: {e}")
-        return {}
+    return {
+        "type": (PyrightChecker, MypyChecker),
+        "test": TestRunner,
+        "docker": DockerValidator,
+        "coverage": CoverageAnalyzer,
+    }
 
 
 def run_checks(

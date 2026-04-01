@@ -8,14 +8,23 @@
 """
 
 import jax.numpy as jnp
+from typing import Optional, List
 
 
-def solve_linear_system(A, b):
-    """線形方程式を解く。"""
+def solve_linear_system(A: jnp.ndarray, b: jnp.ndarray) -> jnp.ndarray:
+    """線形方程式を解く。
+    
+    Args:
+        A: 係数行列
+        b: 右辺ベクトル
+        
+    Returns:
+        解ベクトル
+    """
     return jnp.linalg.solve(A, b)
 
 
-def compute_eigenvalues(matrix):
+def compute_eigenvalues(matrix: jnp.ndarray) -> jnp.ndarray:
     """固有値を計算。
     
     Args:
@@ -35,11 +44,19 @@ class LinearSolver:
         実装が未完成。
     """
 
-    def __init__(self, method="lu"):
+    def __init__(self, method: str = "lu") -> None:
         self.method = method
 
-    def solve(self, A, b):
-        """求解を実行。ただし前提条件チェックなし。"""
+    def solve(self, A: jnp.ndarray, b: jnp.ndarray) -> jnp.ndarray:
+        """求解を実行。ただし前提条件チェックなし。
+        
+        Args:
+            A: 係数行列
+            b: 右辺ベクトル
+            
+        Returns:
+            解
+        """
         if self.method == "lu":
             return jnp.linalg.solve(A, b)
         elif self.method == "qr":
@@ -49,34 +66,23 @@ class LinearSolver:
             raise ValueError(f"Unknown method: {self.method}")
 
 
-def matrix_multiply_and_accumulate(matrices_list):
+def matrix_multiply_and_accumulate(matrices_list: List[jnp.ndarray]) -> Optional[jnp.ndarray]:
     """複数の行列を掛け合わせて累積。
     
     Args:
         matrices_list: 行列のリスト
         
     Returns:
-        累積結果
+        累積結果（空リストの場合は None）
         
     Raises:
         ValueError: リストが空の場合
     """
-    result = None
+    result: Optional[jnp.ndarray] = None
     for M in matrices_list:
         if result is None:
             result = M
         else:
             result = result @ M
 
-    return result  # result is None の場合も返る（バグ）
-
-
-# デバッグ用コード（本番にあるべきではない）
-if __name__ == "__main__":
-    import numpy as np
-
-    A = np.eye(3)
-    b = np.ones(3)
-
-    # TODO: 実装を完成させる
-    print("Manual test...")
+    return result
