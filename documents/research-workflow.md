@@ -2,6 +2,8 @@
 
 この文書は、数式を伴うアルゴリズム研究、比較実験、段階的なコード改造を 1 つの workflow にまとめた正本です。
 対象は、`python/` 配下の実装改造、`experiments/` 配下の比較実験、`notes/` への知見整理、results branch での長時間 run を含みます。
+準備、実装、静的チェック、実行、結果レポートを通した実務上の統合入口は [experiment-workflow.md](/workspace/documents/experiment-workflow.md) を参照してください。
+この文書は、とくに問い、定式化、比較設計、段階的改造、claim 更新の正本を担います。
 
 ## 1. 目的
 

@@ -1,7 +1,7 @@
 # Experiment Runner Usage
 
 この note は、`python/experiment_runner/` を実験コードからどう使うかを、実務向けにまとめた利用ガイドです。
-API の使い方だけでなく、現状把握、small run、正式 run、note 化までの汎用的な進め方もここで扱います。
+実験全般の標準手順は [experiment-workflow.md](/workspace/documents/experiment-workflow.md) を正本とし、この note では runner、scheduler、monitor、GPU env の使い分けに集中します。
 
 対象 reader は次です。
 

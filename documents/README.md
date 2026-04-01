@@ -45,7 +45,10 @@ ______________________________________________________________________
 
 ### 🔧 **レビュー・運用向け**
 
-- **[レビュー手順](./REVIEW_PROCESS.md)** — 実装人間系・検査項目・チェックリスト
+- **[レビュー手順](./REVIEW_PROCESS.md)** — PR フロー・チェックリスト・承認基準
+  - 🆕 **レビュー履歴管理** — 最新のみ保持、古いレビューは git 履歴に移動
+  - コマンド例: `git rm reviews/*.md && git commit`
+  - 復元方法: `git show HEAD~n:reviews/FILENAME.md`
 - **[チーム調整](./AGENTS_COORDINATION.md)** — ロール・責任・コミュニケーション
 - **[タスク別 workflow 集](../agents/TASK_WORKFLOWS.md)** — 10 個の想定タスクと整理済み workflow family
 - **[ワークツリー管理](./WORKTREE_SCOPE_TEMPLATE.md)** — スコープ・ブランチ管理
@@ -61,12 +64,25 @@ ______________________________________________________________________
 
 #### 実験・試行段階
 
+- **[実験の標準手順](./experiment-workflow.md)** — 準備・実装・静的チェック・実行・結果レポートを 1 ページに統合した入口
 - **[研究・実験改造 workflow](./research-workflow.md)** — 数式・比較対象・逐次改造・branch 反映の正本
 - **[実験レポートの書き方](./experiment-report-style.md)** — IMRaD を repo 向けに寄せた report 構成と figure / table / abstract のルール
 - **[実験環境](./coding-conventions-experiments.md)** — HLO 採取・ベンチマーク
 - **[Benchmark 方針](./conventions/python/20_benchmark_policy.md)** — benchmark と experiment の境界
 - **[実験ディレクトリ構成](./conventions/python/30_experiment_directory_structure.md)** — `experiments/` と `experiment_runner` の責務分担
 - **[レビュー文書](./coding-conventions-reviews.md)** — AI レビュー・解析結果
+
+______________________________________________________________________
+
+### 🤖 **AI エージェントワークフロー ガイド**
+
+> Claude Code vs GitHub Copilot — ツール選択・活用方法・ベストプラクティス
+
+- **[AI エージェント ワークフロー比較](./AI_AGENT_WORKFLOWS_COMPARISON.md)** — 各エージェントの特徴・ワークフロー・推奨用途
+  - Claude Code（Cursor での活用）
+  - GitHub Copilot Pro/Pro+ エージェント  
+  - OpenAI Codex（GitHub 統合）
+  - ハイブリッド構成のベストプラクティス
 
 ______________________________________________________________________
 
@@ -128,6 +144,7 @@ documents/ (ここ) ← 📍 ハブ
   ├─ coding-conventions-testing.md (テスト)
 	  ├─ coding-conventions-python.md (Python 詳細)
 	  ├─ coding-conventions-experiments.md (実験)
+	  ├─ experiment-workflow.md (実験の標準手順)
 	  └─ research-workflow.md (研究設計・比較・改造)
 	  └─ experiment-report-style.md (実験レポート体裁)
 
@@ -178,6 +195,7 @@ ______________________________________________________________________
 1. **汎用 / 共通ルール** → `conventions/common/` に追記
 1. **Python 固有** → `conventions/python/` に追記
 1. **テスト・実験・レビュー** → `coding-conventions-*.md` に追記
+1. **実験の標準手順・反復改造フロー** → `experiment-workflow.md` に追記
 1. **研究設計・比較実験・改造手順** → `research-workflow.md` に追記
 1. **実験レポートの構成・体裁** → `experiment-report-style.md` に追記
 

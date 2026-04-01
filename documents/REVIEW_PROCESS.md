@@ -65,4 +65,88 @@
 
 - 重大なレビュー結果は `reviews/` 配下に記録する（`CONFLICT_REPORT.md` 等）。
 
+______________________________________________________________________
+
+## レビュー履歴管理 — 最新のみ保持
+
+`reviews/` ディレクトリに蓄積したレビュー結果を整理する手順。定期的（月 1 回）に実施してください。
+
+### 手順
+
+#### **1. 現在のレビューファイルを確認**
+
+```bash
+# reviews/ 配下の全ファイルリスト
+ls -lt reviews/*.md | head -20
+
+# 古さルー確認（3ヶ月以上前のファイル）
+find reviews/ -type f -name "*.md" -mtime +90 | sort
+```
+
+#### **2. git 履歴で保存確認**
+
+`reviews/` ファイルは Git の履歴に保存されるため、削除しても参照可能：
+
+```bash
+# 特定レビュー の全バージョンを表示
+git log --follow --oneline -- reviews/COMPREHENSIVE_CODE_REVIEW_20260321.md
+
+# 過去バージョンを表示
+git show HEAD~5:reviews/COMPREHENSIVE_CODE_REVIEW_20260321.md
+
+# 削除前に確認
+git log --all --full-history -- reviews/DETAILED_THOROUGH_CODE_REVIEW_20260321.md
+```
+
+#### **3. 古いレビューを削除**
+
+```bash
+# 確認済みなら削除
+rm reviews/COMPREHENSIVE_CODE_REVIEW_20260321.md
+rm reviews/DETAILED_THOROUGH_CODE_REVIEW_20260321.md
+
+# git で追跡削除
+git rm reviews/COMPREHENSIVE_CODE_REVIEW_20260321.md
+git rm reviews/DETAILED_THOROUGH_CODE_REVIEW_20260321.md
+
+# コミット
+git commit -m "chore: archive old reviews to git history
+
+Remove stale review reports:
+- COMPREHENSIVE_CODE_REVIEW_20260321.md (3+ months old, kept in git log)
+- DETAILED_THOROUGH_CODE_REVIEW_20260321.md (3+ months old, kept in git log)
+
+Reference: git log --follow -- reviews/<filename>"
+
+# Push
+git push origin main
+```
+
+### **保持ポリシー**
+
+| ファイル | 保持期間 | 処理 |
+|---------|--------|------|
+| 最新のレビュー | 常時 | 保持 |
+| 参照中のレビュー | 実行中 | 保持 |
+| 過去レビュー（1-3ヶ月）| 3ヶ月 | **保持** |
+| 古いレビュー（3ヶ月+） | 3ヶ月以上 | **git 履歴に移動** |
+| テンプレート・ガイド | 常時 | 保持 |
+
+### **Git 履歴からの復元**
+
+削除後に必要になった場合：
+
+```bash
+# 削除ファイルの最後のバージョンを復元
+git show HEAD@{n}:reviews/FILENAME.md > /tmp/FILENAME.md
+
+# または、git log で特定コミット を検索
+git log -p -- reviews/ | grep -B5 -A5 "削除内容"
+
+# 復元ブランチを作成
+git checkout <commit> -- reviews/FILENAME.md
+```
+
+______________________________________________________________________
+
 ## 例外と逸脱の扱い
