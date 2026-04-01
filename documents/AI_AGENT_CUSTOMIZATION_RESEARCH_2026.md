@@ -1,9 +1,9 @@
 # AI エージェント・カスタマイズ最新リサーチ
 
-**更新日**: 2026年4月1日  
+**更新日**: 2026年4月1日\
 **対象**: GitHub Copilot, Cursor, Claude Code（及び統合エコシステム）
 
----
+______________________________________________________________________
 
 ## 【GPT Codex 最新ステータス】
 
@@ -11,11 +11,11 @@
 
 #### **GitHub Copilot での位置づけ**
 
-| 項目 | 状態 | 詳細 |
-|------|------|------|
-| **OpenAI Codex** | 公開プレビュー中 | (Feb 2026より) Agent HQ で利用可能 |
-| **必要サブスクリプション** | Pro+ / Enterprise | Copilot Free では不可 |
-| **利用可能な統合** | GitHub.com, VS Code, CLI | Copilot Chat, Agent Mode に統合 |
+| 項目                       | 状態                     | 詳細                               |
+| -------------------------- | ------------------------ | ---------------------------------- |
+| **OpenAI Codex**           | 公開プレビュー中         | (Feb 2026より) Agent HQ で利用可能 |
+| **必要サブスクリプション** | Pro+ / Enterprise        | Copilot Free では不可              |
+| **利用可能な統合**         | GitHub.com, VS Code, CLI | Copilot Chat, Agent Mode に統合    |
 
 #### **他エージェント (Claude, Cursor) との統合**
 
@@ -32,20 +32,20 @@
 
 **重要**: これらはシームレスなモデル選択が可能で、ユーザーが Copilot Pro+ または Enterprise を契約すれば、同じプロジェクトで複数モデルを切り替えられます。
 
----
+______________________________________________________________________
 
 ### 2. API レート制限・コスト情報（2026年標準）
 
 #### GitHub Copilot Pro+ / Enterprise
 
-| 項目 | 制限値・料金 | 備考 |
-|------|----------|------|
-| **入力トークン**（API） | 200k context | Pro+ では shared pool |
-| **出力呼び出し** | 1M tokens/month | Enterprise は custom |
-| **モデル切り替え** | 即座 | Agent HQ UI から選択 |
-| **外部 MCP サーバー** | 制限なし* | セキュリティ審査対象 |
+| 項目                    | 制限値・料金    | 備考                  |
+| ----------------------- | --------------- | --------------------- |
+| **入力トークン**（API） | 200k context    | Pro+ では shared pool |
+| **出力呼び出し**        | 1M tokens/month | Enterprise は custom  |
+| **モデル切り替え**      | 即座            | Agent HQ UI から選択  |
+| **外部 MCP サーバー**   | 制限なし\*      | セキュリティ審査対象  |
 
-*Organization / Enterprise では MCP 接続を admin が制御可能
+\*Organization / Enterprise では MCP 接続を admin が制御可能
 
 #### Claude 側の価格体系（2026年対比）
 
@@ -55,34 +55,38 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 - **Projects 機能**: 最大 50 プロジェクト (Pro), 無制限 (Max)
 - **Knowledge Base**: Projects 内で独立した context space
 
----
+______________________________________________________________________
 
 ### 3. 推奨用途・ベストプラクティス
 
 **GitHub Copilot の場合**:
+
 - ✅ ファイル編集・全体コード生成 (Claude のほうが推奨)
 - ✅ 複雑な multi-step task (Codex は historical dataset が豊富)
 - ✅ CI/CD パイプライン自動化 (GitHub Actions 統合あり)
 - ❌ 長時間の思考プロセス (思考トークン対応は Claude のみ)
 
 **Claude Code の場合**:
+
 - ✅ Projects 機能での知識ベース管理
 - ✅ 思考トークンを活用した複雑な設計検討
 - ✅ Artifacts で動的 UI 操作・リアルタイム検証
 - ✅ Cowork (AI Agent) による自動実行
 
 **Cursor の場合**:
+
 - ✅ VS Code ネイティブな開発体験
 - ✅ ローカル MCP サーバーの即座接続
 - ✅ 低レイテンシー推論 (Composer 2 model)
 
----
+______________________________________________________________________
 
 ## 【Skills 以外の拡張機能一覧】
 
 ### GitHub Copilot の包括的カスタマイズ一覧
 
 #### 1. **Custom Instructions**
+
 - **ファイル場所**:
   - `.github/copilot-instructions.md` (repo-wide)
   - `.github/instructions/*.instructions.md` (path-specific)
@@ -92,22 +96,24 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 - **単位**: Automatic (毎回自動)/Manual reference
 
 #### 2. **Prompt Files**
+
 - **ファイル場所**: `.github/prompts/*.prompt.md`
 - **用途**: 再利用可能な prompt template (input 変数対応)
 - **活用例**:
   ```markdown
   # Unit Test Generator
-  
+
   Generate unit tests for the following code:
-  
+
   {{TARGET_CODE}}
-  
+
   - Use the current testing framework
   - Include edge cases
   - Ensure full coverage
   ```
 
 #### 3. **Custom Agents**
+
 - **ファイル場所**:
   - `.github/agents/AGENT-NAME.md` (repo)
   - `agents/AGENT-NAME.md` in `.github-private` repo (org/enterprise)
@@ -116,11 +122,13 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 - **例**: React Reviewer Agent, Read-Only Auditor Agent
 
 #### 4. **Subagents**
+
 - **ファイル場所**: N/A (runtime process)
 - **用途**: Main agent から delegated task を isolated context で実行
 - **例**: Codebase Research, Test Suite Runner
 
 #### 5. **Agent Skills**
+
 - **ファイル場所**:
   - `.github/skills/<skill-name>/SKILL.md` (project)
   - `.claude/skills/<skill-name>/SKILL.md` (project, Claude 互換)
@@ -132,6 +140,7 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 - **自動選択**: Copilot が必要に応じて自動で選択
 
 #### 6. **Hooks**
+
 - **ファイル場所**: `.github/hooks/*.json`
 - **用途**: Agent lifecycle 内の特定ポイントで実行
 - **保証**: Guaranteed deterministic execution
@@ -141,6 +150,7 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
   - `suggestion-generated`: コインレビュー自動承認・拒否
 
 #### 7. **MCP Servers**
+
 - **ファイル場所**: `mcp.json` (IDE 依存), repo settings (GitHub), custom agent config
 - **用途**: External systems, APIs, real-time data へのアクセス
 - **自動/手動**: Automatic (relevant task に応じて) or 明示的指定
@@ -151,19 +161,19 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 
 ### IDE 別対応表
 
-| 機能 | VS Code | GitHub.com | Linux | MacOS | Windows | CLI | Slack |
-|------|:-------:|:---------:|:-----:|:-----:|:-------:|:---:|:-----:|
-| Custom instructions | ✓ | ✓ | P | P | P | ✓ | ✓ |
-| Prompt files | ✓ | ✓ | P | ✗ | P | ✗ | ✓ |
-| Custom agents | ✓ | ✗ | P | P | P | ✓ | ✓ |
-| Subagents | ✓ | ✗ | P | P | P | ✗ | ✓ |
-| Agent skills | ✓ | ✗ | P | ✗ | ✗ | ✓ | ✓ |
-| Hooks | P | ✗ | ✗ | ✗ | ✗ | ✓ | ✓ |
-| MCP servers | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 機能                | VS Code | GitHub.com | Linux | MacOS | Windows | CLI | Slack |
+| ------------------- | :-----: | :--------: | :---: | :---: | :-----: | :-: | :---: |
+| Custom instructions |    ✓    |     ✓      |   P   |   P   |    P    |  ✓  |   ✓   |
+| Prompt files        |    ✓    |     ✓      |   P   |   ✗   |    P    |  ✗  |   ✓   |
+| Custom agents       |    ✓    |     ✗      |   P   |   P   |    P    |  ✓  |   ✓   |
+| Subagents           |    ✓    |     ✗      |   P   |   P   |    P    |  ✗  |   ✓   |
+| Agent skills        |    ✓    |     ✗      |   P   |   ✗   |    ✗    |  ✓  |   ✓   |
+| Hooks               |    P    |     ✗      |   ✗   |   ✗   |    ✗    |  ✓  |   ✓   |
+| MCP servers         |    ✓    |     ✓      |   ✓   |   ✓   |    ✓    |  ✓  |   ✓   |
 
 **凡例**: ✓ = 完全サポート / P = Preview/Partial / ✗ = 非対応
 
----
+______________________________________________________________________
 
 ## 【Cursor のカスタマイズ体系】
 
@@ -184,12 +194,12 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 
 ### Composer 2 Model との連携
 
-| 機能 | 説明 |
-|------|------|
-| **Planner Mode** | Composer が多段階 plan を自動生成 |
+| 機能                   | 説明                                        |
+| ---------------------- | ------------------------------------------- |
+| **Planner Mode**       | Composer が多段階 plan を自動生成           |
 | **Artifact Isolation** | Large diff を isolated panel で表示・review |
-| **Agent Capability** | Tool use, Thinking token active |
-| **Context Window** | 200k tokens (standard), 1M (with output) |
+| **Agent Capability**   | Tool use, Thinking token active             |
+| **Context Window**     | 200k tokens (standard), 1M (with output)    |
 
 ### Cursor 固有の拡張
 
@@ -197,7 +207,7 @@ Claude Code (Free) → Pro ($17/month) → Max ($100/month)
 - **Git Integration**: `.cursorrules` から Git history access 可能
 - **Performance**: WebSocket-based LSP で低レイテンシー推論
 
----
+______________________________________________________________________
 
 ## 【Claude の Projects 機能と統合】
 
@@ -235,7 +245,7 @@ Claude Projects Database
 - **Long-term**: Projects memory (auto-saved embeddings)
 - **Cross-session**: Pull relevant project memory on new conversation
 
----
+______________________________________________________________________
 
 ## 【實裝例: jax_util プロジェクト向け推奨構成】
 
@@ -412,7 +422,7 @@ Claude Projects Database
 - Output: Experiment report + visualizations
 ```
 
----
+______________________________________________________________________
 
 ## 【ワークフロー統合表】
 
@@ -463,34 +473,37 @@ User Request (Chat / IDE)
 
 ### ユースケース別の推奨ツール
 
-| ユースケース | GitHub Copilot | Cursor | Claude Code | 推奨順 |
-|-----------|:-----:|:------:|:----------:|:-----:|
-| **長時間コード生成** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐ | Cursor > Claude |
-| **アーキ設計・思考** | ⭐ | ⭐⭐ | ⭐⭐⭐⭐ | Claude (Think token) |
-| **CI/CD パイプライン** | ⭐⭐⭐⭐ | ⭐⭐ | ⭐⭐ | GitHub Copilot |
-| **実験・検証実行** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | Claude Code |
-| **Multi-project context** | ⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | Claude Projects |
-| **IDE Native Experience** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐ | Copilot > Cursor |
+| ユースケース              | GitHub Copilot |  Cursor  | Claude Code |        推奨順        |
+| ------------------------- | :------------: | :------: | :---------: | :------------------: |
+| **長時間コード生成**      |      ⭐⭐      |  ⭐⭐⭐  |   ⭐⭐⭐    |   Cursor > Claude    |
+| **アーキ設計・思考**      |       ⭐       |   ⭐⭐   |  ⭐⭐⭐⭐   | Claude (Think token) |
+| **CI/CD パイプライン**    |    ⭐⭐⭐⭐    |   ⭐⭐   |    ⭐⭐     |    GitHub Copilot    |
+| **実験・検証実行**        |      ⭐⭐      |  ⭐⭐⭐  |  ⭐⭐⭐⭐   |     Claude Code      |
+| **Multi-project context** |       ⭐       |  ⭐⭐⭐  |  ⭐⭐⭐⭐   |   Claude Projects    |
+| **IDE Native Experience** |    ⭐⭐⭐⭐    | ⭐⭐⭐⭐ |     ⭐      |   Copilot > Cursor   |
 
----
+______________________________________________________________________
 
 ## 【推奨構成】~ jax_util の実装方針
 
 ### Phase 1: 基盤整備 (Week 1-2)
 
 1. **Skills の構築**
+
    ```bash
    mkdir -p .github/skills/{jax-numerical,experiment-execution}
    mkdir -p .claude/skills/jax_util_researcher
    mkdir -p .agents/skills/jax-solver-specialist
    ```
 
-2. **Hooks の設定**
+1. **Hooks の設定**
+
    - Docker ライフサイクル Hook
    - mdformat post-edit hook
    - Credential scanning pre-tool hook
 
-3. **MCP サーバーの登録**
+1. **MCP サーバーの登録**
+
    - Filesystem (read-only safety)
    - Git (history access)
    - Memory (conversation persistence)
@@ -507,7 +520,7 @@ User Request (Chat / IDE)
 - チーム向けワークフロー ガイド作成
 - エラー handling & escalation rules の文書化
 
----
+______________________________________________________________________
 
 ## 【セキュリティ・アクセス制御】
 
@@ -557,9 +570,9 @@ __pycache__/
 ### Secrets 管理ベストプラクティス
 
 1. **GitHub Secrets** → CI/CD 内のみ利用
-2. **Local .env** → `.gitignore` に登録
-3. **MCP server credential** → Environment variable のみ
-4. **Agent tool access** → Read-only が default
+1. **Local .env** → `.gitignore` に登録
+1. **MCP server credential** → Environment variable のみ
+1. **Agent tool access** → Read-only が default
 
 #### Hook による自動検査例
 
@@ -575,7 +588,191 @@ __pycache__/
 }
 ```
 
----
+______________________________________________________________________
+
+## 【CLI エージェント・コマンドラインリファレンス】
+
+### 1. Claude CLI
+
+```bash
+# 基本的な会話
+claude "ファイル形式の説明をして" --model claude-3-5-sonnet
+
+# ファイル参照（`.claude/instructions/` 自動読み込み）
+claude --file ./my_prompt.md "上記のプロンプトに基づいてコード生成"
+
+# Skills 実行（`.claude/skills/` を探索）
+claude --skill refactor-to-async "my_file.py"
+
+# 複数ファイル入力
+claude --files ./src/*.py "このコードベースの問題点を指摘"
+
+# JSON 出力（パース可能）
+claude --format json "以下の仕様をJSON形式で説明: REST API設計"
+
+# Subagents 実行（複数エージェント協調）
+claude --subagent-config .github/subagents/workflow.yaml --task "code-review-and-test"
+
+# API Token 指定
+ANTHROPIC_API_KEY=sk-... claude "..."
+
+参考: `claude --help` または https://github.com/anthropics/claude-cli
+```
+
+### 2. GitHub Copilot CLI
+
+```bash
+# Agent mode で起動（会話型）
+copilot -i
+
+# 単一コマンド実行
+copilot explain "説明対象のコード"
+copilot generate "新規 Python 関数"
+copilot review "コードレビュー実施"
+
+# Custom instructions 自動適用（`.github/copilot-instructions.md`）
+copilot --instructions-file .github/copilot-instructions.md "タスク"
+
+# Prompt file から実行（名前付きプロンプト）
+copilot --prompt-file .github/prompts/unit-test-generator.md "my_module.py"
+
+# Subagents ワークフロー実行
+copilot workflow --config .github/subagents/workflow.yaml --mode sequential
+
+# GitHub URL から直接実行
+copilot gh-issue https://github.com/user/repo/issues/42 "Fix attempt"
+
+# API Token (GitHub)
+GITHUB_TOKEN=ghp_... copilot -i
+
+# En masse PR review
+copilot batch-review --pr-list pull_requests.json
+
+参考: `copilot help` または https://docs.github.com/en/copilot/reference/cli-reference
+```
+
+### 3. Cursor コマンドラインツール
+
+```bash
+# ファイル/ディレクトリを Cursor で開く
+cursor /path/to/project
+
+# 特定リーダーで実行（`.cursorrules` 自動適用）
+cursor --apply-rules ./src/main.py
+
+# Generate コマンド（AI コード生成）
+cursor --generate "Python async context manager"
+
+# Explain コマンド
+cursor --explain ./complex_function.py
+
+# Format & Lint
+cursor --format
+cursor --lint
+
+# Reference ドキュメント適用
+cursor --docs ./documents/AI_AGENT_WORKFLOWS_COMPARISON.md --task "関連実装を推奨"
+
+参考: `cursor --help` または https://cursor.com/docs
+```
+
+### 4. GPT Codex via GitHub CLI
+
+```bash
+# GitHub CLI 経由でコードX提案
+gh api repos/{owner}/{repo}/code-suggestions \
+  -f prompt="実装要件" \
+  -f filename="new_feature.py"
+
+# CSV でバッチ実行
+gh api repos/{owner}/{repo}/code-suggestions/batch \
+  --input requirements.json
+
+# Agent mode での自動修正提案 (GitHub Actions)
+gh workflow run copilot-agent.yml \
+  -f task="fix-linting-errors" \
+  -f target-branch="main"
+
+参考: https://docs.github.com/en/copilot/reference
+```
+
+### 5. SDK / Python 統合例
+
+```python
+# Anthropic Claude SDK
+import anthropic
+
+client = anthropic.Anthropic()
+message = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    max_tokens=2048,
+    system_prompt=open(".claude/instructions/code_reviewer.md").read(),
+    messages=[
+        {"role": "user", "content": "このコードをレビューして"}
+    ]
+)
+print(message.content[0].text)
+```
+
+```python
+# Subagent 実行（GitHub Copilot SDK 概念例）
+from github_copilot import Agent, SubagentWorkflow
+
+workflow = SubagentWorkflow(
+    config_path=".github/subagents/workflow.yaml"
+)
+result = workflow.execute(
+    task="code-review-and-test",
+    parallel=True,  # Sequential / Parallel / Branching
+    timeout=300
+)
+for agent_name, output in result.items():
+    print(f"{agent_name}: {output}")
+```
+
+### 6. Docker 環境での実行
+
+```bash
+# Dockerfile に agent CLI をプリインストール
+FROM python:3.11
+RUN pip install claude-cli github-copilot-cli
+
+# docker run で実行
+docker run -e ANTHROPIC_API_KEY=$API_KEY \
+           -v $(pwd):/workspace \
+           my-agents:latest \
+           claude --skill refactor-to-async /workspace/main.py
+```
+
+### 7. GitHub Actions での自動化例
+
+```yaml
+# .github/workflows/copilot-agent.yml
+name: Copilot Auto-Review
+
+on: [pull_request]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Copilot Agent
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          copilot review \
+            --pr ${{ github.event.pull_request.number }} \
+            --instructions-file .github/copilot-instructions.md
+
+      - name: Subagent Workflow
+        run: |
+          Claude workflow run .github/subagents/workflow.yaml \
+            --input-branch ${{ github.head_ref }} \
+            --output-pr
+```
+
+______________________________________________________________________
 
 ## 【まとめ・実装チェックリスト】
 
@@ -606,15 +803,15 @@ __pycache__/
 
 ### ツール推奨配置
 
-| 役割 | GitHub Copilot | Cursor | Claude Code |
-|-----|:-----:|:------:|:----------:|
-| **コード生成** | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **設計・アーキ** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **テスト・検証** | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
-| **文書化** | ⭐⭐⭐ | ⭐⭐ | ⭐⭐⭐ |
-| **CI/CD自動化** | ⭐⭐⭐⭐ | ⭐ | ⭐⭐ |
+| 役割             | GitHub Copilot |  Cursor  | Claude Code |
+| ---------------- | :------------: | :------: | :---------: |
+| **コード生成**   |     ⭐⭐⭐     | ⭐⭐⭐⭐ |   ⭐⭐⭐    |
+| **設計・アーキ** |      ⭐⭐      |  ⭐⭐⭐  |  ⭐⭐⭐⭐   |
+| **テスト・検証** |      ⭐⭐      |  ⭐⭐⭐  |  ⭐⭐⭐⭐   |
+| **文書化**       |     ⭐⭐⭐     |   ⭐⭐   |   ⭐⭐⭐    |
+| **CI/CD自動化**  |    ⭐⭐⭐⭐    |    ⭐    |    ⭐⭐     |
 
----
+______________________________________________________________________
 
 ## 参考資料
 
@@ -624,7 +821,7 @@ __pycache__/
 - [Cursor Documentation — MCP Support](https://cursor.com/docs)
 - [Claude Projects API Reference](https://docs.anthropic.com/claude)
 
----
+______________________________________________________________________
 
-**このドキュメントは `mdformat` でフォーマット済みです。**  
+**このドキュメントは `mdformat` でフォーマット済みです。**\
 更新時は `mdformat documents/AI_AGENT_CUSTOMIZATION_RESEARCH_2026.md` を実行してください。
