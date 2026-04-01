@@ -4,6 +4,7 @@
 長時間実行と生成物の管理を安定させ、`main` のコード編集と衝突させないことを目的にします。
 研究の問い、数式、比較対象、逐次改造の記録方法は `documents/research-workflow.md` を正本とします。
 準備、実装、静的チェック、実行、結果レポートを通した標準手順の統合入口は `documents/experiment-workflow.md` を参照してください。
+批判的レビューの観点は `documents/experiment-critical-review.md` を参照してください。
 
 ## 1. 対象
 

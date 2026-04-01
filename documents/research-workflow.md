@@ -4,6 +4,7 @@
 対象は、`python/` 配下の実装改造、`experiments/` 配下の比較実験、`notes/` への知見整理、results branch での長時間 run を含みます。
 準備、実装、静的チェック、実行、結果レポートを通した実務上の統合入口は [experiment-workflow.md](/workspace/documents/experiment-workflow.md) を参照してください。
 この文書は、とくに問い、定式化、比較設計、段階的改造、claim 更新の正本を担います。
+批判的レビューの具体的な観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を参照してください。
 
 ## 1. 目的
 
@@ -252,6 +253,7 @@ spot run は次の用途では禁止します。
 ## 8.5 考察に対する批判的レビュー
 
 `experiment_reviewer` は、数字そのものだけでなく、数字の読み方を批判的に見ます。
+最低限の review 観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) に従います。
 
 最低でも次を確認します。
 
@@ -260,6 +262,11 @@ spot run は次の用途では禁止します。
 - failure を都合よく除外していないか
 - 代表値の選び方が結論を歪めていないか
 - 改善幅は sample 数とばらつきに照らしてどこまで強く言えるか
+- 実験コードが equation / assumptions / parameter 記述と一致しているか
+- 外部文献との接続が明示されているか
+- 結論に必要な data、table、figure が足りているか
+- 図の表示方法と scale が妥当か
+- 主要な計算式や proof sketch の所在が明示されているか
 - 改善した指標の裏で悪化した指標を見落としていないか
 - その考察は、観測事実なのか、仮説なのか、推測なのか
 

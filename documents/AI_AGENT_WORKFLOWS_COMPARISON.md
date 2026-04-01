@@ -40,9 +40,196 @@
 | 項目 | 詳細 |
 |------|------|
 | **提供形態** | GitHub Copilot（Pro/Pro+）、Cursor での利用可能 |
-| **主要機能** | コード補完、生成、PR コメント |
+| **主要機能** | コード補完、生成、PR コメント、Agent Mode |
 | **特徴** | 高速応答、コスト効率、GitHub Actions 統合良好 |
 | **モデル** | GPT-5.3 Codex、GPT-5.4（272k コンテキスト） |
+| **ステータス** | 2026年2月より GitHub Agent HQ で Claude と並行利用可能 |
+| **推奨用途** | CI/CD 自動化、複雑な multi-step task、historical dataset 活用 |
+
+**🆕 2026年4月アップデート：**
+- GitHub Agent HQ (Feb 2026) で Claude と Codex の即座切り替え対応
+- MCP (Model Context Protocol) サポート（500+ コミュニティサーバー）
+- 外部 Azure/AWS リソースへのネイティブ連携
+
+---
+
+## 【Skills 以外のカスタマイズ機能】 包括的リサーチ
+
+### 7 つの拡張レイヤー
+
+#### 1. **Custom Instructions** （最優先・全ツール対応）
+
+| ツール | ファイル位置 | スコープ | 自動適用 |
+|--------|-----------|---------|---------|
+| GitHub Copilot | `.github/copilot-instructions.md` | Repo-wide | ✅ 全リクエスト |
+| GitHub Copilot | `.github/instructions/*.md` | Path-specific | ✅ マッチ時 |
+| Claude Code | `Projects/<name>/instructions.md` | Project-wide | ✅ |
+| Cursor | `.cursorrules` | Repo-wide | ✅ 全操作 |
+| CLI 統合 | 環境変数 `AI_INSTRUCTIONS` | Process-wide | ✅ |
+
+**実装例 (.github/copilot-instructions.md):**
+```markdown
+# jax_util Copilot Guidelines
+
+- 日本語でコメントを丁寧に
+- Docker 環境を優先（.venv 禁止）
+- pyright --strict で型検証必須
+- Python は PYTHONPATH=/workspace/python
+```
+
+#### 2. **Prompt Files** （再利用テンプレート）
+
+| ツール | 場所 | 用途 | 変数対応 |
+|--------|------|------|---------|
+| GitHub Copilot | `.github/prompts/*.md` | 定型質問テンプレート | {{variable}} |
+| Cursor | 内蔵 Prompts パネル | 再利用クエリ | デフォルト引数 |
+| Claude Code | `.claude/prompts/*.md` | Project 内テンプレート | Jinja2 形式 |
+
+**例: `.github/prompts/unit-test-generator.md`**
+```markdown
+# 単体テスト生成
+
+対象ファイル: {{file_path}}
+モジュール: {{module_name}}
+テスト対象: {{function_names}}
+
+以下の条件で pytest を生成してください：
+- Edge case を含める
+- Mock は unnecessary if avoidable
+```
+
+#### 3. **MCP Servers** （外部リソース統合）
+
+| 機能 | 接続先例 | 対応ツール | 設定 |
+|------|---------|----------|------|
+| **Database Query** | PostgreSQL / MongoDB | Claude, Copilot Pro+ | MCP via `mcp.json` |
+| **API Integration** | REST / GraphQL endpoints | すべて | `mcpServers` config |
+| **Git Operations** | `jax_util.git` remote | Cursor (Agent Mode) | `.cursor/mcp-servers.json` |
+| **File System Extended** | `/workspace` beyond git | all | `fsAccess` permissions |
+| **Docker Execution** | Local `docker` daemon | Claude | `exec` MCP |
+
+**実装例 (.github/mcp-servers.json):**
+```json
+{
+  "mcpServers": {
+    "jax_util_db": {
+      "command": "python",
+      "args": ["-m", "mcp.server.postgres"],
+      "env": {
+        "DATABASE_URL": "postgresql://localhost/jax_util"
+      }
+    },
+    "experiment_runner": {
+      "command": "python",
+      "args": ["-c", "python.experiment_runner.mcp_server"]
+    }
+  }
+}
+```
+
+#### 4. **Hooks & Lifecycle Integration** （自動トリガー）
+
+| Hook | 実行タイミング | 用途 | ツール対応 |
+|------|-------------|------|----------|
+| **pre-gen** | コード生成前 | コンテキスト準備 | Copilot, Cursor |
+| **post-gen** | 生成後 | lint/format 自動適用 | すべて |
+| **pre-review** | PR レビュー前 | 競合チェック | Copilot Agent |
+| **post-review** | レビュー完了後 | 統計収集 | GitHub Actions |
+| **validation** | 提案の妥当性チェック | エラー防止 | Claude Projects |
+
+**例: `.github/hooks/post-gen.json`**
+```json
+{
+  "hooks": [
+    {
+      "id": "auto-format",
+      "on": ["python_file_generated"],
+      "run": "ruff format {{file}}"
+    },
+    {
+      "id": "type-check",
+      "on": ["python_file_generated"],
+      "run": "pyright --strict {{file}}"
+    }
+  ]
+}
+```
+
+#### 5. **Custom Agents** （専門エージェント定義）
+
+| エージェント | 役割 | 登録方法 |
+|-----------|------|---------|
+| **Code Reviewer** | PR レビュー自動化 | `.github/agents/code-reviewer.md` |
+| **Experiment Executor** | 実験実行管理 | `.github/agents/experimenter.md` |
+| **Documentation Writer** | ドキュメント自動生成 | `.github/agents/doc-writer.md` |
+| **Performance Analyzer** | パフォーマンス最適化 | `.github/agents/performance-analyzer.md` |
+
+**例: `.github/agents/code-reviewer.md`**
+```markdown
+# Code Reviewer Agent
+
+role: 自動コードレビュアー
+
+responsibilities:
+- Python type annotations を厳格に確認（pyright --strict）
+- テストカバレッジ を評価
+- 性能低下を検出
+
+context:
+- documents/coding-conventions-python.md を参照
+- 過去 10 PR のレビュー履歴を学習
+```
+
+#### 6. **Environment & Secrets Management**
+
+| 管理方法 | ツール | 設定ファイル | 自動注入 |
+|---------|--------|-----------|---------|
+| **GitHub Secrets** | Copilot Agent | UI で設定 | ✅ PR に注入 |
+| **Local `.env`** | Cursor | `~/.cursor.env` (gitignore) | ✅ |
+| **Claude Projects** | Claude Code | UI ページ | ✅ |
+| **MCP secret filter** | すべて | `.github/mcp-secrets.json` | ✅ |
+
+**セキュリティテンプレート (.github/hooks/pre-gen-secret-scan.json):**
+```json
+{
+  "secretPatterns": [
+    "AWS_ACCESS_KEY",
+    "DATABASE_URL",
+    "OPENAI_API_KEY"
+  ],
+  "blockOnDetection": true,
+  "alertOnFound": "slack://#security-alerts"
+}
+```
+
+#### 7. **Subagents & Task Distribution** （タスク分散）
+
+| パターン | 説明 | ツール | フロー |
+|---------|------|--------|--------|
+| **Sequential** | Agent A → B → C | Copilot Agent | 直列実行 |
+| **Parallel** | A \\| B \\| C | Claude Projects (experimental) | 並列実行 |
+| **Branching** | 条件分岐 | すべて | if/else 分岐 |
+| **Callback** | Agent A が B に delegation | Cursor Agent Mode | 非同期委譲 |
+
+**例: Task Distribution (.github/subagents/workflow.yaml):**
+```yaml
+workflow:
+  - name: code_analysis
+    agents:
+      - type_checker (pyright)
+      - linter (ruff)
+    mode: parallel
+  
+  - name: review
+    agent: code_reviewer
+    requires: code_analysis
+    mode: sequential
+  
+  - name: deploy
+    agent: ci_orchestrator
+    requires: review
+    condition: "branch == main"
+```
 
 ---
 
@@ -50,25 +237,29 @@
 
 ### コンテキスト・カスタマイズ
 
-| 機能 | Claude Code | GitHub Copilot | Cursor | 備考 |
-|------|-------------|-----------------|--------|------|
-| **Skills 機能** | ✅ 計画中 | ✅ `.github/skills/` | ✅ `.cursorrules` | 手順・スクリプト・リソースフォルダ |
-| **Copilot Spaces** | ✅ 検討中 | ✅ Pro+ | ❌ | 知識ベース統合、ドキュメント参照 |
-| **MCP（Model Context Protocol）** | ✅ 対応 | ✅ Pro+ | ✅（計画中） | 外部システム統合（API、DB等） |
-| **ローカル `.md` 参照** | ✅ | ✅ `@docs` | ✅ `@filename` | プロンプト・規約・仕様書 |
-| **メモリ機能** | ✅ Claude Memory | ✅（開発中） | ❌ | コンテキスト引き継ぎ |
-| **プロジェクト記憶** | ✅ Coagency（開発中） | ✅ Copilot Memory | ❌ | リポジトリ学習 |
+| 機能 | Claude Code | GitHub Copilot | Cursor | Codex | 備考 |
+|------|-------------|-----------------|--------|-------|------|
+| **Skills 機能** | ✅ `.claude/skills/` | ✅ `.github/skills/` | ✅ `.cursorrules` | ❌ | 手順・スクリプト・リソース |
+| **Custom Instructions** | ✅ `.claude/instructions/` | ✅ `.github/copilot-instructions.md` | ✅ `.cursorrules` | ✅ `.github/instructions/` | 標準・自動適用 context |
+| **Prompt Files** | ✅ `.claude/prompts/` | ✅ `.github/prompts/` | ✅ Prompts パネル | ✅ | 再利用テンプレート |
+| **MCP（Model Context Protocol）** | ✅ 完全対応 | ✅ Pro+ | ✅（計画中） | ✅ (Copilot HQ) | 外部システム統合 |
+| **Copilot Spaces** | ✅ Projects | ✅ Pro+ | ❌ | N/A | 知識ベース統合 |
+| **ローカル `.md` 参照** | ✅ | ✅ `@docs` | ✅ `@filename` | ✅ | プロンプト・規約・仕様 |
+| **メモリ機能** | ✅ Claude Memory | ✅（開発中） | ❌ | N/A | コンテキスト引き継ぎ |
+| **Subagents & Task Distribution** | ✅ parallel (experimental) | ✅ sequential | ✅ delegation | ✅ (Agent HQ) | マルチエージェント協調 |
 
 ### エージェント・自動化
 
-| 機能 | Claude Code | GitHub Copilot | Cursor |
-|------|-------------|-----------------|--------|
-| **Agent Mode** | ✅（開発中） | ✅ Pro+ | ✅ |
-| **PR 自動生成** | ❌ | ✅ エージェント | ❌ |
-| **GitHub Issues 割当** | ❌ | ✅ エージェント | ❌ |
-| **CLI 統合** | ✅（Claude CLI） | ✅ Copilot CLI | ❌ |
-| **Slack/Teams 統合** | ✅（検討中） | ✅ Pro+ | ❌ |
-| **外部エージェント対応** | ❌ | ✅（Claude/Codex） | ❌ |
+| 機能 | Claude Code | GitHub Copilot | Cursor | Codex |
+|------|-------------|-----------------|--------|-------|
+| **Agent Mode** | ✅（開発中） | ✅ Pro+ | ✅ | ✅ (HQ) |
+| **Custom Agents** | ✅ `.claude/agents/` | ✅ `.github/agents/` | ✅ | ✅ (HQ) |
+| **PR 自動生成** | ❌ | ✅ エージェント | ❌ | ✅ |
+| **GitHub Issues 割当** | ❌ | ✅ エージェント | ❌ | ✅ |
+| **CLI 統合** | ✅（Claude CLI） | ✅ Copilot CLI | ❌ | ✅ |
+| **Slack/Teams 統合** | ✅（検討中） | ✅ Pro+ | ❌ | ✅ |
+| **外部エージェント対応** | ❌ | ✅（Claude/Codex） | ✅ (MCP) | N/A |
+| **Hooks & Lifecycle** | ✅ | ✅ `.github/hooks/` | ✅ | ✅ |
 
 ### ファイル・リポジトリ操作
 

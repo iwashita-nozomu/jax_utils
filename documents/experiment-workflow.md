@@ -23,6 +23,8 @@
   - [coding-conventions-experiments.md](/workspace/documents/coding-conventions-experiments.md)
 - レポート本文の構成と figure / table の書き方
   - [experiment-report-style.md](/workspace/documents/experiment-report-style.md)
+- 批判的レビューの観点と手順
+  - [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md)
 - `experiment_runner`、scheduler、monitor の使い分け
   - [experiment_runner_usage.md](/workspace/notes/experiments/experiment_runner_usage.md)
 - エージェントごとの task workflow
@@ -181,6 +183,7 @@ host 側で worker 状態や GPU 利用状況を見たい場合は、`RuntimeMon
 ### 5. 結果レポート
 
 run 後は、必ず結果を report と note に整理します。
+批判的レビューの観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を正本にします。
 
 最低限残すものは次です。
 
@@ -238,6 +241,7 @@ carry-over の原則は次です。
    - コード変更を入れる。
 1. `change_reviewer`
    - code diff を批判的にレビューする。
+   - 必要なら [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) の `Mathematical Validity` と `As Reported` を使う。
 1. `implementer`
    - review を反映し、静的チェックを通す。
 1. `experimenter`
@@ -246,6 +250,7 @@ carry-over の原則は次です。
    - final JSON、raw JSONL、report、experiment note を生成する。
 1. `experiment_reviewer`
    - report と結果の読み方を批判的にレビューする。
+   - [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を使って、math validity、evidence sufficiency、figure validity、overclaim を確認する。
 1. `implementer`
    - 必要な修正を入れる。
 1. 4-8 を終了条件まで反復する。
@@ -298,3 +303,31 @@ carry-over の原則は次です。
 
 個別 README は「そのモジュールや実験をどう使うか」を書き、
 この文書は「repo で実験をどう進めるか」を書く、という分担にします。
+
+## 5. References
+
+ローカルで読める索引は次です。
+
+- [experiment_workflow/README.md](/workspace/references/experiment_workflow/README.md)
+- [generative_ai/README.md](/workspace/references/generative_ai/README.md)
+
+### 実験手順・再現性
+
+- [Sandve et al. (2013), Ten Simple Rules for Reproducible Computational Research](/workspace/references/experiment_workflow/Sandve_2013_Ten_Simple_Rules_for_Reproducible_Computational_Research.pdf)
+- [Wilson et al. (2014), Best Practices for Scientific Computing](/workspace/references/experiment_workflow/Wilson_2014_Best_Practices_for_Scientific_Computing.pdf)
+- [Wilson et al. (2017), Good Enough Practices in Scientific Computing](/workspace/references/experiment_workflow/Wilson_2017_Good_Enough_Practices_in_Scientific_Computing.pdf)
+- [Nature, Guidance on Reproducibility for Papers Using Computational Tools](/workspace/references/experiment_workflow/Nature_Guidance_on_Reproducibility_for_Papers_Using_Computational_Tools.pdf)
+- [Bartz-Beielstein et al. (2020), Benchmarking in Optimization: Best Practice and Open Issues](/workspace/references/experiment_workflow/Bartz-Beielstein_2020_Benchmarking_in_Optimization_Best_Practice_and_Open_Issues.pdf)
+
+### 批判的レビュー・図表
+
+- [Minocher et al. (2023), Implementing Code Review in the Scientific Workflow](/workspace/references/experiment_workflow/Minocher_2023_Implementing_Code_Review_in_the_Scientific_Workflow.html)
+- [Tiwari et al. (2021), Reproducibility in Systems Biology Modelling](/workspace/references/experiment_workflow/Tiwari_2021_Reproducibility_in_Systems_Biology_Modelling.pdf)
+- [Rougier et al. (2014), Ten Simple Rules for Better Figures](/workspace/references/experiment_workflow/Rougier_2014_Ten_Simple_Rules_for_Better_Figures.pdf)
+
+### 生成AIの活用
+
+- [Rethinking the AI Scientist: Interactive Multi-Agent Workflows for Scientific Discovery](/workspace/references/generative_ai/Rethinking_the_AI_Scientist_Interactive_Multi-Agent_Workflows_for_Scientific_Discovery.pdf)
+- [Towards Scientific Discovery with Generative AI: Progress, Opportunities and Challenges](/workspace/references/generative_ai/Towards_Scientific_Discovery_with_Generative_AI_Progress_Opportunities_and_Challenges.pdf)
+- [Wu et al. (2025), Automated Literature Research and Review-Generation Method Based on Large Language Models](/workspace/references/generative_ai/Wu_2025_Automated_Literature_Research_and_Review_Generation_Method_Based_on_LLMs.html)
+- [OpenReviewer: A Specialized Large Language Model for Generating Critical Scientific Paper Reviews](/workspace/references/generative_ai/OpenReviewer_A_Specialized_Large_Language_Model_for_Generating_Critical_Scientific_Paper_Reviews.pdf)
