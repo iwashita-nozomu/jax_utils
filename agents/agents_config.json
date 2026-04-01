@@ -339,6 +339,41 @@
         ],
         "notes": "The infra reviewer checks rollout, safety, and maintenance cost before coding begins."
       }
+    },
+    {
+      "id": "critical_guardian",
+      "tier": "governance",
+      "activation": "always_on",
+      "always_evaluates": [
+        "pull_requests",
+        "skill_executions",
+        "releases",
+        "scheduled_reviews"
+      ],
+      "owns": [
+        "critical_risk_assessment",
+        "security_threat_detection",
+        "architecture_validation",
+        "testing_completeness_check",
+        "dependency_conflict_analysis",
+        "implementation_gap_detection"
+      ],
+      "required_outputs": [
+        "critical_review.md"
+      ],
+      "authority": {
+        "can_block_merge": true,
+        "can_request_changes": true,
+        "can_downvote_health_score": true,
+        "escalation_capable": true
+      },
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "critical_review"
+        ],
+        "notes": "The critical guardian provides always-on critical assessment of risks, security threats, and implementation completeness. Can block merge on critical issues only. Provides alternative suggestions and gap analysis."
+      }
     }
   ],
   "handoffs": [
@@ -491,6 +526,26 @@
       "from": "verifier",
       "to": "auditor",
       "gate": "required checks executed and recorded"
+    },
+    {
+      "from": "implementer",
+      "to": "critical_guardian",
+      "gate": "implementation is complete and ready for critical assessment"
+    },
+    {
+      "from": "final_reviewer",
+      "to": "critical_guardian",
+      "gate": "implementation ready for critical risk and security assessment"
+    },
+    {
+      "from": "experimenter",
+      "to": "critical_guardian",
+      "gate": "experimental results ready for critical validation"
+    },
+    {
+      "from": "critical_guardian",
+      "to": "manager_reviewer",
+      "gate": "critical assessment complete, escalation required or merge approval given"
     }
   ],
   "context_policies": [
@@ -672,6 +727,28 @@
         "hidden_chain_of_thought",
         "direct_session_memory"
       ]
+    },
+    {
+      "roles": [
+        "critical_guardian"
+      ],
+      "mode": "assessment_view",
+      "share_only": [
+        "intent_brief.md",
+        "design_brief.md",
+        "design_review.md",
+        "change_review.md",
+        "final_review.md",
+        "experiment_log.md",
+        "experiment_review.md",
+        "research_notes.md",
+        "research_review.md"
+      ],
+      "do_not_share": [
+        "hidden_chain_of_thought",
+        "private_debugging_notes"
+      ],
+      "notes": "Critical guardian has read-only access to all significant artifacts to perform comprehensive risk, security, and completeness assessment."
     }
   ],
   "activation_rules": [
@@ -706,6 +783,10 @@
     {
       "role": "infra_reviewer",
       "when": "infra_steward is active"
+    },
+    {
+      "role": "critical_guardian",
+      "when": "pull request created, skill execution completed, release initiated, or scheduled daily review at 02:00 UTC"
     }
   ],
   "quality_gates": [
@@ -730,6 +811,7 @@
     "schedule": "schedule.md",
     "schedule_review": "schedule_review.md",
     "infra_notes": "infra_notes.md",
-    "infra_review": "infra_review.md"
+    "infra_review": "infra_review.md",
+    "critical_review": "critical_review.md"
   }
 }
