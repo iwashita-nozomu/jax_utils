@@ -1,0 +1,94 @@
+name: Week 4-5 Skill 1 Integration Test
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  schedule:
+    # 毎日朝 2 時 (UTC) に実行
+    - cron: '0 2 * * *'
+
+jobs:
+  skill1-integration-test:
+    runs-on: ubuntu-latest
+    container: 
+      image: ghcr.io/owner/jax-solver-util:dev
+      
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set Up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install -r docker/requirements.txt
+          pip install pyright ruff black pytest pytest-cov
+
+      - name: Run Skill 1 Integration Test
+        id: test
+        run: |
+          python3 .github/skills/01-static-check/test_skill1_integration.py --json > /tmp/skill1_result.json
+          cat /tmp/skill1_result.json
+
+      - name: Parse Test Results
+        if: always()
+        run: |
+          python3 << 'EOF'
+          import json
+          with open('/tmp/skill1_result.json') as f:
+              result = json.load(f)
+          
+          status = "✅ PASS" if result['success'] else "❌ FAIL"
+          print(f"Status: {status}")
+          print(f"Tests PASS={result['output']['passed']}, FAIL={result['output']['failed']}, SKIP={result['output']['skipped']}")
+          EOF
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync('/tmp/skill1_result.json', 'utf8'));
+            
+            const comment = `## Skill 1 Integration Test Results
+            
+- ✅ Type Checker: ${result.output.tests.type_checker ? 'PASS' : 'FAIL'}
+- ✅ Test Runner: ${result.output.tests.test_runner ? 'PASS' : 'FAIL'}
+- ✅ Docker Validator: ${result.output.tests.docker_validator ? 'PASS' : result.output.tests.docker_validator === null ? 'SKIP' : 'FAIL'}
+- ✅ Coverage Analyzer: ${result.output.tests.coverage_analyzer ? 'PASS' : 'FAIL'}
+
+**Summary**: ${result.output.passed}/${result.output.total} tests passed`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+
+      - name: Upload Results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: skill1-test-results
+          path: /tmp/skill1_result.json
+          retention-days: 30
+
+      - name: Fail if Tests Failed
+        if: failure()
+        run: exit 1
