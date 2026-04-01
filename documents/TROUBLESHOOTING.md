@@ -187,7 +187,7 @@ ______________________________________________________________________
 [Reference](../../../documents/coding-conventions.md)
 
 ✅ 正しい例（workspace ルートから相対）
-[Reference](documents/coding-conventions.md)
+[Reference](documents/coding-conventions-project.md)
 ```
 
 2. **ツールで自動修正**
@@ -196,7 +196,7 @@ ______________________________________________________________________
 python scripts/tools/audit_and_fix_links.py documents/
 ```text
 
-**参照：** [コーディング規約](./coding-conventions.md#%E3%83%AA%E3%83%B3%E3%82%AF%E8%A8%98%E6%B3%95)
+**参照：** [コーディング規約](./coding-conventions-project.md#%E3%83%AA%E3%83%B3%E3%82%AF%E8%A8%98%E6%B3%95)
 
 ______________________________________________________________________
 

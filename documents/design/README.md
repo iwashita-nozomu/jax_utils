@@ -34,12 +34,11 @@ ______________________________________________________________________
   - 5つの Protocol レイヤ（base → functional/optimizers/neuralnetwork）
   - 依存関係図（Mermaid）
   - 実装ガイドライン
-
-- **[base_components.md](./base_components.md)** — BASE層の基礎設計
-
-  - 型エイリアス（Scalar, Vector, Matrix）
-  - 共通 Protocol
-  - クラス設計
+  
+<!-- - **[base_components.md](./base_components.md)** — BASE層の基礎設計 -->
+  <!-- 型エイリアス（Scalar, Vector, Matrix） -->
+  <!-- 共通 Protocol -->
+  <!-- クラス設計 -->
 
 ### jax_util 実装ガイド
 
@@ -49,14 +48,12 @@ ______________________________________________________________________
 
 **個別モジュール設計** (jax_util/ 配下):
 
-| モジュール    | ファイル                                        | 責務                  |
-| ------------- | ----------------------------------------------- | --------------------- |
-| base          | [base.md](./jax_util/base.md)                   | 型定義・基盤 Protocol |
-| solvers       | [solvers.md](./jax_util/solvers.md)             | 数値ソルバー実装      |
-| optimizers    | [optimizers.md](./jax_util/optimizers.md)       | 最適化アルゴリズム    |
-| functional    | [functional.md](./jax_util/functional.md)       | 関数型最適化          |
-| neuralnetwork | [neuralnetwork.md](./jax_util/neuralnetwork.md) | NN の層別訓練         |
-| hlo           | [hlo.md](./jax_util/hlo.md)                     | HLO 解析・最適化      |
+| モジュール    | ファイル                                                | 責務                  |
+| ------------- | ----------------------------------------------------- | --------------------- |
+| base          | [base_components.md](./jax_util/base_components.md)  | 型定義・基盤 Protocol |
+| solvers       | [solvers.md](./jax_util/solvers.md)                   | 数値ソルバー実装      |
+| optimizers    | [optimizers.md](./jax_util/optimizers.md)             | 最適化アルゴリズム    |
+| hlo           | [hlo.md](./jax_util/hlo.md)                           | HLO 解析・最適化      |
 
 **独立モジュール設計**:
 

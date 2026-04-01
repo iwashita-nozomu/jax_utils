@@ -301,8 +301,8 @@ ls documents/
 # 2-1. テキストエディタで編集
 vim documents/design/jax_util/<module>.md
 
-# 2-2. コード参照の追加（相対パス）
-# 例: [関数 `solve_kkt`](../../python/jax_util/solvers/kkt.py#L42)
+# 2-2. コード参照の追加（相対パス・存在確認必須）
+# 例: [関数 `solve_kkt`](../.../solvers/kkt.py#L42) ← ファイル存在確認後に追加
 
 # 2-3. 数式・図解の追加（必要に応じて）
 # 例: $$ \min_x \frac{1}{2} x^T A x + b^T x $$

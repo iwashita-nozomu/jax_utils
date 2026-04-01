@@ -35,7 +35,7 @@ ______________________________________________________________________
 - **[プロジェクト設計](./design/README.md)** — モジュール依存・API 構造
 <!-- コンポーネント詳細ドキュメントは Week 2 で作成予定 -->
 <!-- - **[型システム・基本型](./type-aliases.md)** — 型エイリアス・Protocol 定義 -->
-<!-- - **[基本コンポーネント](./design/base_components.md)** — LinOp・linearize・adjoint -->
+<!-- - **[基本コンポーネント](./design/protocols.md)** — LinOp・linearize・adjoint -->
 
 #### ツール・スクリプト
 

@@ -40,7 +40,10 @@ def extract_skill_metadata(skill_dir: Path) -> dict:
     readme_path = skill_dir / "README.md"
     
     if not readme_path.exists():
-        return {}
+        return {
+            "number": int(skill_dir.name.split("-")[0]),
+            "name": skill_dir.name,
+        }
     
     try:
         content = readme_path.read_text(encoding="utf-8")
@@ -72,6 +75,7 @@ def extract_skill_metadata(skill_dir: Path) -> dict:
     except Exception as e:
         return {
             "number": int(skill_dir.name.split("-")[0]),
+            "name": skill_dir.name,
             "error": str(e),
         }
 
