@@ -18,3 +18,10 @@ ruff
 # Documentation & Formatting
 mdformat
 mdformat-myst
+
+# Security & Audit
+jsonschema>=4.0.0
+cryptography>=41.0.0
+
+# Data validation
+pydantic>=2.0.0
