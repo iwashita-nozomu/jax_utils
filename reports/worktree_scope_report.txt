@@ -1,9 +1,0 @@
-Worktree scope check
-Worktree: /workspace
-  MISSING: WORKTREE_SCOPE.md
-Worktree: /workspace/.worktrees/nn-develop-20260318
-  OK: WORKTREE_SCOPE.md present
-Worktree: /workspace/.worktrees/work-experiment-runner-generalization-20260317
-  MISSING: WORKTREE_SCOPE.md
-Worktree: /workspace/.worktrees/work-smolyak-improvement-20260318
-  OK: WORKTREE_SCOPE.md present
