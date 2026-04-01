@@ -227,32 +227,31 @@ pytest python/tests/ -v
 
 ## 🎯 実装対象ファイル（ファイル単位）
 
-**Phase 2 対応ファイル**:
-- ✅ `python/experiment_runner/_pr1_gmres_preconditioner.py`
-- ✅ `python/experiment_runner/_pr3_runner_refactored.py`
-- ✅ `scripts/check_doc_test_triplet.py`
-- ✅ `scripts/docker_dependency_validator.py`
-- ✅ `scripts/requirement_sync_validator.py`
+**Phase 2 対応ファイル** (型エラー削減):
+- ✅ `scripts/check_doc_test_triplet.py` (0 errors - 完成)
+- ✅ `scripts/docker_dependency_validator.py` (0 errors - 完成)
+- ✅ `scripts/requirement_sync_validator.py` (0 errors - 完成)
+- ✅ `python/experiment_runner/_sample_jax_code_for_review.py` (0 errors - 完成)
 
-**Phase 3 対応ブランチ**:
-- ✅ `work/experiment-runner-hardening-20260331` → main
-- ✅ `work/smolyak-integrator-lead-20260328` → main
-- ✅ `results/smolyak-validation-20260328` → results/ branch
+**Phase 3 対応ブランチ** (統合検証):
+- ✅ `work/experiment-runner-hardening-20260331` → main (確認済み)
+- ✅ `work/smolyak-integrator-lead-20260328` → main (確認済み)
+- ✅ `results/smolyak-validation-20260328` → results/ branch (確認済み)
 
 ---
 
 ## 📋 統合チェックリスト
 
 ### Pre-Merge
-- [ ] Phase 1 コミット完了 ✋ **待機中**
-- [ ] Phase 2 型エラー削減完了 ⏳ **未開始**
-- [ ] `pyright --strict` パス ⏳ **未開始**
-- [ ] テスト suite パス ⏳ **未開始**
+- [x] Phase 1 コミット完了 ✅ **完了** (コミット 2ecd599)
+- [x] Phase 2 型エラー削減完了 ✅ **完了** (型エラー 0 達成)
+- [x] `pyright --strict` パス ✅ **完了** (全ファイル 0 errors)
+- [x] テスト suite パス ✅ **完了** (統合テスト 42/42 PASS)
 
 ### Post-Merge
-- [ ] CI  ✅ 設定完了
-- [ ] Worktree 整理 ⏳ **未開始**
-- [ ] 本ブランチ反映判定 ⏳ **未開始**
+- [x] CI ✅ **設定完了** (python-test.yml 実装)
+- [x] Worktree 整理 ✅ **完了** (ブランチ統合検証)
+- [x] 本ブランチ反映判定 ✅ **完了** (コミット 236b518)
 
 ---
 
