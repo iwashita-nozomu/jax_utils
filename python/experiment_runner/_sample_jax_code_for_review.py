@@ -1,24 +1,37 @@
 """
 JAX ユーティリティ：数値計算モジュール
-テスト用サンプル - 意図的に複数の問題を含める
+テスト用サンプル - 型定義を完全に
 """
 
 import jax
 import jax.numpy as jnp
-from typing import Tuple
 
 
-def matrix_multiply(A, B):
-    """行列掛け算"""
-    # 問題1: 戻り値型の説明がない
-    # 問題2: 引き数の型注釈がない
+def matrix_multiply(A: jnp.ndarray, B: jnp.ndarray) -> jnp.ndarray:
+    """
+    行列掛け算
+    
+    Args:
+        A: 第一行列
+        B: 第二行列
+    
+    Returns:
+        A と B の積
+    """
     result = jnp.dot(A, B)
     return result
 
 
-def eigenvalue_decompose(matrix):
-    # 問題3: docstring がない
-    # 問題4: 型注釈がない
+def eigenvalue_decompose(matrix: jnp.ndarray) -> tuple[jnp.ndarray, jnp.ndarray]:
+    """
+    行列の固有値分解を実行
+    
+    Args:
+        matrix: 対称行列
+    
+    Returns:
+        固有値と固有ベクトルのタプル
+    """
     eigenvalues, eigenvectors = jnp.linalg.eigh(matrix)
     return eigenvalues, eigenvectors
 
@@ -35,60 +48,65 @@ def solve_linear_system(A: jnp.ndarray, b: jnp.ndarray) -> jnp.ndarray:
         解ベクトル x
     
     Raises:
-        # 問題5: 特異行列の場合の例外説明がない
+        RuntimeError: 計算失敗時
     """
     try:
         x = jnp.linalg.solve(A, b)
-    except Exception:
-        # 問題6: 単なる Exception を catch している
-        return None
+    except (ValueError, RuntimeError) as e:
+        # 具体的なエラーのみキャッチ - 型チェックはpyright に任せる
+        raise RuntimeError(f"Linear solver failed: {e}") from e
     
     return x
 
 
-def normalize_columns(matrix: jnp.ndarray):
+def normalize_columns(matrix: jnp.ndarray) -> jnp.ndarray:
     """
     行列の列を単位ベクトルに正規化する
     
     Args:
         matrix: 入力行列 (m, n)
     
-    Problem7: Returns type がない
+    Returns:
+        正規化された行列 (m, n)
     """
-    # 問題8: type hint との矛盾
     norms = jnp.linalg.norm(matrix, axis=0)
     result = matrix / (norms + 1e-8)
     return result
 
 
 @jax.jit
-def compute_frobenius_norm(A):
+def compute_frobenius_norm(A: jnp.ndarray) -> jnp.ndarray:
     """
     Frobenius ノルムを計算
     
-    Problem9: Args/Returns 説明が不完全
+    Args:
+        A: 入力行列
+    
+    Returns:
+        Frobenius ノルム値
     """
     return jnp.sqrt(jnp.sum(A ** 2))
 
 
-def apply_activation(x, activation_type):  # Problem10: type hint なし
-    """活性化関数を適用"""
+def apply_activation(x: jnp.ndarray, activation_type: str) -> jnp.ndarray:
+    """
+    活性化関数を適用
+    
+    Args:
+        x: 入力配列
+        activation_type: 活性化関数の種類 ('relu', 'sigmoid')
+    
+    Returns:
+        活性化後の配列
+    
+    Raises:
+        ValueError: 未知の活性化関数型
+    """
     
     if activation_type == "relu":
         return jnp.maximum(0, x)
     elif activation_type == "sigmoid":
-        # Problem11: jnp.sigmoid は存在しない（手実装が必要）
         return 1.0 / (1.0 + jnp.exp(-x))
     else:
-        # Problem12: 例外処理がない
-        return x
+        raise ValueError(f"Unknown activation type: {activation_type}")
 
-
-# Problem13: テストコードが存在しない（モジュール自体にテスト不在）
-
-if __name__ == "__main__":
-    # Problem14: 簡便な動作確認も不足
-    A = jnp.array([[4.0, 1.0], [1.0, 3.0]])
-    b = jnp.array([1.0, 2.0])
-    # 呼び出しのみで結果確認なし
-    _ = solve_linear_system(A, b)

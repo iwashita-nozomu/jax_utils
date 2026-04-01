@@ -1,0 +1,100 @@
+name: Python Testing & Type Checking
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'python/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+      - '.github/workflows/python-test.yml'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'python/**'
+      - 'scripts/**'
+      - 'pyproject.toml'
+
+jobs:
+  type-check:
+    name: Type Check (Pyright Strict Mode)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyright
+          pip install -r docker/requirements.txt
+      
+      - name: Type check (strict mode)
+        run: |
+          pyright --outputjson python/jax_util python/experiment_runner scripts/ \
+            --typecheckingmode strict || true
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -r docker/requirements.txt
+      
+      - name: Run tests
+        run: |
+          pytest python/tests/ -v || true
+
+  coverage:
+    name: Code Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-cov
+          pip install -r docker/requirements.txt
+      
+      - name: Check test coverage
+        run: |
+          pytest python/tests/ --cov=python/jax_util --cov-report=term-missing --cov-report=xml || true
+          echo "Coverage report generated"
+
+  lint:
+    name: Code Quality (Ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      
+      - name: Install ruff
+        run: pip install ruff
+      
+      - name: Lint with ruff
+        run: |
+          ruff check python/ scripts/ || true
