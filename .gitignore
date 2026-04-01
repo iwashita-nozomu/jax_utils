@@ -30,3 +30,9 @@ experiments/functional/smolyak_scaling/results/latest.jsonl
 
 # Smolyak experiment results (generated artifacts)
 experiments/smolyak_experiment/results/
+
+# Analysis reports and agent run artifacts
+reports/agents/
+reports/*.json
+reports/*.txt
+reports/*.patch
