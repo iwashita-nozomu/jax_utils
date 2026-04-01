@@ -15,6 +15,11 @@
 - `path/to/dir`
 - `another/path`
 
+## Runtime Output Directories
+
+- `experiments/<topic>/results/`
+- `experiments/<area>/<topic>/results/`
+
 ## Read-Only Or Avoid Directories
 
 - `path/to/avoid`
@@ -56,3 +61,4 @@
 - 例: `pyright python/tests/experiment_runner` を必ず追加で実行する。
 - 例: 変更した Markdown は `.markdownlint.json` を基準に確認する。
 - 例: scope 更新、編集開始、テスト実行、実験開始/停止、carry-over 判断は action log に逐次追記する。
+- 例: `experimenter` がいる場合、結果出力先は `## Runtime Output Directories` に明記する。

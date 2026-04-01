@@ -1,6 +1,7 @@
 # ベンチマーク方針
 
 この章は、このリポジトリで行う短時間の性能計測を対象にします。
+研究目的、定式化、比較対象、記録方法の正本は `documents/research-workflow.md` を参照します。
 
 ## 要約
 
@@ -29,6 +30,7 @@
 - エントリポイント名は `benchmark_*.py` または `run_*_benchmark*.py` の形にします。
 - benchmark 関数は、条件を明示した JSON serializable な `dict[str, Any]` を返す形を基本にします。
 - 少なくとも、timestamp、対象実装、主要条件、計測値、単位を結果へ含めます。
+- benchmark を走らせる前に、問い、比較対象、主要 metric を対応する note に固定します。
 - JAX の warmup や compile を含むかどうかは、結果の定義として明示します。
 - 失敗を握りつぶして集計を続けるより、異常条件は早く失敗させる方を優先します。
 

@@ -159,6 +159,12 @@ escalation 時は `decision_log.md` に以下を書く。
 - change_reviewer が regression risk を指摘する
 - implementer が修正と test evidence を返す
 
+`experimenter -> experiment_reviewer -> implementer`:
+
+- experimenter が baseline または比較 run を出す
+- experiment_reviewer が fairness、overclaim、比較対象不足、再実行要否を指摘する
+- implementer が必要な修正を入れ、次の実験条件を明示して experimenter へ戻す
+
 ## Repository-Wide Discussion Log
 
 `.github/agents/discussion.md` へ書くときも、最低限以下を守る。

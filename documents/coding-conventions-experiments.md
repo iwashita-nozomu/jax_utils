@@ -2,6 +2,7 @@
 
 この文書は、`experiments/` 配下の実験コード・ベンチマーク・実験結果・実行環境の運用を対象にします。
 長時間実行と生成物の管理を安定させ、`main` のコード編集と衝突させないことを目的にします。
+研究の問い、数式、比較対象、逐次改造の記録方法は `documents/research-workflow.md` を正本とします。
 
 ## 1. 対象
 
@@ -24,6 +25,17 @@
 - benchmark は topic に近い `experiments/` 配下へ置き、グローバルな `python/benchmark/` は既定にしません。
 - benchmark の短時間運用は `documents/conventions/python/20_benchmark_policy.md` を、topic ごとの配置規約は `documents/conventions/python/30_experiment_directory_structure.md` を参照します。
 
+### 実験コードの体裁
+
+- topic ごとに、少なくとも `README.md`、`cases.py`、`runner_config.py`、`results_aggregator.py`、`run_*.py`、`results/` を意識した構成にします。
+- `run_*.py` は orchestration と CLI に集中させ、case 定義、resource estimate、集計ロジックを抱え込みません。
+- その topic に固有の case 生成と difficulty 設計は `cases.py` に寄せます。
+- 次元、level、problem size のような ordered difficulty 軸は、原則として 1 ずつ上げる連続 sweep を基本にします。
+- 飛び飛びの点だけを回す coarse sweep は debug / smoke / 予備探索に限り、正式な比較プロトコルでは理由を明記します。
+- size preset や timeout policy は `runner_config.py` に寄せます。
+- final JSON 生成や summary 集計は `results_aggregator.py` に寄せます。
+- 実験 README には、問い、比較対象、標準 run、結果出力先、carry-over 方針を明記します。
+
 ## 3. worktree とブランチ
 
 - 長時間実験は、必ず専用の git worktree 上で実行します。
@@ -35,6 +47,7 @@
 - 実験用 worktree は results ブランチに対応づけ、同じ worktree のまま branch を切り替えて使い回しません。
 - 実験開始前に、`main` と対象の results ブランチの両方を `origin` と同期します。
 - 実験開始前に、`main` worktree と対象 results worktree の両方が clean であることを確認します。
+- `experimenter` を使う場合は、`WORKTREE_SCOPE.md` に `## Runtime Output Directories` を明記します。
 - 実験固有のコード変更は、まず対応する results ブランチの worktree で行います。
 - 実験ブランチ上で十分に検証した変更だけを、最後に `main` へ merge します。
 - 実験固有ではない共通コード変更を `main` で先に行った場合だけ、results worktree へ `main` を取り込みます。
@@ -43,6 +56,7 @@
 - 実験 branch と results branch は、`main` の `./notes/branches/README.md` から参照できるようにし、関連する experiment note や worktree note への入口を置きます。
 - 実験 worktree では、scope 更新、条件変更、run 開始/停止、final JSON 採用、統合判断を action log に逐次記録します。
 - 実験 worktree では、中断理由と fresh run への切り替え判断も action log に逐次記録します。
+- 実験 worktree では、問い、定式化、比較対象、各改造の狙いも action log または experiment note に逐次記録します。
 - action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とし、worktree 内でも同じ相対パスで下書きします。
 
 ## 4. 生成物の扱い
@@ -58,6 +72,7 @@
 
 - 実行スクリプトは CLI 引数で条件を変更できるようにします。
 - 実行スクリプトは、指定した条件集合を 1 回で最後まで走り切る責務を持たせます。
+- 実行前に、比較対象、主要 metric、仮定、停止条件を対応する note に明記します。
 - benchmark は短時間の前後比較を目的とし、長時間の多条件 sweep は experiment に分けます。
 - 少なくとも、次の切り替えは引数化します。
   - 次元レンジ
@@ -76,13 +91,50 @@
 - 失敗ケースは握りつぶさず、GPU OOM、host OOM、timeout、worker 異常終了を区別できる範囲で記録します。
 - 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
 
+### runner 側に寄せる責務
+
+- process の fresh 起動と終了
+- GPU slot / worker slot の管理
+- child へ渡す `environment_variables` の構築
+- GPU 可視性と allocator 系 env の反映
+- scheduler に基づく case の順序決定
+
+### 実験コード側で重複実装しないこと
+
+- 独自の mini-runner
+- `Popen` ベースの独自 worker 管理
+- `CUDA_VISIBLE_DEVICES` や `XLA_*` の直設定
+- partial run を前提にした resume protocol
+- その場限りの ad hoc output path 命名
+
+### Spot Run 禁止
+
+- 事前に定義した比較プロトコルに入っていない ad hoc 実行を、正式な experiment evidence に使いません。
+- 1 case だけの単発実行、README にない subset 実行、途中停止 run のつまみ食いを benchmark 結果として扱いません。
+- debug / smoke 用の単発実行は許可しますが、`Debug Run:` や `Smoke:` として明示し、final JSON や carry-over の正本にしません。
+
 ## 6. レポートと再現性
 
 - 可視化は実験後処理として分け、実験本体と同じスクリプトへ混ぜません。
 - レポート生成スクリプトは、既存の結果 JSON だけで再生成できるようにします。
+- レポート本文の構成、Abstract、Results / Discussion の書き分け、Figure / Table caption の原則は `documents/experiment-report-style.md` を正本とします。
+- figure には軸名と単位を付け、scale が linear か log かも明示します。
+- figure caption または本文に、`How to read:` に相当する読み取り方を最低 1 文入れます。
 - 実験結果には、少なくとも条件、成功/失敗、主要な誤差指標、時間、メモリ指標を残します。
 - 実験結果には、対応する worktree、branch、commit、実行スクリプトパスも残します。
+- 実験結果には、対応する定式化、比較対象、採用した fairness 条件を note 側から辿れるようにします。
 - 小さい確認実験と大規模実験は同じ形式の JSON へ保存し、後段の処理を共通化します。
+
+### 集計と考察
+
+- final JSON には、少なくとも case 数、成功率、failure kind ごとの件数、主要 metric の代表値を含めます。
+- 平均だけでなく、中央値や最小 / 最大、必要なら分位点も残します。
+- baseline 比較を行う実験では、差分または比率を note か final JSON のどちらかで必ず辿れるようにします。
+- note 側には、`Quantitative Summary:` と `Comparison Table:` と `Critical Review:` を残して、数字、読み、反論可能性を分けます。
+- report 側では、`Results` で数字を出し、`Discussion` で解釈と先行比較を書きます。1 段落の中で観測と推測を混ぜません。
+- 結論には、根拠となる figure / table を本文中で明示的に張ります。
+- scale は、差を見るなら linear、桁差や比を見るなら log を原則とし、使い分け理由を読者に見える場所へ書きます。
+- 改善を主張するときは、改善しなかった条件帯、failure 増加、memory 悪化のような反証側も同じ note で扱います。
 
 ## 7. `main` へ残すもの
 

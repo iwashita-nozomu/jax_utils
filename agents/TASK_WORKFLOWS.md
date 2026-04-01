@@ -9,21 +9,22 @@
 - 類似 task をまとめて、運用を過剰に複雑化させない
 - repo を直接編集する役は `implementer` に一本化する
 - 各 review の直後に、対象 role が feedback を受けて修正してから次段へ進む
+- 実験主導タスクでは `experimenter -> experiment_reviewer -> implementer` の反復を正本にする
 
 ## 想定タスク 10 個
 
-| ID  | 想定タスク                                                | 主担当 workflow family | 有効化する専門ロール                       |
-| --- | --------------------------------------------------------- | ---------------------- | ------------------------------------------ |
-| T1  | solver / optimizer の局所バグ修正                         | Scoped Correction      | なし                                       |
-| T2  | アルゴリズム改善のための外部調査つき実装                  | Research-Driven Change | `researcher`                               |
-| T3  | `base` / `solvers` / `optimizers` をまたぐ大規模 refactor | Large Delivery         | `scheduler`                                |
-| T4  | 新 API / 新機能の追加                                     | Large Delivery         | `scheduler`                                |
-| T5  | CI failure / flaky test の切り分けと修正                  | Scoped Correction      | なし                                       |
-| T6  | `experiment_runner` の拡張や運用改善                      | Platform and Infra     | `scheduler`, `infra_steward`               |
-| T7  | Docker / GitHub Actions / 自動化基盤の拡張                | Platform and Infra     | `infra_steward`                            |
-| T8  | 性能ボトルネック調査と benchmark 主導の最適化             | Research-Driven Change | `researcher`, `scheduler`                  |
-| T9  | 実装変更に追随する設計文書・README・テスト整合            | Scoped Correction      | なし                                       |
-| T10 | 依存更新、runtime 互換性対応、JAX 周辺 upgrade            | Platform and Infra     | `researcher`, `infra_steward`, `scheduler` |
+| ID  | 想定タスク                                                | 主担当 workflow family | 有効化する専門ロール                         |
+| --- | --------------------------------------------------------- | ---------------------- | -------------------------------------------- |
+| T1  | solver / optimizer の局所バグ修正                         | Scoped Correction      | なし                                         |
+| T2  | アルゴリズム改善のための外部調査つき実装                  | Research-Driven Change | `researcher`, `experimenter`                 |
+| T3  | `base` / `solvers` / `optimizers` をまたぐ大規模 refactor | Large Delivery         | `scheduler`                                  |
+| T4  | 新 API / 新機能の追加                                     | Large Delivery         | `scheduler`                                  |
+| T5  | CI failure / flaky test の切り分けと修正                  | Scoped Correction      | なし                                         |
+| T6  | `experiment_runner` の拡張や運用改善                      | Platform and Infra     | `scheduler`, `infra_steward`, `experimenter` |
+| T7  | Docker / GitHub Actions / 自動化基盤の拡張                | Platform and Infra     | `infra_steward`                              |
+| T8  | 性能ボトルネック調査と benchmark 主導の最適化             | Research-Driven Change | `researcher`, `experimenter`, `scheduler`    |
+| T9  | 実装変更に追随する設計文書・README・テスト整合            | Scoped Correction      | なし                                         |
+| T10 | 依存更新、runtime 互換性対応、JAX 周辺 upgrade            | Platform and Infra     | `researcher`, `infra_steward`, `scheduler`   |
 
 ## 各タスクの workflow
 
@@ -50,13 +51,19 @@
 1. `researcher` が paper / docs / web を調べて `research_notes.md` にまとめる。
 1. `research_reviewer` が research をレビューする。
 1. `researcher` が review を受けて research を修正する。
-1. `manager` が採用案を決め、`implementer` に渡す。
+1. `manager` が採用案と実験の exit criteria を決める。
 1. `designer` が実装方針を設計する。
 1. `design_reviewer` が設計をレビューする。
 1. `designer` が review を受けて設計を修正する。
-1. `implementer` が実装する。
+1. `experimenter` が baseline run と比較プロトコルを記録する。
+1. `experiment_reviewer` が baseline の妥当性と比較公平性を批判的にレビューする。
+1. `experimenter` が review を受けて experiment log を修正する。
+1. `implementer` が 1 つの change を実装する。
 1. `change_reviewer` が各 chunk を逐次レビューする。
 1. `implementer` が review を受けて修正する。
+1. `experimenter` が同じ比較プロトコルで再実行する。
+1. `experiment_reviewer` が result interpretation と overclaim をレビューする。
+1. `implementer` が experiment review を受けて必要なら修正し、必要なら前の 5 手順を反復する。
 1. `final_reviewer` が research と diff の整合を見る。
 1. `implementer` が final review を受けて必要なら修正する。
 1. `verifier` がテストと benchmark を実行する。
@@ -128,9 +135,15 @@
 1. `designer` が runner / ops 設計を作る。
 1. `design_reviewer` が設計をレビューする。
 1. `designer` が review を受けて設計を修正する。
+1. `experimenter` が現行 runner の baseline operation を記録する。
+1. `experiment_reviewer` が観測性、比較条件、run 完走性をレビューする。
+1. `experimenter` が review を受けて baseline 記録を修正する。
 1. `implementer` が runner / scheduler / docs を更新する。
 1. `change_reviewer` が運用 regressions を確認する。
 1. `implementer` が review を受けて修正する。
+1. `experimenter` が同じ運用シナリオを再実行する。
+1. `experiment_reviewer` が regression と overclaim をレビューする。
+1. `implementer` が experiment review を受けて必要なら修正する。
 1. `final_reviewer` が安全性と observability を見る。
 1. `implementer` が final review を受けて必要なら修正する。
 1. `verifier` が runner 系テストを実行する。
@@ -168,9 +181,15 @@
 1. `designer` が最適化方針を設計する。
 1. `design_reviewer` が設計をレビューする。
 1. `designer` が review を受けて設計を修正する。
+1. `experimenter` が baseline benchmark を実行する。
+1. `experiment_reviewer` が metric 妥当性と比較条件をレビューする。
+1. `experimenter` が review を受けて benchmark log を修正する。
 1. `implementer` が測定コードと最適化を入れる。
 1. `change_reviewer` が可読性や数値安定性を確認する。
 1. `implementer` が review を受けて修正する。
+1. `experimenter` が同じ benchmark を再実行する。
+1. `experiment_reviewer` が改善主張の妥当性をレビューする。
+1. `implementer` が experiment review を受けて必要なら修正する。
 1. `final_reviewer` が benchmark の妥当性を確認する。
 1. `implementer` が final review を受けて必要なら修正する。
 1. `verifier` が baseline 比較を実行する。
@@ -222,7 +241,7 @@
 | Workflow Family        | 代表 task   | まとめる理由                                                             |
 | ---------------------- | ----------- | ------------------------------------------------------------------------ |
 | Scoped Correction      | T1, T5, T9  | 局所的な変更で、specialist role なしでも完結しやすい                     |
-| Research-Driven Change | T2, T8      | 外部調査と比較評価が本質で、`researcher` が共通して必要                  |
+| Research-Driven Change | T2, T8      | 外部調査に加え、`experimenter` による実験反復が本質になる                |
 | Large Delivery         | T3, T4      | milestone 管理と chunk review が重要で、`scheduler` が共通して必要       |
 | Platform and Infra     | T6, T7, T10 | infra surface、rollout、運用安全性が重要で、`infra_steward` が中心になる |
 

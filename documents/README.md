@@ -61,6 +61,8 @@ ______________________________________________________________________
 
 #### 実験・試行段階
 
+- **[研究・実験改造 workflow](./research-workflow.md)** — 数式・比較対象・逐次改造・branch 反映の正本
+- **[実験レポートの書き方](./experiment-report-style.md)** — IMRaD を repo 向けに寄せた report 構成と figure / table / abstract のルール
 - **[実験環境](./coding-conventions-experiments.md)** — HLO 採取・ベンチマーク
 - **[Benchmark 方針](./conventions/python/20_benchmark_policy.md)** — benchmark と experiment の境界
 - **[実験ディレクトリ構成](./conventions/python/30_experiment_directory_structure.md)** — `experiments/` と `experiment_runner` の責務分担
@@ -124,8 +126,10 @@ documents/ (ここ) ← 📍 ハブ
   ├─ conventions/python/ (Python ガイド詳細)
   ├─ coding-conventions.md (共通ルール)
   ├─ coding-conventions-testing.md (テスト)
-  ├─ coding-conventions-python.md (Python 詳細)
-  └─ coding-conventions-experiments.md (実験)
+	  ├─ coding-conventions-python.md (Python 詳細)
+	  ├─ coding-conventions-experiments.md (実験)
+	  └─ research-workflow.md (研究設計・比較・改造)
+	  └─ experiment-report-style.md (実験レポート体裁)
 
  🏛️ 設計・アーキテクチャ
   ├─ design/README.md (設計 入口)
@@ -174,6 +178,8 @@ ______________________________________________________________________
 1. **汎用 / 共通ルール** → `conventions/common/` に追記
 1. **Python 固有** → `conventions/python/` に追記
 1. **テスト・実験・レビュー** → `coding-conventions-*.md` に追記
+1. **研究設計・比較実験・改造手順** → `research-workflow.md` に追記
+1. **実験レポートの構成・体裁** → `experiment-report-style.md` に追記
 
 ### 設計仕様を追加する場合
 

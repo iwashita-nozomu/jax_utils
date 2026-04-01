@@ -1,6 +1,7 @@
 # 実験ディレクトリ構成
 
 この章は、このリポジトリで experiment をどこへ置くかを定めます。
+研究の問い、数式、比較設計、段階的改造の手順は `documents/research-workflow.md` を正本とします。
 
 ## 要約
 
@@ -49,6 +50,7 @@ experiments/functional/smolyak_scaling/
 - topic をまたいで再利用する protocol や scheduler は `python/experiment_runner/` に置きます。
 - その topic のためだけに存在する `cases.py`、`runner_config.py`、`results_aggregator.py` は `experiments/<topic>/` に置きます。
 - 可視化や report rendering は、topic 固有なら experiment ディレクトリに同居させます。
+- topic 固有ディレクトリの README や note から、定式化と比較対象を必ず辿れるようにします。
 - 長時間実行で生成される JSON、JSONL、HTML、SVG、ログは `results/` に集約します。
 - JSONL は run 中の progress 記録として扱い、resume 用の canonical input にはしません。
 - 生成物は `.gitignore` と results branch 運用で管理し、安定ライブラリやテストディレクトリへ混ぜません。

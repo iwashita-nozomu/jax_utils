@@ -33,6 +33,7 @@
   - branch 名
   - worktree の目的
   - 変更してよいディレクトリ
+  - 実験実行 role が書いてよい runtime output ディレクトリ
   - 原則変更しないディレクトリ
   - 参照必須の文書
   - `main` に持ち帰る予定の `notes/` の置き場
@@ -48,14 +49,17 @@
 - 実験固有のコード変更は、まず対応する results worktree で確認してから `main` へ戻す
 - `main` に先に入れるのは、共通コードや規約更新のような実験非依存の変更に限る
 - 作業中の「一挙手一投足」は、必ず 1 か所の append-only な action log に残す
+- 研究・実験改造では、問い、定式化、比較対象、各改造の狙いも action log に残す
 - 実験 run は 1 回の fresh 実行で完走させる前提とし、途中停止した run をそのまま再開しない
 - action log は、意味のある単位ごとに短く追記する
   - 例: scope 更新、編集開始、テスト実行、実験開始、実験停止、carry-over 判断、branch 統合
+- action log では、`Question:`、`Formulation:`、`Comparison Target:`、`Change:`、`Decision:`、`Branch Reflection:` を明示してよい
 - action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とする
 - worktree 内で下書きするときも、最終配置と同じ相対パスに置く
   - 例: `.worktrees/<name>/notes/worktrees/worktree_<topic>_YYYY-MM-DD.md`
   - 例: `.worktrees/<name>/notes/experiments/<topic>.md`
   - 例: `.worktrees/<name>/notes/branches/<branch_topic>.md`
+- `experimenter` を使う task では、`WORKTREE_SCOPE.md` の `## Runtime Output Directories` を必須にする
 
 ## 6. notes / diary / 実験結果の扱い
 
@@ -118,6 +122,7 @@
 
 1. `scripts/setup_worktree.sh <branch-name> [worktree-path]` で worktree を切る
 1. `WORKTREE_SCOPE.md` を埋め、action log と carry-over target を決める
+1. `documents/research-workflow.md` を読み、問い、定式化、比較対象を決める
 1. `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を開き、作業開始を記録する
 1. コード編集、テスト、実験、停止判断のたびに action log を追記する
 1. run が止まったら partial を継がず、理由を記録して fresh run を切り直す

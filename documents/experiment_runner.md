@@ -44,6 +44,31 @@
 - 標準実装は spawn child process により case ごとに fresh worker process を起動します。
 - runner 自身は実行機構だけを持ち、順序決定や task 切り替えは持ちません。
 
+## 1.6 責務境界
+
+`experiment_runner` を使うときは、次の境界を崩さない方針にします。
+
+runner / scheduler 側の責務:
+
+- fresh child process の起動と終了
+- case queue の進行
+- resource estimate に基づく slot / GPU 割当
+- child に渡す `TaskContext["environment_variables"]` の構築
+- GPU 可視性や allocator 系 env の反映
+- worker event や runtime state の観測面
+
+experiment code 側の責務:
+
+- 研究の問い
+- case 定義
+- difficulty range
+- resource estimate の意味付け
+- metric 計算
+- final JSON への集計
+- result interpretation と note 化
+
+したがって、experiment script 側で独自の mini-runner、独自の GPU slot 管理、独自の env wiring を重ねるのは避けます。
+
 ## 2. 標準実装
 
 - [runner.py](/workspace/python/experiment_runner/runner.py) には `StandardWorker`、`StandardResourceCapacity`、`StandardCompletion`、`StandardScheduler`、`StandardRunner` を置きます。
@@ -84,6 +109,24 @@
 - 既存の multi-GPU 実験で host が pid を直接管理したい場合は、引き続き `subprocess_scheduler.py` を併用できます。
 - 現在は `python/experiment_runner/` の standalone module として置いています。
 - 今後さらに別リポジトリへ分離する場合も、`Worker` / `Scheduler` / `Runner` / `TaskContext` の境界は保ち、experiment 側のコードから見える契約を先に安定化します。
+
+## 5.1 runner を使うならやらなくてよいこと
+
+- `run_*.py` の中で `Popen` を直接並べること
+- GPU ごとの空き管理を script 側で持つこと
+- `CUDA_VISIBLE_DEVICES` を script 側で case ごとに差し替えること
+- case ごとの fresh process を自前で管理すること
+- env を script 本体の if 文に埋め込むこと
+
+これらは runner / scheduler 層へ寄せる前提です。
+
+## 5.2 Spot Run を正規運用にしない
+
+`experiment_runner` は case ごとの実行を安定させるためのものであり、ad hoc な `spot run` を正式な比較手段にするための仕組みではありません。
+
+- 単発 case の debug run は許容します。
+- ただし、その結果を正式な benchmark evidence や carry-over の正本にしません。
+- 正式な比較は、README や note に書いた protocol に従う 1 回の run と final JSON を単位に扱います。
 
 ## 6. リアルタイム資源モニタ設計
 

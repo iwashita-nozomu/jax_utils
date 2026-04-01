@@ -21,12 +21,15 @@ copying role lists or handoff details.
 ## Team Shape
 
 - Always-on roles: `manager`, `manager_reviewer`, `designer`, `design_reviewer`, `implementer`, `change_reviewer`, `final_reviewer`, `verifier`, `auditor`
-- Specialist roles: `researcher`, `research_reviewer`, `scheduler`, `schedule_reviewer`, `infra_steward`, `infra_reviewer`
+- Specialist roles: `researcher`, `research_reviewer`, `experimenter`, `experiment_reviewer`, `scheduler`, `schedule_reviewer`, `infra_steward`, `infra_reviewer`
 - `manager` is the integrated control role for intake, scoping, specialist activation, permissions, and escalation.
 - `designer` always runs before `implementer`.
 - Every execution role has a paired reviewer, and the reviewed role must apply review feedback before handoff proceeds.
-- Only `implementer` may modify repository files.
-- Every other role is artifact-only and writes only to the run bundle under `reports/agents/<run-id>/`.
+- Experiment-driven tasks use an explicit loop: `experimenter -> experiment_reviewer -> implementer -> change_reviewer -> implementer -> experimenter`.
+- `experiment_reviewer` critiques comparison fairness, quantitative summaries, and overclaim risk before the next code change is justified.
+- Only `implementer` may modify repository source files.
+- `experimenter` may write only run artifacts and runtime output directories explicitly listed in `WORKTREE_SCOPE.md`.
+- `manager`, reviewers, `researcher`, `scheduler`, `infra_steward`, `verifier`, and `auditor` are artifact-only and write only to the run bundle under `reports/agents/<run-id>/`.
 - Execution roles and their paired reviewers remain isolated from each other's private working context.
 
 ## Standard Commands
@@ -43,11 +46,12 @@ python3 scripts/agent_tools/bootstrap_agent_run.py \
   --task "large algorithm change" \
   --owner "<agent-or-human>" \
   --enable researcher \
+  --enable experimenter \
   --enable scheduler \
   --workspace-root "$PWD"
 ```
 
-`--enable researcher` のように specialist の execution role を有効化すると、paired reviewer も同じ activation group として自動的に含まれます。
+`--enable researcher` や `--enable experimenter` のように specialist の execution role を有効化すると、paired reviewer も同じ activation group として自動的に含まれます。
 
 ```bash
 python3 scripts/agent_tools/validate_role_write_scope.py \
@@ -69,11 +73,12 @@ python3 scripts/agent_tools/validate_role_write_scope.py \
 ## Operating Rules
 
 - Reuse this same team shape across Codex, GitHub Actions, and any other agent runtime.
-- GitHub Actions models the handoff spine with reviewer-return loops and can activate specialists through workflow inputs when a run needs them.
+- Keep GitHub Actions and any other automation aligned with this canonical handoff spine when workflow logic changes.
 - Treat `agents/agents_config.json` as the single source of truth for roles, handoffs, and write policies.
 - Treat `agents/COMMUNICATION_PROTOCOL.md` as the single source of truth for handoff, review, response, and escalation messages.
 - Treat this file as the only human-facing summary of role lists and team shape.
 - Keep `documents/AGENTS_COORDINATION.md` and `.github/AGENTS.md` as thin entrypoints that link here instead of repeating the team definition.
 - Keep repo edits inside `WORKTREE_SCOPE.md` editable directories whenever `implementer` is active.
+- Keep experiment outputs inside `WORKTREE_SCOPE.md` runtime output directories whenever `experimenter` is active.
 - Capture both a report-dir snapshot and a workspace-change snapshot before an artifact-only role runs, then validate against both after the role writes.
 - Record scope, risk, and acceptance decisions in the report bundle.

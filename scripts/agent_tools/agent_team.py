@@ -318,12 +318,33 @@ def resolve_role_write_scope(
     scope_file = find_worktree_scope_file(workspace_root)
     unresolved_reason: str | None = None
     if role.write_policy.mode == "worktree_scope_plus_artifacts":
-        editable_directories = tuple(_resolve_editable_directories(scope_file, workspace_root))
+        editable_directories = tuple(
+            _resolve_scope_directories(
+                scope_file,
+                workspace_root,
+                "## Editable Directories",
+            )
+        )
         allowed_directories = tuple(sorted(editable_directories, key=str))
         if role.write_policy.requires_worktree_scope and scope_file is None:
             unresolved_reason = "WORKTREE_SCOPE.md is required but was not found in the workspace root."
         elif role.write_policy.requires_worktree_scope and not allowed_directories:
             unresolved_reason = "WORKTREE_SCOPE.md was found, but no editable directories could be parsed."
+    elif role.write_policy.mode == "runtime_outputs_plus_artifacts":
+        runtime_output_directories = tuple(
+            _resolve_scope_directories(
+                scope_file,
+                workspace_root,
+                "## Runtime Output Directories",
+            )
+        )
+        allowed_directories = tuple(sorted(runtime_output_directories, key=str))
+        if role.write_policy.requires_worktree_scope and scope_file is None:
+            unresolved_reason = "WORKTREE_SCOPE.md is required but was not found in the workspace root."
+        elif role.write_policy.requires_worktree_scope and not allowed_directories:
+            unresolved_reason = (
+                "WORKTREE_SCOPE.md was found, but no runtime output directories could be parsed."
+            )
     return RoleWriteScope(
         role_id=role.id,
         mode=role.write_policy.mode,
@@ -453,17 +474,21 @@ def find_worktree_scope_file(workspace_root: Path) -> Path | None:
     return None
 
 
-def _resolve_editable_directories(scope_file: Path | None, workspace_root: Path) -> list[Path]:
-    """Parse editable directories from WORKTREE_SCOPE.md."""
+def _resolve_scope_directories(
+    scope_file: Path | None,
+    workspace_root: Path,
+    section_heading: str,
+) -> list[Path]:
+    """Parse directories from one named WORKTREE_SCOPE.md section."""
     if scope_file is None:
         return []
     content = scope_file.read_text(encoding="utf-8")
     in_section = False
-    editable_directories: list[Path] = []
+    directories: list[Path] = []
     for line in content.splitlines():
         stripped = line.strip()
         if stripped.startswith("## "):
-            in_section = stripped == "## Editable Directories"
+            in_section = stripped == section_heading
             continue
         if not in_section or not stripped.startswith("- "):
             continue
@@ -471,8 +496,8 @@ def _resolve_editable_directories(scope_file: Path | None, workspace_root: Path)
         if not path_text:
             continue
         path_text = path_text.rstrip("/").strip()
-        editable_directories.append((workspace_root / path_text).resolve())
-    return editable_directories
+        directories.append((workspace_root / path_text).resolve())
+    return directories
 
 
 def _extract_markdown_code_or_bullet_value(text: str) -> str:

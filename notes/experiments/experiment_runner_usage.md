@@ -125,6 +125,26 @@ def task(case, context):
     ...
 ```
 
+### 2.4 実験 script 側で mini-runner を足さない
+
+`experiment_runner` を使うなら、実験 script 側で次を重複実装しません。
+
+- 独自の `Popen` 管理
+- GPU slot の帳簿
+- `CUDA_VISIBLE_DEVICES` の手組み
+- partial run を前提にした resume protocol
+
+実験 script 側が持つべきなのは、問い、case、metric、resource estimate、final JSON への集計です。
+
+### 2.5 spot run を正式結果にしない
+
+1 case だけの単発実行や、その場しのぎの subset 実行は debug / smoke には使ってよいです。
+ただし、それを benchmark の結論や carry-over の正本に使いません。
+
+- 正式結果は、README と note に書いた protocol に従う run だけ
+- partial run は診断材料
+- final JSON は完走 run から作る
+
 ## 3. 最小の CPU 例
 
 CPU 実験だけなら、最初はこれで十分です。

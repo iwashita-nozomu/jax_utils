@@ -29,6 +29,8 @@ python3 experiments/smolyak_experiment/run_smolyak_experiment_simple.py --size m
 run は 1 回の fresh 実行で完走させる前提です。途中で止まった場合は同じ
 `jsonl` や `final_results` に継ぎ足さず、新しい timestamp の run を 0 から
 やり直します。JSONL は run 中の progress 記録であり、resume 入力ではありません。
+README にない ad hoc な 1 case 実行や subset 実行は debug / smoke に限り、
+正式な比較結果や carry-over の正本には使いません。
 
 ## Notes
 

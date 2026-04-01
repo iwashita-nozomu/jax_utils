@@ -35,6 +35,8 @@ workflow_families:
       specialists:
         - researcher
         - research_reviewer
+        - experimenter
+        - experiment_reviewer
     tasks:
       - T2
       - T8
@@ -73,6 +75,8 @@ workflow_families:
       specialists:
         - researcher
         - research_reviewer
+        - experimenter
+        - experiment_reviewer
         - scheduler
         - schedule_reviewer
         - infra_steward
@@ -106,6 +110,8 @@ tasks:
     specialists:
       - researcher
       - research_reviewer
+      - experimenter
+      - experiment_reviewer
     steps:
       - manager が改善目標と受け入れ条件を定義
       - manager_reviewer が intake を review
@@ -113,13 +119,19 @@ tasks:
       - researcher が外部調査
       - research_reviewer が調査を review
       - researcher が review を受けて調査を修正
-      - manager が採用案を決定
+      - manager が採用案と実験 exit criteria を決定
       - designer が実装方針を設計
       - design_reviewer が設計を review
       - designer が review を受けて設計を修正
-      - implementer が実装
+      - experimenter が baseline run と比較プロトコルを記録
+      - experiment_reviewer が baseline と比較公平性を review
+      - experimenter が review を受けて experiment log を修正
+      - implementer が 1 つの change を実装
       - change_reviewer が diff を review
       - implementer が review を受けて修正
+      - experimenter が同じ比較プロトコルで再実行
+      - experiment_reviewer が result interpretation と overclaim を review
+      - implementer が experiment review を受けて必要なら修正し、必要なら実験 loop を反復
       - final_reviewer が research と最終 diff を review
       - implementer が final review を受けて必要なら修正
       - verifier が test と benchmark を実行
@@ -189,6 +201,8 @@ tasks:
     name: experiment_runner の拡張や運用改善
     family: platform_and_infra
     specialists:
+      - experimenter
+      - experiment_reviewer
       - scheduler
       - schedule_reviewer
       - infra_steward
@@ -206,9 +220,15 @@ tasks:
       - designer が runner / ops 設計を作成
       - design_reviewer が設計を review
       - designer が review を受けて設計を修正
+      - experimenter が現行 runner の baseline operation を記録
+      - experiment_reviewer が観測性、比較条件、run 完走性を review
+      - experimenter が review を受けて baseline 記録を修正
       - implementer が runner と docs を更新
       - change_reviewer が運用 regression を確認
       - implementer が review を受けて修正
+      - experimenter が同じ運用シナリオを再実行
+      - experiment_reviewer が regression と overclaim を review
+      - implementer が experiment review を受けて必要なら修正
       - final_reviewer が安全性を最終 review
       - implementer が final review を受けて必要なら修正
       - verifier が runner 系 test を実行
@@ -240,6 +260,8 @@ tasks:
     specialists:
       - researcher
       - research_reviewer
+      - experimenter
+      - experiment_reviewer
       - scheduler
       - schedule_reviewer
     steps:
@@ -255,9 +277,15 @@ tasks:
       - designer が最適化方針を設計
       - design_reviewer が設計を review
       - designer が review を受けて設計を修正
+      - experimenter が baseline benchmark を実行
+      - experiment_reviewer が metric 妥当性と比較条件を review
+      - experimenter が review を受けて benchmark log を修正
       - implementer が測定と最適化を実装
       - change_reviewer が妥当性を review
       - implementer が review を受けて修正
+      - experimenter が同じ benchmark を再実行
+      - experiment_reviewer が改善主張の妥当性を review
+      - implementer が experiment review を受けて必要なら修正
       - final_reviewer が benchmark 妥当性を最終 review
       - implementer が final review を受けて必要なら修正
       - verifier が benchmark を実行
