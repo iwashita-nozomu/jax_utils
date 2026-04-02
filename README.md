@@ -1,209 +1,218 @@
 # jax_util
 
-> JAX 向けユーティリティ・線形代数・最適化ソルバー統合ライブラリ
+JAX ベースの数値計算ユーティリティと、実験実行基盤をまとめたリポジトリです。
+ライブラリ本体の実装、実験コード、実験結果、規約文書を 1 つのリポジトリで管理します。
 
-**あなたは誰ですか？** → 下のボタンをクリック
+この README は人間向けの作業入口です。AI エージェント向けの入口は `agents/README.md` です。
 
-______________________________________________________________________
+## 何が入っているか
 
-## 🎯 あなたの役割で選ぶ（3回のクリックで到達可能）
+- `python/jax_util`
+  - ライブラリ本体です。線形作用素、ソルバー、最適化、functional 系の実装を置きます。
+- `python/experiment_runner`
+  - 実験を case ごとの fresh process で回すための共通基盤です。
+- `python/tests`
+  - テストスイートです。
+- `experiments`
+  - topic ごとの実験コード、run ごとの結果、run ごとの report を置きます。
+- `documents`
+  - 規約、設計、運用手順の正本です。
+- `notes`
+  - 実験をまたぐ知見、補助メモ、worktree から持ち帰る要約を置きます。
+- `diary`
+  - 日付単位の作業ログを置きます。
+- `reports`
+  - project-wide な review、automation、management report を置きます。
+- `reviews`
+  - 現在有効なレビュー文書だけを置きます。
 
-### 📚 **ドキュメント・ガイドが必要**
+## 最初に理解しておくルール
 
-👉 [documents/README.md](./documents/README.md)
+- `main` を長時間実験や大きな変更の作業場にしません。
+- 新しい作業は worktree を切って進めます。
+- ローカル仮想環境 (`.venv` など) は使いません。
+- 依存を追加する場合は `docker/Dockerfile` と `docker/requirements.txt` を同時に更新します。
+- コード変更では、対応するテストと必要な文書更新を同じ作業で入れます。
+- `documents/` には正本だけを残します。履歴用の別文書は増やしません。
 
-- 初心者セットアップ（環境・テスト・規約）
-- 実装ガイド（Python・テスト・デザイン）
-- レビュー・運用手順
-- よくある質問
+## ふだんの作業手順
 
-### 🛠️ **ツール・スクリプトを使いたい**
+### 1. worktree を作る
 
-👉 [scripts/README.md](./scripts/README.md)
-
-- ツール一覧（20+ スクリプト）
-- 使用方法・オプション
-- CI/CD コマンド
-- トラブルシューティング
-
-### 📓 **実験・ナレッジ・メモを見たい**
-
-👉 [notes/README.md](./notes/README.md)
-
-- 実験レポート・結果
-- 試行錯誤のメモ
-- チューニング記録
-- 開発ログ
-
-### 🤖 **エージェント（AI）として利用**
-
-👉 [agents/README.md](./agents/README.md) + [agents/TASK_WORKFLOWS.md](./agents/TASK_WORKFLOWS.md)
-
-- チームロール・権限
-- タスク別 workflow
-- 通信規約・handoff
-- 50 個のタスク完全ガイド（📖 [AGENT_TASK_MAP.md](./documents/AGENT_TASK_MAP.md)）
-
-### 🎓 **設計・アーキテクチャを深掘り**
-
-👉 [documents/design/README.md](./documents/design/README.md)
-
-- ソルバー・最適化アルゴリズム
-- 型システム・API 設計
-- モジュール依存関係
-
-______________________________________________________________________
-
-## ⚡ クイックコマンド（よく使うやつ）
+新しい作業は次のコマンドで始めます。
 
 ```bash
-# 環境セットアップ（1回目）
-bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD
-cd .worktrees/work-my-feature-YYYYMMDD
-
-# テスト実行（毎回）
-make ci                         # 全テスト（30～60秒）
-make ci-quick                   # 軽量テスト（10秒）
-
-# ドキュメント修正
-mdformat documents/             # Markdown 書式修正
-
-# ツール実行例
-python scripts/check_convention_consistency.py  # 規約検証
-python scripts/docker_dependency_validator.py   # Docker 依存確認
+bash scripts/setup_worktree.sh work/<topic>-YYYYMMDD
 ```
 
-⚠️ **注意**: ローカル仮想環境（`.venv`, `venv`）は禁止。Docker を使ってください。
+例:
 
-______________________________________________________________________
-
-## 📋 ディレクトリ構成（サイト マップ）
-
-```
-/workspace
-├─ README.md ← 👈 ここ（入口）
-│
-├─ 📚 documents/
-│   ├─ README.md ← 【第2層】全ドキュメント・ガイド入口
-│   ├─ conventions/ ← 規約（Python・C++・共通）
-│   ├─ design/ ← アーキテクチャ・API・設計
-│   ├─ tools/ ← ツール・スクリプト詳細
-│   ├─ QUICK_START.md
-│   ├─ REVIEW_PROCESS.md
-│   └─ worktree-lifecycle.md
-│
-├─ 🛠️ scripts/
-│   ├─ README.md ← 【第2層】ツール・スクリプト入口
-│   ├─ agent_tools/ ← エージェント向け helper
-│   ├─ ci/ ← CI/CD スクリプト
-│   ├─ tools/ ← 検証・チェック ツール
-│   └─ *.sh ← 補助スクリプト
-│
-├─ 📓 notes/
-│   ├─ README.md ← 【第2層】実験・ナレッジ入口
-│   ├─ experiments/ ← 実験レポート
-│   ├─ worktrees/ ← worktree 削除予定メモ
-│   └─ knowledge/ ← 試行錯誤の記録
-│
-├─ 🤖 agents/
-│   ├─ README.md ← 【第2層】エージェント チーム入口
-│   ├─ agents_config.json ← チーム正本（ロール・権限）
-│   ├─ COMMUNICATION_PROTOCOL.md
-│   ├─ TASK_WORKFLOWS.md ← タスク workflow 集
-│   ├─ task_catalog.yaml
-│   └─ templates/ ← エージェント出力テンプレート
-│
-├─ 📖 python/
-│   ├─ jax_util/ ← メインライブラリ
-│   ├─ experiment_runner/ ← 実験実行基盤
-│   └─ tests/ ← テストスイート
-│
-├─ 🧪 experiments/
-│   ├─ functional/ ← 機能テスト・検証
-│   └─ smolyak_experiment/ ← Smolyak グリッド実験
-│
-└─ 📝 その他
-    ├─ docker/ ← Docker 環境・依存
-    ├─ reviews/ ← レビュー報告・進捗レポート
-    ├─ diary/ ← 日付別開発ログ
-    ├─ Makefile ← タスク自動化
-    └─ task.md ← TO-DO（Phase 別）
+```bash
+bash scripts/setup_worktree.sh work/solver-fix-20260402
 ```
 
-**👉 3 階層ナビゲーション例:**
-- 第 1 層: 👆 上の「あなたの役割で選ぶ」を選択
-- 第 2 層: documents/README.md や scripts/README.md で詳細選択
-- 第 3 層: 実際のドキュメント・ガイドを参照
+このコマンドは次を行います。
 
-______________________________________________________________________
+- `origin/main` から branch を作ります
+- `.worktrees/work-<topic>-YYYYMMDD/` に worktree を作ります
+- `WORKTREE_SCOPE.md` のテンプレートをコピーします
 
-## 📊 プロジェクト情報
+### 2. scope を明確にする
 
-| 項目             | 値                                 |
-| ---------------- | ---------------------------------- |
-| **言語**         | Python 3.10+, C++17           |
-| **主要依存**     | JAX, Equinox, scipy, numpy    |
-| **テスト**       | pytest, pyright, ruff         |
-| **ドキュメント** | Markdown (gdformat)           |
-| **自動化**       | Makefile, GitHub Actions, CI  |
-| **ドキュメント数** | 130+ ファイル（構造化）        |
-| **スクリプト**   | 20+ （解析・検証・自動化）     |
+worktree を作ったら、`WORKTREE_SCOPE.md` に少なくとも次を書きます。
 
-______________________________________________________________________
+- 何を直すか
+- どのディレクトリを編集するか
+- 実験結果をどこへ出すか
+- `main` に何を持ち帰るか
 
-## 🆘 困ったら
+### 3. 変更前にチェックを流す
 
-**該当する状況を選んでクリック:**
+軽量チェック:
 
-| 状況 | 参照先 |
-|------|--------|
-| **セットアップできない** | [QUICK_START.md](./QUICK_START.md) / [worktree-lifecycle.md](./documents/worktree-lifecycle.md) |
-| **テストが失敗する** | [documents/TROUBLESHOOTING.md](./documents/TROUBLESHOOTING.md) / [coding-conventions-testing.md](./documents/coding-conventions-testing.md) |
-| **型エラーが出ている** | [coding-conventions-python.md](./documents/coding-conventions-python.md#型チェッカの活用) |
-| **ドキュメント修正方法** | [`mdformat` の使い方](./documents/coding-conventions.md#markdown-書式修正ルール) |
-| **エージェント向けガイド** | [agents/USER_GUIDE_JA.md](./agents/USER_GUIDE_JA.md) 🇯🇵 |
-| **ツールが見つからない** | [scripts/README.md](./scripts/README.md) / [documents/tools/README.md](./documents/tools/README.md) |
-| **Worktree・ブランチ管理** | [documents/worktree-lifecycle.md](./documents/worktree-lifecycle.md) / [documents/BRANCH_SCOPE.md](./documents/BRANCH_SCOPE.md) |
-| **レビュー・統合手順** | [documents/REVIEW_PROCESS.md](./documents/REVIEW_PROCESS.md) / [agents/COMMUNICATION_PROTOCOL.md](./agents/COMMUNICATION_PROTOCOL.md) |
+```bash
+make ci-quick
+```
 
-______________________________________________________________________
+フルチェック:
 
-## 🎬 次のステップ
+```bash
+make ci
+```
 
-### **初心者向け**
-1. [QUICK_START.md](./QUICK_START.md) を 5 分で読む
-2. `bash scripts/setup_worktree.sh work/my-feature-YYYYMMDD` を実行
-3. `make ci` でテストが通るか確認
-4. [documents/coding-conventions-python.md](./documents/coding-conventions-python.md) を読む
+### 4. 変更を入れる
 
-### **実装者向け**
-1. 実装対象を [task.md](./task.md) から選ぶ
-2. `documents/conventions/` で規約確認
-3. [scripts/ci/](./scripts/ci/) で CI 実行方法確認
-4. ワークツリーで実装 → テスト → コミット
+通常のライブラリ修正では、主に次を触ります。
 
-### **レビュー・運用者向け**
-1. [documents/REVIEW_PROCESS.md](./documents/REVIEW_PROCESS.md) を読む
-2. [agents/README.md](./agents/README.md) でチームロール確認
-3. [agents/COMMUNICATION_PROTOCOL.md](./agents/COMMUNICATION_PROTOCOL.md) で通信規約確認
+- `python/jax_util`
+- `python/tests`
+- `documents`
 
-### **エージェント（AI）向け**
-→ **[agents/USER_GUIDE_JA.md](./agents/USER_GUIDE_JA.md)** 🇯🇵 から始めてください
+実験まわりの変更では、主に次を触ります。
 
-______________________________________________________________________
+- `experiments`
+- `python/experiment_runner`
+- `notes`
+- 必要な `documents`
 
-**最後に更新：** 2026-04-01  
-**スポンサー:** jax_util development team  
-**言語:** 日本語 • [English](./README_EN.md) (未翻訳)
+### 5. 持ち帰るものをそろえる
 
-1. **[ツール一覧](./documents/tools/README.md)** で解決ツールを探す
-1. **[ワークフロー手順](./documents/FILE_CHECKLIST_OPERATIONS.md)** で対応フローを確認
-1. **[規約](./documents/conventions/README.md)** で実装・テスト方法を確認
+`main` に持ち帰るときは、少なくとも次をそろえます。
 
-______________________________________________________________________
+- 再生成可能なコード
+- 対応するテスト
+- 必要な規約・設計・README 更新
+- 実験なら per-run report と最低限の result
+- 長期に残す判断は `notes/` または `diary/`
 
-## 📞 その他
+## 実験の標準構成
 
-- **Development:** `pip install -e ".[dev]"` → `pytest` → `ruff check .`
-- **HLO Analysis:** `python scripts/hlo/summarize_hlo_jsonl.py <file.jsonl>`
-- **Notes:** [notes/README.md](./notes/README.md) 参照
+新規実験は次の形にそろえます。
+
+```text
+experiments/
+├── README.md
+├── report/
+│   ├── README.md
+│   └── <run_name>.md
+└── <topic>/
+    ├── README.md
+    ├── cases.py
+    ├── experimentcode.py
+    └── result/
+        └── <run_name>/
+```
+
+topic ディレクトリの必須要素は次です。
+
+- `README.md`
+- `cases.py`
+- `experimentcode.py`
+- `result/`
+
+新規 experiment で topic 直下に topic 固有 Python ファイルを増やすことはしません。追加の topic 固有ロジックは `cases.py` か `experimentcode.py` に整理します。
+
+## 実験結果の置き方
+
+1 回の run の結果は次にそろえます。
+
+- `experiments/<topic>/result/<run_name>/summary.json`
+- `experiments/<topic>/result/<run_name>/cases.jsonl`
+- `experiments/<topic>/result/<run_name>/run.log`
+- 必要なら `figures/`
+- 人が読む report は `experiments/report/<run_name>.md`
+
+`run_name` は次の形式にそろえます。
+
+```text
+<topic>_<variant>_<YYYYMMDDTHHMMSSZ>
+```
+
+例:
+
+```text
+smolyak_gpu_20260402T061500Z
+```
+
+## 実験で守ること
+
+- 1 回の run は fresh 実行で完走させます。
+- 途中停止した run を resume の正本にしません。
+- partial run を正式な比較結果として扱いません。
+- topic ごとの実験 report を top-level `reports/` に置きません。
+- 複数 run をまたぐ要約は `notes/experiments/` または `notes/themes/` に置きます。
+- project-wide な report だけを `reports/` に置きます。
+
+## どこに何を書くか
+
+### `documents`
+
+規約、設計、運用の正本を書きます。現在の正しいルールを残す場所です。
+
+### `notes`
+
+長期に残したい補助メモを書きます。実験をまたぐ知見、比較の要約、worktree の carry-over を置きます。
+
+### `diary`
+
+日付に紐づく作業の流れを書きます。その日に何をして、何を見て、何を決めたかを残します。
+
+### `reports`
+
+project-wide な automation report、management report、review report を置きます。topic ごとの experiment report は置きません。
+
+### `reviews`
+
+現在有効なレビュー文書だけを置きます。古いレビューや重複レビューは Git 履歴へ戻します。
+
+## よく使うコマンド
+
+```bash
+# worktree を作る
+bash scripts/setup_worktree.sh work/<topic>-YYYYMMDD
+
+# 軽量チェック
+make ci-quick
+
+# フルチェック
+make ci
+
+# ツール一覧を見る
+make tools-help
+```
+
+## 作業前に見るべき内容
+
+まずこの README を読んだうえで、次の 3 つを見ればほぼ始められます。
+
+- `documents/worktree-lifecycle.md`
+- `documents/conventions/README.md`
+- `experiments/README.md` もしくは対象 topic の `README.md`
+
+## 詳細入口
+
+- 規約と運用: `documents/README.md`
+- 実験全体: `experiments/README.md`
+- 補助メモ: `notes/README.md`
+- エージェント運用: `agents/README.md`
+- スクリプト一覧: `scripts/README.md`
