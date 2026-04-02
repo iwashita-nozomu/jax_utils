@@ -24,6 +24,14 @@ def _bool_flag(enabled: bool, /) -> str:
     return "1" if enabled else "0"
 
 
+def _coerce_optional_float(value: object | None, /) -> float | None:
+    if value is None:
+        return None
+    if isinstance(value, (int, float, str)):
+        return float(value)
+    raise TypeError(f"Expected float-compatible value, got {type(value).__name__}")
+
+
 def merge_env_vars(*env_sets: Mapping[str, str] | None) -> dict[str, str]:
     """Merge environment-variable mappings from left to right."""
     merged: dict[str, str] = {}
@@ -107,11 +115,7 @@ def build_env_for_profile(profile: str, **kwargs: object) -> dict[str, str]:
                 else None
             ),
             disable_preallocation=bool(kwargs.get("disable_preallocation", True)),
-            memory_fraction=(
-                float(kwargs["memory_fraction"])
-                if kwargs.get("memory_fraction") is not None
-                else None
-            ),
+            memory_fraction=_coerce_optional_float(kwargs.get("memory_fraction")),
             allocator=(
                 str(kwargs["allocator"])
                 if kwargs.get("allocator") is not None

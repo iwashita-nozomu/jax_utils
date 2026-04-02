@@ -16,6 +16,78 @@ from pathlib import Path
 from typing import Any
 
 
+PACKAGE_NAME_RE = re.compile(r"^[A-Za-z0-9_.\-]+")
+
+
+def _stdlib_modules() -> set[str]:
+    modules = set(getattr(sys, "stdlib_module_names", set()))
+    modules.update(
+        {
+            "__future__",
+            "collections",
+            "concurrent",
+            "contextlib",
+            "copy",
+            "dataclasses",
+            "functools",
+            "http",
+            "importlib",
+            "itertools",
+            "json",
+            "logging",
+            "math",
+            "multiprocessing",
+            "os",
+            "pathlib",
+            "pickle",
+            "random",
+            "re",
+            "runpy",
+            "subprocess",
+            "tempfile",
+            "textwrap",
+            "threading",
+            "time",
+            "traceback",
+            "typing",
+            "urllib",
+            "warnings",
+        }
+    )
+    return modules
+
+
+def _local_modules() -> set[str]:
+    modules: set[str] = set()
+    python_root = Path("python")
+    for entry in python_root.rglob("*"):
+        if any(part.startswith(".") or part == "__pycache__" for part in entry.parts):
+            continue
+        if entry.is_dir():
+            modules.add(entry.name)
+        elif entry.suffix == ".py":
+            modules.add(entry.stem)
+    modules.update({"python", "scripts"})
+    return modules
+
+
+def extract_dockerfile_packages() -> set[str]:
+    """Dockerfile で直接インストールするパッケージを抽出。"""
+    dockerfile = Path("docker/Dockerfile")
+    if not dockerfile.exists():
+        return set()
+
+    content = dockerfile.read_text(encoding="utf-8")
+    packages: set[str] = set()
+    for match in re.finditer(r"pip install[^\n]*\s([\"'][^\"']+[\"']|\S+)", content):
+        token = match.group(1).strip("\"'")
+        if token.startswith("-") or "requirements.txt" in token:
+            continue
+        pkg_name = token.split("[", 1)[0].split("=", 1)[0].lower().replace("-", "_")
+        packages.add(pkg_name)
+    return packages
+
+
 class ImportCollector(ast.NodeVisitor):
     """Python コード内のインポートを収集。"""
 
@@ -40,12 +112,8 @@ def extract_imports_from_codebase() -> set[str]:
     """プロジェクトコード内で使用されているパッケージを抽出。"""
     imports = set()
 
-    # 標準ライブラリは除外
-    stdlib_modules = {
-        "sys", "os", "re", "json", "pathlib", "typing", "collections",
-        "functools", "itertools", "math", "random", "datetime", "time",
-        "subprocess", "logging", "unittest", "pytest", "argparse",
-    }
+    stdlib_modules = _stdlib_modules()
+    local_modules = _local_modules()
 
     for py_file in Path("python").rglob("*.py"):
         try:
@@ -59,8 +127,7 @@ def extract_imports_from_codebase() -> set[str]:
         except (SyntaxError, ValueError):
             pass
 
-    # 標準ライブラリをフィルター
-    return {imp for imp in imports if imp not in stdlib_modules}
+    return {imp for imp in imports if imp not in stdlib_modules and imp not in local_modules}
 
 
 def extract_requirements() -> dict[str, str]:
@@ -79,18 +146,29 @@ def extract_requirements() -> dict[str, str]:
             continue
 
         # パッケージと version を分割
-        match = re.match(r"^([a-zA-Z0-9_\-]+)(.*)$", line)
+        if "#" in line:
+            line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+
+        match = PACKAGE_NAME_RE.match(line)
         if match:
-            pkg_name = match.group(1).lower().replace("-", "_")
-            version_spec = match.group(2)
+            pkg_token = match.group(0)
+            pkg_name = pkg_token.lower().replace("-", "_")
+            version_spec = line[len(pkg_token) :]
             packages[pkg_name] = version_spec
 
     return packages
 
 
-def check_missing_imports(used: set[str], required: dict[str, str]) -> list[str]:
+def check_missing_imports(
+    used: set[str],
+    required: dict[str, str],
+    dockerfile_packages: set[str],
+) -> list[str]:
     """requirements.txt に無い使用パッケージを検出。"""
     issues = []
+    installed = set(required) | dockerfile_packages
 
     # パッケージ名のマッピング（pip name vs import name）
     mapping = {
@@ -99,10 +177,18 @@ def check_missing_imports(used: set[str], required: dict[str, str]) -> list[str]
         "attrs": "attr",
         "beautifulsoup4": "bs4",
     }
+    transitive_ok = {
+        "numpy": {"jax", "scipy"},
+    }
 
     for pkg in sorted(used):
         req_name = mapping.get(pkg, pkg)
-        if req_name not in required:
+        if req_name in installed:
+            continue
+        providers = transitive_ok.get(req_name, set())
+        if providers & installed:
+            continue
+        if req_name not in installed:
             issues.append(f"used package '{pkg}' not in requirements.txt")
 
     return issues
@@ -161,10 +247,13 @@ def main() -> int:
     print("\n2️⃣ Loading requirements.txt...")
     required_packages = extract_requirements()
     print(f"   Loaded {len(required_packages)} packages")
+    dockerfile_packages = extract_dockerfile_packages()
+    if dockerfile_packages:
+        print(f"   Dockerfile direct installs: {', '.join(sorted(dockerfile_packages))}")
 
     # 不足しているパッケージ
     print("\n3️⃣ Checking missing imports...")
-    issues = check_missing_imports(used_packages, required_packages)
+    issues = check_missing_imports(used_packages, required_packages, dockerfile_packages)
     for issue in issues:
         print(f"   ⚠️ {issue}")
         all_issues.append(issue)

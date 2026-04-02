@@ -1,34 +1,53 @@
-# ワークフロー目録（自動化現状と未自動化項目）
+# ワークフロー目録
 
-この文書は現状のスクリプト・ワークフローを一覧化し、未自動化の作業を洗い出すための目録です。
+この文書は、現在の自動化入口と、まだ人手 review が必要な作業を整理するための正本です。
+存在しないスクリプトや終了した運用は書きません。
 
-自動化済みスクリプト / ワークフロー（ローカル・CI 共通）:
+## 自動化済みの入口
 
-- `scripts/ci/run_static_checks.sh` — `ruff` / `pyright` / `black --check` / `pytest` を実行して `reports/static-analysis/` に出力。
-- `scripts/ci/safe_file_extractor.py` — ruff レポートと全ブランチ差分を突合して安全ファイルを列挙。
-- `scripts/ci/safe_fix.sh` — 安全ファイルに対して `ruff --fix` と `black` 実行、オプションでコミット。
-- `scripts/ci/collect_reports.sh` — `reports/static-analysis/` をアーカイブ。
-- `scripts/tools/organize_designs.py` — 設計ファイルをサブモジュール別にコピー（保守的）。
-- `scripts/tools/create_design_template.py` — サブモジュール用テンプレートを作成。
-- `scripts/tools/find_redundant_designs.py` — 完全一致の重複設計ファイルを検出・削除（オプション）。
+- `scripts/setup_worktree.sh`
+  - `origin/main` から branch と worktree を作成し、`WORKTREE_SCOPE.md` を配置します。
+- `scripts/tools/create_worktree.sh`
+  - `setup_worktree.sh` 互換の薄いラッパーです。
+- `scripts/ci/run_all_checks.sh`
+  - `pytest`、`pyright`、`pydocstyle`、`ruff` を一括実行します。
+- `scripts/run_pytest_with_logs.sh`
+  - pytest 実行ログを `python/tests/logs/` に保存します。
+- `scripts/run_comprehensive_review.sh`
+  - 包括 review 用の静的解析、テスト、補助 validator をまとめて実行します。
+- `scripts/tools/check_worktree_scopes.sh`
+  - worktree ごとの `WORKTREE_SCOPE.md` を確認します。
+- `scripts/tools/check_markdown_lint.py`
+  - Markdown 体裁を確認します。
+- `scripts/tools/audit_and_fix_links.py`
+  - Markdown 内リンクを検査・修正します。
+- `scripts/tools/fix_markdown_docs.py`
+  - Markdown の機械的な修正を行います。
+- `scripts/tools/find_similar_documents.py`
+  - 類似文書候補を抽出します。
 
-未自動化（要対応）:
+## 人手 review が必要な作業
 
-1. ブランチスコープの CI 自動検出（PR が複数サブモジュールを跨いでいる場合に警告する GitHub Action）。
-   - 理由: 1 ブランチ = 1 サブモジュール方針を技術的に補強するため。
-1. ワークツリー `WORKTREE_SCOPE.md` の存在チェックとオーナー通知（自動作成は `setup_worktree.sh` があるが、既存ワークツリー未整備を検出していない）。
-1. 設計ファイル類似度検出（完全一致でないが内容が重複しているファイルの候補抽出）。
-1. 設計移行の dry-run → PR 自動作成フロー（organize_designs の実行結果を元に PR を用意）。
-1. 設計ドキュメントインデックス自動生成（`documents/design/README.md` と各サブモジュール README の更新）。
+- 実験結果の採否判断
+  - `summary.json`、`cases.jsonl`、report の内容解釈は人が行います。
+- worktree を閉じる前の carry-over 抽出
+  - `notes/`、`diary/`、最小 result の持ち帰り先判断は人が行います。
+- 規約変更の正本反映
+  - `documents/` のどこを更新するかは人が決めます。
+- 歴史メモや旧 skill 草稿の整理
+  - `notes/`、隠し草稿、古い review の削除判断は人が行います。
 
-優先度（提案）:
+## いま不足している自動化
 
-- 高: (1) ブランチスコープの PR 時警告、(2) ワークツリー scope チェック + owner 通知
-- 中: (3) 類似度検出ツール、(4) 設計移行の dry-run → PR 自動化
-- 低: (5) インデックス自動生成（cron で十分）
+- `documents/` と `scripts/README.md` の stale 記述を継続検出する link / path checker
+- `notes/` と歴史文書に残った worktree 絶対パスの定期監査
+- worktree 削除前に carry-over 先が `main` から参照可能かを確認する checker
+- 実験 report の最小必須項目を確認する schema / lint
 
-次ステップ（短期）:
+## 使い分け
 
-1. `scripts/tools/check_worktree_scopes.sh` を追加して全ワークツリーの `WORKTREE_SCOPE.md` を検出・レポート化（既に追加実行済み、結果は `reports/worktree_scope_report.txt`）。
-1. GitHub Actions で (1) を実装するための `.github/workflows/branch-scope-check.yml` を作成。
-1. (3) 類似度検出はまずローカルツールで候補抽出し、レビュワーに割り当てる。
+- 日常の実装確認は `make ci-quick`
+- 仕上げ前の確認は `make ci`
+- workflow 全体の点検は `bash scripts/run_comprehensive_review.sh`
+- 実験運用は [experiment-workflow.md](/workspace/documents/experiment-workflow.md)
+- worktree 運用は [worktree-lifecycle.md](/workspace/documents/worktree-lifecycle.md)

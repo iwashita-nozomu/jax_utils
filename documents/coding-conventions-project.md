@@ -12,11 +12,11 @@
 ## 2. 文書構造
 
 - general なコーディング方針は `coding-conventions*.md` と `conventions/` に置きます。
-- base の型・Protocol・共通クラスは `design/base_components.md` に置きます。
-- 安定サブモジュールの API 詳細は `design/apis/` にサブモジュール単位で置きます。
-- 実験段階モジュールの設計補足は `documents/<module>.md` の独立文書として置きます。
-- 補助資料は `type-aliases.md` などの独立文書として置きます。
-- レビュー報告と実装進捗報告は `./reviews/` に置きます。
+- base の型・Protocol・共通クラスは `design/jax_util/base_components.md` と `design/protocols.md` に置きます。
+- 安定サブモジュールの API 詳細は `design/jax_util/` にサブモジュール単位で置きます。
+- `experiment_runner` の設計補足は `documents/experiment_runner.md` に置きます。
+- 補助資料は `notes/` に置きます。`documents/` には正本以外を置きません。
+- 現在有効なレビュー文書は `./reviews/` に置き、project-wide な進捗報告や集計レポートは `./reports/` に置きます。
 - 軽量なメモと実験の考察は `./notes/` に置きます。
 - 日付ごとの作業ログは `./diary/` に置きます。
 - `./documents/` には正本だけを残し、proposal / report / summary / `.bak` のような履歴物は常設しません。
@@ -90,10 +90,11 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 | `python/tests`                    | 安定     | 検証とログ出力。                                                  |
 | `scripts`                         | 安定     | テスト・ログ・依存解析の補助。                                    |
 | `experiments`                     | 実験運用 | 長時間実験、結果整理、レポート生成。                              |
-| `reviews`                         | 安定     | Git 管理するレビュー報告と進捗文書。                              |
+| `reviews`                         | 安定     | 現在有効なレビュー文書。                                          |
 | `notes`                           | 安定     | 実験メモ、考察。                                                  |
 | `diary`                           | 安定     | 日付ごとの作業ログ。                                              |
 | `documents`                       | 安定     | 規約と設計書の一次情報源。                                        |
+| `reports`                         | 安定     | project-wide な review、automation、management report。           |
 
 ## 5. 共通ルール
 
@@ -107,7 +108,7 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 
 - 実装変更が入った場合は、該当する `documents/` の文書を同時に更新します。
 - 規約を増やすときは `documents/conventions/` に追記します。
-- base の型・Protocol・クラスを変えるときは `documents/design/base_components.md` を更新します。
+- base の型・Protocol・クラスを変えるときは `documents/design/jax_util/base_components.md` と必要に応じて `documents/design/protocols.md` を更新します。
 - 安定サブモジュールの API を変えるときは `documents/design/jax_util/` の対応ファイルを更新します。
 - 文書は参照の一覧ではなく、責務ごとのまとまりとして編成します。
 - 実装パスへの参照は、実装上の制約を明示する必要がある場合に限ります。

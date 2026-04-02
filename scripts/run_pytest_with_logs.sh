@@ -10,11 +10,16 @@ RUN_DIR="${LOG_ROOT}/[$(date +%Y%m%d)]-[$(date +%H%M%S)]"
 RAW_LOG="${RUN_DIR}/pytest.raw.txt"
 JSON_LOG="${RUN_DIR}/pytest.jsonl"
 
+export PYTHONPATH="${ROOT_DIR}/python:${PYTHONPATH:-}"
+export JAX_PLATFORMS="${JAX_PLATFORMS:-cpu}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-}"
+export NVIDIA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:-}"
+
 mkdir -p "${RUN_DIR}"
 
 set +e
 set -o pipefail
-PYTHONPATH="${ROOT_DIR}/python" /usr/bin/python3 -m pytest -q -s 2>&1 | tee "${RAW_LOG}"
+/usr/bin/python3 -m pytest -q -s 2>&1 | tee "${RAW_LOG}"
 EXIT_CODE=${PIPESTATUS[0]}
 set +o pipefail
 set -e

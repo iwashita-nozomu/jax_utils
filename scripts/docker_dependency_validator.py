@@ -12,7 +12,15 @@ from __future__ import annotations
 import re
 import sys
 from pathlib import Path
-from typing import Any
+
+
+REQUIREMENT_LINE_RE = re.compile(
+    r"^[A-Za-z0-9_.\-]+(\[[A-Za-z0-9_,.\-]+\])?(\s*(==|>=|<=|~=|!=|>|<).+)?$"
+)
+VENV_COMMAND_RE = re.compile(
+    r"\b(python3?\s+-m\s+venv|virtualenv|conda\s+create)\b",
+    re.IGNORECASE,
+)
 
 
 def check_requirements_format() -> list[str]:
@@ -31,9 +39,13 @@ def check_requirements_format() -> list[str]:
         if not line or line.startswith("#"):
             continue
 
-        # パッケージ==バージョン形式をチェック
-        if not re.match(r"^[a-zA-Z0-9_\-]+[>=<]+", line):
-            issues.append(f"Line {line_num}: invalid format (should use == or >=): {line}")
+        if "#" in line:
+            line = line.split("#", 1)[0].strip()
+        if not line:
+            continue
+
+        if not REQUIREMENT_LINE_RE.match(line):
+            issues.append(f"Line {line_num}: invalid requirement syntax: {line}")
 
     return issues
 
@@ -86,10 +98,12 @@ def check_venv_prohibition() -> list[str]:
     issues = []
 
     # git の対象外チェック
-    for venv_dir in [".venv", "venv", ".venv-*", "conda-env"]:
+    for venv_dir in [".venv", "venv", "env", ".conda", "conda-env"]:
         path = Path(venv_dir)
         if path.exists():
-            issues.append(f"虚想環境ディレクトリが存在: {venv_dir}")
+            issues.append(f"仮想環境ディレクトリが存在: {venv_dir}")
+    for path in Path(".").glob(".venv-*"):
+        issues.append(f"仮想環境ディレクトリが存在: {path}")
 
     # .gitignore でexclude されているか確認
     gitignore = Path(".gitignore")
@@ -99,13 +113,16 @@ def check_venv_prohibition() -> list[str]:
             issues.append(".venv/venv not explicitly excluded in .gitignore")
 
     # コード内で仮想環境作成コマンドがあるか確認
-    for file in Path("scripts").rglob("*.sh"):
-        if "python -m venv" in file.read_text():
-            issues.append(f"Found 'python -m venv' in {file}")
-
-    for file in Path("scripts").rglob("*.py"):
-        if "venv" in file.read_text().lower():
-            issues.append(f"Found venv reference in {file}")
+    current_file = Path(__file__).resolve()
+    for file in Path("scripts").rglob("*"):
+        if not file.is_file() or file.resolve() == current_file:
+            continue
+        try:
+            content = file.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            continue
+        if VENV_COMMAND_RE.search(content):
+            issues.append(f"Found virtual-environment creation command in {file}")
 
     return issues
 
@@ -114,7 +131,11 @@ def check_pythonpath_documentation() -> list[str]:
     """PYTHONPATH の設定がドキュメント化されているか確認。"""
     issues = []
 
-    readme_files = [Path("README.md"), Path("QUICK_START.md")]
+    readme_files = [
+        Path("README.md"),
+        Path("QUICK_START.md"),
+        Path("documents/coding-conventions-project.md"),
+    ]
     pythonpath_documented = False
 
     for readme in readme_files:

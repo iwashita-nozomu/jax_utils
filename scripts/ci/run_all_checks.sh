@@ -33,6 +33,18 @@ set -euo pipefail
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$WORKSPACE_ROOT"
 
+PYTHON_BIN="${PYTHON_BIN:-}"
+if [ -z "$PYTHON_BIN" ]; then
+  if command -v python3 >/dev/null 2>&1; then
+    PYTHON_BIN="python3"
+  elif command -v python >/dev/null 2>&1; then
+    PYTHON_BIN="python"
+  else
+    echo "python3 or python is required to run CI checks" >&2
+    exit 127
+  fi
+fi
+
 # オプション解析
 QUICK_MODE=0
 VERBOSE_MODE=0
@@ -54,17 +66,23 @@ while [[ $# -gt 0 ]]; do
 done
 
 export PYTHONPATH="${WORKSPACE_ROOT}/python:${PYTHONPATH:-}"
+export JAX_PLATFORMS="${JAX_PLATFORMS:-cpu}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-}"
+export NVIDIA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:-}"
 
 echo "════════════════════════════════════════════════════════════════"
 echo "📋 統合 CI セッション開始"
 echo "════════════════════════════════════════════════════════════════"
+echo ""
+echo "Python interpreter: ${PYTHON_BIN}"
+echo "JAX test platform: ${JAX_PLATFORMS}"
 echo ""
 
 EXIT_CODE=0
 
 # 1. pytest 実行
 echo "1️⃣  pytest を実行中..."
-if python -m pytest python/tests/ -q --tb=short 2>&1; then
+if "$PYTHON_BIN" -m pytest python/tests/ -q --tb=short 2>&1; then
   echo "✅ pytest 成功"
 else
   echo "❌ pytest 失敗"
@@ -74,7 +92,7 @@ echo ""
 
 # 2. pyright 実行
 echo "2️⃣  pyright を実行中..."
-if python -m pyright python/ 2>&1; then
+if "$PYTHON_BIN" -m pyright python/ 2>&1; then
   echo "✅ pyright 成功"
 else
   echo "❌ pyright 失敗"
@@ -84,7 +102,7 @@ echo ""
 
 # 3. pydocstyle 実行（Docstring 検証）
 echo "3️⃣  pydocstyle を実行中... (Docstring チェック)"
-if python -m pydocstyle python/jax_util/ 2>&1; then
+if "$PYTHON_BIN" -m pydocstyle python/jax_util/ 2>&1; then
   echo "✅ pydocstyle 成功"
 else
   echo "❌ pydocstyle 失敗（詳細: documents/DOCSTRING_GUIDE.md を参照）"
@@ -101,7 +119,7 @@ if [ $QUICK_MODE -eq 0 ]; then
   echo "   - UP: Python 最新構文チェック"
   echo ""
   
-  if python -m ruff check python/ --select D,E,F,I,UP 2>&1; then
+  if "$PYTHON_BIN" -m ruff check python/ --select D,E,F,I,UP 2>&1; then
     echo "✅ ruff 成功"
   else
     echo "❌ ruff 失敗"

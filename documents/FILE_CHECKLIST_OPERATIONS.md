@@ -160,7 +160,7 @@ grep -A 5 "tool.pyright" pyproject.toml
 pyright python/jax_util/<my-module>/
 
 # 3-2. テスト実行（後述のチェックリスト3 参照）
-pytest python/tests/<my-module>/
+JAX_PLATFORMS=cpu pytest python/tests/<my-module>/
 ```yaml
 
 **確認項目:**
@@ -302,7 +302,7 @@ ls documents/
 vim documents/design/jax_util/<module>.md
 
 # 2-2. コード参照の追加（相対パス・存在確認必須）
-# 例: [関数 `solve_kkt`](../.../solvers/kkt.py#L42) ← ファイル存在確認後に追加
+# 例: [関数 `build_gpu_env`](/workspace/python/jax_util/xla_env.py#L48) ← 実在するパスだけを使う
 
 # 2-3. 数式・図解の追加（必要に応じて）
 # 例: $$ \min_x \frac{1}{2} x^T A x + b^T x $$

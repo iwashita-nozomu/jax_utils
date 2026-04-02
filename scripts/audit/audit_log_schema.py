@@ -185,6 +185,13 @@ interface AuditLogStatistics {
 '''
 
 
+_REQUIRED_FIELDS = {"timestamp", "action", "actor", "level", "outcome"}
+_ALLOWED_FIELDS = set(AUDIT_LOG_JSON_SCHEMA["properties"].keys())
+_ALLOWED_ACTIONS = set(AUDIT_LOG_JSON_SCHEMA["properties"]["action"]["enum"])
+_ALLOWED_LEVELS = set(AUDIT_LOG_JSON_SCHEMA["properties"]["level"]["enum"])
+_ALLOWED_OUTCOMES = set(AUDIT_LOG_JSON_SCHEMA["properties"]["outcome"]["enum"])
+
+
 # ========== Python Dataclass Models ==========
 
 @dataclass
@@ -226,17 +233,10 @@ class AuditLogEntry:
     
     def validate(self) -> bool:
         """スキーマバリデーション"""
-        import jsonschema
-        
-        schema_validator = jsonschema.Draft7Validator(AUDIT_LOG_JSON_SCHEMA)
-        errors = list(schema_validator.iter_errors(self.to_dict()))
-        
-        if errors:
-            for error in errors:
-                print(f"Validation error: {error.message}")
-            return False
-        
-        return True
+        is_valid, error = validate_entry(self.to_dict())
+        if not is_valid and error:
+            print(f"Validation error: {error}")
+        return is_valid
     
     def to_dict(self) -> Dict[str, Any]:
         """辞書に変換"""
@@ -315,6 +315,78 @@ def get_typescript_definitions() -> str:
     return TYPE_DEFINITIONS
 
 
+def _is_iso8601_datetime(value: Any) -> bool:
+    """ISO 8601 の日時文字列かを判定"""
+    if not isinstance(value, str):
+        return False
+
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+        return True
+    except ValueError:
+        return False
+
+
+def _validate_manual_schema(entry: Dict[str, Any]) -> tuple[bool, Optional[str]]:
+    """jsonschema 非依存の最小バリデーション"""
+    if not isinstance(entry, dict):
+        return False, "Entry must be a dictionary"
+
+    missing = sorted(_REQUIRED_FIELDS - set(entry.keys()))
+    if missing:
+        return False, f"Missing required fields: {', '.join(missing)}"
+
+    unexpected = sorted(set(entry.keys()) - _ALLOWED_FIELDS)
+    if unexpected:
+        return False, f"Unexpected fields: {', '.join(unexpected)}"
+
+    if not _is_iso8601_datetime(entry.get("timestamp")):
+        return False, "timestamp must be an ISO 8601 datetime string"
+
+    if not isinstance(entry.get("action"), str):
+        return False, "action must be a string"
+    if entry["action"] not in _ALLOWED_ACTIONS:
+        return False, f"Invalid action: {entry['action']}"
+
+    if not isinstance(entry.get("actor"), str):
+        return False, "actor must be a string"
+
+    if not isinstance(entry.get("level"), str):
+        return False, "level must be a string"
+    if entry["level"] not in _ALLOWED_LEVELS:
+        return False, f"Invalid level: {entry['level']}"
+
+    if not isinstance(entry.get("outcome"), str):
+        return False, "outcome must be a string"
+    if entry["outcome"] not in _ALLOWED_OUTCOMES:
+        return False, f"Invalid outcome: {entry['outcome']}"
+
+    if "resource" in entry and entry["resource"] is not None and not isinstance(entry["resource"], str):
+        return False, "resource must be a string or null"
+
+    if "details" in entry and not isinstance(entry["details"], dict):
+        return False, "details must be an object"
+
+    if "metadata" in entry and entry["metadata"] is not None and not isinstance(entry["metadata"], dict):
+        return False, "metadata must be an object or null"
+
+    if "git_commit" in entry and not isinstance(entry["git_commit"], str):
+        return False, "git_commit must be a string"
+
+    if "branch" in entry and not isinstance(entry["branch"], str):
+        return False, "branch must be a string"
+
+    if "error" in entry and entry["error"] is not None:
+        if not isinstance(entry["error"], dict):
+            return False, "error must be an object or null"
+        required_error_fields = {"type", "message"}
+        missing_error_fields = sorted(required_error_fields - set(entry["error"].keys()))
+        if missing_error_fields:
+            return False, f"Missing error fields: {', '.join(missing_error_fields)}"
+
+    return True, None
+
+
 def validate_entry(entry: Dict[str, Any]) -> tuple[bool, Optional[str]]:
     """ログエントリをバリデーション
     
@@ -326,6 +398,10 @@ def validate_entry(entry: Dict[str, Any]) -> tuple[bool, Optional[str]]:
     """
     try:
         import jsonschema
+    except ModuleNotFoundError:
+        return _validate_manual_schema(entry)
+
+    try:
         jsonschema.validate(entry, AUDIT_LOG_JSON_SCHEMA)
         return True, None
     except Exception as e:

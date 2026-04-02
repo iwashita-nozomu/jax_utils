@@ -1,212 +1,98 @@
-# 🚀 作業開始ガイド
+# Quick Start
 
-## 現在の状態
+このファイルは、人間がこの repo で作業を始めるための最短手順です。
+詳細な背景説明より、今すぐ必要な入口とコマンドだけを置きます。
 
-✅ **mainブランチに最新の変更をPush完了**
+## 1. 最初に読む
 
-- Markdown規約修正（MD029/MD060対応）
-- Protocol型アノテーション改善
-- ドキュメント整理
+- [README.md](/workspace/README.md)
+- [documents/worktree-lifecycle.md](/workspace/documents/worktree-lifecycle.md)
+- [documents/conventions/README.md](/workspace/documents/conventions/README.md)
 
-## 📚 規約について
+実験を行う場合は、追加で次を読みます。
 
-このプロジェクトは **20種類以上の詳細な規約** に従って実装されています：
+- [experiments/README.md](/workspace/experiments/README.md)
+- [documents/experiment-workflow.md](/workspace/documents/experiment-workflow.md)
 
-### Python規約（15章）
+## 2. 新しい作業を始める
 
-- 型アノテーション、責務分離、命名規則、JAX運用等
-
-### 共通規約（5章）
-
-- ドキュメント形式、コメント方針、演算子記法等
-
-## 🎯 3ステップで作業開始
-
-### ステップ1: 規約確認
+新しい作業は `main` で直接始めません。必ず worktree を作ります。
 
 ```bash
-bash scripts/view_conventions.sh
-```yaml
+bash scripts/setup_worktree.sh work/<topic>-YYYYMMDD
+cd .worktrees/work-<topic>-YYYYMMDD
+```
 
-**主要な規約（最初に確認すべき）:**
-
-- `documents/conventions/python/04_type_annotations.md` - 型安全性
-- `documents/conventions/python/09_file_roles.md` - 責務分離
-- `documents/conventions/common/05_docs.md` - ドキュメント形式
-
-### ステップ2: ワークツリーを作成
+例:
 
 ```bash
-bash scripts/setup_worktree.sh <branch-name> [description]
-```yaml
+bash scripts/setup_worktree.sh work/solver-fix-20260402
+cd .worktrees/work-solver-fix-20260402
+```
 
-**例:**
+worktree を作ったら、最初に `WORKTREE_SCOPE.md` を埋めます。
 
-```bash
-# Protocol型アノテーションの改善
-bash scripts/setup_worktree.sh protocol-improvements "Protocol型アノテーション改善"
+- 何を直すか
+- どのディレクトリを編集するか
+- どのチェックを通すか
+- `main` に何を持ち帰るか
 
-# train.pyのAPI改善
-bash scripts/setup_worktree.sh train-api-refactor "train.pyのAPI改善"
-
-# テスト追加
-bash scripts/setup_worktree.sh neuralnetwork-tests "ニューラルネットテスト拡充"
-```yaml
-
-自動作成される内容：
-
-- ブランチ: `work/<branch-name>-<YYYYMMDD>`
-- ワークツリー: `.worktrees/<branch-name>-<YYYYMMDD>/`
-
-## ステップ3: ワークツリーで作業
-
-```bash
-# ワークツリーに移動
-cd .worktrees/<branch-name>-<YYYYMMDD>
-
-# 作業実施
-# ... ファイル編集 ...
-make test
-
-# コミット・プッシュ
-git add -A
-git commit -m "category: 説明"
-git push origin work/<branch-name>-<YYYYMMDD>
-```text
-
-## 📋 コミットメッセージの規約
-
-```bash
-feat:      新機能追加
-fix:       バグ修正
-docs:      ドキュメント更新
-refactor:  コード改善（機能変更なし）
-test:      テスト追加/修正
-chore:     ビルド等の設定変更
-```text
-
-## 🧹 ワークツリーのクリーンアップ
-
-（マージ完了後）
-
-```bash
-# ワークツリーを削除
-git worktree remove .worktrees/<branch-name>-<YYYYMMDD>
-
-# ローカルブランチを削除
-git branch -d work/<branch-name>-<YYYYMMDD>
-```text
-
-## 📊 現在のブランチ・ワークツリー確認
-
-```bash
-# 全ワークツリー表示
-git worktree list
-
-# ブランチ一覧
-git branch -v
-
-# リモートブランチ
-git branch -r
-```text
-
-## 🔗 参考資料
-
-### 全体ガイド（インタラクティブ）
+## 3. 実装前の確認
 
 ```bash
 bash scripts/guide.sh
-```text
+bash scripts/view_conventions.sh naming
+make ci-quick
+```
 
-### 規約一覧
+`make ci-quick` と `make ci`、`bash scripts/run_pytest_with_logs.sh` は既定で `JAX_PLATFORMS=cpu` を使います。GPU 前提の確認をしたい場合だけ、明示的に環境変数を上書きします。
+
+フルチェックは次です。
 
 ```bash
+make ci
+```
+
+## 4. よく使うコマンド
+
+```bash
+# 規約一覧
 bash scripts/view_conventions.sh
-```text
 
-### 特定の規約を確認
+# pytest をログ付きで実行
+bash scripts/run_pytest_with_logs.sh
 
-```bash
-# 型アノテーション規約
-less documents/conventions/python/04_type_annotations.md
+# 包括 review を実行
+bash scripts/run_comprehensive_review.sh
 
-# Markdown形式規約
-less documents/conventions/common/05_docs.md
+# Markdown とリンクを確認
+python3 scripts/tools/check_markdown_lint.py documents
+python3 scripts/tools/audit_and_fix_links.py documents
+```
 
-# プロジェクト全体のコーディング規則
-less documents/coding-conventions-project.md
-```text
+## 5. 実験の基本
 
-## 💡 Tips
+- 実験コードは `experiments/<topic>/` に置きます。
+- 実行ごとの生成物は `experiments/<topic>/result/<run_name>/` に置きます。
+- 1 回の実験 report は `experiments/report/<run_name>.md` に置きます。
+- partial run を正式結果として再開・継ぎ足しすることを禁止します。
 
-### よくある作業パターン
-
-#### 1. 新機能追加（複数章に渡る大型タスク）
-
-```bash
-bash scripts/setup_worktree.sh major-feature-name "大型機能の実装"
-cd .worktrees/major-feature-name-20260318
-# ... 大きな変更 ...
-# 複数回コミット可能
-```text
-
-## 2. バグ修正（緊急・小規模）
+## 6. 終了時の整理
 
 ```bash
-bash scripts/setup_worktree.sh quick-fix "バグ修正のタイトル"
-cd .worktrees/quick-fix-20260318
-# ... 修正 ...
-git add -A
-git commit -m "fix: バグ詳細"
-```text
+git status --short
+git worktree list
+```
 
-## 3. ドキュメント更新（規約改善含む）
+不要になった worktree は、carry-over を `main` に持ち帰ってから削除します。
 
 ```bash
-bash scripts/setup_worktree.sh docs-update "規約更新・ドキュメント改善"
-cd .worktrees/docs-update-20260318
-# ... ファイル編集 ...
-```text
+git worktree remove .worktrees/work-<topic>-YYYYMMDD
+git branch -d work/<topic>-YYYYMMDD
+```
 
-## ⚠️ 注意点
+## 7. 参照先
 
-1. **ワークツリーは独立している**
-
-   - mainで作業しない
-   - 各ワークツリーは完全に独立
-
-1. **マージ前にレビューを通す**
-
-   - GitHub PR作成時に自動でレビュー
-
-1. **規約に従わない場合**
-
-   - CI/CD が失敗するので、必ず規約を確認
-
-## 🆘 トラブルシューティング
-
-### ワークツリーが作成できない
-
-```bash
-# origin/mainが古い可能性
-git fetch origin main
-bash scripts/setup_worktree.sh ...
-```text
-
-## ブランチ削除に失敗
-
-```bash
-# マージされていない場合は -D で強制削除
-git branch -D work/branch-name-20260318
-```text
-
-## ワークツリー登録状態を確認
-
-```bash
-git worktree prune  # 無効なエントリを削除
-git worktree list   # 確認
-```text
-
-______________________________________________________________________
-
-**質問や問題がある場合は、docs/ 内の規約を参照するか、メンターに相談してください。**
+- [scripts/README.md](/workspace/scripts/README.md)
+- [documents/README.md](/workspace/documents/README.md)
+- [documents/TROUBLESHOOTING.md](/workspace/documents/TROUBLESHOOTING.md)

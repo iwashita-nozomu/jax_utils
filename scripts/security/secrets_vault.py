@@ -53,10 +53,15 @@ class Secret:
     
     def to_dict_masked(self) -> Dict[str, Any]:
         """値をマスクして辞書に変換"""
+        if len(self.value) > 4:
+            masked_value = "****" + self.value[-4:]
+        else:
+            masked_value = "****"
+
         return {
             "name": self.name,
             "secret_type": self.secret_type,
-            "value": "***" + self.value[-4:] if len(self.value) > 4 else "****",
+            "value": masked_value,
             "created_at": self.created_at,
             "expires_at": self.expires_at,
             "tags": self.tags,

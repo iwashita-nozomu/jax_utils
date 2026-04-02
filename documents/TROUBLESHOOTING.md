@@ -186,8 +186,8 @@ ______________________________________________________________________
 ❌ 悪い例
 [Reference](../../../documents/coding-conventions.md)
 
-✅ 正しい例（workspace ルートから相対）
-[Reference](documents/coding-conventions-project.md)
+✅ 正しい例（同じ documents/ 配下からの相対パス）
+[Reference](./coding-conventions-project.md)
 ```
 
 2. **ツールで自動修正**

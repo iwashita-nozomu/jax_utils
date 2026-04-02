@@ -20,6 +20,9 @@ WORKSPACE_ROOT="$(cd "${SCRIPT_DIR}/../.." && pwd)"
 cd "${WORKSPACE_ROOT}"
 
 export PYTHONPATH="${WORKSPACE_ROOT}/python:${PYTHONPATH:-}"
+export JAX_PLATFORMS="${JAX_PLATFORMS:-cpu}"
+export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-}"
+export NVIDIA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:-}"
 
 REPORT_DIR="${AGENT_REPORT_DIR:-}"
 REPORT_FILE=""
@@ -110,6 +113,7 @@ echo ""
 echo "=========================================="
 echo "PRE-REVIEW QA CHECKS"
 echo "=========================================="
+echo "JAX test platform: ${JAX_PLATFORMS}"
 
 # 1. Type checking
 echo ""
