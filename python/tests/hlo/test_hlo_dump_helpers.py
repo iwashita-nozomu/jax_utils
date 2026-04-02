@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import importlib
 import json
 
 import pytest
@@ -36,14 +37,18 @@ def test_to_jsonable_normalizes_nested_non_serializable_values() -> None:
 def test_get_hlo_text_falls_back_to_hlo_and_raises_when_both_dialects_fail(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
+    dump_module = importlib.import_module("jax_util.hlo.dump")
+
     monkeypatch.setattr(
-        "jax_util.hlo.dump.jax.jit",
+        dump_module.jax,
+        "jit",
         lambda _func: _FakeJit({"stablehlo": RuntimeError("no stablehlo"), "hlo": "HLO TEXT"}),
     )
     assert _get_hlo_text(lambda x: x, 1) == "HLO TEXT"
 
     monkeypatch.setattr(
-        "jax_util.hlo.dump.jax.jit",
+        dump_module.jax,
+        "jit",
         lambda _func: _FakeJit({"stablehlo": RuntimeError("bad"), "hlo": RuntimeError("bad")}),
     )
     with pytest.raises(RuntimeError, match="Failed to get HLO text"):

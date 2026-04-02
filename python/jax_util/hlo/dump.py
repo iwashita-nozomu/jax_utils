@@ -54,13 +54,47 @@ def _get_hlo_text(func: Callable[..., Any], /, *args: Any, **kwargs: Any) -> str
     raise RuntimeError("Failed to get HLO text from lowered compiler IR.")
 
 
+def _infer_tag(func: Callable[..., Any], /) -> str:
+    """関数から既定のタグ名を決めます。"""
+    qualname = getattr(func, "__qualname__", None)
+    if isinstance(qualname, str) and qualname:
+        return qualname
+
+    name = getattr(func, "__name__", None)
+    if isinstance(name, str) and name:
+        return name
+
+    return type(func).__name__
+
+
+def dump(
+    func: Callable[[], Any],
+    path: str | Path,
+    *,
+    tag: str | None = None,
+) -> None:
+    """0 引数 callable の HLO を JSONL へ 1 行追記します。
+
+    Parameters
+    ----------
+    func:
+        解析対象の 0 引数 callable。
+        引数付き関数を解析したい場合は `lambda: f(x, y)` のように閉じ込めます。
+    path:
+        JSONL の出力先（追記）。
+    tag:
+        レコード識別用ラベル。省略時は関数名から自動生成します。
+    """
+    dump_hlo_jsonl(func, out_path=path, tag=tag)
+
+
 # 責務: HLO を 1 レコードの JSONL として追記保存します。
 def dump_hlo_jsonl(
     func: Callable[..., Any],
     /,
     *args: Any,
     out_path: str | Path,
-    tag: str,
+    tag: str | None = None,
     **kwargs: Any,
 ) -> None:
     """HLO を JSONL で 1 行出力します。
@@ -80,6 +114,7 @@ def dump_hlo_jsonl(
     -----
     - 実行制御は `JAX_UTIL_ENABLE_HLO_DUMP` に従います。
     - HLO 取得は重い処理になり得るため、既定では無効 (`False`) です。
+    - `tag` を省略した場合は関数名から自動生成します。
     """
     # Notes:
     # - テストや対話環境では、この関数呼び出しより後に環境変数が変更される場合があります。
@@ -90,7 +125,7 @@ def dump_hlo_jsonl(
     hlo_text = _get_hlo_text(func, *args, **kwargs)
     record: dict[str, object] = {
         "case": "hlo",
-        "tag": tag,
+        "tag": tag if tag is not None else _infer_tag(func),
         "dialect": "stablehlo_or_hlo",
         "hlo": hlo_text,
     }

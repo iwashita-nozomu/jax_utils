@@ -58,7 +58,7 @@ def _count_lines(text: str) -> int:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Summarize HLO JSONL.")
-    parser.add_argument("jsonl", type=str, help="Path to JSONL (produced by dump_hlo_jsonl).")
+    parser.add_argument("jsonl", type=str, help="Path to JSONL (produced by jax_util.hlo.dump or dump_hlo_jsonl).")
     parser.add_argument("--top", type=int, default=30, help="Show top-k ops.")
     parser.add_argument(
         "--only-case",

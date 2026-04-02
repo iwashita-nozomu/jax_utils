@@ -1,6 +1,6 @@
 # Smolyak HLO Analysis
 
-単一の Smolyak 積分ケースについて、既存の `jax_util.hlo.dump_hlo_jsonl` を使って HLO を保存し、`scripts/hlo/summarize_hlo_jsonl.py` で集計する実験ディレクトリです。
+単一の Smolyak 積分ケースについて、`from jax_util.hlo import dump` を使って HLO を保存し、`scripts/hlo/summarize_hlo_jsonl.py` で集計する実験ディレクトリです。
 
 この実験の目的は、まず 1 ケースの lowering を丁寧に見て、
 
@@ -26,7 +26,7 @@ python3 /workspace/.worktrees/work-smolyak-tuning-20260316/experiments/functiona
 ## 出力
 
 - `<run>.jsonl`
-  - `dump_hlo_jsonl` が吐く生の HLO JSONL
+  - `dump` が吐く生の HLO JSONL
 - `<run>_summary.json`
   - `summarize_hlo_jsonl.py` の集計結果
   - `preferred_text.utf8_bytes`, `hlo_proto_bytes`, `generated_code_size_in_bytes`, `temp_size_in_bytes` などの size 集計を含む

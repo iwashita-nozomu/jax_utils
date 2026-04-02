@@ -46,7 +46,7 @@ import jax.numpy as jnp
 from jax import lax
 
 from jax_util.functional import integrate, initialize_smolyak_integrator
-from jax_util.hlo import dump_hlo_jsonl
+from jax_util.hlo import dump
 
 
 # 責務: Git コマンドの標準出力を取り出せるときだけ返す。
@@ -222,19 +222,14 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
     )
     coeffs = _build_coefficients(args.dimension, args.coeff_start, args.coeff_stop, args.dtype)
 
-    dump_hlo_jsonl(
-        _compiled_single_integral,
-        coeffs,
-        integrator,
-        out_path=jsonl_path,
+    dump(
+        lambda: _compiled_single_integral(coeffs, integrator),
+        jsonl_path,
         tag="smolyak_single_integral",
     )
-    dump_hlo_jsonl(
-        _compiled_repeated_integral,
-        coeffs,
-        integrator,
-        args.num_repeats,
-        out_path=jsonl_path,
+    dump(
+        lambda: _compiled_repeated_integral(coeffs, integrator, args.num_repeats),
+        jsonl_path,
         tag="smolyak_repeated_integral",
     )
 

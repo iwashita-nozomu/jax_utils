@@ -9,7 +9,7 @@ import pytest
 
 import jax.numpy as jnp
 
-from jax_util.hlo import dump_hlo_jsonl
+from jax_util.hlo import dump, dump_hlo_jsonl
 
 
 SOURCE_FILE = Path(__file__).name
@@ -71,6 +71,39 @@ def test_dump_hlo_jsonl_enabled(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     _run_dump_hlo_jsonl_enabled(tmp_path, monkeypatch)
 
 
+def _run_dump_enabled_with_default_tag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    """簡易 API で HLO が出力され、tag が自動設定されることを確認します。"""
+    monkeypatch.setenv("JAX_UTIL_ENABLE_HLO_DUMP", "1")
+
+    out_path = tmp_path / "hlo_simple.jsonl"
+
+    def named_function() -> jnp.ndarray:
+        return jnp.tanh(jnp.ones((2, 3))) * 2
+
+    dump(named_function, out_path)
+
+    assert out_path.exists()
+    lines = out_path.read_text(encoding="utf-8").splitlines()
+    assert len(lines) == 1
+
+    rec: dict[str, Any] = json.loads(lines[0])
+    print(json.dumps({
+        "case": "hlo_dump_simple_enabled",
+        "source_file": SOURCE_FILE,
+        "test": "test_dump_enabled_with_default_tag",
+        "tag": rec["tag"],
+        "line_count": len(lines),
+    }))
+    assert rec["case"] == "hlo"
+    assert str(rec["tag"]).endswith("named_function")
+    assert isinstance(rec["hlo"], str)
+    assert len(rec["hlo"]) > 0
+
+
+def test_dump_enabled_with_default_tag(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    _run_dump_enabled_with_default_tag(tmp_path, monkeypatch)
+
+
 def _run_all_tests() -> None:
     """このファイル内のテストを順に実行します。"""
     with tempfile.TemporaryDirectory() as tmp_dir:
@@ -79,6 +112,7 @@ def _run_all_tests() -> None:
         try:
             _run_dump_hlo_jsonl_disabled(tmp_path, monkeypatch)
             _run_dump_hlo_jsonl_enabled(tmp_path, monkeypatch)
+            _run_dump_enabled_with_default_tag(tmp_path, monkeypatch)
         finally:
             monkeypatch.undo()
 

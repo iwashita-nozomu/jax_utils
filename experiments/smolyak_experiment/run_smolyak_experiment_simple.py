@@ -203,7 +203,7 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
             if jsonl_path_text:
                 try:
                     import jax as jax_imported
-                    from jax_util.hlo.dump import dump_hlo_jsonl
+                    from jax_util.hlo import dump
 
                     jax_module = jax_imported
                     trace_dir = (
@@ -217,9 +217,9 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
                     except Exception:
                         tracing_started = False
                     try:
-                        dump_hlo_jsonl(
+                        dump(
                             lambda: integrator.integrate(integrand),
-                            out_path=str(trace_dir / f"hlo_{case['case_id']}.jsonl"),
+                            trace_dir / f"hlo_{case['case_id']}.jsonl",
                             tag=str(case["case_id"]),
                         )
                     except Exception:

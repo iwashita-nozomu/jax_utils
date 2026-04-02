@@ -256,7 +256,7 @@
 
 - **用途:** HLO JSONL ログを集計・分析
 - **実行:** `python scripts/hlo/summarize_hlo_jsonl.py <input.jsonl> [--top 50]`
-- **前提:** `jax_util.hlo.dump_hlo_jsonl` で作成した JSONL
+- **前提:** `jax_util.hlo.dump` または `jax_util.hlo.dump_hlo_jsonl` で作成した JSONL
 - **依存:** Python, jax_util
 - **出力:** 統計情報コンソール出力
   - レコード数、タグ出現回数、方言、HLO op 頻度
