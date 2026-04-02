@@ -27,4 +27,4 @@
 ## Interpretation
 
 - `main` は結果ファイル本体の保管場所ではなく、再現のための code と、判断履歴への入口を保つ場所として扱う
-- そのため branch note を厚めに残し、results branch へ飛ばないと分からない状態を減らすのが望ましい
+- そのため branch note を厚めに残し、results branch へ飛ばないと分からない状態を減らします

@@ -13,7 +13,7 @@
 - repo root の `pyrightconfig.json` は editor / tool 互換のための薄いラッパーに限り、`extends = "./pyproject.toml"` だけを持たせます。独自設定は足しません。
 - 既定の `pyright` 実行は repo root で行い、`pyproject.toml` に含めた対象だけを baseline として常時 clean に保ちます。
 - 現在の baseline は `python/jax_util/` 全体で、`solvers/archive` は `exclude`、`python/tests/` は `ignore` とします。
-- VSCode / Pylance で third-party import を解決するときは、workspace で選ばれた Python interpreter が使われます。repo 側では `.vscode/settings.json` の `python.defaultInterpreterPath` を基準にし、必要なら `Python: Select Interpreter` で合わせます。
+- VSCode / Pylance で third-party import を解決するときは、workspace で選ばれた Python interpreter が使われます。repo 側では `.vscode/settings.json` の `python.defaultInterpreterPath` を基準にし、差分がある場合は `Python: Select Interpreter` で合わせます。
 - `python/tests/` を触った場合は、既定実行とは別に対象 path を明示して `pyright` を追加実行します。
 - 実験段階やテストで `pyright` エラーが残る場合は、黙って放置せず `task.md`、`reviews/`、または関連 note に未解消として残します。
 - cast 等のプログラマによる型安全性の確保は避け、pyright による型安全性の確保を優先します。

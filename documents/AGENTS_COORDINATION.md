@@ -47,7 +47,7 @@ python3 scripts/agent_tools/validate_role_write_scope.py \
   --workspace-root "$PWD"
 ```
 
-`pre_review.sh` では、必要なら以下で verifier の write scope も検査できる。
+`pre_review.sh` では、verifier の write scope も検査する場合に以下を使う。
 
 ```bash
 AGENT_REPORT_DIR=reports/agents/<run-id> \

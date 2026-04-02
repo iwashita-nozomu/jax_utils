@@ -67,7 +67,7 @@
 - host 側で pid / slot / stdout completion を直接見たい run
   - `build_worker_slots()`
   - `run_cases_with_subprocess_scheduler()`
-  - 必要なら `RuntimeMonitor`
+  - 監視が必要な場合は `RuntimeMonitor`
 
 基準は次です。
 

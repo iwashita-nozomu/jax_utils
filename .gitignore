@@ -28,6 +28,10 @@ python/tests/logs/
 experiments/functional/smolyak_scaling/results/latest.json
 experiments/functional/smolyak_scaling/results/latest.jsonl
 
+# New experiment run artifact layout
+experiments/**/result/*
+!experiments/**/result/.gitkeep
+
 # Smolyak experiment results (generated artifacts)
 experiments/smolyak_experiment/results/
 

@@ -41,7 +41,7 @@
 - `git rev-parse HEAD`
 - `git rev-parse origin/main`
 - bare repo の hook を確認
-- 必要なら `git push GitHub main` を直接試す
+- 追加確認が必要な場合は `git push GitHub main` を直接試す
 
 ## 現状の結論
 

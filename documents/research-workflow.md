@@ -1,7 +1,7 @@
 # 研究・実験改造ワークフロー
 
 この文書は、数式を伴うアルゴリズム研究、比較実験、段階的なコード改造を 1 つの workflow にまとめた正本です。
-対象は、`python/` 配下の実装改造、`experiments/` 配下の比較実験、`notes/` への知見整理、results branch での長時間 run を含みます。
+対象は、`python/` 配下の実装改造、`experiments/` 配下の比較実験、`notes/` への知見整理を含みます。
 準備、実装、静的チェック、実行、結果レポートを通した実務上の統合入口は [experiment-workflow.md](/workspace/documents/experiment-workflow.md) を参照してください。
 この文書は、とくに問い、定式化、比較設計、段階的改造、claim 更新の正本を担います。
 批判的レビューの具体的な観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を参照してください。
@@ -10,10 +10,10 @@
 
 - 数式、仮定、比較対象を曖昧なまま実装に入らない
 - 各改造の狙いと副作用を、実験前後で比較できる形にする
-- worktree / branch / note / final JSON を一貫した流れでつなぐ
+- 実験コード、result ディレクトリ、report、summary note を一貫した流れでつなぐ
 - 途中の思いつきではなく、記録された判断に基づいて順次改造する
 
-## 2. 基本原則
+## 2. 基本ルール
 
 - 研究目的と benchmark の scope を最初に固定します。目的が曖昧な benchmark は、problem、algorithm、metric、statistics の設計も曖昧になります。
 - 実装前に定式化を明文化します。対象の数式、制約、近似、数値法の前提を明記し、どの条件で成り立つかを書きます。
@@ -61,15 +61,14 @@
 - `Metrics:` に、精度、時間、メモリ、失敗率、頑健性などを列挙します。
 - `Dataset / Case Range:` に、どの problem class と difficulty range を見るかを書きます。
 - `Fairness Notes:` に、parameter tuning、timeout、hardware、seed の公平条件を書きます。
-- ordered difficulty 軸は、原則として 1 ずつ連続に sweep します。飛び飛びの点だけで frontier や failure onset を判断しません。
+- ordered difficulty 軸は 1 ずつ連続に sweep します。飛び飛びの点だけで frontier や failure onset を判断することを禁止します。
 
-### Step 4. branch / worktree を切る
+### Step 4. 作業場所と出力先を決める
 
-- 実装改造は `work/<topic>-<date>` branch を原則とします。
-- 長時間実験は `results/<topic>` branch を原則とします。
-- `WORKTREE_SCOPE.md` に、editable path、carry-over target、action log の置き場を書きます。
-- `experimenter` を使う run では、`WORKTREE_SCOPE.md` に `## Runtime Output Directories` を書きます。
-- worktree 作成直後に `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を作り、開始時点の問い、定式化、比較計画を書きます。
+- branch は既定では分けません。
+- 長時間 run の隔離や破壊的な試行が必要な場合に限って、別 branch / worktree の使用を許可します。
+- topic README に、`result/<run_name>/` と `experiments/report/<run_name>.md` の置き方を書きます。
+- 詳細な作業ログが必要な場合に限って `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を作ります。
 
 ### Step 5. prototype を作る
 
@@ -79,7 +78,7 @@
 
 ### Step 6. 小さく改造する
 
-- 1 commit 1 意図を原則にします。
+- 1 commit 1 意図にします。
 - 各改造ごとに、次を action log へ残します。
   - `Change:`
   - `Expected Effect:`
@@ -101,7 +100,7 @@
 
 - experiment script は、指定レンジを 1 invocation で完走できるように書きます。
 - 途中停止した run は、partial のまま carry-over しません。
-- 停止時は `Stop Reason:` と `Restart Decision:` を action log に残し、新しい run_id で fresh run を開始します。
+- 停止時は `Stop Reason:` と `Restart Decision:` を action log に残し、新しい run_name で fresh run を開始します。
 
 ### Step 9. 結果を比較し、claim を更新する
 
@@ -123,19 +122,18 @@
   - baseline 比の差
 - figure を使う場合は、軸名、単位、scale、読み取り方を caption か本文に明記します。
 - 結論として残す各ポイントには、対応する figure / table を最低 1 つ紐付けます。
-- 代表値は平均だけで済ませません。平均、中央値、最小、最大、必要なら四分位や標準偏差を併記します。
+- 代表値は平均だけで済ませません。平均、中央値、最小、最大を併記します。四分位や標準偏差が必要な場合は追加します。
 - failure を無視した平均だけを出しません。成功率と failure kind を同じ table か同じ section で見えるようにします。
 - 比較は絶対値だけでなく、baseline 比、差分、改善率を並べます。
 - case mix が変わると数字の意味が崩れるため、比較単位を dimension、level、dtype、problem family などで揃えます。
 - 「速くなったが失敗が増えた」「精度は上がったが memory が悪化した」のような trade-off を別指標として切り出します。
 - 可能なら、代表例だけでなく worst case、median case、failure case を 1 つずつ本文で確認します。
 
-### Step 10. branch に反映し、main へ持ち帰る
+### Step 10. report をまとめ、summary の要否を決める
 
-- work branch の code change は、必要なら results branch に cherry-pick または merge して同条件で検証します。
-- `notes/branches/<branch_topic>.md` から、branch の役割、scope、主要 note、主要 result を辿れるようにします。
-- `main` へ戻すときは、code だけでなく test、document、note、final JSON を同時に持ち帰ります。
-- `notes/experiments/` には結論を、`notes/worktrees/` には判断の流れを、`notes/themes/` には再利用可能な一般化知見を残します。
+- `main` へ戻すときは、code だけでなく test、document、`result/<run_name>/`、`experiments/report/<run_name>.md` を同時に持ち帰ります。
+- 複数 run をまたぐ結論だけを `notes/experiments/` にまとめます。
+- 判断の流れが必要な場合だけ `notes/worktrees/` に残します。
 
 ## 5. マルチエージェント実験ループ
 
@@ -187,7 +185,7 @@
 
 - どの branch / worktree で検証したか
 - どの commit をどこへ反映したか
-- results branch と `main` のどちらへ、どの順で持ち帰るか
+- 同じ branch で完結したか、別 branch / worktree を使ったか
 
 ## 6.5 集計と定量的考察の作法
 
@@ -201,20 +199,18 @@
   - 1 つの difficulty 帯の改善を全体改善とみなす
   - speedup を accuracy / robustness の悪化から切り離して語る
   - sample 数が少ないのに強い一般化をする
-- case 数が少ない場合や分布が歪む場合は、中央値や rank ベースの比較を優先してよいです。
+- case 数が少ない場合や分布が歪む場合は、中央値や rank ベースの比較を優先します。
 - 有意差検定を必須にはしませんが、ばらつきが大きいときは effect size、分位点、再現 run の差を少なくとも言葉で扱います。
 - 「改善なし」も結果です。改善が見えなかった場合は、その条件帯と failure pattern を残します。
 
 ## 7. 実験コードを書くときのコツ
 
 - 実験コードは「問いと比較」を表現する薄い層に保ちます。case 生成、metric 計算、集計、report 生成は実験コードの責務ですが、process 管理や GPU 割当は runner 側の責務です。
-- topic ディレクトリは、少なくとも `README.md`、`cases.py`、`runner_config.py`、`results_aggregator.py`、`run_*.py`、`results/` を意識した構成にします。
-- `run_*.py` は orchestrator であり、数式や benchmark の意味を隠した巨大 script にしません。比較対象、case range、metric、run_id を読み取れる形にします。
+- topic ディレクトリは、少なくとも `README.md`、`cases.py`、`experimentcode.py`、`result/` を意識した構成にします。
+- `experimentcode.py` は orchestrator であり、数式や benchmark の意味を隠した巨大 script にしません。比較対象、case range、metric、run_name を読み取れる形にします。
 - `cases.py` には case 定義と resource estimate を寄せます。実験意味のある difficulty 設計はここで管理します。
-- ordered difficulty 軸は、原則として連続レンジを生成します。飛び飛びの点だけを返す helper は debug / smoke 用に限ります。
-- `runner_config.py` には size preset と run policy を寄せます。`smoke`, `small`, `verified`, `medium` のような段階を作り、spot な条件分岐を script 本体へ散らしません。
-- `results_aggregator.py` には JSONL から final JSON を作るロジックを寄せます。plot や report 再生成が同じ final JSON から行える形を優先します。
-- 実験 README には、問い、比較対象、標準コマンド、出力先、carry-over 方針を書きます。実験者の頭の中にしかない運用を残しません。
+- ordered difficulty 軸は連続レンジを生成します。飛び飛びの点だけを返す helper の使用は debug / smoke 用に限って許可します。
+- 実験 README には、問い、比較対象、標準コマンド、`result/<run_name>/` の出力先、`experiments/report/` の入口を書きます。実験者の頭の中にしかない運用を残しません。
 
 ### やらないこと
 
@@ -235,11 +231,11 @@
 - 途中停止 run の一部 case だけ抜き出して結論に使う
 - script を一時編集して手元の都合のよい subset だけ回し、そのまま benchmark evidence として扱う
 
-spot run は次の用途では禁止します。
+spot run は次の用途での使用を禁止します。
 
 - 比較表や結論の根拠
 - method 採否の判断
-- `main` に持ち帰る final JSON の代わり
+- `main` に持ち帰る正式 report の代わり
 - review で使う正式 evidence
 
 許されるのは次に限ります。
@@ -248,7 +244,7 @@ spot run は次の用途では禁止します。
 - crash 再現
 - import / env / shape mismatch の smoke 確認
 
-この場合も、正式な実験結果とは混ぜません。必要なら `Debug Run:` または `Smoke:` と明記し、research note の主結果へ昇格させません。
+この場合も、正式な実験結果と混ぜることを禁止します。debug / smoke として残す場合は `Debug Run:` または `Smoke:` と明記し、research note の主結果へ昇格させません。
 
 ## 8.5 考察に対する批判的レビュー
 
@@ -270,7 +266,7 @@ spot run は次の用途では禁止します。
 - 改善した指標の裏で悪化した指標を見落としていないか
 - その考察は、観測事実なのか、仮説なのか、推測なのか
 
-review artifact では、できれば次のラベルで切り分けます。
+review artifact では、次のラベルで切り分けます。
 
 - `Observed:`
 - `Supported Interpretation:`
@@ -298,10 +294,10 @@ review artifact では、できれば次のラベルで切り分けます。
 
 ## 11. 生成物と carry-over
 
-- raw JSONL、HTML、SVG、大きい log は results branch に残します。
-- `main` には、完走 run の final JSON と、その意味を説明する note を残します。
+- raw JSONL、HTML、SVG、大きい log は `experiments/<topic>/result/<run_name>/` に残します。
+- `main` には、完走 run の report と、その意味を説明する要約 note を残します。
 - partial run は正本にせず、診断材料としてのみ扱います。
-- worktree を閉じる前に、action log と branch summary を `main` から辿れるようにします。
+- worktree を閉じる前に、action log を残した場合は `main` から辿れるようにします。
 
 ## 12. 推奨ファイル配置
 
@@ -309,6 +305,7 @@ review artifact では、できれば次のラベルで切り分けます。
 - report 体裁の正本: `documents/experiment-report-style.md`
 - 実験運用規約: `documents/coding-conventions-experiments.md`
 - worktree 規約: `documents/worktree-lifecycle.md`
+- 1 run の report: `experiments/report/<run_name>.md`
 - 実験 note: `notes/experiments/<topic>.md`
 - worktree action log: `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md`
 - branch summary: `notes/branches/<branch_topic>.md`

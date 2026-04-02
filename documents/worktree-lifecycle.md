@@ -14,7 +14,7 @@
 
 - `main` と対象 branch を `origin` と同期する
 - `main` worktree と対象 branch の worktree が clean であることを確認する
-- 既存の worktree を使い回さず、必要なら新しい worktree を切る
+- 既存の worktree を使い回しません。新しい worktree を切ります。
 
 ## 3. 作成ルール
 
@@ -23,7 +23,7 @@
   - 例: `results/<topic>`
   - 例: `work/<topic>-YYYYMMDD`
 - 実験結果を保存する worktree は `results/<topic>` branch に対応づける
-- 一時的な開発 worktree は `work/<topic>-<date>` を原則とする
+- 一時的な開発 worktree は `work/<topic>-<date>` を使う
 
 ## 4. `WORKTREE_SCOPE.md`
 
@@ -32,9 +32,9 @@
 - `WORKTREE_SCOPE.md` には少なくとも次を明記する
   - branch 名
   - worktree の目的
-  - 変更してよいディレクトリ
+  - 変更を許可するディレクトリ
   - 実験実行 role が書いてよい runtime output ディレクトリ
-  - 原則変更しないディレクトリ
+  - 変更を禁止するディレクトリ
   - 参照必須の文書
   - `main` に持ち帰る予定の `notes/` の置き場
   - 作業中に追記する action log の置き場
@@ -53,7 +53,7 @@
 - 実験 run は 1 回の fresh 実行で完走させる前提とし、途中停止した run をそのまま再開しない
 - action log は、意味のある単位ごとに短く追記する
   - 例: scope 更新、編集開始、テスト実行、実験開始、実験停止、carry-over 判断、branch 統合
-- action log では、`Question:`、`Formulation:`、`Comparison Target:`、`Change:`、`Decision:`、`Branch Reflection:` を明示してよい
+- action log では、`Question:`、`Formulation:`、`Comparison Target:`、`Change:`、`Decision:`、`Branch Reflection:` を明示できます
 - action log の既定位置は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` とする
 - worktree 内で下書きするときも、最終配置と同じ相対パスに置く
   - 例: `.worktrees/<name>/notes/worktrees/worktree_<topic>_YYYY-MM-DD.md`
@@ -70,10 +70,10 @@
 - `main` に残したい要約・観測・判断のうち、規約・レビュー・実コードに属さないものは `notes/` に置く
 - 複数 branch から得た一般化知見は `notes/themes/` に整理する
 - 後から図や集計を再生成したい実験は、最低限の final JSON を `notes/experiments/results/` に持ち帰る
-- 巨大な raw JSONL、HTML、SVG、ログは原則として results branch に残し、`main` へ常設しない
+- 巨大な raw JSONL、HTML、SVG、ログは results branch に残します。`main` へ常設することを禁止します
 - `main` の note から raw 結果を参照するときは、本文の核心をリンク先へ逃がさず、必要最小限の JSON と要約を `main` 側にも残す
-- `main` へ持ち帰るのは、再解析に必要な最小 final JSON と、その意味を説明する note を原則とする
-- 途中停止した partial run は carry-over の正本にせず、必要なら停止理由の診断材料として results branch 側へ残す
+- `main` へ持ち帰るのは、再解析に必要な最小 final JSON と、その意味を説明する note だけにします
+- 途中停止した partial run は carry-over の正本にしません。停止理由の診断材料として results branch 側へ残します
 - worktree を削除する前に、残すべき `notes/` は `main` 側へ commit 済み、または `main` に merge 済みでなければならない
 
 ## 7. worktree を閉じる前のチェック
@@ -84,13 +84,13 @@
 - `diary/` に残すべき日付依存ログを分けたか
 - `notes/experiments/results/` に持ち帰る final JSON を選んだか
 - raw 結果を results branch に残すか、不要として捨てるかを決めたか
-- branch の結果を `main` にどう要約するか決め、必要なら図や数式を note 側で整理したか
+- branch の結果を `main` にどう要約するか決め、図や数式が必要な場合は note 側で整理したか
 - run が途中停止した場合に、停止理由を action log に記録し、次回は fresh run に切り替えると決めたか
 
 ## 8. 削除前の整理
 
 - worktree を消す前に、その worktree に残っている知見を `main` へ吸い出す
-- 吸い出し先は `notes/worktrees/` を原則とする
+- 吸い出し先は `notes/worktrees/` に固定する
 - 吸い出した `notes/` は、worktree 側だけで終わらせず `main` に commit または merge してから削除へ進む
 - 最低限、次を残す
   - branch 名
@@ -102,7 +102,7 @@
   - `WORKTREE_SCOPE.md` があった場合は、その制約と実際の運用差分
 - 実験 worktree の場合は、`notes/experiments/` と `notes/experiments/results/` の更新要否も確認する
 - branch の入口は `notes/branches/` に置き、関連 note と raw 結果の所在を 1 か所から辿れるようにする
-- 公開や再利用を前提とする図は、必要なら `notes/assets/` に持ち帰る
+- 公開や再利用を前提とする図は `notes/assets/` に持ち帰る
 
 ## 9. 削除の条件
 

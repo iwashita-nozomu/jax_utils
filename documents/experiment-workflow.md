@@ -41,27 +41,61 @@
 - `Comparison Target:`
   - main 実装、旧実装、baseline、外部 reference のどれと比べるか。
 - `Metrics:`
-  - final JSON と note に何を残すか。少なくとも時間、成功率、failure kind、主要誤差を含めます。
+  - `summary.json` と report に何を残すか。少なくとも時間、成功率、failure kind、主要誤差を含めます。
 - `Stop Condition:`
   - smoke で止めるのか、verified まで進めるのか、正式な比較表や report まで必要なのか。
 - `Fairness Notes:`
   - 同じ case set、同じ timeout、同じ hardware、同じ seed policy、同じ allocator 方針をどこまで維持するか。
+- `Artifact Plan:`
+  - 実験ディレクトリ、`result/<run_name>/` の出力先、`experiments/report/<run_name>.md` の置き場を先に固定します。
+- `Naming Plan:`
+  - topic 名、run_name、result ディレクトリ名、report 名の規則を先に決め、topic README か対応する正本文書へ残します。
+- `Branch Plan:`
+  - 同じ branch で進めるか、必要があれば別 branch / worktree を使うかを先に決めます。既定は同じ branch です。
 
-次に、branch と worktree を分けます。
+次に、branch / worktree の分離要否を決めます。
 
-- コード改造用
-  - `work/<topic>-<date>` branch を使います。
-- 長時間 run 用
-  - `results/<topic>` branch を使います。
-- worktree log
-  - `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` に開始時点の問い、比較対象、run 方針を書きます。
+- 通常の実験
+  - 既存の branch 上で、そのまま進めます。
+- 隔離が必要な実験
+  - 長時間 run、巨大生成物、破壊的な試行がある場合に限って別 branch / worktree の使用を許可します。
+- action log
+  - 詳細な作業ログが必要な場合は `notes/worktrees/worktree_<topic>_YYYY-MM-DD.md` を使います。
+
+準備段階で固定する置き場は次です。
+
+- 実験コード
+  - `experiments/<topic>/`
+- runtime 生成物
+  - `experiments/<topic>/result/<run_name>/`
+- 1 回の実験 report
+  - `experiments/report/<run_name>.md`
+- 複数 run をまたぐ要約や知見
+  - `notes/experiments/<topic>.md` または `notes/themes/`
+
+top-level の `reports/` は project-wide な review、automation、management report の置き場として扱い、topic ごとの experiment report の正本には使いません。`notes/experiments/` は run ごとの一次 report ではなく、横断的な要約の置き場として使います。
+
+準備段階で固定する命名は次です。
+
+- topic ディレクトリ名
+  - `snake_case`
+- run_name
+  - `<topic>_<variant>_<YYYYMMDDTHHMMSSZ>`
+- runtime 生成物
+  - `result/<run_name>/summary.json`
+  - `result/<run_name>/cases.jsonl`
+  - `result/<run_name>/run.log`
+  - 図を出力する場合は `result/<run_name>/figures/`
+- report 名
+  - `experiments/report/<run_name>.md`
 
 準備段階で確認するものは次です。
 
 - topic の `README.md`
-- 直近の experiment note
-- final JSON / JSONL schema
+- 直近の experiment report
+- `summary.json` / `cases.jsonl` の schema
 - `git status --short`
+- 既定の出力先と命名が topic README に書かれているか
 
 `Interpretation:`
 準備段階の目的は、今回の run が debug なのか、verified なのか、正式比較なのかを曖昧にしないことです。
@@ -74,17 +108,21 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 推奨構成は次です。
 
 - `README.md`
-  - 問い、比較対象、標準コマンド、出力先、carry-over 方針を書く。
+  - 実験目的、コード配置、標準コマンド、出力先、report の入口、命名規則を書く。
 - `cases.py`
   - case 定義、difficulty range、resource estimate を置く。
-- `runner_config.py`
-  - `smoke`, `small`, `verified`, `medium` のような size preset と timeout policy を置く。
-- `results_aggregator.py`
-  - JSONL から final JSON を作る。
-- `run_*.py`
+- `experimentcode.py`
   - orchestration と CLI に集中させる。
-- `results/`
-  - JSON、JSONL、HTML、SVG、ログなどの生成物を置く。
+- `result/`
+  - `result/<run_name>/` ごとに JSON、JSONL、ログ、図を置く。
+
+実装時点で、少なくとも次の配置と名前を README に明記します。
+
+- 実験コードの topic パス
+- `result/<run_name>/` の canonical 出力先
+- `experiments/report/<run_name>.md` の置き場
+- 関連する `notes/` を使う場合はその入口
+- run_name の形式
 
 `experiment_runner` を使う場合の入口は次です。
 
@@ -95,7 +133,7 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 - host 側で pid / worker slot を強く観測したい実験
   - `build_worker_slots()`
   - `run_cases_with_subprocess_scheduler()`
-  - 必要なら `RuntimeMonitor`
+  - 監視が必要な場合は `RuntimeMonitor`
 
 実装時にやらないことは次です。
 
@@ -114,11 +152,11 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 - `ruff check`
   - import、未使用変数、到達不能コード、雑な例外処理を早めに落とす。
 - CLI help
-  - `python run_*.py --help` が通ることを確認する。
+  - `python experimentcode.py --help` が通ることを確認する。
 - import path
   - top-level import と package path が壊れていないことを確認する。
 - 出力 schema
-  - final JSON に必要な key が揃うよう、集計コードを静的に読んでおく。
+  - `summary.json` に必要な key が揃うよう、集計コードを静的に読んでおく。
 
 静的チェックの段階では、まだ正式な benchmark conclusion を出しません。
 ここでの目的は「長時間 run を始めても、型・import・引数の破綻で止まらない状態」にすることです。
@@ -138,7 +176,7 @@ pickle 可否、JAX import 後の env 汚染、GPU visibility の実際の反映
 - import が通る
 - worker が起動する
 - JSONL が追記される
-- final JSON が生成される
+- `summary.json` が生成される
 - report 再生成の入口が成立する
 
 #### 4.2 verified
@@ -150,7 +188,7 @@ pickle 可否、JAX import 後の env 汚染、GPU visibility の実際の反映
 - allocator 設定
 - worker slot / timeout の挙動
 - failure kind の記録
-- final JSON と JSONL の整合
+- `summary.json` と `cases.jsonl` の整合
 
 #### 4.3 formal run
 
@@ -166,13 +204,13 @@ pickle 可否、JAX import 後の env 汚染、GPU visibility の実際の反映
 
 は run 開始前に固定し、途中で script を書き換えながら継ぎ足しません。
 
-#### 4.4 long run の原則
+#### 4.4 long run のルール
 
-- 長時間 run は `results/<topic>` worktree で行います。
-- run は 1 つの run_id と 1 つの出力先に閉じた fresh 実行として扱います。
+- 長時間 run でも、別 branch / worktree は必須ではありません。隔離が必要なときだけ使います。
+- run は 1 つの run_name と 1 つの出力先に閉じた fresh 実行として扱います。
 - case ごとの JSONL は progress 記録と failure 診断のために保存します。
-- partial run は診断材料としては残してよいですが、正規の再開点にはしません。
-- 止まった run は `Stop Reason:` と `Restart Decision:` を log に残し、新しい run_id で 0 からやり直します。
+- partial run の保存は診断材料に限って許可します。正規の再開点としての使用を禁止します。
+- 止まった run は `Stop Reason:` と `Restart Decision:` を log に残し、新しい run_name で 0 からやり直します。
 
 #### 4.5 monitor
 
@@ -187,9 +225,9 @@ run 後は、必ず結果を report と note に整理します。
 
 最低限残すものは次です。
 
-- final JSON
-- raw JSONL
-- report 再生成コマンド
+- `summary.json`
+- `cases.jsonl`
+- report へのリンク
 - `Result Summary:`
 - `Quantitative Summary:`
 - `Comparison Table:`
@@ -216,12 +254,12 @@ report 本文は次の構成を基本にします。
 - まだ言えないこと
   - `Limitations` と `Critical Review`
 
-carry-over の原則は次です。
+carry-over のルールは次です。
 
-- raw JSON、HTML、SVG、ログ本体は results branch に残す
-- `main` には note と必要最小限の final JSON だけを持ち帰る
-- `main` に持ち帰る JSON は完走した fresh run の final JSON を原則とする
-- partial run の JSON は carry-over の正本にしない
+- 実行ごとの生成物は `experiments/<topic>/result/<run_name>/` に残す
+- 1 回の実験 report は `experiments/report/<run_name>.md` に残す
+- 複数 run をまたぐ知見だけを `notes/` へ持ち上げる
+- partial run は診断用とし、正式な report の正本にしない
 
 ## 3. コード改造を伴う反復ワークフロー
 
@@ -241,13 +279,13 @@ carry-over の原則は次です。
    - コード変更を入れる。
 1. `change_reviewer`
    - code diff を批判的にレビューする。
-   - 必要なら [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) の `Mathematical Validity` と `As Reported` を使う。
+   - 数学的妥当性や報告内容も確認する場合は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) の `Mathematical Validity` と `As Reported` を使う。
 1. `implementer`
    - review を反映し、静的チェックを通す。
 1. `experimenter`
    - 同じ protocol で fresh run を実行する。
 1. `experimenter`
-   - final JSON、raw JSONL、report、experiment note を生成する。
+   - `summary.json`、`cases.jsonl`、report を生成する。`notes/` を使う場合は対応する experiment note も生成する。
 1. `experiment_reviewer`
    - report と結果の読み方を批判的にレビューする。
    - [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を使って、math validity、evidence sufficiency、figure validity、overclaim を確認する。
@@ -276,8 +314,9 @@ carry-over の原則は次です。
 - `Validation Plan:`
 - 静的チェック結果
 - 実行コマンド
-- final JSON / raw JSONL の所在
+- `result/<run_name>/` の所在
 - report の所在
+- 置き場と命名規則の変更有無
 - `Critical Review:`
 - `Decision:`
 - `Next Idea:`
@@ -299,7 +338,7 @@ carry-over の原則は次です。
 - この文書
   - 実験全般の標準手順
 - topic README
-  - その実験固有の問い、入力、CLI、出力、results branch 名、既知の注意点
+  - その実験固有の目的、入力、CLI、`result/<run_name>/` の置き場、`experiments/report/<run_name>.md` の置き場、run_name 規則、既知の注意点
 
 個別 README は「そのモジュールや実験をどう使うか」を書き、
 この文書は「repo で実験をどう進めるか」を書く、という分担にします。

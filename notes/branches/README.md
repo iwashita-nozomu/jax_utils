@@ -19,7 +19,7 @@
 - 1 branch 1 file を基本とします。
 - タイトルは branch 名そのものではなく、topic-first で付けます。
 - branch 名、役割、現在の状態、読むべき note、主要な知見を最初に書きます。
-- 過去 branch の既存メモ本文は原則として書き換えず、このディレクトリに補助的な summary を足します。
+- 過去 branch の既存メモ本文は書き換えず、このディレクトリに補助的な summary を足します。
 - active な branch は、対応する worktree の action log と carry-over 先を必ずここから辿れるようにします。
 
 ## Index

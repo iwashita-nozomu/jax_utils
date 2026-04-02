@@ -15,7 +15,7 @@
 ## Format
 
 - 1 topic 1 file を基本とします。
-- 箇条書きを中心にしてよいです。
+- 箇条書きを中心にできます。
 - できるだけ特定の実装ではなく、複数 topic にまたがる知識を書きます。
 - `path resolution`, `environment setup`, `experiment operations` のような広い主語を使います。
 - 詳しい説明は `notes/themes/` や `notes/experiments/` にリンクします。

@@ -28,7 +28,7 @@ Experiment でも canonical な運用は resume ではなく fresh run です。
 
 - 「実装変更の前後比較」なら benchmark。
 - 「条件 sweep と failure analysis」なら experiment。
-- 迷ったら、まず benchmark で局所差分を見て、必要なら experiment に拡張する。
+- 迷ったら、まず benchmark で局所差分を見ます。追加の条件探索が必要になった時点で experiment に拡張します。
 
 ## 参照
 

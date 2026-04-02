@@ -5,15 +5,15 @@ worktree の作成と carry-over の流れは [worktree-lifecycle.md](/workspace
 
 ## 1. 基本方針
 
-- 1 branch = 1 topic を原則とします。
+- 1 branch = 1 topic に固定します。
 - branch の責務が広がったら、branch を分けるか `WORKTREE_SCOPE.md` を更新します。
 - 実装コードと長時間実験の生成物は、必要に応じて branch を分けます。
 - `main` は統合先であり、試行錯誤や途中生成物の置き場にはしません。
 
 ## 2. branch 名
 
-- 通常の実装 branch は `work/<topic>-YYYYMMDD` を原則とします。
-- 結果保存 branch は `results/<topic>` を原則とします。
+- 通常の実装 branch は `work/<topic>-YYYYMMDD` を使います。
+- 結果保存 branch は `results/<topic>` を使います。
 - branch 名は目的が読める英語句で付けます。
 
 ## 3. Scope の固定

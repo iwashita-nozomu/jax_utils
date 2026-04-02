@@ -55,7 +55,11 @@
 
 ## Notes
 
+- [worktree_experiment_runner_module_2026-03-16.md](/workspace/notes/worktrees/worktree_experiment_runner_module_2026-03-16.md)
+- [worktree_experiment_runner_refactor_2026-03-30.md](/workspace/notes/worktrees/worktree_experiment_runner_refactor_2026-03-30.md)
 - [worktree_results_smolyak_scaling_tuned_2026-03-18.md](/workspace/notes/worktrees/worktree_results_smolyak_scaling_tuned_2026-03-18.md)
+- [worktree_scope_report.md](/workspace/notes/worktrees/worktree_scope_report.md)
+- [worktree_smolyak_tuning_2026-03-16.md](/workspace/notes/worktrees/worktree_smolyak_tuning_2026-03-16.md)
 - [worktree_work_smolyak_improvement_2026-03-18.md](/workspace/notes/worktrees/worktree_work_smolyak_improvement_2026-03-18.md)
 - [worktree_work_editing_2026-03-18.md](/workspace/notes/worktrees/worktree_work_editing_2026-03-18.md)
 

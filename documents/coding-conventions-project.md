@@ -30,7 +30,7 @@
 
 ## 3. Docker 環境の方針
 
-### 基本原則
+### 基本ルール
 
 - 既定の実行環境は `docker/Dockerfile` を基準にします。
 - 追加パッケージが必要な場合は、**`docker/Dockerfile` と `docker/requirements.txt` を同時に更新**します。
@@ -98,8 +98,8 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 ## 5. 共通ルール
 
 - `Scalar` / `Vector` / `Matrix` を優先します。
-- `Matrix` は `(n, batch)` を原則とします。
-- 線形作用素の適用は `@`、合成は `*` を原則とします。
+- `Matrix` は `(n, batch)` にします。
+- 線形作用素の適用は `@`、合成は `*` にします。
 - 反復は `jax.lax.scan` / `jax.lax.while_loop` / `jax.lax.fori_loop` を優先します。
 - ログ出力は `DEBUG` ガードの内側でのみ行います。
 
@@ -112,6 +112,9 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 - 文書は参照の一覧ではなく、責務ごとのまとまりとして編成します。
 - 実装パスへの参照は、実装上の制約を明示する必要がある場合に限ります。
 - `.bak`、日付付き report、proposal、completion summary を `documents/` の正本として残しません。
+- `documents/` の規約文書では、曖昧な規範表現を禁止します。
+- 禁止事項は `禁止`、必須事項は `必須` または `しなければなりません`、許可事項は `許可`、任意事項は `任意` と明記します。
+- `原則`、`望ましい`、`できれば`、`構いません`、`してよい`、`必要なら` を、遵守確認の対象になる規約文の代わりに使ってはいけません。
 
 ## 7. タスク運用
 
@@ -121,17 +124,10 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 
 ## 8. ブランチ運用
 
-- 実装コードと生成物は、必要に応じてブランチを分けます。
-- 実験を実行するときは、実験専用の worktree を作ってその worktree 上で動かします。
-- `main` の worktree ではコード編集・文書更新・通常テストのみを行い、長時間走る実験は開始しません。
-- worktree は VS Code やホスト OS から見える共有パスに置くことを原則とし、既定では `/workspace/.worktrees/<name>` を使います。
-- 実験コードそのものは `main` に載せてもよいですが、生成された実験結果は専用の results ブランチへ分離することを原則とします。
-- results ブランチ名は `results/<topic>` 形式を原則とし、実験ごとに固有の名前を使います。
-- 実験用 worktree は results ブランチに対応づけ、`main` と同じ worktree のまま branch を切り替えて使い回しません。
-- 実験を始める前に、`main` と対象 results ブランチを `origin` と同期し、両方の worktree が clean であることを確認します。
-- 実験固有のコード調整は、まず対応する results ブランチの worktree 上で行い、実験で確認した後に `main` へ統合します。
-- `main` で先に変更するのは、実験固有ではない共通コードや規約更新に限ります。
-- 実験スクリプトの先頭には、対応する results ブランチ名をコメントで明記します。
+- 実装コードと生成物は、既定では同じ branch で扱います。
+- 別 branch / worktree の使用は、長時間 run の隔離、巨大生成物の退避、破壊的な試行の切り分けに限って許可します。
+- worktree を使う場合は VS Code やホスト OS から見える共有パスに置き、既定では `/workspace/.worktrees/<name>` を使います。
+- 実験コードそのものも report も `experiments/` 配下に集約し、1 回の実験結果は `experiments/<topic>/result/<run_name>/` と `experiments/report/<run_name>.md` にそろえます。
 - `main` には再生成可能なコード・文書・最小限の雛形だけを置き、大きな JSON・画像・ログを常設しません。
 - 実験 run は 1 回の fresh 実行で完走する前提で書き、途中停止した run を再開しません。
-- 途中で止まった場合は、partial 出力を正規結果として継ぎ足さず、新しい run_id と新しい出力先で 0 から再実行します。
+- 途中で止まった場合は、partial 出力を正規結果として継ぎ足さず、新しい run_name と新しい出力先で 0 から再実行します。

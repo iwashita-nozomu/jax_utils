@@ -15,7 +15,7 @@
 
 ## CPU thread
 
-- 実験 worker で hidden thread が暴れないように、必要なら
+- 実験 worker で hidden thread が暴れないように、CPU thread 制御が必要な場合は
   - `OMP_NUM_THREADS=1`
   - `OPENBLAS_NUM_THREADS=1`
   - `MKL_NUM_THREADS=1`

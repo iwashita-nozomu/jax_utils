@@ -102,7 +102,7 @@ tasks:
       - change_reviewer が chunk review
       - implementer が review を受けて修正
       - final_reviewer が独立 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が対象 test を実行
   - id: T2
     name: アルゴリズム改善のための外部調査つき実装
@@ -131,9 +131,9 @@ tasks:
       - implementer が review を受けて修正
       - experimenter が同じ比較プロトコルで再実行
       - experiment_reviewer が result interpretation と overclaim を review
-      - implementer が experiment review を受けて必要なら修正し、必要なら実験 loop を反復
+      - implementer が experiment review を受け、指摘があれば修正。再実験が必要と判定された場合は実験 loop を反復
       - final_reviewer が research と最終 diff を review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が test と benchmark を実行
   - id: T3
     name: base / solvers / optimizers をまたぐ大規模 refactor
@@ -155,7 +155,7 @@ tasks:
       - change_reviewer が逐次 review
       - implementer が review を受けて逐次修正
       - final_reviewer が設計整合を確認
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が主要 CI を実行
   - id: T4
     name: 新 API / 新機能の追加
@@ -177,7 +177,7 @@ tasks:
       - change_reviewer が compatibility を review
       - implementer が review を受けて修正
       - final_reviewer が公開面を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が CI を実行
   - id: T5
     name: CI failure / flaky test の切り分けと修正
@@ -195,7 +195,7 @@ tasks:
       - change_reviewer が過剰修正を防ぐ
       - implementer が review を受けて修正
       - final_reviewer が再発防止を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が failing command を再実行
   - id: T6
     name: experiment_runner の拡張や運用改善
@@ -228,9 +228,9 @@ tasks:
       - implementer が review を受けて修正
       - experimenter が同じ運用シナリオを再実行
       - experiment_reviewer が regression と overclaim を review
-      - implementer が experiment review を受けて必要なら修正
+      - implementer が experiment review を受け、指摘があれば修正
       - final_reviewer が安全性を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が runner 系 test を実行
   - id: T7
     name: Docker / GitHub Actions / 自動化基盤の拡張
@@ -252,7 +252,7 @@ tasks:
       - change_reviewer が運用リスクを review
       - implementer が review を受けて修正
       - final_reviewer が maintenance cost を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が構文と dry-run 相当を確認
   - id: T8
     name: 性能ボトルネック調査と benchmark 主導の最適化
@@ -285,9 +285,9 @@ tasks:
       - implementer が review を受けて修正
       - experimenter が同じ benchmark を再実行
       - experiment_reviewer が改善主張の妥当性を review
-      - implementer が experiment review を受けて必要なら修正
+      - implementer が experiment review を受け、指摘があれば修正
       - final_reviewer が benchmark 妥当性を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が benchmark を実行
   - id: T9
     name: 実装変更に追随する設計文書・README・テスト整合
@@ -304,7 +304,7 @@ tasks:
       - change_reviewer が内容整合を review
       - implementer が review を受けて修正
       - final_reviewer が可読性を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が markdown formatting と test を確認
   - id: T10
     name: 依存更新、runtime 互換性対応、JAX 周辺 upgrade
@@ -336,5 +336,5 @@ tasks:
       - change_reviewer が migration risk を review
       - implementer が review を受けて修正
       - final_reviewer が upgrade 方針を最終 review
-      - implementer が final review を受けて必要なら修正
+      - implementer が final review を受け、指摘があれば修正
       - verifier が full CI を実行

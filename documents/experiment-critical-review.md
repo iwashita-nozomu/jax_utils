@@ -148,7 +148,7 @@ AI に要約や論点抽出を補助させても、math validity、figure validi
 - `Equation:` または擬似数式があるか
 - 記号の意味、index、range、constraint が定義されているか
 - 数値安定性や approximation の仮定が書かれているか
-- 理論 claim に derivation や proof sketch が必要なら、その所在があるか
+- 理論 claim に derivation や proof sketch が必要な場合、その所在があるか
 
 `Blocker:`
 主要な更新式や評価式が本文にも補足にも見当たらず、読者が code を読まないと method を再構成できない状態です。

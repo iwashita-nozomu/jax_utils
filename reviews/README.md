@@ -1,26 +1,15 @@
 # reviews
 
-`reviews/` は、コードレビュー報告とレビュー後の進捗整理を置くディレクトリです。
-レビュー成果物はここへ集約し、Git 管理します。
+`reviews/` は、現在有効なレビュー文書だけを置くディレクトリです。
 新規または整理し直す文書は、`documents/coding-conventions-reviews.md` の命名規則と必須見出しに従います。
+役目を終えたレビュー文書、テスト用レビュー文書、重複する旧レビュー文書は残しません。過去内容が必要な場合は Git 履歴を参照します。
 
 ## 現在の文書
 
-- `CODE_REVIEW_SUMMARY__copilot.md`
-  - レビュー全体の要約です。
-- `CODE_REVIEW_REPORT__copilot.md`
-  - モジュールごとの詳細なレビュー報告です。
-- `DETAILED_CODE_REVIEW__copilot.md`
-  - 個別指摘と改善提案を中心にしたレビュー文書です。
-- `DETAILED_CONVENTION_REVIEW.md`
-  - 規約準拠と文書整合性を点検する作業メモです。
-  - 並行整理中のため、今回は旧名のまま一時運用しています。
-- `IMPLEMENTATION_PROGRESS_REPORT__copilot.md`
-  - レビュー後の実装改善進捗をまとめた文書です。
-- `TEST_MODIFICATION_REVIEW__copilot.md`
-  - テスト修正内容のレビュー記録です。
-- `TEST_MODIFICATION_COMPLETION__copilot.md`
-  - テスト修正の完了記録です。
+- [EXECUTIVE_SUMMARY_20260401.md](/workspace/reviews/EXECUTIVE_SUMMARY_20260401.md)
+  - 複数レビュアー体制のエグゼクティブサマリーです。
+- [MULTI_CODE_REVIEW_20260401.md](/workspace/reviews/MULTI_CODE_REVIEW_20260401.md)
+  - 複数 PR を対象にした詳細レビュー本体です。
 
 ## 状態ラベル
 

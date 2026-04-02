@@ -2,9 +2,9 @@
 
 `SmolyakIntegrator` の計算規模探索とベンチマークを、テストとは分離して行うための実験置き場です。
 
-結果 JSON を載せるブランチ名は `results/functional-smolyak-scaling` を想定しています。
+従来は専用 branch に結果を逃がす運用も想定していましたが、新標準では branch 分離は必須ではありません。
 
-結果メモと branch 対応は [notes/README.md](/workspace/notes/README.md) に残します。
+結果メモと横断的な要約は [notes/README.md](/workspace/notes/README.md) に残します。
 
 ## What It Does
 
@@ -39,6 +39,13 @@
   - 実行結果を保存するディレクトリです。
   - `<run>.jsonl` は case 単位の逐次保存結果です。
   - 途中停止した場合でも同じ `<run>.jsonl` へ継ぎ足さず、新しい run を 0 からやり直します。
+
+## Layout Note
+
+- この topic は簡素化前の layout で、`results/` と補助 script を持っています。
+- 新規 experiment の標準構成は [experiments/README.md](/workspace/experiments/README.md) を参照してください。
+- 1 回の run に対する Markdown report の正本は [experiments/report/](/workspace/experiments/report/README.md) に置きます。
+- 新規 experiment でこの legacy layout を再利用することを禁止します。
 
 ## Usage
 
@@ -90,6 +97,7 @@ python3 /workspace/experiments/functional/smolyak_scaling/render_smolyak_scaling
 
 - 実験は 1 回の fresh 実行で指定レンジを完走させます。
 - JSONL は progress 記録であり、resume のための canonical input ではありません。
-- 途中で止まった run は診断用に残してよいですが、正規結果として継続しません。
+- 途中で止まった run を診断用に残すことは許可します。ただし、正規結果として継続することを禁止します。
 - 再実行するときは、新しい出力先で 0 から実行します。
+- naming rule や出力先を変えた場合は、この README と `documents/coding-conventions-experiments.md` を同時に更新します。
 ````

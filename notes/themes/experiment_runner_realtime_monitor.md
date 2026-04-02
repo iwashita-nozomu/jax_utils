@@ -143,7 +143,7 @@ Open: `StandardRunner` 側で pid registration を正式に持たせるかはま
 
 Likely: `StandardRunner` v1 では scheduler の `pending/running/completed` と GPU 割当を主表示にし、pid 単位表示は後回しにするのが軽いです。
 
-Idea: `StandardRunner` でも pid 単位表示が必要なら、child が起動直後に `register_worker(case_id, pid, gpu_ids, started_at)` を host へ送る軽量 registration path を追加します。
+Idea: `StandardRunner` でも pid 単位表示が必要になった場合、child が起動直後に `register_worker(case_id, pid, gpu_ids, started_at)` を host へ送る軽量 registration path を追加します。
 
 ### Sampling Policy
 
@@ -160,7 +160,7 @@ Worked: 実装順は次で固定するのが安全です。
 1. subprocess scheduler で使える monitor core を先に作る
 1. 軽量 HTML + `/api/v1/*` を乗せる
 1. JSONL sink を付ける
-1. `StandardRunner` の registration path を必要なら追加する
+1. `StandardRunner` の registration path が必要になった場合に追加する
 
 ## Extension Ideas
 
@@ -188,7 +188,7 @@ Idea 10: JSON API に加えて Unix domain socket の軽量ローカル API を 
 
 Open: `StandardRunner` 側で pid registration を入れるなら、worker protocol を増やすか、context 経由の side channel を使うかを決める必要があります。
 
-Open: host metrics を `/proc` のみで押し切るか、将来 `psutil` を許容するかは、実装量と保守性を見て判断してよいです。
+Open: host metrics を `/proc` のみで押し切るか、将来 `psutil` を許容するかは、実装量と保守性を見て判断します。
 
 Open: GUI の描画は純粋な HTML + 小さな inline JS で十分か、最小限の chart helper を持つかを決める必要があります。
 

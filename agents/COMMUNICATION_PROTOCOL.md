@@ -9,7 +9,7 @@
 - hidden context に依存しない受け渡しを徹底する
 - disagreement や scope expansion を manager へ正しく戻す
 
-## 基本原則
+## 基本ルール
 
 - 次の role が判断に使う情報は、必ず artifact に書く
 - 口頭相当の短いやり取りで合意した内容も、判断に効くなら artifact に残す
