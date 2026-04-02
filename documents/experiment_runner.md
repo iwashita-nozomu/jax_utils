@@ -75,7 +75,9 @@
 - `StandardFullResourceScheduler.from_worker(...)` を使うと、worker が持つ `resource_estimate(case)` をそのまま scheduler へ渡せます。
 - `FullResourceCapacity.from_system(...)` は、`max_workers` を CPU 数、`host_memory_bytes` を物理メモリ量、`gpu_devices` を可視 GPU とそのメモリ容量から自動検出する入口です。
 - GPU を割り当てる scheduler は `CUDA_VISIBLE_DEVICES` と `NVIDIA_VISIBLE_DEVICES` を `TaskContext["environment_variables"]` にまとめて載せ、worker 側で [context_utils.py](/workspace/python/experiment_runner/context_utils.py) の `apply_environment_variables()` を呼んで反映します。
-- JAX の GPU メモリ先取りを避けたい実験では、scheduler 初期化時に `disable_gpu_preallocation=True` を渡し、`XLA_PYTHON_CLIENT_PREALLOCATE=false` を同じ `environment_variables` 経由で渡します。
+- JAX / XLA の標準 env は [xla_env.py](/workspace/python/jax_util/xla_env.py) を正本とし、`experiment_runner` はその env dict を child へ運ぶ役割に留めます。
+- JAX の GPU メモリ挙動を調整したい実験では、`jax_util.xla_env.build_gpu_env(...)` または `GPUEnvironmentConfig(...)` を使って `XLA_PYTHON_CLIENT_PREALLOCATE`、`XLA_PYTHON_CLIENT_MEM_FRACTION`、`XLA_PYTHON_CLIENT_ALLOCATOR`、`TF_GPU_ALLOCATOR` などを `environment_variables` 経由で worker へ渡します。
+- 実験 script 側では `CUDA_VISIBLE_DEVICES`、`JAX_PLATFORMS`、`XLA_*` などの runtime env を直接組み立てず、`jax_util.xla_env` で env dict を作って runner / scheduler へ渡します。
 - 既存の multi-GPU 実験は fresh subprocess へ環境変数を入れてから JAX を使う流儀だったため、import 前の環境固定が重要な task では `subprocess_scheduler.py` を併用します。
 - 現在は `python/experiment_runner/` の standalone module として置いています。
 - 今後さらに別リポジトリへ分離する場合も、`Worker` / `Scheduler` / `Runner` / `TaskContext` の境界は保ち、experiment 側のコードから見える契約を先に安定化します。
