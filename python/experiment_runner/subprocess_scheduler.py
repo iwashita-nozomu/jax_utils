@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
+from jax_util.xla_env import build_cpu_env, build_gpu_env
 
 from .monitor import RuntimeMonitor
 
@@ -204,8 +205,6 @@ def apply_worker_environment(
     disable_gpu_preallocation: bool,
 ) -> None:
     """Apply process-local environment settings for a subprocess worker."""
-    if disable_gpu_preallocation:
-        os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
@@ -215,12 +214,18 @@ def apply_worker_environment(
 
     if platform == "gpu":
         os.environ.pop("JAX_PLATFORMS", None)
-        if worker_slot.gpu_index is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(worker_slot.gpu_index)
-            os.environ["SMOLYAK_GPU_INDEX"] = str(worker_slot.gpu_index)
+        visible_devices = (
+            str(worker_slot.gpu_index) if worker_slot.gpu_index is not None else ""
+        )
+        os.environ.update(
+            build_gpu_env(
+                visible_devices=visible_devices,
+                disable_preallocation=disable_gpu_preallocation,
+            )
+        )
+        os.environ["SMOLYAK_GPU_INDEX"] = visible_devices or "cpu"
     else:
-        os.environ["JAX_PLATFORMS"] = "cpu"
-        os.environ.pop("CUDA_VISIBLE_DEVICES", None)
+        os.environ.update(build_cpu_env())
         os.environ["SMOLYAK_GPU_INDEX"] = "cpu"
 
     os.environ["EXPERIMENT_RUNNER_WORKER_LABEL"] = worker_slot.worker_label

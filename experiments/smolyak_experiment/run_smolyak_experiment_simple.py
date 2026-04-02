@@ -36,6 +36,7 @@ from experiment_runner import (  # noqa: E402
 from experiment_runner.protocols import Worker  # noqa: E402
 
 from experiments.smolyak_experiment import cases, runner_config  # noqa: E402
+from jax_util.xla_env import build_cpu_env, build_gpu_env  # noqa: E402
 
 
 def _read_jsonl_records(path: Path, /) -> list[dict[str, Any]]:
@@ -486,13 +487,11 @@ def main(
     final_json_file = output_dir / f"final_results_{run_id}.json"
 
     def context_builder(case: dict[str, Any]) -> TaskContext:
-        environment_variables: dict[str, str] = {}
-        if config.device == "cpu":
-            environment_variables["JAX_PLATFORMS"] = "cpu"
-            environment_variables["CUDA_VISIBLE_DEVICES"] = ""
-            environment_variables["NVIDIA_VISIBLE_DEVICES"] = ""
-        else:
-            environment_variables["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
+        environment_variables = (
+            build_cpu_env()
+            if config.device == "cpu"
+            else build_gpu_env(disable_preallocation=True)
+        )
         return {
             "case_id": case["case_id"],
             "jsonl_path": str(jsonl_file),
@@ -521,7 +520,7 @@ def main(
         cases=case_list,
         worker=worker,
         context_builder=context_builder,
-        disable_gpu_preallocation=(config.device == "gpu"),
+        disable_gpu_preallocation=False,
         resource_capacity=resource_capacity,
     )
     runner = StandardRunner(scheduler, progress_callback=progress)

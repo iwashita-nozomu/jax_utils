@@ -19,7 +19,7 @@
 - 各ケースは終了時に JSONL へ 1 行ずつ追記され、run 中の progress と failure 診断を残します。
 - ホストプロセスはケース列と GPU 空き slot だけを管理し、各ケースはサブプロセスへ `case + run_config + GPU slot` を渡して実行します。
 - サブプロセスは JSONL へ結果を追記してから、stdout の completion message でホストへ明示的に終了を返します。
-- GPU 実験では `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
+- GPU 実験では `jax_util.xla_env` 経由で `XLA_PYTHON_CLIENT_PREALLOCATE=false` を設定し、GPU メモリの先取りを無効化します。
 - 実験全体について、`git_branch`、`git_commit`、`results_branch`、`worktree_path`、`script_path`、実行条件レンジをトップレベル JSON に保存します。
 - 実験後は `render_smolyak_scaling_report.py` で SVG/HTML のレポートを生成できます。
 

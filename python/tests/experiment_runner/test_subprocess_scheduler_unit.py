@@ -161,6 +161,7 @@ def test_append_jsonl_record_and_apply_worker_environment_set_expected_values(
     )
     assert os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
     assert os.environ["CUDA_VISIBLE_DEVICES"] == "4"
+    assert os.environ["NVIDIA_VISIBLE_DEVICES"] == "4"
     assert os.environ["SMOLYAK_GPU_INDEX"] == "4"
     assert os.environ["EXPERIMENT_RUNNER_WORKER_LABEL"] == "gpu-0-w0"
     assert affinity_calls[-1] == (0, {0, 1})
@@ -171,7 +172,8 @@ def test_append_jsonl_record_and_apply_worker_environment_set_expected_values(
         disable_gpu_preallocation=False,
     )
     assert os.environ["JAX_PLATFORMS"] == "cpu"
-    assert "CUDA_VISIBLE_DEVICES" not in os.environ
+    assert os.environ["CUDA_VISIBLE_DEVICES"] == ""
+    assert os.environ["NVIDIA_VISIBLE_DEVICES"] == ""
     assert os.environ["SMOLYAK_GPU_INDEX"] == "cpu"
 
 

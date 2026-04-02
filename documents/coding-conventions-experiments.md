@@ -117,8 +117,11 @@
 - 独自の mini-runner
 - `Popen` ベースの独自 worker 管理
 - `CUDA_VISIBLE_DEVICES` や `XLA_*` の直設定
+- JAX / XLA env を if 文で場当たり的に組み立てること
 - partial run を前提にした resume protocol
 - その場限りの ad hoc output path 命名
+
+JAX / XLA env が必要な場合は `jax_util.xla_env` を正本として使います。
 
 ### Spot Run 禁止
 

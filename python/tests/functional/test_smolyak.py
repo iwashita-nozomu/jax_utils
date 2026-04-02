@@ -2,8 +2,13 @@ from __future__ import annotations
 
 import os
 
-os.environ.setdefault("JAX_PLATFORMS", "cpu")
-os.environ.setdefault("XLA_PYTHON_CLIENT_PREALLOCATE", "false")
+from jax_util.xla_env import build_cpu_env, build_gpu_env
+
+for _key, _value in {
+    **build_cpu_env(),
+    **build_gpu_env(disable_preallocation=True),
+}.items():
+    os.environ.setdefault(_key, _value)
 
 import jax.numpy as jnp
 import numpy as np

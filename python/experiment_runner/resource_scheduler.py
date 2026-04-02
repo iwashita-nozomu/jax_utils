@@ -17,6 +17,8 @@ import os
 import subprocess
 from typing import Callable, Generic, Mapping, Protocol, Sequence, TypeVar, cast
 
+from jax_util.xla_env import build_gpu_env, merge_env_vars
+
 from .protocols import TaskContext, Worker
 from .runner import StandardResourceCapacity, StandardScheduler
 
@@ -101,22 +103,13 @@ class GPUEnvironmentConfig:
             raise ValueError("tf_gpu_allocator must not be empty.")
 
     def build_environment_variables(self) -> dict[str, str]:
-        env_vars: dict[str, str] = {}
-        if self.disable_preallocation:
-            env_vars["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-        if self.memory_fraction is not None:
-            env_vars["XLA_PYTHON_CLIENT_MEM_FRACTION"] = (
-                f"{float(self.memory_fraction):.6f}".rstrip("0").rstrip(".")
-            )
-        if self.xla_client_allocator is not None:
-            env_vars["XLA_PYTHON_CLIENT_ALLOCATOR"] = self.xla_client_allocator
-        if self.tf_gpu_allocator is not None:
-            env_vars["TF_GPU_ALLOCATOR"] = self.tf_gpu_allocator
-        if self.use_cuda_host_allocator is not None:
-            env_vars["XLA_PYTHON_CLIENT_USE_CUDA_HOST_ALLOCATOR"] = (
-                "true" if self.use_cuda_host_allocator else "false"
-            )
-        return env_vars
+        return build_gpu_env(
+            disable_preallocation=self.disable_preallocation,
+            memory_fraction=self.memory_fraction,
+            allocator=self.xla_client_allocator,
+            tf_gpu_allocator=self.tf_gpu_allocator,
+            use_cuda_host_allocator=self.use_cuda_host_allocator,
+        )
 
 
 def _merge_gpu_environment_config(
@@ -592,13 +585,21 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             }
             if allocation.gpu_ids:
                 gpu_ids_text = ",".join(str(gpu_id) for gpu_id in allocation.gpu_ids)
-                env_vars["gpu_ids"] = gpu_ids_text
-                env_vars["CUDA_VISIBLE_DEVICES"] = gpu_ids_text
-                env_vars["NVIDIA_VISIBLE_DEVICES"] = gpu_ids_text
+                allocation_env_vars = build_gpu_env(
+                    visible_devices=gpu_ids_text,
+                    disable_preallocation=False,
+                )
+                allocation_env_vars["gpu_ids"] = gpu_ids_text
                 if len(allocation.gpu_ids) == 1:
-                    env_vars["gpu_id"] = str(allocation.gpu_ids[0])
+                    allocation_env_vars["gpu_id"] = str(allocation.gpu_ids[0])
                 if self._gpu_environment_config is not None:
-                    env_vars.update(self._gpu_environment_config.build_environment_variables())
+                    env_vars = merge_env_vars(
+                        env_vars,
+                        allocation_env_vars,
+                        self._gpu_environment_config.build_environment_variables(),
+                    )
+                else:
+                    env_vars = merge_env_vars(env_vars, allocation_env_vars)
             context["environment_variables"] = env_vars
 
             # コンテキストをキーに割当を記録しておく（on_finish で復元する）

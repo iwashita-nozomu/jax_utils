@@ -140,6 +140,7 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 - 実験 script 内で独自の mini-runner を書く
 - GPU slot 管理を script 側で持つ
 - `CUDA_VISIBLE_DEVICES` や `XLA_*` を script 側で直接組み立てる
+- JAX / XLA env が必要な場合に `jax_util.xla_env` を通さない
 - partial run を前提にした resume protocol を作る
 - ad hoc な result path 命名を増やす
 

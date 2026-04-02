@@ -65,6 +65,8 @@ def test_disable_jax_memory_preallocation_sets_expected_environment(
     disable_jax_memory_preallocation(gpu_devices=False)
     assert os.environ["JAX_PLATFORMS"] == "cpu"
     assert os.environ["XLA_FLAGS"] == "--xla_force_host_platform_device_count=1"
+    assert os.environ["CUDA_VISIBLE_DEVICES"] == ""
+    assert os.environ["NVIDIA_VISIBLE_DEVICES"] == ""
 
     for key in (
         "JAX_PLATFORMS",

@@ -102,9 +102,10 @@ experiment code 側の責務:
 - `StandardFullResourceScheduler.from_worker(...)` を使うと、worker が持つ `resource_estimate(case)` をそのまま scheduler へ渡せます。
 - `FullResourceCapacity.from_system(...)` は、`max_workers` を CPU 数、`host_memory_bytes` を物理メモリ量、`gpu_devices` を可視 GPU とそのメモリ容量から自動検出する入口です。
 - GPU を割り当てる scheduler は `CUDA_VISIBLE_DEVICES` と `NVIDIA_VISIBLE_DEVICES` を `TaskContext["environment_variables"]` にまとめて載せ、worker 側で [context_utils.py](/workspace/python/experiment_runner/context_utils.py) の `apply_environment_variables()` を呼んで反映します。
-- 既定では JAX allocator 系の環境変数は足しません。`StandardFullResourceScheduler` は「GPU 可視性の制御」だけを責務にして、allocator / preallocation の調整は明示的な opt-in に寄せます。
-- JAX の GPU メモリ挙動を調整したい実験では、`disable_gpu_preallocation=True` または `GPUEnvironmentConfig(...)` を scheduler 初期化時に渡し、`XLA_PYTHON_CLIENT_PREALLOCATE`、`XLA_PYTHON_CLIENT_MEM_FRACTION`、`XLA_PYTHON_CLIENT_ALLOCATOR`、`TF_GPU_ALLOCATOR` などを `environment_variables` 経由で worker へ渡します。
-- 実験 script 側では `CUDA_VISIBLE_DEVICES`、`JAX_PLATFORMS`、`XLA_*` などの runtime env を直接組み立てず、runner / scheduler 側へ責務を寄せる前提にします。
+- JAX / XLA の標準 env は [xla_env.py](/workspace/python/jax_util/xla_env.py) を正本とし、`experiment_runner` はその env dict を child へ運ぶ役割に留めます。
+- 既定では JAX allocator 系の環境変数は足しません。`StandardFullResourceScheduler` は「GPU 可視性の制御」だけを基本責務にして、allocator / preallocation の調整は明示的な opt-in に寄せます。
+- JAX の GPU メモリ挙動を調整したい実験では、`jax_util.xla_env.build_gpu_env(...)` または `GPUEnvironmentConfig(...)` を使って `XLA_PYTHON_CLIENT_PREALLOCATE`、`XLA_PYTHON_CLIENT_MEM_FRACTION`、`XLA_PYTHON_CLIENT_ALLOCATOR`、`TF_GPU_ALLOCATOR` などを `environment_variables` 経由で worker へ渡します。
+- 実験 script 側では `CUDA_VISIBLE_DEVICES`、`JAX_PLATFORMS`、`XLA_*` などの runtime env を直接組み立てず、`jax_util.xla_env` で env dict を作って runner / scheduler へ渡します。
 - `StandardRunner` は case ごとに fresh child process を使うため、`CUDA_VISIBLE_DEVICES` や `JAX_PLATFORMS` のような import-sensitive な環境変数が前ケースの JAX state に汚染されにくいです。
 - 既存の multi-GPU 実験で host が pid を直接管理したい場合は、引き続き `subprocess_scheduler.py` を併用できます。
 - 現在は `python/experiment_runner/` の standalone module として置いています。

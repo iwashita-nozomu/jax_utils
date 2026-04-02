@@ -1,6 +1,6 @@
 # Smolyak HLO Analysis
 
-単一の Smolyak 積分ケースについて、`from jax_util.hlo import dump` を使って HLO を保存し、`scripts/hlo/summarize_hlo_jsonl.py` で集計する実験ディレクトリです。
+単一の Smolyak 積分ケースについて、`jax_util.xla_env` で pre-import env を整えたうえで、`from jax_util.hlo import dump` を使って HLO を保存し、`scripts/hlo/summarize_hlo_jsonl.py` で集計する実験ディレクトリです。
 
 この実験の目的は、まず 1 ケースの lowering を丁寧に見て、
 

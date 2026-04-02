@@ -217,8 +217,11 @@
 - 実験 script 内で独自の mini-runner を書かない
 - 実験 script 内で GPU slot 管理や child process の生存監視をしない
 - 実験 script 内で `CUDA_VISIBLE_DEVICES` や `XLA_*` を直接組み立てない
+- 実験 script 内で JAX / XLA env を場当たり的に if 文で分岐しない
 - 実験 script 内で partial run の resume protocol を作らない
 - 実験 script 内で ad hoc な result path 命名や手作業 rename をしない
+
+JAX / XLA env が必要な場合は `jax_util.xla_env` を使います。
 
 ## 8. Spot Run 禁止
 

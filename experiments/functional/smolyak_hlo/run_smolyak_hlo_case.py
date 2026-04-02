@@ -36,9 +36,22 @@ def _jax_platform_name(platform: str, /) -> str:
     return platform
 
 
-if "JAX_PLATFORMS" not in os.environ:
-    os.environ["JAX_PLATFORMS"] = _jax_platform_name(_preparse_platform(sys.argv[1:]))
-os.environ["JAX_UTIL_ENABLE_HLO_DUMP"] = "1"
+def _configure_preimport_xla_env(argv: list[str], /) -> None:
+    from jax_util.xla_env import build_cpu_env, build_gpu_env
+
+    platform = _preparse_platform(argv)
+    env_vars = (
+        build_cpu_env(enable_hlo_dump=True)
+        if platform == "cpu"
+        else build_gpu_env(
+            jax_platform_name=_jax_platform_name(platform),
+            enable_hlo_dump=True,
+        )
+    )
+    os.environ.update(env_vars)
+
+
+_configure_preimport_xla_env(sys.argv[1:])
 
 import equinox as eqx
 import jax
@@ -276,7 +289,7 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
 # 責務: CLI 引数を組み立てる。
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Dump and summarize HLO for a single Smolyak integration case.")
-    parser.add_argument("--platform", type=str, choices=("cpu", "gpu"), default=os.environ.get("JAX_PLATFORMS", "cpu"))
+    parser.add_argument("--platform", type=str, choices=("cpu", "gpu"), default="cpu")
     parser.add_argument("--dimension", type=int, default=4)
     parser.add_argument("--level", type=int, default=3)
     parser.add_argument("--prepared-level", type=int, default=None)
