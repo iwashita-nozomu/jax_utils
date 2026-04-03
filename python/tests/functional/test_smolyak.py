@@ -362,6 +362,7 @@ def test_smolyak_internal_plan_matches_integrate() -> None:
         integrator.rule_lengths,
         integrator.generation_weights,
         integrator.term_budget,
+        integrator.num_terms,
         chunk_size=integrator.chunk_size,
         batched_suffix_ndim=integrator.batched_suffix_ndim,
         max_suffix_points=integrator.max_suffix_points,

@@ -594,6 +594,7 @@ def _smolyak_plan_integral(
     rule_lengths: jax.Array,
     generation_weights: jax.Array,
     term_budget: int,
+    num_terms: int,
     *,
     chunk_size: int,
     batched_suffix_ndim: int,
@@ -612,8 +613,11 @@ def _smolyak_plan_integral(
     fixed_suffix_local_indices = jnp.arange(max_suffix_points, dtype=jnp.int64)
     fixed_prefix_local_indices = jnp.arange(prefix_chunk_size, dtype=jnp.int64)
 
-    def term_body(state: tuple[Vector, jax.Array, jax.Array]) -> tuple[Vector, jax.Array, jax.Array]:
-        acc, current_extra_levels, _ = state
+    def term_body(
+        _: int,
+        state: tuple[Vector, jax.Array],
+    ) -> tuple[Vector, jax.Array]:
+        acc, current_extra_levels = state
         current_levels = current_extra_levels.astype(jnp.int32) + 1
         level_indices = current_levels - 1
         current_offsets = jnp.take(rule_offsets, level_indices, mode="clip")
@@ -690,22 +694,31 @@ def _smolyak_plan_integral(
             jnp.asarray(prefix_chunk_size, dtype=jnp.int64),
         )
         updated_acc = jax.lax.fori_loop(0, num_prefix_chunks, prefix_chunk_body, acc)
-        next_extra_levels, has_next = _next_term_extra_levels(
+        next_extra_levels, _ = _next_term_extra_levels(
             current_extra_levels,
             generation_weights,
             term_budget,
         )
-        return updated_acc, next_extra_levels, has_next
+        return updated_acc, next_extra_levels
+
+    initial_state = (initial_value, jnp.zeros((dimension,), dtype=jnp.uint8))
+    if num_terms <= np.iinfo(np.int32).max:
+        final_state = jax.lax.fori_loop(0, num_terms, term_body, initial_state)
+        return final_state[0]
+
+    def while_body(state: tuple[Vector, jax.Array, jax.Array]) -> tuple[Vector, jax.Array, jax.Array]:
+        acc, current_extra_levels, remaining_terms = state
+        updated_acc, next_extra_levels = term_body(0, (acc, current_extra_levels))
+        return updated_acc, next_extra_levels, remaining_terms - 1
 
     def cond_fun(state: tuple[Vector, jax.Array, jax.Array]) -> jax.Array:
-        return state[2]
+        return state[2] > 0
 
-    initial_state = (
-        initial_value,
-        jnp.zeros((dimension,), dtype=jnp.uint8),
-        jnp.asarray(True),
+    final_state = jax.lax.while_loop(
+        cond_fun,
+        while_body,
+        (initial_value, jnp.zeros((dimension,), dtype=jnp.uint8), jnp.asarray(num_terms, dtype=jnp.int64)),
     )
-    final_state = jax.lax.while_loop(cond_fun, term_body, initial_state)
     return final_state[0]
 
 
@@ -847,6 +860,7 @@ class SmolyakIntegrator(eqx.Module):
             self.rule_lengths,
             self.generation_weights,
             self.term_budget,
+            self.num_terms,
             chunk_size=self.chunk_size,
             batched_suffix_ndim=self.batched_suffix_ndim,
             max_suffix_points=self.max_suffix_points,

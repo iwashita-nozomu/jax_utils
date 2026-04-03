@@ -651,3 +651,60 @@ Interpretation:
 - high-level 1D では「完全に世界が変わる」ほどではないが、確実に init を削れている。
 - 軽中規模ケースでは効きが大きく、full rule の重複生成が実際に無駄だったことが確認できた。
 - 次は 1D rule builder のさらに深い incremental 化や、term traversal 側の改良を試すのが自然。
+
+### Idea 037
+
+Idea:
+
+- `num_terms` は integrator 初期化時に static に分かっているので、term loop の本体を `has_next` つき `while_loop` から `fori_loop` へ寄せる。
+
+Why:
+
+- current 実装は term 列挙を動的生成していて、outer term loop も `while` で回している。
+- ただし loop 回数自体は `num_terms` として static に持っているので、実行時の `has_next` 判定を毎 iteration 持ち回る必要はない。
+- `vmap` 本番では loop 骨格の差が runtime に効く可能性がある。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) の `_smolyak_plan_integral(...)` に `num_terms` を追加。
+- main term loop を
+  - 通常: `lax.fori_loop(0, num_terms, term_body, state)`
+  - fallback: `num_terms` が極端に大きいときだけ remaining-term count を持つ `while_loop`
+  の形へ変更した。
+- public path からは `integrator.num_terms` を渡す。
+- internal test も private helper の新 signature に追随させた。
+
+Status:
+
+- `done`
+
+Validation:
+
+- `python3 -m py_compile python/jax_util/functional/smolyak.py python/tests/functional/test_smolyak.py`
+- `CUDA_VISIBLE_DEVICES=1 python3 -m pytest python/tests/functional/test_smolyak.py python/tests/functional/test_integrate.py -q`
+- result: `30 passed`
+
+Result:
+
+- `Idea 033` 版との runtime 比較:
+  - `single_4d_l4_f32`: `7.50 -> 5.49 ms`, `1.37x`
+  - `batch_4d_l4_f32`: `17.50 -> 14.18 ms`, throughput `14625.92 -> 18047.51/s`, `1.23x`
+  - `single_8d_l4_f32`: `55.24 -> 32.79 ms`, `1.68x`
+  - `batch_8d_l4_f32`: `98.15 -> 73.20 ms`, throughput `2608.36 -> 3497.46/s`, `1.34x`
+  - `single_16d_l3_f32`: `42.99 -> 48.52 ms`, 約 `13%` 悪化
+  - `batch_16d_l3_f32`: `135.35 -> 85.82 ms`, throughput `1891.35 -> 2982.89/s`, `1.58x`
+
+HLO / memory (16D, level3, float32, batch256):
+
+- temp size はほぼ不変:
+  - `16865344 -> 16865600 bytes`
+- `while` count もほぼ不変:
+  - `single: 15 -> 16`
+  - `batch: 34 -> 34`
+- それでも runtime は特に batched path で大きく改善した。
+
+Interpretation:
+
+- loop skeleton の変更は、HLO op count や temp size だけでは見えにくいが、実行時には確かに効く。
+- 少なくとも `vmap` 本命ケースでは明確に前進。
+- `single_16d_l3_f32` のみ軽い悪化があるので、次は term traversal の中でも `current_extra_levels` 更新部分をもう少し詰めて、この outlier を確認する価値がある。
