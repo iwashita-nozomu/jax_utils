@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 import json
 import os
 from pathlib import Path
@@ -13,8 +13,8 @@ if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
 from experiment_runner.context_utils import apply_environment_variables
-from experiment_runner.execution_result import FailureKind
-from experiment_runner.protocols import TaskContext
+from experiment_runner.execution_result import ExecutionResult, FailureKind
+from experiment_runner.protocols import DispatchDecision, TaskContext
 from experiment_runner.runner import (
     StandardCompletion,
     StandardResourceCapacity,
@@ -147,6 +147,66 @@ class _AbruptExitWorker:
         raise ValueError("resource_estimate is not used in this test")
 
 
+@dataclass
+class _SkipOddCaseController:
+    skipped_case_ids: list[int] = field(default_factory=list)
+    updates: list[tuple[int, str]] = field(default_factory=list)
+
+    def should_skip(
+        self,
+        case: dict[str, object],
+        context: TaskContext,
+    ) -> DispatchDecision:
+        del context
+        case_id = int(case["case_id"])
+        if case_id % 2 == 1:
+            self.skipped_case_ids.append(case_id)
+            return DispatchDecision.skip("skip odd case_id before spawn")
+        return DispatchDecision.run()
+
+    def update(
+        self,
+        case: dict[str, object],
+        context: TaskContext,
+        result: ExecutionResult,
+    ) -> None:
+        del context
+        self.updates.append((int(case["case_id"]), result.status))
+
+
+@dataclass
+class _SkipAfterFailureController:
+    skip_remaining: bool = False
+    updates: list[tuple[int, str]] = field(default_factory=list)
+
+    def should_skip(
+        self,
+        case: dict[str, object],
+        context: TaskContext,
+    ) -> DispatchDecision:
+        del context
+        if self.skip_remaining and int(case["case_id"]) >= 1:
+            return DispatchDecision.skip("skip after prior failure")
+        return DispatchDecision.run()
+
+    def update(
+        self,
+        case: dict[str, object],
+        context: TaskContext,
+        result: ExecutionResult,
+    ) -> None:
+        del context
+        self.updates.append((int(case["case_id"]), result.status))
+        if result.status == "failed":
+            self.skip_remaining = True
+
+
+def _fail_case_zero(case: dict[str, object], context: TaskContext) -> None:
+    del context
+    if int(case["case_id"]) == 0:
+        raise RuntimeError("case zero failed")
+
+
 def test_standard_runner_isolates_import_sensitive_environment_per_case(
     tmp_path: Path,
 ) -> None:
@@ -227,6 +287,65 @@ def test_standard_runner_progress_callback_uses_scheduler_total_case_count() -> 
 
     assert progress_updates
     assert all(total == 4 for _, total, _ in progress_updates)
+
+
+def test_standard_runner_can_skip_case_before_spawn(tmp_path: Path) -> None:
+    records_dir = tmp_path / "skip_records"
+    cases = [
+        {"case_id": 0, "sleep_seconds": 0.01},
+        {"case_id": 1, "sleep_seconds": 0.01},
+        {"case_id": 2, "sleep_seconds": 0.01},
+    ]
+    skip_controller = _SkipOddCaseController()
+
+    scheduler = StandardScheduler(
+        resource_capacity=StandardResourceCapacity(max_workers=2),
+        cases=cases,
+        skip_controller=skip_controller,
+    )
+    runner = StandardRunner(scheduler)
+    worker = StandardWorker(_SleepRecordingTask(records_dir))
+
+    runner.run(worker)
+    records = _read_json_records(records_dir)
+
+    assert [record["case_id"] for record in records] == [0, 2]
+    assert len(scheduler.completions) == 3
+
+    skipped_completion = next(
+        completion
+        for completion in scheduler.completions
+        if completion.result.status == "skipped"
+    )
+    assert skipped_completion.case["case_id"] == 1
+    assert skipped_completion.result.status == "skipped"
+    assert skipped_completion.result.message == "skip odd case_id before spawn"
+    assert skipped_completion.result.source == "runner"
+    assert skipped_completion.exit_code == 0
+    assert skip_controller.skipped_case_ids == [1]
+    assert sorted(skip_controller.updates) == [(0, "ok"), (1, "skipped"), (2, "ok")]
+
+
+def test_standard_scheduler_skip_controller_updates_from_result() -> None:
+    skip_controller = _SkipAfterFailureController()
+    scheduler = StandardScheduler(
+        resource_capacity=StandardResourceCapacity(max_workers=1),
+        cases=[
+            {"case_id": 0},
+            {"case_id": 1},
+        ],
+        skip_controller=skip_controller,
+    )
+    runner = StandardRunner(scheduler)
+    worker = StandardWorker(_fail_case_zero)
+
+    runner.run(worker)
+
+    assert len(scheduler.completions) == 2
+    assert scheduler.completions[0].result.status == "failed"
+    assert scheduler.completions[1].result.status == "skipped"
+    assert scheduler.completions[1].result.message == "skip after prior failure"
+    assert skip_controller.updates == [(0, "failed"), (1, "skipped")]
 
 
 def test_standard_runner_captures_python_exception_as_structured_result() -> None:

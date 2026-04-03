@@ -64,6 +64,8 @@ from .execution_result import (
 
 # Protocols / constants / JAX utilities
 from .protocols import (
+    DispatchDecision,
+    SkipController,
     TaskContext,
     SUCCESS_EXIT_CODE,
     WORKER_PROTOCOL_ERROR_EXIT_CODE,
@@ -109,6 +111,8 @@ __all__ = [
     "ExecutionResult",
     "FailureKind",
     # protocols / constants / jax utilities
+    "DispatchDecision",
+    "SkipController",
     "TaskContext",
     "SUCCESS_EXIT_CODE",
     "WORKER_PROTOCOL_ERROR_EXIT_CODE",

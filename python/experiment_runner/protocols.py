@@ -6,18 +6,22 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from typing import Any, Callable, Protocol, TypeAlias, TypeVar
+from typing import Any, Callable, Literal, Protocol, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
     from .execution_result import ExecutionResult
 
 
 T = TypeVar("T")
+T_contra = TypeVar("T_contra", contravariant=True)
 U = TypeVar("U")
 
 __all__ = [
     "TaskContext",
+    "DispatchDecision",
+    "SkipController",
     "ResourceEstimate",
     "ResourceCapacity",
     "Worker",
@@ -30,6 +34,39 @@ __all__ = [
 # `TaskContext` はワーカーへ渡す環境や設定を表す。
 # 環境変数辞書のような構造化データも流せるよう Any を許容する。
 TaskContext: TypeAlias = dict[str, Any]
+
+
+@dataclass(frozen=True)
+class DispatchDecision:
+    """起動前 case 判定の結果を表す。"""
+
+    action: Literal["run", "skip"] = "run"
+    message: str = ""
+
+    def __post_init__(self) -> None:
+        if self.action not in {"run", "skip"}:
+            raise ValueError("action must be either 'run' or 'skip'.")
+
+    @classmethod
+    def run(cls) -> DispatchDecision:
+        return cls(action="run")
+
+    @classmethod
+    def skip(cls, message: str = "", /) -> DispatchDecision:
+        return cls(action="skip", message=message)
+
+
+class SkipController(Protocol[T_contra]):
+    """起動前 skip と完了後 state 更新を持つ controller protocol。"""
+
+    def should_skip(self, case: T_contra, context: TaskContext) -> DispatchDecision: ...
+
+    def update(
+        self,
+        case: T_contra,
+        context: TaskContext,
+        result: "ExecutionResult",
+    ) -> None: ...
 
 
 class ResourceEstimate(Protocol):

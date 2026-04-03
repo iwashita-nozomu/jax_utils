@@ -54,6 +54,7 @@ runner / scheduler 側の責務:
 - fresh child process の起動と終了
 - timeout、`terminate()`、`kill()`、`finally` cleanup
 - case queue の進行
+- 起動前 case の skip 判定
 - resource estimate に基づく slot / GPU 割当
 - child に渡す `TaskContext["environment_variables"]` の構築
 - GPU 可視性や allocator 系 env の反映
@@ -87,6 +88,9 @@ runner diagnostics の正本は数値 error code ではなく、`status`、`fail
 - `StandardRunner` は `max_workers` 本までの fresh child process を case 単位で起動し、ケース完了ごとに process を終了させます。
 - `StandardRunner` は child が completion を返せない場合でも、parent 側で `ExecutionResult` を合成して scheduler へ返します。
 - `StandardRunner` は optional な per-case timeout を持ち、timeout 時は parent 側で child を停止します。
+- `StandardScheduler` は optional な `skip_controller` を受け取れます。
+- `skip_controller` は `should_skip(case, context)` と `update(case, context, result)` を持ちます。
+- `StandardRunner` は child 起動前に scheduler 側の skip controller を参照し、`DispatchDecision.skip(...)` を返した case を `status="skipped"` として完了扱いにできます。
 
 ## 3. task 切り替えのルール
 
@@ -102,10 +106,12 @@ runner diagnostics の正本は数値 error code ではなく、`status`、`fail
 - top-level class / function と pickle 可能な dataclass を使うのが基本です。
 - worker が JAX / XLA / CUDA の native crash を直接 catch することは前提にしません。
 - native crash、signal 終了、timeout、completion 欠落は runner parent 側が検知して diagnostics record を合成します。
+- 実行前に条件で case を落としたい場合は worker の先頭で return せず、scheduler に渡した `skip_controller` で skip 判定を行います。
 
 ## 5. 今後の拡張
 
 - resource-aware な順序最適化は scheduler 側へ追加します。
+- 起動前 skip は runner 側へ追加します。
 - GPU 固有差分は専用 runner を増やさず、`resource_scheduler.py` 内の scheduler と resource 表現で吸収する方針です。
 - [resource_scheduler.py](/workspace/python/experiment_runner/resource_scheduler.py) には、1 task = 1 process を前提に host memory と GPU ごとの slot / memory を同時に見る `FullResourceCapacity`、`FullResourceEstimate`、`StandardFullResourceScheduler` を置きます。
 - [monitor.py](/workspace/python/experiment_runner/monitor.py) には、軽量な runtime snapshot 保持、worker event 記録、`GET /` と `/api/v1/*` を返す小さな HTTP surface を置きます。

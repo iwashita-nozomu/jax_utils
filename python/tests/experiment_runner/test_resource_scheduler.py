@@ -23,6 +23,7 @@ from experiment_runner.resource_scheduler import (
     detect_host_memory_bytes,
     detect_max_workers,
 )
+from experiment_runner.execution_result import build_skipped_result
 from experiment_runner.runner import (
     StandardRunner,
     StandardWorker,
@@ -385,6 +386,47 @@ def test_standard_full_resource_scheduler_preserves_context_builder_environment_
     assert env_vars["NVIDIA_VISIBLE_DEVICES"] == "5"
     assert env_vars["gpu_id"] == "5"
     assert env_vars["XLA_PYTHON_CLIENT_MEM_FRACTION"] == "0.4"
+
+
+def test_standard_full_resource_scheduler_releases_resources_for_skipped_result() -> None:
+    scheduler = StandardFullResourceScheduler(
+        resource_capacity=FullResourceCapacity(
+            max_workers=1,
+            host_memory_bytes=64,
+            gpu_devices=(GPUDeviceCapacity(gpu_id=0, memory_bytes=32, max_slots=1),),
+        ),
+        cases=[
+            {
+                "case_id": 30,
+                "host_memory_bytes": 32,
+                "gpu_count": 1,
+                "gpu_memory_bytes": 16,
+            },
+            {
+                "case_id": 31,
+                "host_memory_bytes": 32,
+                "gpu_count": 1,
+                "gpu_memory_bytes": 16,
+            },
+        ],
+        estimate_builder=_resource_estimate,
+    )
+
+    first_job = scheduler.next_case()
+    assert first_job is not None
+    first_case, first_context = first_job
+
+    scheduler.on_finish(
+        first_case,
+        first_context,
+        build_skipped_result("pre-dispatch skip in runner"),
+    )
+
+    second_job = scheduler.next_case()
+    assert second_job is not None
+    second_case, second_context = second_job
+    assert _case_id(second_case) == 31
+    assert cast(dict[str, str], second_context["environment_variables"])["gpu_id"] == "0"
 
 
 def _run_standard_full_resource_scheduler_with_runner(tmp_path: Path) -> None:

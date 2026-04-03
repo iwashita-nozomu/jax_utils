@@ -24,6 +24,7 @@ from .runner import StandardResourceCapacity, StandardScheduler
 
 if TYPE_CHECKING:
     from .execution_result import ExecutionResult
+    from .protocols import SkipController
 
 
 # ジェネリック型定義
@@ -403,6 +404,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         cases: list[T],
         worker: FullResourceWorker[T],
         context_builder: Callable[[T], TaskContext] | None = None,
+        skip_controller: "SkipController[T] | None" = None,
         disable_gpu_preallocation: bool = False,
         gpu_environment_config: GPUEnvironmentConfig | None = None,
         resource_capacity: FullResourceCapacity | None = None,
@@ -417,6 +419,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             cases=cases,
             estimate_builder=worker.resource_estimate,
             context_builder=context_builder,
+            skip_controller=skip_controller,
             disable_gpu_preallocation=disable_gpu_preallocation,
             gpu_environment_config=gpu_environment_config,
         )
@@ -427,6 +430,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         cases: list[T],
         estimate_builder: Callable[[T], FullResourceEstimate],
         context_builder: Callable[[T], TaskContext] | None = None,
+        skip_controller: "SkipController[T] | None" = None,
         disable_gpu_preallocation: bool = False,
         gpu_environment_config: GPUEnvironmentConfig | None = None,
     ) -> None:
@@ -442,6 +446,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             resource_capacity=resource_capacity,
             cases=[],
             context_builder=context_builder,
+            skip_controller=skip_controller,
         )
         self._estimate_builder = estimate_builder
         self._gpu_environment_config = _merge_gpu_environment_config(
