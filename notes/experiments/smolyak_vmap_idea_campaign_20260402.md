@@ -454,3 +454,200 @@ Interpretation:
 
 - 今の kernel は contraction 記法の選択で改善する段階ではない。
 - `tensordot` は少なくとも current code では十分に強く、ここをいじる価値は低い。
+
+### Idea 033
+
+Idea:
+
+- `_decode_points_and_weights(...)` の axis `scan` をやめ、mixed-radix stride から各軸 index を一括で復元する。
+
+Why:
+
+- 現行 decode は軸方向に `scan` を回していて、各 axis ごとに `div/rem + take` を carry 付きで実行していた。
+- local point index は連続区間なので、各軸 digit は
+  - `stride_j = prod(lengths[j+1:])`
+  - `digit_j = (index // stride_j) % length_j`
+  で直接出せる。
+- これなら decode の loop 骨格を薄くでき、1D だけでなく中次元でも効く可能性がある。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) の `_decode_points_and_weights(...)` を差し替えた。
+- `axis_count == 0` は従来どおり。
+- 一般 case は suffix product から `axis_strides` を作り、
+  - `local_axis_indices = (local_point_indices[None, :] // axis_strides[:, None]) % axis_lengths[:, None]`
+  で digit をまとめて復元する。
+- `axis_count == 1` だけは退化 case として最小の fast-path を置いた。
+- その後の `points` / `axis_weights` は従来どおり gather し、weight は `prod(axis=0)` で作る。
+
+Status:
+
+- `done`
+
+Validation:
+
+- `python3 -m py_compile python/jax_util/functional/smolyak.py`
+- `python3 -m pytest python/tests/functional/test_smolyak.py python/tests/functional/test_integrate.py -q`
+- result: `30 passed`
+
+Result:
+
+- current code と checkpoint `57b406a` を同じ GPU probe で比較した。
+
+1D / 4D:
+
+- `single_1d_l18_f64`: `13.06 ms -> 9.89 ms`, `1.32x` speedup
+- `batch_1d_l18_f64`: `156.50 ms -> 134.33 ms`, throughput `1635.74 -> 1905.69/s`, `1.17x`
+- `single_4d_l4_f32`: `10.57 ms -> 7.50 ms`, `1.41x`
+- `batch_4d_l4_f32`: `21.75 ms -> 17.50 ms`, throughput `11769.46 -> 14625.92/s`, `1.24x`
+
+8D / 16D:
+
+- `single_8d_l4_f32`: `60.85 ms -> 55.24 ms`, `1.10x`
+- `batch_8d_l4_f32`: `153.74 ms -> 98.15 ms`, throughput `1665.13 -> 2608.36/s`, `1.57x`
+- `single_16d_l3_f32`: `111.22 ms -> 42.99 ms`, `2.59x`
+- `batch_16d_l3_f32`: `237.82 ms -> 135.35 ms`, throughput `1076.44 -> 1891.35/s`, `1.76x`
+
+Interpretation:
+
+- 改善は 1D 専用ではなく、少なくとも `4D`, `8D`, `16D` でも一貫して効いた。
+- 特に `16D` で効きが大きいので、今回の本質は 1D fast-path より「axis scan を mixed-radix stride decode へ変えた一般化」にある。
+- 次は `take(..., mode=\"clip\")` の safety overhead や integer dtype を詰めるのが自然。
+
+### Idea 034
+
+Idea:
+
+- 構造的に index が範囲内なので、`jnp.take(..., mode="clip")` を direct indexing へ置き換えて bounds handling を減らす。
+
+Why:
+
+- `mode="clip"` は安全だが、HLO 上は余分な bounds logic を持ち込みうる。
+- `rule_nodes[rule_indices]` / `rule_weights[rule_indices]` と `rule_offsets[level_indices]` / `rule_lengths[level_indices]` に寄せれば、gather の周辺を少し軽くできるかもしれない。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) の
+  - `jnp.take(rule_nodes, rule_indices, mode="clip")`
+  - `jnp.take(rule_weights, rule_indices, mode="clip")`
+  - `jnp.take(rule_offsets, level_indices, mode="clip")`
+  - `jnp.take(rule_lengths, level_indices, mode="clip")`
+  を direct indexing に置き換えて probe を取った。
+
+Status:
+
+- `rejected`
+
+Result:
+
+- 代表 probe は current `Idea 033` 版と比較。
+- `1D` ではほぼ横ばいか微悪化:
+  - `single_1d_l18_f64`: `9.89 -> 10.28 ms`
+  - `batch_1d_l18_f64`: `134.33 -> 143.08 ms`, throughput `1905.69 -> 1789.16/s`
+- `8D` は mixed:
+  - `single_8d_l4_f32`: `55.24 -> 39.93 ms`
+  - `batch_8d_l4_f32`: `98.15 -> 105.62 ms`, throughput `2608.36 -> 2423.85/s`
+- `16D` は明確に悪化:
+  - `single_16d_l3_f32`: `42.99 -> 53.22 ms`
+  - `batch_16d_l3_f32`: `135.35 -> 177.95 ms`, throughput `1891.35 -> 1438.59/s`
+
+Failed Because:
+
+- `clip` を外しても general に速くはならず、むしろ中高次元 batch で不安定に悪化した。
+- XLA の gather lowering と direct indexing lowering が常に有利になるわけではなく、このコードでは `mode="clip"` 由来の保険コストは主犯ではなかった。
+- 良いケースと悪いケースが混じり、general improvement として採れない。
+
+Interpretation:
+
+- gather の本質的なコストは bounds mode より decode / reduction 全体の構造にある。
+- current code では safety gather を維持し、次は integer dtype や term traversal のような、もっと大きい構造側を試すべき。
+
+### Idea 035
+
+Idea:
+
+- term ごとに不変な `axis_strides` を `_decode_points_and_weights(...)` の外へ hoist し、prefix chunk ごとの `cumprod` を避ける。
+
+Why:
+
+- current decode は毎 chunk ごとに `axis_lengths` から stride を組み直している。
+- これは term 内では不変なので、`prefix_strides` / `suffix_strides` を term body で 1 回だけ作れば中次元以上で効くはず、という仮説。
+
+Implementation:
+
+- `_axis_strides(...)` と `_decode_points_and_weights_with_strides(...)` を追加。
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) の term body で
+  - `prefix_strides = _axis_strides(prefix_lengths)`
+  - `suffix_strides = _axis_strides(suffix_lengths)`
+  を作り、decode helper に渡す形へ変えた。
+
+Status:
+
+- `rejected`
+
+Result:
+
+- `Idea 033` 版との比較で、4D はほぼ横ばいだが 8D / 16D が悪化。
+- 代表値:
+  - `single_4d_l4_f32`: `7.50 -> 7.74 ms`
+  - `batch_4d_l4_f32`: `17.50 -> 17.61 ms`, throughput `14625.92 -> 14535.98/s`
+  - `single_8d_l4_f32`: `55.24 -> 43.26 ms` と一見改善したが
+  - `batch_8d_l4_f32`: `98.15 -> 130.73 ms`, throughput `2608.36 -> 1958.21/s`
+  - `single_16d_l3_f32`: `42.99 -> 60.48 ms`
+  - `batch_16d_l3_f32`: `135.35 -> 185.73 ms`, throughput `1891.35 -> 1378.35/s`
+
+Failed Because:
+
+- stride を外へ出しても、実際には HLO 形が良くならず、batched path の fusion / scheduling を崩した可能性が高い。
+- 「Python レベルでの再計算削減」が、そのまま XLA 実行時の利益に変わるとは限らない典型例だった。
+- general improvement としては採れないので revert した。
+
+Interpretation:
+
+- decode まわりは「再計算を減らす」より「XLA が好む形を保つ」ほうが重要。
+- ここから先は metadata の hoist より、term traversal や integer arithmetic の質を変える案へ進むべき。
+
+### Idea 036
+
+Idea:
+
+- `_difference_rule_storage_device(max_level)` で full rule を毎 level 1 回だけ作り、`previous full weights` を使い回して差分則を構成する。
+
+Why:
+
+- 現行 storage builder は各 level で `_difference_rule_device(level)` を呼び、その中で `level` と `level-1` の full rule を毎回作り直していた。
+- storage 全体を作るときは level が昇順に並ぶので、`previous_weights` を carry すれば再計算をかなり減らせる。
+- これは high-level 1D init の timeout frontier に直接効く。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) に `_difference_rule_from_full_rule_device(...)` を追加。
+- `_difference_rule_device(level)` 自体は public behavior を変えず、その helper を使う形に整理。
+- `_difference_rule_storage_device(max_level)` では
+  - `full_nodes, full_weights = _clenshaw_curtis_rule_device(level)`
+  - `diff = _difference_rule_from_full_rule_device(level, full_nodes, full_weights, previous_full_weights)`
+  - `previous_full_weights = full_weights`
+  の形で昇順に積み上げるようにした。
+
+Status:
+
+- `done`
+
+Validation:
+
+- `python3 -m py_compile python/jax_util/functional/smolyak.py`
+- `CUDA_VISIBLE_DEVICES=1 python3 -m pytest python/tests/functional/test_smolyak.py python/tests/functional/test_integrate.py -q`
+- result: `30 passed`
+
+Result:
+
+- current と checkpoint `57b406a` の init-only probe を比較。
+- `init_1d_l25_f64`: `39.04 s -> 36.99 s`, 約 `1.06x` 改善
+- `init_16d_l3_f32`: `0.164 s -> 0.094 s`, 約 `1.74x` 改善
+- `storage_bytes` と `num_points` は一致しており、数学的な結果は変わっていない。
+
+Interpretation:
+
+- high-level 1D では「完全に世界が変わる」ほどではないが、確実に init を削れている。
+- 軽中規模ケースでは効きが大きく、full rule の重複生成が実際に無駄だったことが確認できた。
+- 次は 1D rule builder のさらに深い incremental 化や、term traversal 側の改良を試すのが自然。

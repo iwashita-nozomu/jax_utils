@@ -161,6 +161,18 @@ def _difference_rule_device(
         return nodes, weights
 
     previous_weights = _clenshaw_curtis_rule_device(level - 1)[1]
+    return _difference_rule_from_full_rule_device(level, nodes, weights, previous_weights)
+
+
+def _difference_rule_from_full_rule_device(
+    level: int,
+    nodes: Vector,
+    weights: Vector,
+    previous_weights: Vector | None,
+    /,
+) -> tuple[Vector, Vector]:
+    if level == 1 or previous_weights is None:
+        return nodes, weights
     if level == 2:
         overlap_indices = jnp.asarray([1], dtype=jnp.int32)
     else:
@@ -355,12 +367,20 @@ def _difference_rule_storage_device(
     nodes_by_level: list[Vector] = []
     weights_by_level: list[Vector] = []
     lengths = np.empty((max_level,), dtype=np.int64)
+    previous_full_weights: Vector | None = None
 
     for current_level in range(1, max_level + 1):
-        nodes, weights = _difference_rule_device(current_level)
-        nodes_by_level.append(nodes)
-        weights_by_level.append(weights)
-        lengths[current_level - 1] = int(nodes.shape[0])
+        full_nodes, full_weights = _clenshaw_curtis_rule_device(current_level)
+        diff_nodes, diff_weights = _difference_rule_from_full_rule_device(
+            current_level,
+            full_nodes,
+            full_weights,
+            previous_full_weights,
+        )
+        nodes_by_level.append(diff_nodes)
+        weights_by_level.append(diff_weights)
+        lengths[current_level - 1] = int(diff_nodes.shape[0])
+        previous_full_weights = full_weights
 
     offsets = np.empty((max_level,), dtype=np.int64)
     total_length = 0
@@ -486,34 +506,29 @@ def _decode_points_and_weights(
     axis_offsets = jnp.asarray(axis_offsets, dtype=jnp.int64)
     axis_lengths = jnp.asarray(axis_lengths, dtype=jnp.int64)
     local_point_indices = jnp.asarray(local_point_indices, dtype=jnp.int64)
-    reversed_axis_offsets = lax.rev(axis_offsets, dimensions=(0,))
-    reversed_axis_lengths = lax.rev(axis_lengths, dimensions=(0,))
-
-    def decode_axis(
-        carry: tuple[jax.Array, jax.Array],
-        axis_data: tuple[jax.Array, jax.Array],
-    ) -> tuple[tuple[jax.Array, jax.Array], jax.Array]:
-        remaining_indices, accumulated_weights = carry
-        axis_offset, axis_length = axis_data
-        next_remaining_indices = lax.div(remaining_indices, axis_length)
-        local_axis_indices = lax.rem(remaining_indices, axis_length)
-        rule_indices = axis_offset + local_axis_indices
-        axis_points = jnp.take(rule_nodes, rule_indices, mode="clip")
-        axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
-        return (next_remaining_indices, accumulated_weights * axis_weights), axis_points
-
-    (_, point_weights), reversed_points = lax.scan(
-        decode_axis,
-        (
-            local_point_indices,
-            jnp.ones((point_count,), dtype=rule_weights.dtype),
-        ),
-        (
-            reversed_axis_offsets,
-            reversed_axis_lengths,
-        ),
-    )
-    return lax.rev(reversed_points, dimensions=(0,)), point_weights
+    if axis_count == 1:
+        rule_indices = axis_offsets[:, jnp.newaxis] + local_point_indices[jnp.newaxis, :]
+    else:
+        reversed_suffix_products = jnp.cumprod(
+            lax.rev(axis_lengths[1:], dimensions=(0,)),
+            dtype=jnp.int64,
+        )
+        axis_strides = jnp.concatenate(
+            [
+                lax.rev(reversed_suffix_products, dimensions=(0,)),
+                jnp.ones((1,), dtype=jnp.int64),
+            ],
+            axis=0,
+        )
+        local_axis_indices = lax.rem(
+            lax.div(local_point_indices[jnp.newaxis, :], axis_strides[:, jnp.newaxis]),
+            axis_lengths[:, jnp.newaxis],
+        )
+        rule_indices = axis_offsets[:, jnp.newaxis] + local_axis_indices
+    points = jnp.take(rule_nodes, rule_indices, mode="clip")
+    axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
+    point_weights = jnp.prod(axis_weights, axis=0)
+    return points, point_weights
 
 
 def _next_term_extra_levels(
