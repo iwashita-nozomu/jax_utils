@@ -376,9 +376,3 @@ def solve(
 - [PEP 544 — Protocols](https://peps.python.org/pep-0544/)
 - [Typing.Protocol Documentation](https://docs.python.org/3/library/typing.html#typing.Protocol)
 - [Design Patterns in Python](https://refactoring.guru/design-patterns/python)
-
----
-
-**作成日**: 2026-03-20  
-**対象**: `/workspace/python/jax_util/` 全 protocols.py  
-**状態**: ✅ 既存実装に合わせて図示完了

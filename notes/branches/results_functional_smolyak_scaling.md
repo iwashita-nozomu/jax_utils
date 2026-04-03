@@ -28,4 +28,5 @@
 ## Status
 
 - archived
+- Retention: `persistent`
 - `main` には結果本体ではなく、要約 note と branch note を残す

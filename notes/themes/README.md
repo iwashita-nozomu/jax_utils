@@ -29,4 +29,5 @@
 
 ## Current Themes
 
+- [experiment_runner.md](/workspace/notes/themes/experiment_runner.md)
 - [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md)

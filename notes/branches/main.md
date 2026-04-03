@@ -28,3 +28,38 @@
 
 - `main` は結果ファイル本体の保管場所ではなく、再現のための code と、判断履歴への入口を保つ場所として扱う
 - そのため branch note を厚めに残し、results branch へ飛ばないと分からない状態を減らします
+
+## Branch Inventory And Knowledge Landing
+
+### Inventory
+
+| Branch | State | Knowledge Landing | Retention |
+| --- | --- | --- | --- |
+| `work/experiment-runner-module-20260316` | merged | [experiment_runner.md](/workspace/notes/themes/experiment_runner.md) | `delete-ok` |
+| `work/experiment-runner-generalization-20260317` | merged | [experiment_runner.md](/workspace/notes/themes/experiment_runner.md) | `delete-ok` |
+| `work/experiment-runner-refactor-20260330` | stale branch, core findings merged | [experiment_runner.md](/workspace/notes/themes/experiment_runner.md) | `delete-ok` |
+| `results/smolyak-experiment-20260321` | archived / stale | [experiment_directory_planning.md](/workspace/notes/knowledge/experiment_directory_planning.md) | `delete-ok` |
+| `work/smolyak-improvement-20260318` | archived / stale | [work_smolyak_improvement_20260318.md](/workspace/notes/branches/work_smolyak_improvement_20260318.md) | `delete-ok` |
+| `results/functional-smolyak-scaling` | archived raw result branch | [legacy_smolyak_results_20260316.md](/workspace/notes/experiments/legacy_smolyak_results_20260316.md) | `persistent` |
+| `results/functional-smolyak-scaling-tuned` | fully absorbed | [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md) | `delete-ok` |
+| `work/smolyak-tuning-20260316` | merged knowledge retained | [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md) | `delete-ok` |
+| `work/jaxutil-test-expansion-20260317` | merged | branch note のみで十分 | `delete-ok` |
+| `work/editing-20260316` | archived | branch note と worktree note を保持 | `delete-ok` |
+| `work/nn-develop-20260318` | active | active worktree 側で継続 | `keep-while-active` |
+| `results/smolyak-validation-20260328` | active | active worktree 側で継続 | `keep-while-active` |
+| `work/smolyak-integrator-lead-20260328` | active | active worktree 側で継続 | `keep-while-active` |
+| `work/smolyak-integrator-opt-20260328` | active | active worktree 側で継続 | `keep-while-active` |
+| `feature/fix/reports/merge/*` の保守 branch | mostly merged or low-signal | `main` と Git 履歴を参照 | `delete-ok` |
+| `template-python-module` | upstream template tracking | `template/python-module` | `persistent` |
+
+### Knowledge Landing Map
+
+- experiment runner の設計判断:
+  - [experiment_runner.md](/workspace/notes/themes/experiment_runner.md)
+- 実験ディレクトリと results branch 運用:
+  - [experiment_directory_planning.md](/workspace/notes/knowledge/experiment_directory_planning.md)
+- Smolyak 積分器の本質的な観測:
+  - [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md)
+- 実験運用の実務ルール:
+  - [experiment_operations.md](/workspace/notes/knowledge/experiment_operations.md)
+  - [environment_setup.md](/workspace/notes/knowledge/environment_setup.md)

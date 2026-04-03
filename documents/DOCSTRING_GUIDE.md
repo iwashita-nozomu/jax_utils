@@ -306,9 +306,3 @@ ______________________________________________________________________
 - [NumPy Docstring Standard](https://numpydoc.readthedocs.io/en/latest/format.html)
 - [documents/coding-conventions-python.md](./coding-conventions-python.md)
 - [TEAM_IMPLEMENTATION_GUIDE.md](./TEAM_IMPLEMENTATION_GUIDE.md)
-
-______________________________________________________________________
-
-**作成日**: 2026-03-20\
-**対象**: Python コードベース全体（`python/jax_util/`）\
-**関連**: Docstring と公開 API の改善タスク

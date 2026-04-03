@@ -12,6 +12,9 @@
 - GPU の先取りを避けたいときは `XLA_PYTHON_CLIENT_PREALLOCATE=false` を使う。
 - CPU に逃がしたいときは `JAX_PLATFORMS=cpu` を使う。
 - GPU child は、親の見えている全 GPU を暗黙に引き継がないようにする。
+- JAX / XLA の標準 env は experiment script 側で ad hoc に組まず、runner または `jax_util.xla_env` 側で組み立てる。
+- `jax`, `jax.numpy`, `jax_util.base` を import する前に env を適用する。
+- case ごとの fresh child process を前提にし、process-local state の再利用を期待しない。
 
 ## CPU thread
 

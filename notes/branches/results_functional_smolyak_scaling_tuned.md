@@ -6,7 +6,7 @@
 
 ## Role
 
-- tuned Smolyak 積分器と、新しい experiment runner を使った継続実験の結果を保持する branch
+- tuned Smolyak 積分器と、新しい experiment runner を使った実験結果を保持していた branch
 - 旧版より explicit grid 展開を減らした実装で、実行限界と bottleneck を再評価している
 
 ## Primary Notes
@@ -33,5 +33,6 @@ case 順は途中で `dtype -> level -> dimension` から `level -> dimension ->
 
 ## Status
 
-- active
-- 継続観測中
+- archived
+- Retention: `delete-ok`
+- main 側の note へ知見を吸収済み

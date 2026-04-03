@@ -70,3 +70,8 @@
 - `experiments/smolyak_experiment/` を新しい `experiment_runner` の責務境界に合わせて段階的に移行する。
 - monitor を常用する script と、使わない script の最小 wiring を整理する。
 - branch を閉じる前に `notes/branches/work_experiment_runner_refactor_20260330.md` の status と入口リンクを最終状態へ更新する。
+
+## Addendum: 2026-04-03
+
+- この note で当時 carry-over target として挙げていた `notes/experiments/experiment_runner_usage.md`、`notes/themes/experiment_runner_main_integration.md`、`notes/themes/experiment_runner_realtime_monitor.md` は、main では個別ファイルとして残さなかった。
+- 現在の恒久受け皿は [experiment_runner.md](/workspace/notes/themes/experiment_runner.md)、[environment_setup.md](/workspace/notes/knowledge/environment_setup.md)、[experiment_operations.md](/workspace/notes/knowledge/experiment_operations.md) です。
