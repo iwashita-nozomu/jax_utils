@@ -22,13 +22,16 @@ from .execution_result import (
     FailureKind,
     build_failure_result,
     build_parent_exit_result,
+    build_skipped_result,
     coerce_execution_result,
 )
 from .jax_context import check_picklable, get_spawn_context
 from .process_supervisor import terminate_then_kill_process
 from .protocols import (
+    DispatchDecision,
     ResourceEstimate,
     Scheduler,
+    SkipController,
     SUCCESS_EXIT_CODE,
     TaskContext,
     Worker,
@@ -159,10 +162,12 @@ class StandardScheduler(Generic[T]):
         resource_capacity: StandardResourceCapacity,
         cases: list[T],
         context_builder: Callable[[T], TaskContext] | None = None,
+        skip_controller: SkipController[T] | None = None,
     ) -> None:
         self._resource_capacity = resource_capacity
         self._pending_cases = list(cases)
         self._context_builder = context_builder
+        self._skip_controller = skip_controller
         self.completions: list[StandardCompletion[T]] = []
 
     @property
@@ -185,6 +190,17 @@ class StandardScheduler(Generic[T]):
             return case, self._build_context(case)
         return None
 
+    def dispatch_decision(self, case: T, context: TaskContext) -> DispatchDecision:
+        if self._skip_controller is None:
+            return DispatchDecision.run()
+        decision = cast(object, self._skip_controller.should_skip(case, context))
+        if not isinstance(decision, DispatchDecision):
+            raise TypeError(
+                "skip_controller.should_skip must return "
+                "experiment_runner.protocols.DispatchDecision."
+            )
+        return decision
+
     def on_finish(
         self,
         case: T,
@@ -192,13 +208,16 @@ class StandardScheduler(Generic[T]):
         result: ExecutionResult | int,
     ) -> None:
         """完了時に `completions` に結果を記録する（context は複製して保存）。"""
+        normalized_result = coerce_execution_result(result)
         self.completions.append(
             StandardCompletion(
                 case=case,
                 context=dict(context),
-                result=result,
+                result=normalized_result,
             )
         )
+        if self._skip_controller is not None:
+            self._skip_controller.update(case, context, normalized_result)
 
     def is_completed(self) -> bool:
         return not self._pending_cases
@@ -302,6 +321,15 @@ class StandardRunner(Generic[T, U]):
                     if job is None:
                         break
                     case, context = job
+                    decision = self._resolve_dispatch_decision(case, context)
+                    if decision.action == "skip":
+                        self.scheduler.on_finish(
+                            case,
+                            context,
+                            build_skipped_result(decision.message, source="runner"),
+                        )
+                        self._report_progress(start_time, total_cases, len(running))
+                        continue
                     receiver, sender = spawn_context.Pipe(duplex=False)
                     process = spawn_context.Process(
                         target=_run_worker_in_child,
@@ -347,6 +375,22 @@ class StandardRunner(Generic[T, U]):
                     child.process,
                     grace_seconds=self.termination_grace_seconds,
                 )
+
+    def _resolve_dispatch_decision(
+        self,
+        case: T,
+        context: TaskContext,
+    ) -> DispatchDecision:
+        decision_fn = getattr(self.scheduler, "dispatch_decision", None)
+        if decision_fn is None:
+            return DispatchDecision.run()
+        decision = cast(object, decision_fn(case, context))
+        if not isinstance(decision, DispatchDecision):
+            raise TypeError(
+                "scheduler.dispatch_decision must return "
+                "experiment_runner.protocols.DispatchDecision."
+            )
+        return decision
 
     def _finish_timed_out_processes(
         self,

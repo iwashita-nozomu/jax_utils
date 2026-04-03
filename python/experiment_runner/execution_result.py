@@ -67,6 +67,21 @@ def build_success_result(worker_exit_code: int = 0, /) -> ExecutionResult:
     )
 
 
+def build_skipped_result(
+    message: str = "",
+    /,
+    *,
+    source: str = "runner",
+) -> ExecutionResult:
+    """Build a skipped execution result without starting a child process."""
+    return ExecutionResult(
+        status="skipped",
+        message=message,
+        worker_exit_code=0,
+        source=source,
+    )
+
+
 def build_failure_result(
     *,
     failure_kind: FailureKind | str,
