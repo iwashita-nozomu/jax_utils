@@ -47,8 +47,6 @@ U = TypeVar("U")
 # ProgressCallback は実行完了ごとに呼び出される
 # 引数: completed_count (完了数), total_count (全体), elapsed_time (経過時間秒), running_count (実行中数)
 ProgressCallback = Callable[[int, int, float, int], None] | None
-CaseStartedCallback = Callable[[T, TaskContext, int], None] | None
-CaseFinishedCallback = Callable[[T, TaskContext, ExecutionResult, int | None], None] | None
 
 __all__ = [
     "StandardWorker",
@@ -302,8 +300,12 @@ class StandardRunner(Generic[T, U]):
         case_timeout_seconds: float | None = None,
         termination_grace_seconds: float = 5.0,
         monitor: RuntimeMonitor | None = None,
-        on_case_started: CaseStartedCallback = None,
-        on_case_finished: CaseFinishedCallback = None,
+        on_case_started: Callable[[T, TaskContext, int], None] | None = None,
+        on_case_finished: Callable[
+            [T, TaskContext, ExecutionResult, int | None],
+            None,
+        ]
+        | None = None,
     ) -> None:
         """
         ランナーを初期化する。
