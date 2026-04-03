@@ -6,7 +6,11 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 from typing import Any, Callable, Protocol, TypeAlias, TypeVar
+
+if TYPE_CHECKING:
+    from .execution_result import ExecutionResult
 
 
 T = TypeVar("T")
@@ -67,7 +71,12 @@ class Scheduler(Protocol[T]):
 
     def next_case(self) -> tuple[T, TaskContext] | None: ...
 
-    def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None: ...
+    def on_finish(
+        self,
+        case: T,
+        context: TaskContext,
+        result: "ExecutionResult | int",
+    ) -> None: ...
 
     def is_completed(self) -> bool: ...
 

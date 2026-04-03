@@ -10,10 +10,13 @@
 
 from . import jax_context as jax_context
 from . import runner as runner
-from . import gpu_runner as gpu_runner
 from . import resource_scheduler as resource_scheduler
 from . import protocols as protocols
 from . import subprocess_scheduler as subprocess_scheduler
+from . import monitor as monitor
+from . import execution_result as execution_result
+from . import process_supervisor as process_supervisor
+from . import child_runtime as child_runtime
 
 # 便宜的に最もよく使われるシンボルのみ top-level に再エクスポートします。
 # - 詳細な API は引き続きサブモジュールから明示的にインポートしてください。
@@ -34,17 +37,12 @@ from .resource_scheduler import (
     FullResourceEstimate,
     StandardFullResourceScheduler,
     GPUDeviceCapacity,
+    GPUEnvironmentConfig,
     detect_gpu_devices,
     detect_host_memory_bytes,
     detect_max_workers,
 )
 
-# GPU-specific helpers
-from .gpu_runner import (
-    GPUResourceCapacity,
-    StandardGPUScheduler,
-    visible_gpu_ids_from_environment,
-)
 from .subprocess_scheduler import (
     CHILD_COMPLETE_PREFIX,
     WorkerSlot,
@@ -54,6 +52,14 @@ from .subprocess_scheduler import (
     json_compatible,
     run_cases_with_subprocess_scheduler,
     worker_slot_from_mapping,
+)
+from .monitor import (
+    RuntimeMonitor,
+    RuntimeMonitorConfig,
+)
+from .execution_result import (
+    ExecutionResult,
+    FailureKind,
 )
 
 # Protocols / constants / JAX utilities
@@ -84,13 +90,10 @@ __all__ = [
     "FullResourceEstimate",
     "StandardFullResourceScheduler",
     "GPUDeviceCapacity",
+    "GPUEnvironmentConfig",
     "detect_gpu_devices",
     "detect_host_memory_bytes",
     "detect_max_workers",
-    # gpu
-    "GPUResourceCapacity",
-    "StandardGPUScheduler",
-    "visible_gpu_ids_from_environment",
     # subprocess scheduler
     "CHILD_COMPLETE_PREFIX",
     "WorkerSlot",
@@ -100,6 +103,11 @@ __all__ = [
     "json_compatible",
     "run_cases_with_subprocess_scheduler",
     "worker_slot_from_mapping",
+    # monitor
+    "RuntimeMonitor",
+    "RuntimeMonitorConfig",
+    "ExecutionResult",
+    "FailureKind",
     # protocols / constants / jax utilities
     "TaskContext",
     "SUCCESS_EXIT_CODE",

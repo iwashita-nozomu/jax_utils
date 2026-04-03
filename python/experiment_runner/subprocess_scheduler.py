@@ -24,6 +24,9 @@ from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
 import numpy as np
+from jax_util.xla_env import build_cpu_env, build_gpu_env
+
+from .monitor import RuntimeMonitor
 
 
 CHILD_COMPLETE_PREFIX = "EXPERIMENT_RUNNER_COMPLETE "
@@ -202,8 +205,6 @@ def apply_worker_environment(
     disable_gpu_preallocation: bool,
 ) -> None:
     """Apply process-local environment settings for a subprocess worker."""
-    if disable_gpu_preallocation:
-        os.environ["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
     os.environ["OMP_NUM_THREADS"] = "1"
     os.environ["OPENBLAS_NUM_THREADS"] = "1"
     os.environ["MKL_NUM_THREADS"] = "1"
@@ -213,12 +214,18 @@ def apply_worker_environment(
 
     if platform == "gpu":
         os.environ.pop("JAX_PLATFORMS", None)
-        if worker_slot.gpu_index is not None:
-            os.environ["CUDA_VISIBLE_DEVICES"] = str(worker_slot.gpu_index)
-            os.environ["SMOLYAK_GPU_INDEX"] = str(worker_slot.gpu_index)
+        visible_devices = (
+            str(worker_slot.gpu_index) if worker_slot.gpu_index is not None else ""
+        )
+        os.environ.update(
+            build_gpu_env(
+                visible_devices=visible_devices,
+                disable_preallocation=disable_gpu_preallocation,
+            )
+        )
+        os.environ["SMOLYAK_GPU_INDEX"] = visible_devices or "cpu"
     else:
-        os.environ["JAX_PLATFORMS"] = "cpu"
-        os.environ.pop("CUDA_VISIBLE_DEVICES", None)
+        os.environ.update(build_cpu_env())
         os.environ["SMOLYAK_GPU_INDEX"] = "cpu"
 
     os.environ["EXPERIMENT_RUNNER_WORKER_LABEL"] = worker_slot.worker_label
@@ -250,6 +257,18 @@ def _terminate_process(process: subprocess.Popen[str], /) -> tuple[str, str]:
     return process.communicate()
 
 
+def _case_id_value(case: Mapping[str, object], /) -> object | None:
+    if "case_id" not in case:
+        return None
+    return json_compatible(case["case_id"])
+
+
+def _worker_gpu_ids(worker_slot: WorkerSlot, /) -> tuple[int, ...]:
+    if worker_slot.gpu_index is None:
+        return ()
+    return (worker_slot.gpu_index,)
+
+
 def run_cases_with_subprocess_scheduler(
     cases: Sequence[Mapping[str, object]],
     worker_slots: Sequence[WorkerSlot],
@@ -268,6 +287,7 @@ def run_cases_with_subprocess_scheduler(
     ]
     | None = None,
     poll_interval_seconds: float = 0.05,
+    monitor: RuntimeMonitor | None = None,
 ) -> list[dict[str, object]]:
     """Run cases with host-managed child processes and explicit worker slots."""
     if not worker_slots:
@@ -277,6 +297,18 @@ def run_cases_with_subprocess_scheduler(
     free_slots = deque(worker_slots)
     running_children: dict[int, _RunningChild] = {}
     all_results: list[dict[str, object]] = []
+
+    def update_monitor_state() -> None:
+        if monitor is None:
+            return
+        monitor.update_runner_state(
+            pending_cases=len(pending_cases),
+            running_cases=len(running_children),
+            completed_cases=len(all_results),
+            max_workers=len(worker_slots),
+        )
+
+    update_monitor_state()
 
     while pending_cases or running_children:
         while pending_cases and free_slots:
@@ -299,6 +331,14 @@ def run_cases_with_subprocess_scheduler(
                 process=process,
                 started_at=time.monotonic(),
             )
+            if monitor is not None:
+                monitor.register_worker(
+                    case_id=_case_id_value(case),
+                    worker_label=worker_slot.worker_label,
+                    pid=process.pid,
+                    gpu_ids=_worker_gpu_ids(worker_slot),
+                )
+            update_monitor_state()
 
         finished_pids: list[int] = []
         now = time.monotonic()
@@ -316,10 +356,13 @@ def run_cases_with_subprocess_scheduler(
                 if fallback_jsonl_output_path is not None:
                     append_jsonl_record(fallback_jsonl_output_path, result)
                 all_results.append(result)
+                if monitor is not None:
+                    monitor.complete_worker(pid=pid, result=result)
                 if on_case_finished is not None:
                     on_case_finished(child.case, child.worker_slot, result)
                 free_slots.append(child.worker_slot)
                 finished_pids.append(pid)
+                update_monitor_state()
                 continue
 
             returncode = child.process.poll()
@@ -342,13 +385,18 @@ def run_cases_with_subprocess_scheduler(
                 result = completion
 
             all_results.append(result)
+            if monitor is not None:
+                monitor.complete_worker(pid=pid, result=result)
             if on_case_finished is not None:
                 on_case_finished(child.case, child.worker_slot, result)
             free_slots.append(child.worker_slot)
             finished_pids.append(pid)
+            update_monitor_state()
 
         for pid in finished_pids:
             del running_children[pid]
+        if finished_pids:
+            update_monitor_state()
 
         if running_children:
             time.sleep(poll_interval_seconds)

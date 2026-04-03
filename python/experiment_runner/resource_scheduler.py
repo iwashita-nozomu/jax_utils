@@ -15,10 +15,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 import subprocess
-from typing import Callable, Generic, Mapping, Protocol, Sequence, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, Mapping, Protocol, Sequence, TypeVar, cast
+
+from jax_util.xla_env import build_gpu_env, merge_env_vars
 
 from .protocols import TaskContext, Worker
 from .runner import StandardResourceCapacity, StandardScheduler
+
+if TYPE_CHECKING:
+    from .execution_result import ExecutionResult
 
 
 # ジェネリック型定義
@@ -26,6 +31,7 @@ T = TypeVar("T")
 
 __all__ = [
     "GPUDeviceCapacity",
+    "GPUEnvironmentConfig",
     "FullResourceCapacity",
     "FullResourceEstimate",
     "detect_max_workers",
@@ -78,6 +84,55 @@ class GPUDeviceCapacity:
         _validate_int(self.gpu_id, "gpu_id", minimum=0)
         _validate_int(self.memory_bytes, "memory_bytes", minimum=0)
         _validate_int(self.max_slots, "max_slots", minimum=1)
+
+
+@dataclass(frozen=True)
+class GPUEnvironmentConfig:
+    disable_preallocation: bool = False
+    memory_fraction: float | None = None
+    xla_client_allocator: str | None = None
+    tf_gpu_allocator: str | None = None
+    use_cuda_host_allocator: bool | None = None
+
+    def __post_init__(self) -> None:
+        if self.memory_fraction is not None:
+            if isinstance(self.memory_fraction, bool):
+                raise TypeError("memory_fraction must be numeric, bool is not allowed.")
+            if not 0.0 < float(self.memory_fraction) <= 1.0:
+                raise ValueError("memory_fraction must be within (0, 1].")
+        if self.xla_client_allocator is not None and not self.xla_client_allocator:
+            raise ValueError("xla_client_allocator must not be empty.")
+        if self.tf_gpu_allocator is not None and not self.tf_gpu_allocator:
+            raise ValueError("tf_gpu_allocator must not be empty.")
+
+    def build_environment_variables(self) -> dict[str, str]:
+        return build_gpu_env(
+            disable_preallocation=self.disable_preallocation,
+            memory_fraction=self.memory_fraction,
+            allocator=self.xla_client_allocator,
+            tf_gpu_allocator=self.tf_gpu_allocator,
+            use_cuda_host_allocator=self.use_cuda_host_allocator,
+        )
+
+
+def _merge_gpu_environment_config(
+    *,
+    disable_gpu_preallocation: bool,
+    gpu_environment_config: GPUEnvironmentConfig | None,
+) -> GPUEnvironmentConfig | None:
+    if gpu_environment_config is None:
+        if not disable_gpu_preallocation:
+            return None
+        return GPUEnvironmentConfig(disable_preallocation=True)
+    return GPUEnvironmentConfig(
+        disable_preallocation=(
+            gpu_environment_config.disable_preallocation or disable_gpu_preallocation
+        ),
+        memory_fraction=gpu_environment_config.memory_fraction,
+        xla_client_allocator=gpu_environment_config.xla_client_allocator,
+        tf_gpu_allocator=gpu_environment_config.tf_gpu_allocator,
+        use_cuda_host_allocator=gpu_environment_config.use_cuda_host_allocator,
+    )
 
 
 @dataclass(frozen=True)
@@ -203,16 +258,28 @@ def detect_host_memory_bytes(
     # 実効メモリを 0.8 倍に制限して、常用時の安定性を優先する。
     return int(page_size_value * phys_pages_value * 0.8)
 
-'''
-review:
-_visible_gpu_ids_from_environment と _query_gpu_rows_from_system は、環境変数の解釈とシステムからの GPU 情報取得を分担して行う関数で、detect_gpu_devices 内で呼び出される。
-この分割は責務の分離という観点で適切に見える。
-この段階で正規化すれば、のちの検証は不要
-'''
+def _resolve_visible_gpu_ids(
+    environ: Mapping[str, str] | None = None,
+    /,
+) -> tuple[int, ...] | None:
+    """環境変数から可視 GPU 一覧を解決する。
 
-
-# Note: 上の詳細説明に従って、環境変数の解析は各呼び出し側で簡潔に行います。
-# 旧来の `_visible_gpu_ids_from_environment` は単純化のため削除しました。
+    - 明示指定がなければ `None` を返す。
+    - 空文字 / "-1" / "none" / "void" は「GPU を使わない」とみなして空タプルを返す。
+    - "all" は検出された全 GPU を使う指定として `None` を返す。
+    """
+    source = os.environ if environ is None else environ
+    for env_name in _GPU_ENV_NAMES:
+        raw = source.get(env_name)
+        if raw is None:
+            continue
+        stripped = raw.strip().lower()
+        if stripped in {"", "-1", "none", "void"}:
+            return ()
+        if stripped == "all":
+            return None
+        return tuple(int(token.strip()) for token in raw.split(",") if token.strip())
+    return None
 
 
 def _query_gpu_rows_from_system(
@@ -240,22 +307,7 @@ def _query_gpu_rows_from_system(
     except (FileNotFoundError, subprocess.CalledProcessError) as exc:
         # nvidia-smi が無い環境では GPU メモリ量を検出できない。
         # 環境変数で明示的に GPU を指定している場合、メモリ量の確認が必須なので失敗させる。
-        source = os.environ if environ is None else environ
-        # 簡潔に環境変数を解釈する（詳細はモジュール先頭コメント参照）
-        specified = None
-        for env_name in _GPU_ENV_NAMES:
-            raw = source.get(env_name)
-            if raw is None:
-                continue
-            s = raw.strip().lower()
-            if s in {"", "-1", "none", "void"}:
-                specified = ()
-                break
-            if s == "all":
-                specified = None
-                break
-            specified = tuple(int(token.strip()) for token in raw.split(",") if token.strip())
-            break
+        specified = _resolve_visible_gpu_ids(environ)
         if specified not in {None, ()}:
             raise RuntimeError(
                 f"GPU devices specified in environment variables ({_GPU_ENV_NAMES}) "
@@ -285,21 +337,7 @@ def detect_gpu_devices(
 ) -> tuple[GPUDeviceCapacity, ...]:
     _validate_int(max_slots, "max_slots", minimum=1)
     # 環境変数で明示的に GPU を無効にしている場合は空のタプルを返す。
-    source = os.environ if environ is None else environ
-    visible_gpu_ids = None
-    for env_name in _GPU_ENV_NAMES:
-        raw = source.get(env_name)
-        if raw is None:
-            continue
-        s = raw.strip().lower()
-        if s in {"", "-1", "none", "void"}:
-            visible_gpu_ids = ()
-            break
-        if s == "all":
-            visible_gpu_ids = None
-            break
-        visible_gpu_ids = tuple(int(token.strip()) for token in raw.split(",") if token.strip())
-        break
+    visible_gpu_ids = _resolve_visible_gpu_ids(environ)
     if visible_gpu_ids == ():
         return ()
 
@@ -366,6 +404,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         worker: FullResourceWorker[T],
         context_builder: Callable[[T], TaskContext] | None = None,
         disable_gpu_preallocation: bool = False,
+        gpu_environment_config: GPUEnvironmentConfig | None = None,
         resource_capacity: FullResourceCapacity | None = None,
     ) -> StandardFullResourceScheduler[T]:
         resolved_capacity = (
@@ -379,6 +418,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             estimate_builder=worker.resource_estimate,
             context_builder=context_builder,
             disable_gpu_preallocation=disable_gpu_preallocation,
+            gpu_environment_config=gpu_environment_config,
         )
 
     def __init__(
@@ -388,6 +428,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         estimate_builder: Callable[[T], FullResourceEstimate],
         context_builder: Callable[[T], TaskContext] | None = None,
         disable_gpu_preallocation: bool = False,
+        gpu_environment_config: GPUEnvironmentConfig | None = None,
     ) -> None:
         """
         スケジューラの内部状態を初期化する。
@@ -403,7 +444,10 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             context_builder=context_builder,
         )
         self._estimate_builder = estimate_builder
-        self._disable_gpu_preallocation = disable_gpu_preallocation
+        self._gpu_environment_config = _merge_gpu_environment_config(
+            disable_gpu_preallocation=disable_gpu_preallocation,
+            gpu_environment_config=gpu_environment_config,
+        )
 
         # 各ケースを資源見積り付きの保留エントリへ変換する
         self._pending_entries = [
@@ -431,7 +475,15 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
 
     @property
     def resource_capacity(self) -> FullResourceCapacity:
-        return self._resource_capacity
+        return cast(FullResourceCapacity, self._resource_capacity)
+
+    @property
+    def total_case_count(self) -> int:
+        return (
+            len(self.completions)
+            + len(self._pending_entries)
+            + len(self._active_allocations)
+        )
 
     def _build_estimate(self, case: T) -> FullResourceEstimate:
         estimate = self._estimate_builder(case)
@@ -528,22 +580,29 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             # 予約リストから取り除く
             self._pending_entries.pop(index)
             context = self._build_context(pending_entry.case)
-            env_vars: dict[str, str] = {}
+            inherited_env_vars = context.get("environment_variables", {})
+            if not isinstance(inherited_env_vars, dict):
+                raise TypeError("context['environment_variables'] must be a dict.")
+            env_vars = {
+                str(key): str(value) for key, value in inherited_env_vars.items()
+            }
             if allocation.gpu_ids:
                 gpu_ids_text = ",".join(str(gpu_id) for gpu_id in allocation.gpu_ids)
-                env_vars["gpu_ids"] = gpu_ids_text
-                env_vars["CUDA_VISIBLE_DEVICES"] = gpu_ids_text
-                env_vars["NVIDIA_VISIBLE_DEVICES"] = gpu_ids_text
-                if len(allocation.gpu_ids) == 1:
-                    env_vars["gpu_id"] = str(allocation.gpu_ids[0])
-                if self._disable_gpu_preallocation:
-                    env_vars["XLA_PYTHON_CLIENT_PREALLOCATE"] = "false"
-                env_vars.setdefault("TF_GPU_ALLOCATOR", "cuda_malloc_async")
-                env_vars.setdefault("XLA_PYTHON_CLIENT_ALLOCATOR", "platform")
-                env_vars.setdefault(
-                    "XLA_PYTHON_CLIENT_USE_CUDA_HOST_ALLOCATOR",
-                    "false",
+                allocation_env_vars = build_gpu_env(
+                    visible_devices=gpu_ids_text,
+                    disable_preallocation=False,
                 )
+                allocation_env_vars["gpu_ids"] = gpu_ids_text
+                if len(allocation.gpu_ids) == 1:
+                    allocation_env_vars["gpu_id"] = str(allocation.gpu_ids[0])
+                if self._gpu_environment_config is not None:
+                    env_vars = merge_env_vars(
+                        env_vars,
+                        allocation_env_vars,
+                        self._gpu_environment_config.build_environment_variables(),
+                    )
+                else:
+                    env_vars = merge_env_vars(env_vars, allocation_env_vars)
             context["environment_variables"] = env_vars
 
             # コンテキストをキーに割当を記録しておく（on_finish で復元する）
@@ -551,8 +610,13 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             return pending_entry.case, context
         return None
 
-    def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:
-        super().on_finish(case, context, exit_code)
+    def on_finish(
+        self,
+        case: T,
+        context: TaskContext,
+        result: "ExecutionResult | int",
+    ) -> None:
+        super().on_finish(case, context, result)
 
         # 実行完了後はスケジューラ側で割り当てたリソースを解放する。
         allocation = self._active_allocations.pop(id(context), None)
