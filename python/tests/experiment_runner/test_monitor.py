@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import sys
-import textwrap
 import time
 from pathlib import Path
 from urllib.error import URLError
@@ -13,10 +12,12 @@ if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
 from experiment_runner.monitor import RuntimeMonitor
-from experiment_runner.subprocess_scheduler import (
-    CHILD_COMPLETE_PREFIX,
-    WorkerSlot,
-    run_cases_with_subprocess_scheduler,
+from experiment_runner.protocols import TaskContext
+from experiment_runner.runner import (
+    StandardResourceCapacity,
+    StandardRunner,
+    StandardScheduler,
+    StandardWorker,
 )
 
 
@@ -41,26 +42,9 @@ def _wait_for_url(url: str, /) -> None:
     raise AssertionError(f"monitor endpoint did not become ready: {url}")
 
 
-def _write_script(path: Path, body: str) -> Path:
-    path.write_text(textwrap.dedent(body), encoding="utf-8")
-    return path
-
-
-def _failure_result(
-    case: dict[str, object],
-    worker_slot: WorkerSlot,
-    failure_kind: str,
-    error: str,
-    traceback_text: str,
-) -> dict[str, object]:
-    return {
-        "status": "failed",
-        "case_id": int(case["case_id"]),
-        "worker_label": worker_slot.worker_label,
-        "failure_kind": failure_kind,
-        "error": error,
-        "traceback": traceback_text,
-    }
+def _sleep_task(case: dict[str, object], context: TaskContext) -> None:
+    del context
+    time.sleep(float(case["sleep_seconds"]))
 
 
 def test_runtime_monitor_serves_http_snapshot_history_and_events() -> None:
@@ -160,22 +144,7 @@ def test_runtime_monitor_serves_http_snapshot_history_and_events() -> None:
         monitor.stop()
 
 
-def test_subprocess_scheduler_updates_runtime_monitor_state(tmp_path: Path) -> None:
-    child_script = _write_script(
-        tmp_path / "success_child.py",
-        f"""
-        import json
-        import sys
-        import time
-
-        time.sleep(0.1)
-        print({CHILD_COMPLETE_PREFIX!r} + json.dumps({{
-            "status": "ok",
-            "case_id": int(sys.argv[1]),
-            "worker_label": sys.argv[2],
-        }}), flush=True)
-        """,
-    )
+def test_standard_runner_updates_runtime_monitor_state() -> None:
     monitor = RuntimeMonitor.for_run(
         enable_http=False,
         sample_interval_seconds=0.02,
@@ -191,36 +160,25 @@ def test_subprocess_scheduler_updates_runtime_monitor_state(tmp_path: Path) -> N
     )
     monitor.start()
     try:
-        worker_slots = [
-            WorkerSlot(
-                worker_label="cpu-0",
-                gpu_index=None,
-                gpu_slot=0,
-                cpu_affinity=(),
-            )
-        ]
-        results = run_cases_with_subprocess_scheduler(
-            [{"case_id": 1}, {"case_id": 2}],
-            worker_slots,
-            timeout_seconds=5,
-            build_child_command=lambda case, worker_slot: [
-                sys.executable,
-                str(child_script),
-                str(case["case_id"]),
-                worker_slot.worker_label,
+        scheduler = StandardScheduler(
+            resource_capacity=StandardResourceCapacity(max_workers=1),
+            cases=[
+                {"case_id": 1, "sleep_seconds": 0.1},
+                {"case_id": 2, "sleep_seconds": 0.1},
             ],
-            build_parent_failure_result=_failure_result,
-            fallback_jsonl_output_path=None,
-            cwd=tmp_path,
-            poll_interval_seconds=0.01,
+            context_builder=lambda case: {
+                "runner_metadata": {
+                    "worker_label": f"cpu-{int(case['case_id'])}",
+                    "gpu_ids": [],
+                }
+            },
+        )
+        runner = StandardRunner(
+            scheduler,
             monitor=monitor,
         )
+        runner.run(StandardWorker(_sleep_task))
         monitor.collect_once()
-
-        assert results == [
-            {"status": "ok", "case_id": 1, "worker_label": "cpu-0"},
-            {"status": "ok", "case_id": 2, "worker_label": "cpu-0"},
-        ]
 
         snapshot = monitor.snapshot()
         assert snapshot["runner"] == {

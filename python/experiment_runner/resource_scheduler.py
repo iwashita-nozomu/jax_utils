@@ -12,6 +12,7 @@
 
 from __future__ import annotations
 
+from collections import deque
 from dataclasses import dataclass
 import os
 import subprocess
@@ -72,6 +73,35 @@ def _validate_int(
             raise ValueError(f"{field_name} must be positive.")
         raise ValueError(f"{field_name} must be non-negative.")
     return iv
+
+
+def _available_cpu_indices() -> list[int]:
+    if hasattr(os, "sched_getaffinity"):
+        return sorted(int(cpu) for cpu in os.sched_getaffinity(0))
+    cpu_count = os.cpu_count() or 1
+    return list(range(cpu_count))
+
+
+def _partition_cpu_indices(num_workers: int, /) -> list[list[int]]:
+    cpu_indices = _available_cpu_indices()
+    if num_workers < 1:
+        raise ValueError("num_workers must be positive.")
+    if not cpu_indices:
+        return [[] for _ in range(num_workers)]
+
+    base = len(cpu_indices) // num_workers
+    extra = len(cpu_indices) % num_workers
+    groups: list[list[int]] = []
+    start = 0
+    for worker_index in range(num_workers):
+        group_size = base + (1 if worker_index < extra else 0)
+        if group_size <= 0:
+            groups.append([cpu_indices[worker_index % len(cpu_indices)]])
+            continue
+        stop = start + group_size
+        groups.append(cpu_indices[start:stop])
+        start = stop
+    return groups
 
 
 @dataclass(frozen=True)
@@ -387,10 +417,13 @@ class _PendingCase(Generic[T]):
 
 @dataclass(frozen=True)
 class _RunningAllocation:
+    worker_slot_id: int
+    cpu_affinity: tuple[int, ...]
     host_memory_bytes: int
     gpu_ids: tuple[int, ...]
     gpu_memory_bytes: int
     gpu_slots: int
+    gpu_slot_assignments: tuple[tuple[int, tuple[int, ...]], ...]
 
 
 class FullResourceWorker(Worker[T, int], Protocol[T]):
@@ -465,6 +498,12 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
 
         # 初期の利用可能リソースを記録
         self._available_worker_slots = resource_capacity.max_workers
+        self._available_worker_slot_ids = deque(range(resource_capacity.max_workers))
+        cpu_groups = _partition_cpu_indices(resource_capacity.max_workers)
+        self._worker_cpu_affinities = {
+            worker_slot_id: tuple(cpu_groups[worker_slot_id])
+            for worker_slot_id in range(resource_capacity.max_workers)
+        }
         self._available_host_memory_bytes = resource_capacity.host_memory_bytes
         self._available_gpu_memory_bytes = {
             gpu_device.gpu_id: gpu_device.memory_bytes
@@ -472,6 +511,10 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         }
         self._available_gpu_slots = {
             gpu_device.gpu_id: gpu_device.max_slots
+            for gpu_device in resource_capacity.gpu_devices
+        }
+        self._available_gpu_slot_ids = {
+            gpu_device.gpu_id: list(range(gpu_device.max_slots))
             for gpu_device in resource_capacity.gpu_devices
         }
 
@@ -548,6 +591,8 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         """
         if self._available_worker_slots < 1:
             return None
+        if not self._available_worker_slot_ids:
+            return None
         if self._available_host_memory_bytes < estimate.host_memory_bytes:
             return None
 
@@ -555,19 +600,54 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         if gpu_ids is None:
             return None
 
+        gpu_slot_assignments: list[tuple[int, tuple[int, ...]]] = []
+        for gpu_id in gpu_ids:
+            available_slot_ids = self._available_gpu_slot_ids[gpu_id]
+            if len(available_slot_ids) < estimate.gpu_slots:
+                return None
+
         # リソースを減らして割当を確定する
+        worker_slot_id = self._available_worker_slot_ids.popleft()
+        cpu_affinity = self._worker_cpu_affinities.get(worker_slot_id, ())
         self._available_worker_slots -= 1
         self._available_host_memory_bytes -= estimate.host_memory_bytes
         for gpu_id in gpu_ids:
+            selected_slot_ids = tuple(self._available_gpu_slot_ids[gpu_id][: estimate.gpu_slots])
+            del self._available_gpu_slot_ids[gpu_id][: estimate.gpu_slots]
             self._available_gpu_slots[gpu_id] -= estimate.gpu_slots
             self._available_gpu_memory_bytes[gpu_id] -= estimate.gpu_memory_bytes
+            gpu_slot_assignments.append((gpu_id, selected_slot_ids))
 
         return _RunningAllocation(
+            worker_slot_id=worker_slot_id,
+            cpu_affinity=cpu_affinity,
             host_memory_bytes=estimate.host_memory_bytes,
             gpu_ids=gpu_ids,
             gpu_memory_bytes=estimate.gpu_memory_bytes,
             gpu_slots=estimate.gpu_slots,
+            gpu_slot_assignments=tuple(gpu_slot_assignments),
         )
+
+    def _worker_label_for_allocation(self, allocation: _RunningAllocation, /) -> str:
+        if not allocation.gpu_slot_assignments:
+            return f"cpu-w{allocation.worker_slot_id}"
+
+        labels: list[str] = []
+        for gpu_id, slot_ids in allocation.gpu_slot_assignments:
+            if len(slot_ids) == 1:
+                labels.append(f"gpu-{gpu_id}-w{slot_ids[0]}")
+            else:
+                slot_ids_text = "-".join(str(slot_id) for slot_id in slot_ids)
+                labels.append(f"gpu-{gpu_id}-w{slot_ids_text}")
+        return "+".join(labels)
+
+    def _single_gpu_slot(self, allocation: _RunningAllocation, /) -> int | None:
+        if len(allocation.gpu_slot_assignments) != 1:
+            return None
+        _, slot_ids = allocation.gpu_slot_assignments[0]
+        if len(slot_ids) != 1:
+            return None
+        return int(slot_ids[0])
 
     def next_case(self) -> tuple[T, TaskContext] | None:
         """
@@ -608,7 +688,27 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
                     )
                 else:
                     env_vars = merge_env_vars(env_vars, allocation_env_vars)
+
+            worker_label = self._worker_label_for_allocation(allocation)
+            env_vars["EXPERIMENT_RUNNER_WORKER_LABEL"] = worker_label
+            env_vars["EXPERIMENT_RUNNER_CPU_AFFINITY"] = ",".join(
+                str(cpu) for cpu in allocation.cpu_affinity
+            )
+            if allocation.gpu_ids:
+                env_vars["EXPERIMENT_RUNNER_ASSIGNED_GPU_IDS"] = ",".join(
+                    str(gpu_id) for gpu_id in allocation.gpu_ids
+                )
+            gpu_slot = self._single_gpu_slot(allocation)
+            if gpu_slot is not None:
+                env_vars["EXPERIMENT_RUNNER_GPU_SLOT"] = str(gpu_slot)
             context["environment_variables"] = env_vars
+            context["runner_metadata"] = {
+                "worker_label": worker_label,
+                "worker_slot_id": allocation.worker_slot_id,
+                "cpu_affinity": list(allocation.cpu_affinity),
+                "gpu_ids": list(allocation.gpu_ids),
+                "gpu_slot": gpu_slot,
+            }
 
             # コンテキストをキーに割当を記録しておく（on_finish で復元する）
             self._active_allocations[id(context)] = allocation
@@ -630,10 +730,13 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
 
         # ワーカースロット、ホストメモリ、GPU スロット/メモリを戻す
         self._available_worker_slots += 1
+        self._available_worker_slot_ids.append(allocation.worker_slot_id)
         self._available_host_memory_bytes += allocation.host_memory_bytes
-        for gpu_id in allocation.gpu_ids:
+        for gpu_id, slot_ids in allocation.gpu_slot_assignments:
             self._available_gpu_slots[gpu_id] += allocation.gpu_slots
             self._available_gpu_memory_bytes[gpu_id] += allocation.gpu_memory_bytes
+            self._available_gpu_slot_ids[gpu_id].extend(slot_ids)
+            self._available_gpu_slot_ids[gpu_id].sort()
 
     def is_completed(self) -> bool:
         return not self._pending_entries

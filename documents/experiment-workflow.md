@@ -126,14 +126,10 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 
 `experiment_runner` を使う場合の入口は次です。
 
-- 一般的な実験
-  - `StandardWorker`
-  - `StandardScheduler` または `StandardFullResourceScheduler`
-  - `StandardRunner`
-- host 側で pid / worker slot を強く観測したい実験
-  - `build_worker_slots()`
-  - `run_cases_with_subprocess_scheduler()`
-  - 監視が必要な場合は `RuntimeMonitor`
+- `StandardWorker`
+- `StandardScheduler` または `StandardFullResourceScheduler`
+- `StandardRunner`
+- 監視が必要な場合は `RuntimeMonitor`
 
 `experiment_runner` に委譲するものは次です。
 
@@ -141,6 +137,7 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 - timeout と child cleanup
 - child / parent の diagnostics 記録
 - `environment_variables` の child 反映
+- worker start / finish の host 側観測点
 
 実装時にやらないことは次です。
 

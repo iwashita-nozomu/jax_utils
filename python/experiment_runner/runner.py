@@ -14,7 +14,7 @@ from __future__ import annotations
 from multiprocessing.connection import Connection, wait as wait_for_connections
 import time
 from dataclasses import dataclass
-from typing import Any, Callable, Generic, TypeVar, cast
+from typing import Any, Callable, Generic, Mapping, TypeVar, cast
 
 from .child_runtime import execute_worker_in_child
 from .execution_result import (
@@ -26,6 +26,7 @@ from .execution_result import (
     coerce_execution_result,
 )
 from .jax_context import check_picklable, get_spawn_context
+from .monitor import RuntimeMonitor
 from .process_supervisor import terminate_then_kill_process
 from .protocols import (
     DispatchDecision,
@@ -36,6 +37,7 @@ from .protocols import (
     TaskContext,
     Worker,
 )
+from .result_io import json_compatible
 
 
 T = TypeVar("T")
@@ -54,6 +56,65 @@ __all__ = [
     "StandardRunner",
     "ProgressCallback",
 ]
+
+
+def _mapping_case_id(case: object, /) -> object | None:
+    if not isinstance(case, Mapping):
+        return None
+    if "case_id" not in case:
+        return None
+    return json_compatible(case["case_id"])
+
+
+def _context_runner_metadata(context: TaskContext, /) -> dict[str, object]:
+    metadata = context.get("runner_metadata", {})
+    if not isinstance(metadata, dict):
+        return {}
+    return {str(key): value for key, value in metadata.items()}
+
+
+def _worker_label_from_context(
+    context: TaskContext,
+    /,
+    *,
+    pid: int | None = None,
+) -> str:
+    metadata = _context_runner_metadata(context)
+    worker_label = metadata.get("worker_label")
+    if isinstance(worker_label, str) and worker_label:
+        return worker_label
+
+    env_vars = context.get("environment_variables", {})
+    if isinstance(env_vars, dict):
+        env_worker_label = env_vars.get("EXPERIMENT_RUNNER_WORKER_LABEL")
+        if isinstance(env_worker_label, str) and env_worker_label:
+            return env_worker_label
+
+    if pid is not None:
+        return f"worker-{pid}"
+    return "worker"
+
+
+def _gpu_ids_from_context(context: TaskContext, /) -> tuple[int, ...]:
+    metadata = _context_runner_metadata(context)
+    gpu_ids = metadata.get("gpu_ids")
+    if isinstance(gpu_ids, (list, tuple)):
+        return tuple(int(gpu_id) for gpu_id in gpu_ids)
+
+    env_vars = context.get("environment_variables", {})
+    if not isinstance(env_vars, dict):
+        return ()
+    gpu_ids_text = env_vars.get("gpu_ids")
+    if isinstance(gpu_ids_text, str) and gpu_ids_text:
+        return tuple(
+            int(gpu_id.strip())
+            for gpu_id in gpu_ids_text.split(",")
+            if gpu_id.strip()
+        )
+    gpu_id_text = env_vars.get("gpu_id")
+    if isinstance(gpu_id_text, str) and gpu_id_text:
+        return (int(gpu_id_text),)
+    return ()
 
 
 class StandardWorker(Generic[T, U]):
@@ -238,6 +299,13 @@ class StandardRunner(Generic[T, U]):
         progress_callback: ProgressCallback = None,
         case_timeout_seconds: float | None = None,
         termination_grace_seconds: float = 5.0,
+        monitor: RuntimeMonitor | None = None,
+        on_case_started: Callable[[T, TaskContext, int], None] | None = None,
+        on_case_finished: Callable[
+            [T, TaskContext, ExecutionResult, int | None],
+            None,
+        ]
+        | None = None,
     ) -> None:
         """
         ランナーを初期化する。
@@ -257,6 +325,9 @@ class StandardRunner(Generic[T, U]):
         self.progress_callback = progress_callback
         self.case_timeout_seconds = case_timeout_seconds
         self.termination_grace_seconds = termination_grace_seconds
+        self.monitor = monitor
+        self.on_case_started = on_case_started
+        self.on_case_finished = on_case_finished
 
     def run(self, worker: Worker[T, U]) -> None:
         """ケースを並列実行する。
@@ -313,6 +384,7 @@ class StandardRunner(Generic[T, U]):
         spawn_context = get_spawn_context()
         running: dict[Connection, _RunningProcess[T]] = {}
         start_time = time.time()
+        self._update_monitor_state(total_cases, len(running))
         try:
             while not self.scheduler.is_completed() or running:
                 # max_workers 本まで fresh child process を起動する。
@@ -323,11 +395,14 @@ class StandardRunner(Generic[T, U]):
                     case, context = job
                     decision = self._resolve_dispatch_decision(case, context)
                     if decision.action == "skip":
+                        result = build_skipped_result(decision.message, source="runner")
                         self.scheduler.on_finish(
                             case,
                             context,
-                            build_skipped_result(decision.message, source="runner"),
+                            result,
                         )
+                        self._notify_case_finished(case, context, result, pid=None)
+                        self._update_monitor_state(total_cases, len(running))
                         self._report_progress(start_time, total_cases, len(running))
                         continue
                     receiver, sender = spawn_context.Pipe(duplex=False)
@@ -344,6 +419,8 @@ class StandardRunner(Generic[T, U]):
                         receiver=receiver,
                         started_at=time.monotonic(),
                     )
+                    self._notify_case_started(case, context, process.pid)
+                    self._update_monitor_state(total_cases, len(running))
 
                 self._finish_timed_out_processes(running, start_time, total_cases)
 
@@ -367,6 +444,13 @@ class StandardRunner(Generic[T, U]):
                     child = running.pop(receiver)
                     result = self._receive_child_result(child)
                     self.scheduler.on_finish(child.case, child.context, result)
+                    self._notify_case_finished(
+                        child.case,
+                        child.context,
+                        result,
+                        pid=child.process.pid,
+                    )
+                    self._update_monitor_state(total_cases, len(running))
                     self._report_progress(start_time, total_cases, len(running))
         finally:
             for child in running.values():
@@ -375,6 +459,18 @@ class StandardRunner(Generic[T, U]):
                     child.process,
                     grace_seconds=self.termination_grace_seconds,
                 )
+                self._notify_case_finished(
+                    child.case,
+                    child.context,
+                    build_failure_result(
+                        failure_kind=FailureKind.NO_COMPLETION,
+                        message="Child process was terminated during runner cleanup.",
+                        raw_exit_code=child.process.exitcode,
+                        source="parent",
+                    ),
+                    pid=child.process.pid,
+                )
+            self._update_monitor_state(total_cases, 0)
 
     def _resolve_dispatch_decision(
         self,
@@ -424,6 +520,13 @@ class StandardRunner(Generic[T, U]):
                 source="parent",
             )
             self.scheduler.on_finish(child.case, child.context, result)
+            self._notify_case_finished(
+                child.case,
+                child.context,
+                result,
+                pid=child.process.pid,
+            )
+            self._update_monitor_state(total_cases, len(running))
             self._report_progress(start_time, total_cases, len(running))
 
     def _receive_child_result(
@@ -469,3 +572,46 @@ class StandardRunner(Generic[T, U]):
             elapsed,
             running_count,
         )
+
+    def _update_monitor_state(self, total_cases: int, running_count: int) -> None:
+        if self.monitor is None:
+            return
+        completed = len(self.scheduler.completions)
+        pending = max(total_cases - completed - running_count, 0)
+        self.monitor.update_runner_state(
+            pending_cases=pending,
+            running_cases=running_count,
+            completed_cases=completed,
+            max_workers=self.scheduler.resource_capacity.max_workers,
+        )
+
+    def _notify_case_started(
+        self,
+        case: T,
+        context: TaskContext,
+        pid: int | None,
+    ) -> None:
+        if pid is None:
+            return
+        if self.monitor is not None:
+            self.monitor.register_worker(
+                case_id=_mapping_case_id(case),
+                worker_label=_worker_label_from_context(context, pid=pid),
+                pid=pid,
+                gpu_ids=_gpu_ids_from_context(context),
+            )
+        if self.on_case_started is not None:
+            self.on_case_started(case, context, pid)
+
+    def _notify_case_finished(
+        self,
+        case: T,
+        context: TaskContext,
+        result: ExecutionResult,
+        *,
+        pid: int | None,
+    ) -> None:
+        if self.monitor is not None and pid is not None:
+            self.monitor.complete_worker(pid=pid, result=result.to_dict())
+        if self.on_case_finished is not None:
+            self.on_case_finished(case, context, result, pid)
