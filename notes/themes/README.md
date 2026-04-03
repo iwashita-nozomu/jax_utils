@@ -29,6 +29,4 @@
 
 ## Current Themes
 
-- [experiment_runner_main_integration.md](/workspace/notes/themes/experiment_runner_main_integration.md)
-- [experiment_runner_realtime_monitor.md](/workspace/notes/themes/experiment_runner_realtime_monitor.md)
 - [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md)
