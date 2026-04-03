@@ -6,25 +6,32 @@ import os
 from pathlib import Path
 import sys
 import time
-from typing import cast
+from typing import Callable, TypeVar, cast
 
 PYTHON_ROOT = Path(__file__).resolve().parents[2]
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
-from experiment_runner.context_utils import apply_environment_variables
-from experiment_runner.execution_result import ExecutionResult, FailureKind
-from experiment_runner.protocols import DispatchDecision, TaskContext
+from experiment_runner.execution_result import (
+    ExecutionResult,
+    FailureKind,
+    build_success_result,
+)
+from experiment_runner.protocols import SkipController, TaskContext
+from experiment_runner.resource_scheduler import (
+    FullResourceCapacity,
+    FullResourceEstimate,
+    StandardFullResourceScheduler,
+)
 from experiment_runner.runner import (
     StandardCompletion,
-    StandardResourceCapacity,
     StandardRunner,
-    StandardScheduler,
     StandardWorker,
 )
 
 
 _IMPORT_SENSITIVE_TOKEN_SNAPSHOT: str | None = None
+CaseT = TypeVar("CaseT")
 
 
 def _write_json(path: Path, record: dict[str, object], /) -> None:
@@ -82,7 +89,7 @@ class _ImportSensitiveTask:
     records_dir: Path
 
     def __call__(self, case: dict[str, object], context: TaskContext) -> dict[str, object]:
-        apply_environment_variables(context)
+        del context
         started_at = time.time()
         snapshot = _capture_import_sensitive_token()
         finished_at = time.time()
@@ -156,13 +163,13 @@ class _SkipOddCaseController:
         self,
         case: dict[str, object],
         context: TaskContext,
-    ) -> DispatchDecision:
+    ) -> str | None:
         del context
         case_id = int(case["case_id"])
         if case_id % 2 == 1:
             self.skipped_case_ids.append(case_id)
-            return DispatchDecision.skip("skip odd case_id before spawn")
-        return DispatchDecision.run()
+            return "skip odd case_id before spawn"
+        return None
 
     def update(
         self,
@@ -183,11 +190,11 @@ class _SkipAfterFailureController:
         self,
         case: dict[str, object],
         context: TaskContext,
-    ) -> DispatchDecision:
+    ) -> str | None:
         del context
         if self.skip_remaining and int(case["case_id"]) >= 1:
-            return DispatchDecision.skip("skip after prior failure")
-        return DispatchDecision.run()
+            return "skip after prior failure"
+        return None
 
     def update(
         self,
@@ -207,6 +214,26 @@ def _fail_case_zero(case: dict[str, object], context: TaskContext) -> None:
         raise RuntimeError("case zero failed")
 
 
+def _zero_estimate(case: object) -> FullResourceEstimate:
+    del case
+    return FullResourceEstimate()
+
+
+def _cpu_scheduler(
+    cases: list[CaseT],
+    max_workers: int,
+    context_builder: Callable[[CaseT], TaskContext] | None = None,
+    skip_controller: SkipController[CaseT] | None = None,
+) -> StandardFullResourceScheduler[CaseT]:
+    return StandardFullResourceScheduler(
+        resource_capacity=FullResourceCapacity(max_workers=max_workers),
+        cases=cases,
+        estimate_builder=_zero_estimate,
+        context_builder=context_builder,
+        skip_controller=skip_controller,
+    )
+
+
 def test_standard_runner_isolates_import_sensitive_environment_per_case(
     tmp_path: Path,
 ) -> None:
@@ -216,9 +243,9 @@ def test_standard_runner_isolates_import_sensitive_environment_per_case(
         {"case_id": 1, "visible_token": "gpu-1"},
     ]
 
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=1),
+    scheduler = _cpu_scheduler(
         cases=cases,
+        max_workers=1,
         context_builder=lambda case: {
             "environment_variables": {
                 "VISIBLE_TOKEN": str(case["visible_token"]),
@@ -246,9 +273,9 @@ def test_standard_runner_respects_max_workers_with_fresh_processes(
         {"case_id": 3, "sleep_seconds": 0.25},
     ]
 
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=2),
+    scheduler = _cpu_scheduler(
         cases=cases,
+        max_workers=2,
     )
     runner = StandardRunner(scheduler)
     worker = StandardWorker(_SleepRecordingTask(records_dir))
@@ -268,12 +295,12 @@ def test_standard_runner_respects_max_workers_with_fresh_processes(
 
 def test_standard_runner_progress_callback_uses_scheduler_total_case_count() -> None:
     progress_updates: list[tuple[int, int, int]] = []
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=1),
+    scheduler = _cpu_scheduler(
         cases=[0, 1, 2],
+        max_workers=1,
     )
     scheduler.completions.append(
-        StandardCompletion(case=-1, context={}, exit_code=0)
+        StandardCompletion(case=-1, context={}, result=build_success_result())
     )
     runner = StandardRunner(
         scheduler,
@@ -298,9 +325,9 @@ def test_standard_runner_can_skip_case_before_spawn(tmp_path: Path) -> None:
     ]
     skip_controller = _SkipOddCaseController()
 
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=2),
+    scheduler = _cpu_scheduler(
         cases=cases,
+        max_workers=2,
         skip_controller=skip_controller,
     )
     runner = StandardRunner(scheduler)
@@ -321,19 +348,18 @@ def test_standard_runner_can_skip_case_before_spawn(tmp_path: Path) -> None:
     assert skipped_completion.result.status == "skipped"
     assert skipped_completion.result.message == "skip odd case_id before spawn"
     assert skipped_completion.result.source == "runner"
-    assert skipped_completion.exit_code == 0
     assert skip_controller.skipped_case_ids == [1]
     assert sorted(skip_controller.updates) == [(0, "ok"), (1, "skipped"), (2, "ok")]
 
 
 def test_standard_scheduler_skip_controller_updates_from_result() -> None:
     skip_controller = _SkipAfterFailureController()
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=1),
+    scheduler = _cpu_scheduler(
         cases=[
             {"case_id": 0},
             {"case_id": 1},
         ],
+        max_workers=1,
         skip_controller=skip_controller,
     )
     runner = StandardRunner(scheduler)
@@ -349,9 +375,9 @@ def test_standard_scheduler_skip_controller_updates_from_result() -> None:
 
 
 def test_standard_runner_captures_python_exception_as_structured_result() -> None:
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=1),
+    scheduler = _cpu_scheduler(
         cases=[0],
+        max_workers=1,
     )
     runner = StandardRunner(scheduler)
     worker = StandardWorker(_raise_runtime_error)
@@ -360,7 +386,6 @@ def test_standard_runner_captures_python_exception_as_structured_result() -> Non
 
     assert len(scheduler.completions) == 1
     completion = scheduler.completions[0]
-    assert completion.exit_code == 1
     assert completion.result.status == "failed"
     assert completion.result.failure_kind == FailureKind.PYTHON_EXCEPTION.value
     assert "boom from task" in completion.result.message
@@ -368,9 +393,9 @@ def test_standard_runner_captures_python_exception_as_structured_result() -> Non
 
 
 def test_standard_runner_synthesizes_parent_result_for_abrupt_child_exit() -> None:
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=1),
+    scheduler = _cpu_scheduler(
         cases=[0],
+        max_workers=1,
     )
     runner = StandardRunner(scheduler)
 
@@ -385,9 +410,9 @@ def test_standard_runner_synthesizes_parent_result_for_abrupt_child_exit() -> No
 
 
 def test_standard_runner_times_out_hanging_child_process() -> None:
-    scheduler = StandardScheduler(
-        resource_capacity=StandardResourceCapacity(max_workers=1),
+    scheduler = _cpu_scheduler(
         cases=[0],
+        max_workers=1,
     )
     runner = StandardRunner(
         scheduler,

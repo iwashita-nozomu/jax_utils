@@ -11,7 +11,7 @@ from typing import Any
 class FailureKind(str, Enum):
     """Normalized failure categories for runner-managed child processes."""
 
-    WORKER_EXIT_CODE = "worker_exit_code"
+    PROTOCOL_ERROR = "protocol_error"
     PYTHON_EXCEPTION = "python_exception"
     PROCESS_EXIT = "process_exit"
     PROCESS_SIGNAL = "process_signal"
@@ -27,19 +27,11 @@ class ExecutionResult:
     failure_kind: str | None = None
     message: str = ""
     raw_exit_code: int | None = None
-    worker_exit_code: int | None = None
     signal_name: str | None = None
     stdout: str | None = None
     stderr: str | None = None
     traceback: str | None = None
     source: str = "child"
-
-    @property
-    def exit_code(self) -> int:
-        """Return a backward-compatible integer exit code."""
-        if self.worker_exit_code is not None:
-            return int(self.worker_exit_code)
-        return 1
 
     def to_dict(self) -> dict[str, Any]:
         """Return a JSON-friendly dictionary representation."""
@@ -57,13 +49,12 @@ def signal_name_from_exit_code(raw_exit_code: int | None, /) -> str | None:
         return f"SIG{signal_number}"
 
 
-def build_success_result(worker_exit_code: int = 0, /) -> ExecutionResult:
+def build_success_result(*, source: str = "child") -> ExecutionResult:
     """Build a successful execution result."""
     return ExecutionResult(
         status="ok",
-        worker_exit_code=int(worker_exit_code),
         raw_exit_code=0,
-        source="child",
+        source=source,
     )
 
 
@@ -77,7 +68,6 @@ def build_skipped_result(
     return ExecutionResult(
         status="skipped",
         message=message,
-        worker_exit_code=0,
         source=source,
     )
 
@@ -87,7 +77,6 @@ def build_failure_result(
     failure_kind: FailureKind | str,
     message: str,
     raw_exit_code: int | None = None,
-    worker_exit_code: int | None = None,
     signal_name: str | None = None,
     stdout: str | None = None,
     stderr: str | None = None,
@@ -106,7 +95,6 @@ def build_failure_result(
         failure_kind=resolved_failure_kind,
         message=message,
         raw_exit_code=raw_exit_code,
-        worker_exit_code=worker_exit_code,
         signal_name=resolved_signal_name,
         stdout=stdout,
         stderr=stderr,
@@ -159,19 +147,4 @@ def build_parent_exit_result(
         message=resolved_message,
         raw_exit_code=raw_exit_code,
         source=source,
-    )
-
-
-def coerce_execution_result(result: ExecutionResult | int, /) -> ExecutionResult:
-    """Coerce a legacy integer exit code into an `ExecutionResult`."""
-    if isinstance(result, ExecutionResult):
-        return result
-    if int(result) == 0:
-        return build_success_result(int(result))
-    return build_failure_result(
-        failure_kind=FailureKind.WORKER_EXIT_CODE,
-        message=f"Worker returned non-success exit code {int(result)}.",
-        worker_exit_code=int(result),
-        raw_exit_code=int(result),
-        source="child",
     )

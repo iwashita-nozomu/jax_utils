@@ -23,16 +23,17 @@ from experiment_runner.resource_scheduler import (
     detect_host_memory_bytes,
     detect_max_workers,
 )
-from experiment_runner.execution_result import build_skipped_result
+from experiment_runner.execution_result import (
+    FailureKind,
+    build_failure_result,
+    build_skipped_result,
+    build_success_result,
+)
 from experiment_runner.runner import (
     StandardRunner,
     StandardWorker,
-    SUCCESS_EXIT_CODE,
 )
-from experiment_runner.protocols import (
-    TaskContext,
-    WORKER_PROTOCOL_ERROR_EXIT_CODE,
-)
+from experiment_runner.protocols import TaskContext
 
 
 SOURCE_FILE = Path(__file__).name
@@ -272,7 +273,7 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
     assert second_context["environment_variables"]["EXPERIMENT_RUNNER_GPU_SLOT"] == "0"
     assert cast(dict[str, object], second_context["runner_metadata"])["worker_label"] == "gpu-2-w0"
 
-    scheduler.on_finish(first_case, first_context, SUCCESS_EXIT_CODE)
+    scheduler.on_finish(first_case, first_context, build_success_result())
     third_job = scheduler.next_case()
 
     assert third_job is not None
@@ -281,14 +282,22 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
     assert third_context["environment_variables"]["gpu_ids"] == "0,1"
     assert third_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "0,1"
 
-    scheduler.on_finish(second_case, second_context, WORKER_PROTOCOL_ERROR_EXIT_CODE)
-    scheduler.on_finish(third_case, third_context, SUCCESS_EXIT_CODE)
+    scheduler.on_finish(
+        second_case,
+        second_context,
+        build_failure_result(
+            failure_kind=FailureKind.PROTOCOL_ERROR,
+            message="simulated protocol failure",
+            raw_exit_code=1,
+        ),
+    )
+    scheduler.on_finish(third_case, third_context, build_success_result())
 
     assert scheduler.is_completed()
-    assert [completion.exit_code for completion in scheduler.completions] == [
-        SUCCESS_EXIT_CODE,
-        WORKER_PROTOCOL_ERROR_EXIT_CODE,
-        SUCCESS_EXIT_CODE,
+    assert [completion.result.status for completion in scheduler.completions] == [
+        "ok",
+        "failed",
+        "ok",
     ]
 
     print(

@@ -112,13 +112,30 @@
 - GPU 可視性と allocator 系 env の反映
 - scheduler に基づく case の順序決定
 
+### `experiment_runner` を使う topic が実装するもの
+
+- `task(case, context)`
+  - 1 case の研究ロジックと case ごとの結果書き込みを担当させます。
+- `cases`
+  - 実行対象の case 列を topic 側で展開します。
+- 環境初期化
+  - `context_builder(case)` と、必要なら `initializer(context)` を実装します。
+- `resource_estimate(case)`
+  - `StandardFullResourceScheduler` に渡す見積もりを実装します。
+- `SkipController`
+  - 起動前 skip が必要な場合にだけ実装します。
+
+この 5 点以外の process 管理、resource 割当、timeout cleanup、diagnostics 合成を topic 側へ重複実装することを禁止します。
+
 ### 実験コード側で重複実装しないこと
 
 - 独自の mini-runner
 - `Popen` ベースの独自 worker 管理
+- 独自の scheduler 実装
 - `CUDA_VISIBLE_DEVICES` や `XLA_*` の直設定
 - JAX / XLA env を if 文で場当たり的に組み立てること
 - timeout、signal、native crash の parent-side cleanup を script 側で重複実装すること
+- `ExecutionResult` 以外の completion 契約
 - partial run を前提にした resume protocol
 - その場限りの ad hoc output path 命名
 

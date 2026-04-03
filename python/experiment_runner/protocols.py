@@ -6,9 +6,8 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import TYPE_CHECKING
-from typing import Any, Callable, Literal, Protocol, TypeAlias, TypeVar
+from typing import Any, Callable, Protocol, TypeAlias, TypeVar
 
 if TYPE_CHECKING:
     from .execution_result import ExecutionResult
@@ -16,50 +15,27 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 T_contra = TypeVar("T_contra", contravariant=True)
-U = TypeVar("U")
-
 __all__ = [
     "TaskContext",
-    "DispatchDecision",
+    "ContextInitializer",
     "SkipController",
     "ResourceEstimate",
     "ResourceCapacity",
     "Worker",
     "Scheduler",
     "Runner",
-    "SUCCESS_EXIT_CODE",
-    "WORKER_PROTOCOL_ERROR_EXIT_CODE",
 ]
 
 # `TaskContext` はワーカーへ渡す環境や設定を表す。
 # 環境変数辞書のような構造化データも流せるよう Any を許容する。
 TaskContext: TypeAlias = dict[str, Any]
-
-
-@dataclass(frozen=True)
-class DispatchDecision:
-    """起動前 case 判定の結果を表す。"""
-
-    action: Literal["run", "skip"] = "run"
-    message: str = ""
-
-    def __post_init__(self) -> None:
-        if self.action not in {"run", "skip"}:
-            raise ValueError("action must be either 'run' or 'skip'.")
-
-    @classmethod
-    def run(cls) -> DispatchDecision:
-        return cls(action="run")
-
-    @classmethod
-    def skip(cls, message: str = "", /) -> DispatchDecision:
-        return cls(action="skip", message=message)
+ContextInitializer: TypeAlias = Callable[[TaskContext], None]
 
 
 class SkipController(Protocol[T_contra]):
     """起動前 skip と完了後 state 更新を持つ controller protocol。"""
 
-    def should_skip(self, case: T_contra, context: TaskContext) -> DispatchDecision: ...
+    def should_skip(self, case: T_contra, context: TaskContext) -> str | None: ...
 
     def update(
         self,
@@ -84,15 +60,18 @@ class ResourceCapacity(Protocol):
     def max_workers(self) -> int: ...
 
 
-class Worker(Protocol[T, U]):
+class Worker(Protocol[T]):
     """ワーカーはタスク（case）を受け取り `TaskContext` 下で実行するコール可能オブジェクトを要求する。
 
-    - エラー時は例外を投げても構わないが、ランナーは終了コードで結果を受け取る契約になっている。
+    - 正常系では `ExecutionResult(status="ok")` を返す。
+    - 失敗系を自前で扱う worker は `ExecutionResult(status="failed")` を返してよい。
+    - 例外は child runtime が structured diagnostics に正規化する。
     """
 
-    task: Callable[[T, TaskContext], U]
+    task: Callable[[T, TaskContext], object]
+    initializer: ContextInitializer
 
-    def __call__(self, case: T, context: TaskContext) -> int: ...
+    def __call__(self, case: T, context: TaskContext) -> "ExecutionResult": ...
 
     def resource_estimate(self, case: T) -> ResourceEstimate: ...
 
@@ -106,25 +85,27 @@ class Scheduler(Protocol[T]):
     @property
     def completions(self) -> list[Any]: ...
 
+    @property
+    def total_case_count(self) -> int: ...
+
+    @property
+    def skip_controller(self) -> SkipController[T] | None: ...
+
     def next_case(self) -> tuple[T, TaskContext] | None: ...
 
     def on_finish(
         self,
         case: T,
         context: TaskContext,
-        result: "ExecutionResult | int",
+        result: "ExecutionResult",
     ) -> None: ...
 
     def is_completed(self) -> bool: ...
 
 
-class Runner(Protocol[T, U]):
+class Runner(Protocol[T]):
     """ランナーはスケジューラとワーカーを使って全ケースを実行する役割を持つ。"""
 
     scheduler: Scheduler[T]
 
-    def run(self, worker: Worker[T, U]) -> None: ...
-
-
-SUCCESS_EXIT_CODE = 0
-WORKER_PROTOCOL_ERROR_EXIT_CODE = 1
+    def run(self, worker: Worker[T]) -> None: ...

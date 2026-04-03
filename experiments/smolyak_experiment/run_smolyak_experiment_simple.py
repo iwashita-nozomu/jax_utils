@@ -7,42 +7,37 @@
 from __future__ import annotations
 
 import argparse
-import fcntl
 import json
 import sys
 import time
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
+WORKSPACE_ROOT = SCRIPT_DIR.parent.parent
+PYTHON_ROOT = WORKSPACE_ROOT / "python"
+if str(PYTHON_ROOT) not in sys.path:
+    sys.path.insert(0, str(PYTHON_ROOT))
+if str(WORKSPACE_ROOT) not in sys.path:
+    sys.path.insert(0, str(WORKSPACE_ROOT))
 
-from python.experiment_runner import (
+from experiment_runner import (  # noqa: E402
     FullResourceCapacity,
-    FullResourceEstimate,
     StandardFullResourceScheduler,
     StandardRunner,
-    SUCCESS_EXIT_CODE,
+    StandardWorker,
     TaskContext,
-    WORKER_PROTOCOL_ERROR_EXIT_CODE,
-    apply_environment_variables,
 )
-from python.experiment_runner.protocols import Worker
+from experiment_runner.result_io import append_jsonl_record, read_jsonl_records  # noqa: E402
 
-import experiments.smolyak_experiment.cases as cases
-import experiments.smolyak_experiment.runner_config as runner_config
+from experiments.smolyak_experiment import cases, runner_config  # noqa: E402
+from jax_util.xla_env import build_cpu_env, build_gpu_env  # noqa: E402
 
 
 def _read_jsonl_records(path: Path, /) -> list[dict[str, Any]]:
-    records: list[dict[str, Any]] = []
-    if not path.exists():
-        return records
-
-    with path.open(encoding="utf-8") as handle:
-        for line in handle:
-            if line.strip():
-                records.append(json.loads(line))
-    return records
+    return read_jsonl_records(path)
 
 
 def _numeric_stats(values: list[float], /) -> dict[str, float | int]:
@@ -65,26 +60,15 @@ def _numeric_stats(values: list[float], /) -> dict[str, float | int]:
     }
 
 
-class SmolyakWorker(Worker[dict[str, Any], int]):
-    """Worker that executes one Smolyak scaling case."""
+@dataclass(frozen=True)
+class SmolyakTask:
+    """Task that executes one Smolyak scaling case and persists per-case results."""
 
-    task: Callable[[dict[str, Any], TaskContext], int]
-
-    def __init__(self) -> None:
-        self.task = self._task_fn
-
-    @staticmethod
-    def _task_fn(case: dict[str, Any], context: TaskContext) -> int:
-        del case, context
-        return SUCCESS_EXIT_CODE
-
-    def __call__(self, case: dict[str, Any], context: TaskContext) -> int:
+    def __call__(self, case: dict[str, Any], context: TaskContext) -> None:
         try:
-            apply_environment_variables(context)
-
             t_import_start = time.perf_counter()
             import jax.numpy as jnp
-            from python.jax_util.functional.smolyak import SmolyakIntegrator
+            from jax_util.functional.smolyak import SmolyakIntegrator
 
             t_import_end = time.perf_counter()
 
@@ -98,7 +82,6 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
                 },
             )
             self._save_result(result, context)
-            return SUCCESS_EXIT_CODE
         except Exception as exc:
             error_result = {
                 "case_id": case["case_id"],
@@ -126,12 +109,9 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
                 },
             }
             self._save_result(error_result, context)
-            sys.stderr.write(f"[SmolyakWorker] case={case['case_id']} error={exc}\n")
+            sys.stderr.write(f"[SmolyakTask] case={case['case_id']} error={exc}\n")
             sys.stderr.flush()
-            return WORKER_PROTOCOL_ERROR_EXIT_CODE
-
-    def resource_estimate(self, case: dict[str, Any]) -> FullResourceEstimate:
-        return cases.estimate_case_resources(case)
+            raise
 
     @staticmethod
     def _run_case(
@@ -198,7 +178,7 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
             if jsonl_path_text:
                 try:
                     import jax as jax_imported
-                    from python.jax_util.hlo.dump import dump_hlo_jsonl
+                    from jax_util.hlo import dump
 
                     jax_module = jax_imported
                     trace_dir = (
@@ -212,9 +192,9 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
                     except Exception:
                         tracing_started = False
                     try:
-                        dump_hlo_jsonl(
+                        dump(
                             lambda: integrator.integrate(integrand),
-                            out_path=str(trace_dir / f"hlo_{case['case_id']}.jsonl"),
+                            trace_dir / f"hlo_{case['case_id']}.jsonl",
                             tag=str(case["case_id"]),
                         )
                     except Exception:
@@ -256,7 +236,7 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
             )
 
             try:
-                monte_carlo = SmolyakWorker._run_monte_carlo(
+                monte_carlo = SmolyakTask._run_monte_carlo(
                     dimension=int(case["dimension"]),
                     seed=case["case_id"],
                     num_samples=int(integrator.num_evaluation_points),
@@ -276,19 +256,7 @@ class SmolyakWorker(Worker[dict[str, Any], int]):
         if not isinstance(jsonl_path, str) or not jsonl_path:
             return
 
-        path = Path(jsonl_path)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        try:
-            with path.open("a", encoding="utf-8") as handle:
-                fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
-                try:
-                    handle.write(json.dumps(result, ensure_ascii=True) + "\n")
-                    handle.flush()
-                finally:
-                    fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
-        except OSError:
-            with path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(result, ensure_ascii=True) + "\n")
+        append_jsonl_record(Path(jsonl_path), result)
 
     @staticmethod
     def _run_monte_carlo(
@@ -481,9 +449,15 @@ def main(
     final_json_file = output_dir / f"final_results_{run_id}.json"
 
     def context_builder(case: dict[str, Any]) -> TaskContext:
+        environment_variables = (
+            build_cpu_env()
+            if config.device == "cpu"
+            else build_gpu_env(disable_preallocation=True)
+        )
         return {
             "case_id": case["case_id"],
             "jsonl_path": str(jsonl_file),
+            "environment_variables": environment_variables,
         }
 
     def progress(completed: int, total: int, elapsed: float, running: int) -> None:
@@ -499,7 +473,11 @@ def main(
             flush=True,
         )
 
-    worker = SmolyakWorker()
+    task = SmolyakTask()
+    worker = StandardWorker(
+        task,
+        resource_estimator=cases.estimate_case_resources,
+    )
     resource_capacity = FullResourceCapacity.from_system(
         max_workers=max_workers,
         gpu_max_slots=1,
@@ -508,7 +486,7 @@ def main(
         cases=case_list,
         worker=worker,
         context_builder=context_builder,
-        disable_gpu_preallocation=(config.device == "gpu"),
+        disable_gpu_preallocation=False,
         resource_capacity=resource_capacity,
     )
     runner = StandardRunner(scheduler, progress_callback=progress)
