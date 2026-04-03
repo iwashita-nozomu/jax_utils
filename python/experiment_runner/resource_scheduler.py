@@ -15,12 +15,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 import os
 import subprocess
-from typing import Callable, Generic, Mapping, Protocol, Sequence, TypeVar, cast
+from typing import TYPE_CHECKING, Callable, Generic, Mapping, Protocol, Sequence, TypeVar, cast
 
 from jax_util.xla_env import build_gpu_env, merge_env_vars
 
 from .protocols import TaskContext, Worker
 from .runner import StandardResourceCapacity, StandardScheduler
+
+if TYPE_CHECKING:
+    from .execution_result import ExecutionResult
 
 
 # ジェネリック型定義
@@ -607,8 +610,13 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             return pending_entry.case, context
         return None
 
-    def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:
-        super().on_finish(case, context, exit_code)
+    def on_finish(
+        self,
+        case: T,
+        context: TaskContext,
+        result: "ExecutionResult | int",
+    ) -> None:
+        super().on_finish(case, context, result)
 
         # 実行完了後はスケジューラ側で割り当てたリソースを解放する。
         allocation = self._active_allocations.pop(id(context), None)

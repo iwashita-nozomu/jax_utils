@@ -12,18 +12,25 @@ JAX fork() 互換性: StandardRunner は spawn コンテキストで child proce
 from __future__ import annotations
 
 from multiprocessing.connection import Connection, wait as wait_for_connections
-import traceback
 import time
 from dataclasses import dataclass
 from typing import Any, Callable, Generic, TypeVar, cast
 
+from .child_runtime import execute_worker_in_child
+from .execution_result import (
+    ExecutionResult,
+    FailureKind,
+    build_failure_result,
+    build_parent_exit_result,
+    coerce_execution_result,
+)
 from .jax_context import check_picklable, get_spawn_context
+from .process_supervisor import terminate_then_kill_process
 from .protocols import (
     ResourceEstimate,
     Scheduler,
     SUCCESS_EXIT_CODE,
     TaskContext,
-    WORKER_PROTOCOL_ERROR_EXIT_CODE,
     Worker,
 )
 
@@ -49,7 +56,8 @@ __all__ = [
 class StandardWorker(Generic[T, U]):
     """ワーカー呼び出しラッパー。
 
-    - `task` を実行し、例外が発生した場合はトレースを出力してエラーコードを返す。
+    - `task` を実行し、正常終了時は成功コードを返す。
+    - 例外の structured diagnostics 化は child runtime 側が担当する。
     - 任意で `resource_estimator` を注入して `resource_estimate` を提供できる。
     """
 
@@ -62,12 +70,8 @@ class StandardWorker(Generic[T, U]):
         self._resource_estimator = resource_estimator
 
     def __call__(self, case: T, context: TaskContext) -> int:
-        try:
-            self.task(case, context)
-            return SUCCESS_EXIT_CODE
-        except Exception:
-            traceback.print_exc()
-            return WORKER_PROTOCOL_ERROR_EXIT_CODE
+        self.task(case, context)
+        return SUCCESS_EXIT_CODE
 
     def resource_estimate(self, case: T) -> ResourceEstimate:
         # NOTE: _resource_estimator は Worker インスタンスが from_worker()
@@ -86,11 +90,31 @@ class StandardResourceCapacity:
             raise ValueError("max_workers must be positive.")
 
 
-@dataclass(frozen=True)
+@dataclass(init=False)
 class StandardCompletion(Generic[T]):
     case: T
     context: TaskContext
-    exit_code: int
+    result: ExecutionResult
+
+    def __init__(
+        self,
+        case: T,
+        context: TaskContext,
+        result: ExecutionResult | int = 0,
+        *,
+        exit_code: int | None = None,
+    ) -> None:
+        self.case = case
+        self.context = context
+        self.result = (
+            coerce_execution_result(exit_code)
+            if exit_code is not None
+            else coerce_execution_result(result)
+        )
+
+    @property
+    def exit_code(self) -> int:
+        return self.result.exit_code
 
 
 @dataclass
@@ -99,6 +123,7 @@ class _RunningProcess(Generic[T]):
     context: TaskContext
     process: Any
     receiver: Connection
+    started_at: float
 
 
 def _run_worker_in_child(
@@ -108,13 +133,9 @@ def _run_worker_in_child(
     context: TaskContext,
 ) -> None:
     """Execute one worker invocation in a fresh spawned child process."""
-    exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
+    result = execute_worker_in_child(worker, case, context)
     try:
-        exit_code = int(worker(case, context))
-    except Exception:
-        traceback.print_exc()
-    try:
-        sender.send(exit_code)
+        sender.send(result)
     except (BrokenPipeError, OSError):
         pass
     finally:
@@ -164,13 +185,18 @@ class StandardScheduler(Generic[T]):
             return case, self._build_context(case)
         return None
 
-    def on_finish(self, case: T, context: TaskContext, exit_code: int) -> None:
+    def on_finish(
+        self,
+        case: T,
+        context: TaskContext,
+        result: ExecutionResult | int,
+    ) -> None:
         """完了時に `completions` に結果を記録する（context は複製して保存）。"""
         self.completions.append(
             StandardCompletion(
                 case=case,
                 context=dict(context),
-                exit_code=exit_code,
+                result=result,
             )
         )
 
@@ -191,6 +217,8 @@ class StandardRunner(Generic[T, U]):
         self,
         scheduler: Scheduler[T],
         progress_callback: ProgressCallback = None,
+        case_timeout_seconds: float | None = None,
+        termination_grace_seconds: float = 5.0,
     ) -> None:
         """
         ランナーを初期化する。
@@ -202,8 +230,14 @@ class StandardRunner(Generic[T, U]):
         progress_callback : ProgressCallback, optional
             実行完了ごとに (completed, total, elapsed, running) を受け取るコールバック
         """
+        if case_timeout_seconds is not None and case_timeout_seconds <= 0:
+            raise ValueError("case_timeout_seconds must be positive when provided.")
+        if termination_grace_seconds <= 0:
+            raise ValueError("termination_grace_seconds must be positive.")
         self.scheduler = scheduler
         self.progress_callback = progress_callback
+        self.case_timeout_seconds = case_timeout_seconds
+        self.termination_grace_seconds = termination_grace_seconds
 
     def run(self, worker: Worker[T, U]) -> None:
         """ケースを並列実行する。
@@ -260,67 +294,134 @@ class StandardRunner(Generic[T, U]):
         spawn_context = get_spawn_context()
         running: dict[Connection, _RunningProcess[T]] = {}
         start_time = time.time()
+        try:
+            while not self.scheduler.is_completed() or running:
+                # max_workers 本まで fresh child process を起動する。
+                while len(running) < max_workers:
+                    job = self.scheduler.next_case()
+                    if job is None:
+                        break
+                    case, context = job
+                    receiver, sender = spawn_context.Pipe(duplex=False)
+                    process = spawn_context.Process(
+                        target=_run_worker_in_child,
+                        args=(sender, worker, case, context),
+                    )
+                    process.start()
+                    sender.close()
+                    running[receiver] = _RunningProcess(
+                        case=case,
+                        context=context,
+                        process=process,
+                        receiver=receiver,
+                        started_at=time.monotonic(),
+                    )
 
-        while not self.scheduler.is_completed() or running:
-            # max_workers 本まで fresh child process を起動する。
-            while len(running) < max_workers:
-                job = self.scheduler.next_case()
-                if job is None:
-                    break
-                case, context = job
-                receiver, sender = spawn_context.Pipe(duplex=False)
-                process = spawn_context.Process(
-                    target=_run_worker_in_child,
-                    args=(sender, worker, case, context),
-                )
-                process.start()
-                sender.close()
-                running[receiver] = _RunningProcess(
-                    case=case,
-                    context=context,
-                    process=process,
-                    receiver=receiver,
-                )
+                self._finish_timed_out_processes(running, start_time, total_cases)
 
-            if not running:
-                continue
-
-            ready_receivers = cast(
-                list[Connection],
-                wait_for_connections(list(running.keys()), timeout=0.1),
-            )
-            if not ready_receivers:
-                ready_receivers = [
-                    receiver
-                    for receiver, child in running.items()
-                    if not child.process.is_alive()
-                ]
-                if not ready_receivers:
+                if not running:
                     continue
 
-            for receiver in ready_receivers:
-                child = running.pop(receiver)
-                exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
-                try:
-                    exit_code = int(receiver.recv())
-                except (EOFError, OSError, TypeError, ValueError):
-                    exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
-                finally:
-                    receiver.close()
-                    child.process.join()
+                ready_receivers = cast(
+                    list[Connection],
+                    wait_for_connections(list(running.keys()), timeout=0.1),
+                )
+                if not ready_receivers:
+                    ready_receivers = [
+                        receiver
+                        for receiver, child in running.items()
+                        if not child.process.is_alive()
+                    ]
+                    if not ready_receivers:
+                        continue
 
-                if child.process.exitcode not in {0, None}:
-                    exit_code = WORKER_PROTOCOL_ERROR_EXIT_CODE
+                for receiver in ready_receivers:
+                    child = running.pop(receiver)
+                    result = self._receive_child_result(child)
+                    self.scheduler.on_finish(child.case, child.context, result)
+                    self._report_progress(start_time, total_cases, len(running))
+        finally:
+            for child in running.values():
+                child.receiver.close()
+                terminate_then_kill_process(
+                    child.process,
+                    grace_seconds=self.termination_grace_seconds,
+                )
 
-                self.scheduler.on_finish(child.case, child.context, exit_code)
+    def _finish_timed_out_processes(
+        self,
+        running: dict[Connection, _RunningProcess[T]],
+        start_time: float,
+        total_cases: int,
+    ) -> None:
+        if self.case_timeout_seconds is None:
+            return
 
-                # プログレス報告を実行
-                if self.progress_callback is not None:
-                    elapsed = time.time() - start_time
-                    completed = len(self.scheduler.completions)
-                    self.progress_callback(
-                        completed,
-                        total_cases,
-                        elapsed,
-                        len(running),
-                    )
+        now = time.monotonic()
+        timed_out_receivers = [
+            receiver
+            for receiver, child in running.items()
+            if now - child.started_at > self.case_timeout_seconds
+        ]
+        for receiver in timed_out_receivers:
+            child = running.pop(receiver)
+            child.receiver.close()
+            terminate_then_kill_process(
+                child.process,
+                grace_seconds=self.termination_grace_seconds,
+            )
+            result = build_failure_result(
+                failure_kind=FailureKind.TIMEOUT,
+                message=(
+                    "Child process exceeded "
+                    f"case_timeout_seconds={self.case_timeout_seconds}."
+                ),
+                raw_exit_code=child.process.exitcode,
+                source="parent",
+            )
+            self.scheduler.on_finish(child.case, child.context, result)
+            self._report_progress(start_time, total_cases, len(running))
+
+    def _receive_child_result(
+        self,
+        child: _RunningProcess[T],
+    ) -> ExecutionResult:
+        result: ExecutionResult | int | None = None
+        try:
+            result = cast(ExecutionResult | int, child.receiver.recv())
+        except (EOFError, OSError, TypeError, ValueError):
+            result = None
+        finally:
+            child.receiver.close()
+            child.process.join()
+
+        if result is not None:
+            normalized = coerce_execution_result(result)
+            if child.process.exitcode in {0, None}:
+                return normalized
+
+        return build_parent_exit_result(
+            child.process.exitcode,
+            message=(
+                "Child process exited without a usable completion record."
+                if result is None
+                else "Child process exited abnormally after reporting completion."
+            ),
+        )
+
+    def _report_progress(
+        self,
+        start_time: float,
+        total_cases: int,
+        running_count: int,
+    ) -> None:
+        if self.progress_callback is None:
+            return
+        elapsed = time.time() - start_time
+        completed = len(self.scheduler.completions)
+        self.progress_callback(
+            completed,
+            total_cases,
+            elapsed,
+            running_count,
+        )

@@ -13,6 +13,7 @@ if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
 from experiment_runner.context_utils import apply_environment_variables
+from experiment_runner.execution_result import FailureKind
 from experiment_runner.protocols import TaskContext
 from experiment_runner.runner import (
     StandardCompletion,
@@ -123,6 +124,29 @@ def _noop_task(case: int, context: TaskContext) -> None:
     del case, context
 
 
+def _raise_runtime_error(case: int, context: TaskContext) -> None:
+    del case, context
+    raise RuntimeError("boom from task")
+
+
+def _hang_forever(case: int, context: TaskContext) -> None:
+    del case, context
+    time.sleep(30.0)
+
+
+@dataclass(frozen=True)
+class _AbruptExitWorker:
+    task: object = _noop_task
+
+    def __call__(self, case: int, context: TaskContext) -> int:
+        del case, context
+        os._exit(17)
+
+    def resource_estimate(self, case: int) -> object:
+        del case
+        raise ValueError("resource_estimate is not used in this test")
+
+
 def test_standard_runner_isolates_import_sensitive_environment_per_case(
     tmp_path: Path,
 ) -> None:
@@ -203,3 +227,63 @@ def test_standard_runner_progress_callback_uses_scheduler_total_case_count() -> 
 
     assert progress_updates
     assert all(total == 4 for _, total, _ in progress_updates)
+
+
+def test_standard_runner_captures_python_exception_as_structured_result() -> None:
+    scheduler = StandardScheduler(
+        resource_capacity=StandardResourceCapacity(max_workers=1),
+        cases=[0],
+    )
+    runner = StandardRunner(scheduler)
+    worker = StandardWorker(_raise_runtime_error)
+
+    runner.run(worker)
+
+    assert len(scheduler.completions) == 1
+    completion = scheduler.completions[0]
+    assert completion.exit_code == 1
+    assert completion.result.status == "failed"
+    assert completion.result.failure_kind == FailureKind.PYTHON_EXCEPTION.value
+    assert "boom from task" in completion.result.message
+    assert completion.result.traceback is not None
+
+
+def test_standard_runner_synthesizes_parent_result_for_abrupt_child_exit() -> None:
+    scheduler = StandardScheduler(
+        resource_capacity=StandardResourceCapacity(max_workers=1),
+        cases=[0],
+    )
+    runner = StandardRunner(scheduler)
+
+    runner.run(_AbruptExitWorker())
+
+    assert len(scheduler.completions) == 1
+    completion = scheduler.completions[0]
+    assert completion.result.status == "failed"
+    assert completion.result.failure_kind == FailureKind.PROCESS_EXIT.value
+    assert completion.result.raw_exit_code == 17
+    assert completion.result.source == "parent"
+
+
+def test_standard_runner_times_out_hanging_child_process() -> None:
+    scheduler = StandardScheduler(
+        resource_capacity=StandardResourceCapacity(max_workers=1),
+        cases=[0],
+    )
+    runner = StandardRunner(
+        scheduler,
+        case_timeout_seconds=0.2,
+        termination_grace_seconds=0.2,
+    )
+    worker = StandardWorker(_hang_forever)
+
+    started_at = time.perf_counter()
+    runner.run(worker)
+    elapsed_seconds = time.perf_counter() - started_at
+
+    assert elapsed_seconds < 5.0
+    assert len(scheduler.completions) == 1
+    completion = scheduler.completions[0]
+    assert completion.result.status == "failed"
+    assert completion.result.failure_kind == FailureKind.TIMEOUT.value
+    assert completion.result.source == "parent"

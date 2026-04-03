@@ -14,6 +14,9 @@ from . import resource_scheduler as resource_scheduler
 from . import protocols as protocols
 from . import subprocess_scheduler as subprocess_scheduler
 from . import monitor as monitor
+from . import execution_result as execution_result
+from . import process_supervisor as process_supervisor
+from . import child_runtime as child_runtime
 
 # 便宜的に最もよく使われるシンボルのみ top-level に再エクスポートします。
 # - 詳細な API は引き続きサブモジュールから明示的にインポートしてください。
@@ -53,6 +56,10 @@ from .subprocess_scheduler import (
 from .monitor import (
     RuntimeMonitor,
     RuntimeMonitorConfig,
+)
+from .execution_result import (
+    ExecutionResult,
+    FailureKind,
 )
 
 # Protocols / constants / JAX utilities
@@ -99,6 +106,8 @@ __all__ = [
     # monitor
     "RuntimeMonitor",
     "RuntimeMonitorConfig",
+    "ExecutionResult",
+    "FailureKind",
     # protocols / constants / jax utilities
     "TaskContext",
     "SUCCESS_EXIT_CODE",
