@@ -5,7 +5,7 @@
 [runner.py](/workspace/python/experiment_runner/runner.py)、
 [resource_scheduler.py](/workspace/python/experiment_runner/resource_scheduler.py)、
 [monitor.py](/workspace/python/experiment_runner/monitor.py)、
-[subprocess_scheduler.py](/workspace/python/experiment_runner/subprocess_scheduler.py) です。
+[result_io.py](/workspace/python/experiment_runner/result_io.py) です。
 
 ## 1. 基本抽象
 
@@ -81,6 +81,7 @@ runner diagnostics の正本は数値 error code ではなく、`status`、`fail
 - [execution_result.py](/workspace/python/experiment_runner/execution_result.py) には `ExecutionResult` と `FailureKind` を置きます。
 - [child_runtime.py](/workspace/python/experiment_runner/child_runtime.py) には child 側の worker 実行と Python 例外の diagnostics 化を置きます。
 - [process_supervisor.py](/workspace/python/experiment_runner/process_supervisor.py) には `terminate -> kill` の lifecycle helper を置きます。
+- [result_io.py](/workspace/python/experiment_runner/result_io.py) には JSON 互換変換と JSONL append/read helper を置きます。
 - `StandardWorker` は `task(case, context)` を呼び、成功時は `0` を返します。Python 例外の structured diagnostics 化は runner child runtime 側が行います。
 - `StandardScheduler` は FIFO で case を返す最小 scheduler です。
 - `StandardScheduler` は optional な `context_builder` を受け取り、`TaskContext` の組み立てを標準機能として持ちます。
@@ -88,6 +89,7 @@ runner diagnostics の正本は数値 error code ではなく、`status`、`fail
 - `StandardRunner` は `max_workers` 本までの fresh child process を case 単位で起動し、ケース完了ごとに process を終了させます。
 - `StandardRunner` は child が completion を返せない場合でも、parent 側で `ExecutionResult` を合成して scheduler へ返します。
 - `StandardRunner` は optional な per-case timeout を持ち、timeout 時は parent 側で child を停止します。
+- `StandardRunner` は optional な `monitor`、`on_case_started`、`on_case_finished` を受け取り、fresh child process 系でも host 側の観測点を持ちます。
 - `StandardScheduler` は optional な `skip_controller` を受け取れます。
 - `skip_controller` は `should_skip(case, context)` と `update(case, context, result)` を持ちます。
 - `StandardRunner` は child 起動前に scheduler 側の skip controller を参照し、`DispatchDecision.skip(...)` を返した case を `status="skipped"` として完了扱いにできます。
@@ -111,22 +113,21 @@ runner diagnostics の正本は数値 error code ではなく、`status`、`fail
 ## 5. 今後の拡張
 
 - resource-aware な順序最適化は scheduler 側へ追加します。
-- 起動前 skip は runner 側へ追加します。
+- 起動前 skip は scheduler が持つ `skip_controller` を経由して runner が適用します。
 - GPU 固有差分は専用 runner を増やさず、`resource_scheduler.py` 内の scheduler と resource 表現で吸収する方針です。
 - [resource_scheduler.py](/workspace/python/experiment_runner/resource_scheduler.py) には、1 task = 1 process を前提に host memory と GPU ごとの slot / memory を同時に見る `FullResourceCapacity`、`FullResourceEstimate`、`StandardFullResourceScheduler` を置きます。
 - [monitor.py](/workspace/python/experiment_runner/monitor.py) には、軽量な runtime snapshot 保持、worker event 記録、`GET /` と `/api/v1/*` を返す小さな HTTP surface を置きます。
-- [subprocess_scheduler.py](/workspace/python/experiment_runner/subprocess_scheduler.py) には、host が worker slot と child process を直接管理したい benchmark 向けに、`WorkerSlot`、`build_worker_slots()`、`run_cases_with_subprocess_scheduler()` を置きます。
 - `StandardFullResourceScheduler` に渡す `estimate_builder` は、task 実装に隣接した関数、または `task.resource_estimate(case)` のような bound method として定義するのを基本にします。
 - `StandardFullResourceScheduler.from_worker(...)` を使うと、worker が持つ `resource_estimate(case)` をそのまま scheduler へ渡せます。
 - `FullResourceCapacity.from_system(...)` は、`max_workers` を CPU 数、`host_memory_bytes` を物理メモリ量、`gpu_devices` を可視 GPU とそのメモリ容量から自動検出する入口です。
 - GPU を割り当てる scheduler は `CUDA_VISIBLE_DEVICES` と `NVIDIA_VISIBLE_DEVICES` を `TaskContext["environment_variables"]` にまとめて載せ、worker 側で [context_utils.py](/workspace/python/experiment_runner/context_utils.py) の `apply_environment_variables()` を呼んで反映します。
+- `StandardFullResourceScheduler` は worker label、GPU slot、CPU affinity も `TaskContext["runner_metadata"]` と環境変数に載せ、fresh child process 系の monitor / logging に渡します。
 - JAX / XLA の標準 env は [xla_env.py](/workspace/python/jax_util/xla_env.py) を正本とし、`experiment_runner` はその env dict を child へ運ぶ役割に留めます。
 - 既定では JAX allocator 系の環境変数は足しません。`StandardFullResourceScheduler` は「GPU 可視性の制御」だけを基本責務にして、allocator / preallocation の調整は明示的な opt-in に寄せます。
 - JAX の GPU メモリ挙動を調整したい実験では、`jax_util.xla_env.build_gpu_env(...)` または `GPUEnvironmentConfig(...)` を使って `XLA_PYTHON_CLIENT_PREALLOCATE`、`XLA_PYTHON_CLIENT_MEM_FRACTION`、`XLA_PYTHON_CLIENT_ALLOCATOR`、`TF_GPU_ALLOCATOR` などを `environment_variables` 経由で worker へ渡します。
 - 実験 script 側では `CUDA_VISIBLE_DEVICES`、`JAX_PLATFORMS`、`XLA_*` などの runtime env を直接組み立てず、`jax_util.xla_env` で env dict を作って runner / scheduler へ渡します。
 - `StandardRunner` は case ごとに fresh child process を使うため、`CUDA_VISIBLE_DEVICES` や `JAX_PLATFORMS` のような import-sensitive な環境変数が前ケースの JAX state に汚染されにくいです。
 - `StandardRunner` の timeout / diagnostics / cleanup は framework 非依存の core 機能として保ちます。
-- 既存の multi-GPU 実験で host が pid を直接管理したい場合は、引き続き `subprocess_scheduler.py` を併用できます。
 - 現在は `python/experiment_runner/` の standalone module として置いています。
 - 今後さらに別リポジトリへ分離する場合も、`Worker` / `Scheduler` / `Runner` / `TaskContext` の境界は保ち、experiment 側のコードから見える契約を先に安定化します。
 
@@ -218,9 +219,10 @@ runner diagnostics の正本は数値 error code ではなく、`status`、`fail
 
 ### 6.6 runner への接続
 
-- `subprocess_scheduler.py` 系では host が `Popen` を直接持つため、worker 起動時に pid と slot 情報を monitor registry へ即時登録できる。
-- `StandardRunner` 系では case ごとに fresh child process を起動するため、pid registration path を後から足すこと自体は難しくない。ただし v1 は `subprocess_scheduler.py` 側を monitor の基準挙動とし、`StandardRunner` 側は scheduler の pending/running/completed 数と GPU 割当情報を主表示にする。
-- `StandardRunner` で pid 単位の監視が必要になった場合は、worker 起動直後に host へ `register_worker(case_id, pid, gpu_ids, started_at)` を送る軽量 registration path を追加する。
+- monitor の正規接続先は `StandardRunner` です。
+- `StandardRunner` は child 起動直後に pid を取得し、worker label / GPU ids / case_id を `RuntimeMonitor` へ登録します。
+- `StandardRunner` は completion ごとに `RuntimeMonitor.complete_worker(...)` を呼び、timeout / signal / no_completion も monitor event として残します。
+- 実験 script 側は monitor 用に `Popen` や独自 pid registry を持ちません。
 
 ### 6.7 保持方式
 

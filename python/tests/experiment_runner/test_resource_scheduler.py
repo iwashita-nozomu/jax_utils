@@ -260,13 +260,17 @@ def _run_standard_full_resource_scheduler_assigns_and_releases_resources() -> No
     assert first_context["environment_variables"]["CUDA_VISIBLE_DEVICES"] == "0,1"
     assert first_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "0,1"
     assert first_context["environment_variables"]["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
+    assert first_context["environment_variables"]["EXPERIMENT_RUNNER_WORKER_LABEL"] == "gpu-0-w0+gpu-1-w0"
     assert "TF_GPU_ALLOCATOR" not in first_context["environment_variables"]
     assert "XLA_PYTHON_CLIENT_ALLOCATOR" not in first_context["environment_variables"]
+    assert cast(dict[str, object], first_context["runner_metadata"])["worker_label"] == "gpu-0-w0+gpu-1-w0"
     assert _case_id(second_case) == 2
     assert second_context["environment_variables"]["gpu_ids"] == "2"
     assert second_context["environment_variables"]["gpu_id"] == "2"
     assert second_context["environment_variables"]["NVIDIA_VISIBLE_DEVICES"] == "2"
     assert second_context["environment_variables"]["XLA_PYTHON_CLIENT_PREALLOCATE"] == "false"
+    assert second_context["environment_variables"]["EXPERIMENT_RUNNER_GPU_SLOT"] == "0"
+    assert cast(dict[str, object], second_context["runner_metadata"])["worker_label"] == "gpu-2-w0"
 
     scheduler.on_finish(first_case, first_context, SUCCESS_EXIT_CODE)
     third_job = scheduler.next_case()
@@ -346,7 +350,9 @@ def test_standard_full_resource_scheduler_applies_explicit_gpu_environment_confi
     assert env_vars["XLA_PYTHON_CLIENT_ALLOCATOR"] == "platform"
     assert env_vars["TF_GPU_ALLOCATOR"] == "cuda_malloc_async"
     assert env_vars["XLA_PYTHON_CLIENT_USE_CUDA_HOST_ALLOCATOR"] == "false"
+    assert env_vars["EXPERIMENT_RUNNER_WORKER_LABEL"] == "gpu-3-w0"
     assert "XLA_PYTHON_CLIENT_PREALLOCATE" not in env_vars
+    assert cast(dict[str, object], context["runner_metadata"])["gpu_slot"] == 0
 
 
 def test_standard_full_resource_scheduler_preserves_context_builder_environment_variables() -> None:

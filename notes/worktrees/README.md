@@ -62,6 +62,7 @@
 - [worktree_smolyak_tuning_2026-03-16.md](/workspace/notes/worktrees/worktree_smolyak_tuning_2026-03-16.md)
 - [worktree_work_smolyak_improvement_2026-03-18.md](/workspace/notes/worktrees/worktree_work_smolyak_improvement_2026-03-18.md)
 - [worktree_work_editing_2026-03-18.md](/workspace/notes/worktrees/worktree_work_editing_2026-03-18.md)
+- [worktree_runner_single_path_2026-04-03.md](/workspace/notes/worktrees/worktree_runner_single_path_2026-04-03.md)
 
 ## Source And Idea Marking
 

@@ -12,11 +12,11 @@ from . import jax_context as jax_context
 from . import runner as runner
 from . import resource_scheduler as resource_scheduler
 from . import protocols as protocols
-from . import subprocess_scheduler as subprocess_scheduler
 from . import monitor as monitor
 from . import execution_result as execution_result
 from . import process_supervisor as process_supervisor
 from . import child_runtime as child_runtime
+from . import result_io as result_io
 
 # 便宜的に最もよく使われるシンボルのみ top-level に再エクスポートします。
 # - 詳細な API は引き続きサブモジュールから明示的にインポートしてください。
@@ -43,15 +43,10 @@ from .resource_scheduler import (
     detect_max_workers,
 )
 
-from .subprocess_scheduler import (
-    CHILD_COMPLETE_PREFIX,
-    WorkerSlot,
+from .result_io import (
     append_jsonl_record,
-    apply_worker_environment,
-    build_worker_slots,
     json_compatible,
-    run_cases_with_subprocess_scheduler,
-    worker_slot_from_mapping,
+    read_jsonl_records,
 )
 from .monitor import (
     RuntimeMonitor,
@@ -96,15 +91,10 @@ __all__ = [
     "detect_gpu_devices",
     "detect_host_memory_bytes",
     "detect_max_workers",
-    # subprocess scheduler
-    "CHILD_COMPLETE_PREFIX",
-    "WorkerSlot",
+    # result io
     "append_jsonl_record",
-    "apply_worker_environment",
-    "build_worker_slots",
     "json_compatible",
-    "run_cases_with_subprocess_scheduler",
-    "worker_slot_from_mapping",
+    "read_jsonl_records",
     # monitor
     "RuntimeMonitor",
     "RuntimeMonitorConfig",

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+import functools
 import json
 import os
 import resource
@@ -12,7 +13,7 @@ import time
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Mapping, cast
 
 import numpy as np
 from numpy.typing import NDArray
@@ -23,16 +24,21 @@ PYTHON_ROOT = WORKSPACE_ROOT / "python"
 if str(PYTHON_ROOT) not in sys.path:
     sys.path.insert(0, str(PYTHON_ROOT))
 
-from experiment_runner import (
-    CHILD_COMPLETE_PREFIX,
-    WorkerSlot,
-    append_jsonl_record,
-    apply_worker_environment,
-    build_worker_slots,
-    json_compatible,
-    run_cases_with_subprocess_scheduler,
-    worker_slot_from_mapping,
+from experiment_runner.context_utils import apply_environment_variables
+from experiment_runner.execution_result import ExecutionResult
+from experiment_runner.resource_scheduler import (
+    FullResourceCapacity,
+    FullResourceEstimate,
+    StandardFullResourceScheduler,
+    detect_gpu_devices,
 )
+from experiment_runner.result_io import (
+    append_jsonl_record,
+    json_compatible,
+    read_jsonl_records,
+)
+from experiment_runner.runner import StandardRunner, StandardWorker
+from jax_util.xla_env import build_cpu_env
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 DEFAULT_TIMEOUT_SECONDS = 180
 DEFAULT_NUM_REPEATS = 100
@@ -280,31 +286,6 @@ def _failure_kind_from_exception(exc: BaseException, traceback_text: str, /) -> 
     return "error"
 
 
-# 責務: 親側で補完した失敗結果レコードを構築する。
-def _parent_failure_result(
-    case: Mapping[str, object],
-    worker_slot: WorkerSlot,
-    failure_kind: str,
-    error: str,
-    traceback_text: str,
-    /,
-) -> dict[str, object]:
-    return {
-        "status": "failed",
-        "failure_kind": failure_kind,
-        "case_id": _case_int(case, "case_id"),
-        "dimension": _case_int(case, "dimension"),
-        "level": _case_int(case, "level"),
-        "dtype_name": str(case["dtype_name"]),
-        "assigned_gpu_index": worker_slot.gpu_index,
-        "gpu_slot": worker_slot.gpu_slot,
-        "cpu_affinity": list(worker_slot.cpu_affinity),
-        "worker_label": worker_slot.worker_label,
-        "error": error,
-        "traceback": traceback_text[-4000:],
-    }
-
-
 # 責務: ケース識別用の短い文字列を作る。
 def _case_label(case: Mapping[str, object], /) -> str:
     return (
@@ -416,7 +397,13 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
         "backend": jax.default_backend(),
         "device_kind": target_device.device_kind,
         "visible_device_id": int(target_device.id),
-        "assigned_gpu_index": os.environ.get("SMOLYAK_GPU_INDEX"),
+        "assigned_gpu_index": os.environ.get("gpu_id", "cpu" if platform == "cpu" else None),
+        "worker_label": os.environ.get("EXPERIMENT_RUNNER_WORKER_LABEL"),
+        "gpu_slot": (
+            int(os.environ["EXPERIMENT_RUNNER_GPU_SLOT"])
+            if os.environ.get("EXPERIMENT_RUNNER_GPU_SLOT")
+            else None
+        ),
         "cpu_affinity": sorted(int(cpu) for cpu in os.sched_getaffinity(0)) if hasattr(os, "sched_getaffinity") else None,
         "num_terms": int(integrator.num_terms),
         "num_points": int(integrator.num_evaluation_points),
@@ -442,125 +429,258 @@ def _run_single_case(case: Mapping[str, object], run_config: Mapping[str, object
     }
 
 
-# 責務: 子プロセスで 1 ケースを実行し、失敗も結果として返す。
-def _run_case_in_child(
-    case: Mapping[str, object],
-    run_config: Mapping[str, object],
-    worker_slot: WorkerSlot,
+def _runner_metadata(context: Mapping[str, object], /) -> dict[str, object]:
+    metadata = context.get("runner_metadata", {})
+    if not isinstance(metadata, dict):
+        return {}
+    return {str(key): value for key, value in metadata.items()}
+
+
+def _worker_label_from_context(context: Mapping[str, object], /) -> str:
+    metadata = _runner_metadata(context)
+    worker_label = metadata.get("worker_label")
+    if isinstance(worker_label, str) and worker_label:
+        return worker_label
+    return "worker"
+
+
+def _gpu_slot_from_context(context: Mapping[str, object], /) -> int | None:
+    metadata = _runner_metadata(context)
+    gpu_slot = metadata.get("gpu_slot")
+    if gpu_slot is None:
+        return None
+    return int(gpu_slot)
+
+
+def _cpu_affinity_from_context(context: Mapping[str, object], /) -> list[int] | None:
+    metadata = _runner_metadata(context)
+    cpu_affinity = metadata.get("cpu_affinity")
+    if not isinstance(cpu_affinity, list):
+        return None
+    return [int(cpu) for cpu in cpu_affinity]
+
+
+def _assigned_gpu_index_from_context(context: Mapping[str, object], /) -> int | str | None:
+    metadata = _runner_metadata(context)
+    gpu_ids = metadata.get("gpu_ids")
+    if isinstance(gpu_ids, list) and gpu_ids:
+        return int(gpu_ids[0])
+
+    env_vars = context.get("environment_variables", {})
+    if isinstance(env_vars, dict):
+        gpu_id = env_vars.get("gpu_id")
+        if isinstance(gpu_id, str) and gpu_id:
+            return int(gpu_id)
+        if env_vars.get("JAX_PLATFORMS") == "cpu":
+            return "cpu"
+    return None
+
+
+def _attach_runner_metadata(
+    result: dict[str, object],
+    context: Mapping[str, object],
     /,
 ) -> dict[str, object]:
-    try:
-        result = _run_single_case(case, run_config)
-    except Exception as exc:
-        message = "".join(traceback.format_exception_only(type(exc), exc)).strip()
-        traceback_text = traceback.format_exc(limit=8)
-        failure_kind = _failure_kind_from_exception(exc, traceback_text)
-        result: dict[str, object] = {
+    if "worker_label" not in result:
+        result["worker_label"] = _worker_label_from_context(context)
+    if "assigned_gpu_index" not in result:
+        result["assigned_gpu_index"] = _assigned_gpu_index_from_context(context)
+    result["gpu_slot"] = _gpu_slot_from_context(context)
+    result["cpu_affinity"] = _cpu_affinity_from_context(context)
+    return result
+
+
+def _base_environment_variables(platform: str, /) -> dict[str, str]:
+    env_vars = {
+        "OMP_NUM_THREADS": "1",
+        "OPENBLAS_NUM_THREADS": "1",
+        "MKL_NUM_THREADS": "1",
+        "NUMEXPR_NUM_THREADS": "1",
+    }
+    if platform == "cpu":
+        env_vars.update(build_cpu_env())
+    return env_vars
+
+
+def _resource_capacity_for_run(run_config: Mapping[str, object], /) -> FullResourceCapacity:
+    platform = _config_str(run_config, "platform")
+    if platform == "cpu":
+        return FullResourceCapacity.from_system(
+            max_workers=1,
+            gpu_devices=(),
+        )
+
+    gpu_indices_value = run_config.get("gpu_indices")
+    gpu_indices = (
+        [int(gpu_index) for gpu_index in gpu_indices_value]
+        if isinstance(gpu_indices_value, list)
+        else []
+    )
+    if not gpu_indices:
+        raise RuntimeError("gpu_indices must be resolved before building GPU capacity.")
+
+    workers_per_gpu = _config_int(run_config, "workers_per_gpu")
+    visible_devices = ",".join(str(gpu_index) for gpu_index in gpu_indices)
+    gpu_devices = detect_gpu_devices(
+        environ={"CUDA_VISIBLE_DEVICES": visible_devices},
+        max_slots=workers_per_gpu,
+    )
+    return FullResourceCapacity.from_system(
+        max_workers=len(gpu_devices) * workers_per_gpu,
+        gpu_devices=gpu_devices,
+    )
+
+
+def _resource_estimate_for_case(
+    case: Mapping[str, object],
+    run_config: Mapping[str, object],
+) -> FullResourceEstimate:
+    del case
+    if _config_str(run_config, "platform") == "gpu":
+        return FullResourceEstimate(gpu_count=1, gpu_slots=1)
+    return FullResourceEstimate()
+
+
+def _context_builder(
+    case: Mapping[str, object],
+    run_config: Mapping[str, object],
+    jsonl_output_path: Path,
+    /,
+) -> dict[str, object]:
+    del case
+    return {
+        "run_config": dict(run_config),
+        "jsonl_output_path": str(jsonl_output_path),
+        "environment_variables": _base_environment_variables(
+            _config_str(run_config, "platform")
+        ),
+    }
+
+
+def _build_child_failure_result(
+    case: Mapping[str, object],
+    context: Mapping[str, object],
+    exc: BaseException,
+    /,
+) -> dict[str, object]:
+    message = "".join(traceback.format_exception_only(type(exc), exc)).strip()
+    traceback_text = traceback.format_exc(limit=8)
+    failure_kind = _failure_kind_from_exception(exc, traceback_text)
+    return _attach_runner_metadata(
+        {
             "status": "failed",
             "failure_kind": failure_kind,
             "case_id": _case_int(case, "case_id"),
             "dimension": _case_int(case, "dimension"),
             "level": _case_int(case, "level"),
             "dtype_name": str(case["dtype_name"]),
-            "assigned_gpu_index": worker_slot.gpu_index,
-            "gpu_slot": worker_slot.gpu_slot,
-            "cpu_affinity": list(worker_slot.cpu_affinity),
             "error": message,
             "traceback": traceback_text[-4000:],
-        }
-
-    result["worker_label"] = worker_slot.worker_label
-    if "assigned_gpu_index" not in result:
-        result["assigned_gpu_index"] = worker_slot.gpu_index
-    result["gpu_slot"] = worker_slot.gpu_slot
-    result["cpu_affinity"] = list(worker_slot.cpu_affinity)
-    return result
+        },
+        context,
+    )
 
 
-def _build_child_command(
+def _parent_completion_record(
     case: Mapping[str, object],
-    run_config: Mapping[str, object],
-    worker_slot: WorkerSlot,
-    jsonl_output_path: Path,
+    context: Mapping[str, object],
+    result: ExecutionResult,
     /,
-) -> list[str]:
-    return [
-        sys.executable,
-        str(Path(__file__).resolve()),
-        "--child-case-json",
-        json.dumps(json_compatible(case), ensure_ascii=True),
-        "--child-run-config-json",
-        json.dumps(json_compatible(run_config), ensure_ascii=True),
-        "--child-worker-slot-json",
-        json.dumps(json_compatible(worker_slot.to_dict()), ensure_ascii=True),
-        "--child-jsonl-output",
-        str(jsonl_output_path),
-    ]
+) -> dict[str, object]:
+    status = "skipped" if result.status == "skipped" else "failed"
+    return _attach_runner_metadata(
+        {
+            "status": status,
+            "failure_kind": result.failure_kind,
+            "case_id": _case_int(case, "case_id"),
+            "dimension": _case_int(case, "dimension"),
+            "level": _case_int(case, "level"),
+            "dtype_name": str(case["dtype_name"]),
+            "error": result.message,
+            "traceback": (result.traceback or "")[-4000:],
+            "raw_exit_code": result.raw_exit_code,
+            "signal_name": result.signal_name,
+            "result_source": result.source,
+        },
+        context,
+    )
 
 
-def _log_case_started(case: Mapping[str, object], worker_slot: WorkerSlot, /) -> None:
-    started_at = datetime.now(timezone.utc).isoformat()
-    print(f"[{started_at}] start {worker_slot.worker_label} {_case_label(case)}", flush=True)
+def _run_case_task(case: Mapping[str, object], context: dict[str, object]) -> None:
+    apply_environment_variables(context)
+    run_config = cast(Mapping[str, object], context["run_config"])
+    jsonl_output_path = Path(str(context["jsonl_output_path"]))
+    try:
+        result = _run_single_case(case, run_config)
+    except Exception as exc:
+        append_jsonl_record(jsonl_output_path, _build_child_failure_result(case, context, exc))
+        raise
+    append_jsonl_record(jsonl_output_path, _attach_runner_metadata(result, context))
 
 
-def _log_case_finished(
+def _log_case_started(
     case: Mapping[str, object],
-    worker_slot: WorkerSlot,
-    result: Mapping[str, object],
+    context: Mapping[str, object],
+    pid: int,
     /,
 ) -> None:
-    finished_at = datetime.now(timezone.utc).isoformat()
-    status = str(result.get("status", "unknown"))
-    failure_kind = str(result.get("failure_kind", "-"))
+    started_at = datetime.now(timezone.utc).isoformat()
     print(
-        f"[{finished_at}] done  {worker_slot.worker_label} {_case_label(case)} status={status} failure_kind={failure_kind}",
+        f"[{started_at}] start {_worker_label_from_context(context)} {_case_label(case)} pid={pid}",
         flush=True,
     )
 
 
-def _run_cases_with_host_scheduler(
+def _log_case_finished(
+    case: Mapping[str, object],
+    context: Mapping[str, object],
+    result: ExecutionResult,
+    pid: int | None,
+    /,
+) -> None:
+    finished_at = datetime.now(timezone.utc).isoformat()
+    failure_kind = result.failure_kind if result.failure_kind is not None else "-"
+    print(
+        f"[{finished_at}] done  {_worker_label_from_context(context)} {_case_label(case)} pid={pid} status={result.status} failure_kind={failure_kind}",
+        flush=True,
+    )
+
+
+def _run_cases_with_runner(
     cases: list[dict[str, object]],
     run_config: Mapping[str, object],
     jsonl_output_path: Path,
     /,
 ) -> list[dict[str, object]]:
-    platform = _config_str(run_config, "platform")
-    gpu_indices_value = run_config.get("gpu_indices")
-    gpu_indices = [int(gpu_index) for gpu_index in gpu_indices_value] if isinstance(gpu_indices_value, list) else []
-    worker_slots = build_worker_slots(platform, gpu_indices, _config_int(run_config, "workers_per_gpu"))
-    results = run_cases_with_subprocess_scheduler(
-        cases,
-        worker_slots,
-        timeout_seconds=_config_int(run_config, "timeout_seconds"),
-        build_child_command=lambda case, worker_slot: _build_child_command(case, run_config, worker_slot, jsonl_output_path),
-        build_parent_failure_result=_parent_failure_result,
-        fallback_jsonl_output_path=jsonl_output_path,
-        cwd=WORKSPACE_ROOT,
-        on_case_started=_log_case_started,
-        on_case_finished=_log_case_finished,
+    worker = StandardWorker(
+        _run_case_task,
+        resource_estimator=functools.partial(_resource_estimate_for_case, run_config=run_config),
     )
+    scheduler = StandardFullResourceScheduler.from_worker(
+        cases=cases,
+        worker=worker,
+        context_builder=lambda case: _context_builder(case, run_config, jsonl_output_path),
+        disable_gpu_preallocation=GPU_PREALLOCATION_DISABLED,
+        resource_capacity=_resource_capacity_for_run(run_config),
+    )
+    runner = StandardRunner(
+        scheduler,
+        case_timeout_seconds=float(_config_int(run_config, "timeout_seconds")),
+        on_case_started=_log_case_started,
+        on_case_finished=lambda case, context, result, pid: (
+            append_jsonl_record(
+                jsonl_output_path,
+                _parent_completion_record(case, context, result),
+            )
+            if result.source == "parent" or result.status == "skipped"
+            else None
+        )
+        or _log_case_finished(case, context, result, pid),
+    )
+    runner.run(worker)
+    results = read_jsonl_records(jsonl_output_path)
     results.sort(key=lambda result: _result_int(result, "case_id"))
     return results
-
-
-def _child_main(
-    case_json: str,
-    run_config_json: str,
-    worker_slot_json: str,
-    jsonl_output_path: Path,
-    /,
-) -> None:
-    case = json.loads(case_json)
-    run_config = json.loads(run_config_json)
-    worker_slot = worker_slot_from_mapping(json.loads(worker_slot_json))
-    apply_worker_environment(
-        platform=_config_str(run_config, "platform"),
-        worker_slot=worker_slot,
-        disable_gpu_preallocation=GPU_PREALLOCATION_DISABLED,
-    )
-    result = _run_case_in_child(case, run_config, worker_slot)
-    append_jsonl_record(jsonl_output_path, result)
-    print(f"{CHILD_COMPLETE_PREFIX}{json.dumps(json_compatible(result), ensure_ascii=True)}", flush=True)
 
 
 # 責務: dtype ごとの誤差と実行時間を要約する。
@@ -685,7 +805,7 @@ def run_benchmark(
     }
     metadata = _experiment_metadata()
     cases = _build_cases(dimensions, levels, dtype_names)
-    results = _run_cases_with_host_scheduler(cases, run_config, jsonl_output_path)
+    results = _run_cases_with_runner(cases, run_config, jsonl_output_path)
     finished_at = datetime.now(timezone.utc)
 
     return {
@@ -734,28 +854,10 @@ def main() -> None:
     parser.add_argument("--coeff-start", type=float, default=DEFAULT_COEFF_START)
     parser.add_argument("--coeff-stop", type=float, default=DEFAULT_COEFF_STOP)
     parser.add_argument("--output", type=Path, default=None)
-    parser.add_argument("--child-case-json", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--child-run-config-json", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--child-worker-slot-json", default=None, help=argparse.SUPPRESS)
-    parser.add_argument("--child-jsonl-output", type=Path, default=None, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
-    if (
-        args.child_case_json is not None
-        and args.child_run_config_json is not None
-        and args.child_worker_slot_json is not None
-        and args.child_jsonl_output is not None
-    ):
-        _child_main(
-            args.child_case_json,
-            args.child_run_config_json,
-            args.child_worker_slot_json,
-            args.child_jsonl_output,
-        )
-        return
-
     if args.dimensions is None or args.levels is None:
-        raise ValueError("--dimensions and --levels are required outside child mode.")
+        raise ValueError("--dimensions and --levels are required.")
 
     if args.num_accuracy_problems < 1:
         raise ValueError("--num-accuracy-problems must be positive.")

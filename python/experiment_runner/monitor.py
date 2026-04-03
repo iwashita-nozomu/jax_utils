@@ -582,7 +582,12 @@ class RuntimeMonitor:
             event_name = "case_finished"
             if failure_kind == "timeout":
                 event_name = "case_timeout"
-            elif failure_kind == "worker_terminated":
+            elif failure_kind in {
+                "worker_terminated",
+                "process_exit",
+                "process_signal",
+                "no_completion",
+            }:
                 event_name = "worker_terminated"
 
             should_record_event = (
