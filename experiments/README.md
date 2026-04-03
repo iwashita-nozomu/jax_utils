@@ -28,10 +28,25 @@ experiments/
 
 - 実験目的
 - `cases.py` と `experimentcode.py` の役割
+- `task`、環境初期化、`resource_estimate`、`SkipController` の有無
 - 実行コマンド
 - `result/<run_name>/` に何が出るか
 - 対応する report の場所
 - 関連ドキュメントの入口
+
+## `experiment_runner` を使う topic の最小実装
+
+- `cases.py`
+  - case 列の展開
+  - `resource_estimate(case)`
+- `experimentcode.py`
+  - `task(case, context)`
+  - `context_builder(case)`
+  - 必要なら `initializer(context)`
+  - 必要なら `SkipController`
+  - runner 起動と final summary 生成
+
+process 管理、GPU 割当、timeout cleanup、diagnostics 合成は `python/experiment_runner/` に委譲します。
 
 ## 置き場の方針
 

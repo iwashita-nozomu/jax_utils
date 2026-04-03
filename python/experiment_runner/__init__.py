@@ -25,9 +25,7 @@ from . import result_io as result_io
 # Runner / Scheduler / Worker (standard)
 from .runner import (
     StandardRunner,
-    StandardScheduler,
     StandardWorker,
-    StandardResourceCapacity,
     StandardCompletion,
 )
 
@@ -59,11 +57,9 @@ from .execution_result import (
 
 # Protocols / constants / JAX utilities
 from .protocols import (
-    DispatchDecision,
     SkipController,
+    ContextInitializer,
     TaskContext,
-    SUCCESS_EXIT_CODE,
-    WORKER_PROTOCOL_ERROR_EXIT_CODE,
 )
 from .jax_context import (
     check_picklable,
@@ -78,9 +74,7 @@ from .context_utils import (
 __all__ = [
     # runner
     "StandardRunner",
-    "StandardScheduler",
     "StandardWorker",
-    "StandardResourceCapacity",
     "StandardCompletion",
     # full resource
     "FullResourceCapacity",
@@ -101,11 +95,9 @@ __all__ = [
     "ExecutionResult",
     "FailureKind",
     # protocols / constants / jax utilities
-    "DispatchDecision",
     "SkipController",
+    "ContextInitializer",
     "TaskContext",
-    "SUCCESS_EXIT_CODE",
-    "WORKER_PROTOCOL_ERROR_EXIT_CODE",
     "get_spawn_context",
     "disable_jax_memory_preallocation",
     "check_picklable",

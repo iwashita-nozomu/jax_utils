@@ -16,7 +16,6 @@ if str(PYTHON_ROOT) not in sys.path:
 
 import pytest
 
-from experiment_runner.context_utils import apply_environment_variables
 from experiment_runner.protocols import TaskContext
 from experiment_runner.resource_scheduler import (
     GPUDeviceCapacity,
@@ -179,8 +178,6 @@ class _HeavyGpuRunnerTask:
     def __call__(self, case: dict[str, object], context: TaskContext) -> dict[str, object]:
         env_vars = cast(dict[str, str], context.get("environment_variables", {}))
         assigned_gpu_id = int(env_vars.get("gpu_id", "-1"))
-        _clear_allocator_environment()
-        apply_environment_variables(context)
 
         started_at = time.time()
         try:

@@ -13,10 +13,13 @@ if str(PYTHON_ROOT) not in sys.path:
 
 from experiment_runner.monitor import RuntimeMonitor
 from experiment_runner.protocols import TaskContext
+from experiment_runner.resource_scheduler import (
+    FullResourceCapacity,
+    FullResourceEstimate,
+    StandardFullResourceScheduler,
+)
 from experiment_runner.runner import (
-    StandardResourceCapacity,
     StandardRunner,
-    StandardScheduler,
     StandardWorker,
 )
 
@@ -45,6 +48,11 @@ def _wait_for_url(url: str, /) -> None:
 def _sleep_task(case: dict[str, object], context: TaskContext) -> None:
     del context
     time.sleep(float(case["sleep_seconds"]))
+
+
+def _zero_estimate(case: object) -> FullResourceEstimate:
+    del case
+    return FullResourceEstimate()
 
 
 def test_runtime_monitor_serves_http_snapshot_history_and_events() -> None:
@@ -160,12 +168,13 @@ def test_standard_runner_updates_runtime_monitor_state() -> None:
     )
     monitor.start()
     try:
-        scheduler = StandardScheduler(
-            resource_capacity=StandardResourceCapacity(max_workers=1),
+        scheduler = StandardFullResourceScheduler(
+            resource_capacity=FullResourceCapacity(max_workers=1),
             cases=[
                 {"case_id": 1, "sleep_seconds": 0.1},
                 {"case_id": 2, "sleep_seconds": 0.1},
             ],
+            estimate_builder=_zero_estimate,
             context_builder=lambda case: {
                 "runner_metadata": {
                     "worker_label": f"cpu-{int(case['case_id'])}",

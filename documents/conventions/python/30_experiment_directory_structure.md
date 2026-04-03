@@ -44,6 +44,8 @@ experiments/report/
 
 - topic をまたいで再利用する protocol や scheduler は `python/experiment_runner/` に置きます。
 - その topic のためだけに存在する `cases.py` と `experimentcode.py` は `experiments/<topic>/` に置きます。
+- `cases.py` には case 列の展開と `resource_estimate(case)` を置きます。
+- `experimentcode.py` には `task(case, context)`、`context_builder(case)`、必要なら `initializer(context)` と `SkipController` を置きます。
 - 可視化や report 用の生成物は `result/<run_name>/` にまとめます。
 - topic 固有ディレクトリの README や note から、定式化と比較対象を必ず辿れるようにします。
 - 長時間実行で生成される JSON、JSONL、HTML、SVG、ログは `result/<run_name>/` に集約します。

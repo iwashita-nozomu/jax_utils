@@ -16,19 +16,14 @@ from collections import deque
 from dataclasses import dataclass
 import os
 import subprocess
-from typing import TYPE_CHECKING, Callable, Generic, Mapping, Protocol, Sequence, TypeVar, cast
+from typing import Callable, Generic, Mapping, Protocol, Sequence, TypeVar
 
 from jax_util.xla_env import build_gpu_env, merge_env_vars
 
-from .protocols import TaskContext, Worker
-from .runner import StandardResourceCapacity, StandardScheduler
+from .execution_result import ExecutionResult
+from .protocols import SkipController, TaskContext, Worker
+from .runner import StandardCompletion
 
-if TYPE_CHECKING:
-    from .execution_result import ExecutionResult
-    from .protocols import SkipController
-
-
-# ジェネリック型定義
 T = TypeVar("T")
 
 __all__ = [
@@ -167,12 +162,13 @@ def _merge_gpu_environment_config(
 
 
 @dataclass(frozen=True)
-class FullResourceCapacity(StandardResourceCapacity):
+class FullResourceCapacity:
+    max_workers: int
     host_memory_bytes: int = 0
     gpu_devices: tuple[GPUDeviceCapacity, ...] = ()
 
     def __post_init__(self) -> None:
-        super().__post_init__()
+        _validate_int(self.max_workers, "max_workers", minimum=1)
         # ホストメモリは非負であることを検証
         _validate_int(self.host_memory_bytes, "host_memory_bytes", minimum=0)
 
@@ -426,11 +422,11 @@ class _RunningAllocation:
     gpu_slot_assignments: tuple[tuple[int, tuple[int, ...]], ...]
 
 
-class FullResourceWorker(Worker[T, int], Protocol[T]):
+class FullResourceWorker(Worker[T], Protocol[T]):
     def resource_estimate(self, case: T) -> FullResourceEstimate: ...
 
 
-class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
+class StandardFullResourceScheduler(Generic[T]):
     @classmethod
     def from_worker(
         cls,
@@ -474,13 +470,10 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         - 待機中ケースを `_pending_entries` として、リソース割当可能かを評価できる形で保存する。
         - 利用可能なワーカースロット、ホストメモリ、GPU メモリ、GPU スロットを追跡する辞書を作る。
         """
-        # 親クラスは cases を受け取るが、ここでは独自に pending を管理するため空リストで初期化する
-        super().__init__(
-            resource_capacity=resource_capacity,
-            cases=[],
-            context_builder=context_builder,
-            skip_controller=skip_controller,
-        )
+        self._resource_capacity = resource_capacity
+        self._context_builder = context_builder
+        self.skip_controller = skip_controller
+        self.completions: list[StandardCompletion[T]] = []
         self._estimate_builder = estimate_builder
         self._gpu_environment_config = _merge_gpu_environment_config(
             disable_gpu_preallocation=disable_gpu_preallocation,
@@ -523,7 +516,7 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
 
     @property
     def resource_capacity(self) -> FullResourceCapacity:
-        return cast(FullResourceCapacity, self._resource_capacity)
+        return self._resource_capacity
 
     @property
     def total_case_count(self) -> int:
@@ -532,6 +525,11 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
             + len(self._pending_entries)
             + len(self._active_allocations)
         )
+
+    def _build_context(self, case: T) -> TaskContext:
+        if self._context_builder is None:
+            return {}
+        return dict(self._context_builder(case))
 
     def _build_estimate(self, case: T) -> FullResourceEstimate:
         estimate = self._estimate_builder(case)
@@ -719,9 +717,17 @@ class StandardFullResourceScheduler(StandardScheduler[T], Generic[T]):
         self,
         case: T,
         context: TaskContext,
-        result: "ExecutionResult | int",
+        result: ExecutionResult,
     ) -> None:
-        super().on_finish(case, context, result)
+        self.completions.append(
+            StandardCompletion(
+                case=case,
+                context=dict(context),
+                result=result,
+            )
+        )
+        if self.skip_controller is not None:
+            self.skip_controller.update(case, context, result)
 
         # 実行完了後はスケジューラ側で割り当てたリソースを解放する。
         allocation = self._active_allocations.pop(id(context), None)

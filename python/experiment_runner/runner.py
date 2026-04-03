@@ -1,7 +1,7 @@
-"""ランナーと標準的なスケジューラ/ワーカーの実装。
+"""ランナーと標準的なワーカー実装。
 
-軽量な抽象（`StandardScheduler` / `StandardRunner` / `StandardWorker`）を提供します。
-実装は並列実行と完了ハンドリングの単純な契約に従います。
+軽量な抽象（`StandardWorker` / `StandardCompletion` / `StandardRunner`）を提供します。
+実装は fresh child process と structured completion の単純な契約に従います。
 
 JAX fork() 互換性: StandardRunner は spawn コンテキストで child process を起動し、
 ケースごとに fresh process で worker を実行します。これにより、`CUDA_VISIBLE_DEVICES`
@@ -17,23 +17,22 @@ from dataclasses import dataclass
 from typing import Any, Callable, Generic, Mapping, TypeVar, cast
 
 from .child_runtime import execute_worker_in_child
+from .context_utils import apply_environment_variables
 from .execution_result import (
     ExecutionResult,
     FailureKind,
     build_failure_result,
     build_parent_exit_result,
     build_skipped_result,
-    coerce_execution_result,
+    build_success_result,
 )
 from .jax_context import check_picklable, get_spawn_context
 from .monitor import RuntimeMonitor
 from .process_supervisor import terminate_then_kill_process
 from .protocols import (
-    DispatchDecision,
+    ContextInitializer,
     ResourceEstimate,
     Scheduler,
-    SkipController,
-    SUCCESS_EXIT_CODE,
     TaskContext,
     Worker,
 )
@@ -50,9 +49,7 @@ ProgressCallback = Callable[[int, int, float, int], None] | None
 
 __all__ = [
     "StandardWorker",
-    "StandardResourceCapacity",
     "StandardCompletion",
-    "StandardScheduler",
     "StandardRunner",
     "ProgressCallback",
 ]
@@ -120,7 +117,9 @@ def _gpu_ids_from_context(context: TaskContext, /) -> tuple[int, ...]:
 class StandardWorker(Generic[T, U]):
     """ワーカー呼び出しラッパー。
 
-    - `task` を実行し、正常終了時は成功コードを返す。
+    - `initializer(context)` を先頭で実行して process-local 環境を整える。
+    - `task` が `ExecutionResult` を返せばそのまま返す。
+    - `task` が通常の payload を返した場合は `status="ok"` の結果へ正規化する。
     - 例外の structured diagnostics 化は child runtime 側が担当する。
     - 任意で `resource_estimator` を注入して `resource_estimate` を提供できる。
     """
@@ -129,13 +128,18 @@ class StandardWorker(Generic[T, U]):
         self,
         task: Callable[[T, TaskContext], U],
         resource_estimator: Callable[[T], ResourceEstimate] | None = None,
+        initializer: ContextInitializer = apply_environment_variables,
     ) -> None:
         self.task = task
         self._resource_estimator = resource_estimator
+        self.initializer = initializer
 
-    def __call__(self, case: T, context: TaskContext) -> int:
-        self.task(case, context)
-        return SUCCESS_EXIT_CODE
+    def __call__(self, case: T, context: TaskContext) -> ExecutionResult:
+        self.initializer(context)
+        task_result = self.task(case, context)
+        if isinstance(task_result, ExecutionResult):
+            return task_result
+        return build_success_result()
 
     def resource_estimate(self, case: T) -> ResourceEstimate:
         # NOTE: _resource_estimator は Worker インスタンスが from_worker()
@@ -146,39 +150,10 @@ class StandardWorker(Generic[T, U]):
 
 
 @dataclass(frozen=True)
-class StandardResourceCapacity:
-    max_workers: int
-
-    def __post_init__(self) -> None:
-        if self.max_workers < 1:
-            raise ValueError("max_workers must be positive.")
-
-
-@dataclass(init=False)
 class StandardCompletion(Generic[T]):
     case: T
     context: TaskContext
     result: ExecutionResult
-
-    def __init__(
-        self,
-        case: T,
-        context: TaskContext,
-        result: ExecutionResult | int = 0,
-        *,
-        exit_code: int | None = None,
-    ) -> None:
-        self.case = case
-        self.context = context
-        self.result = (
-            coerce_execution_result(exit_code)
-            if exit_code is not None
-            else coerce_execution_result(result)
-        )
-
-    @property
-    def exit_code(self) -> int:
-        return self.result.exit_code
 
 
 @dataclass
@@ -192,7 +167,7 @@ class _RunningProcess(Generic[T]):
 
 def _run_worker_in_child(
     sender: Connection,
-    worker: Worker[T, U],
+    worker: Worker[T],
     case: T,
     context: TaskContext,
 ) -> None:
@@ -206,85 +181,7 @@ def _run_worker_in_child(
         sender.close()
 
 
-class StandardScheduler(Generic[T]):
-    """FIFO ベースのシンプルなスケジューラ実装。
-
-    .. deprecated::
-        `StandardFullResourceScheduler` を使ってください。
-        リソース管理（GPU メモリ、ワーカースロット、ホストメモリ）を
-        統合的に管理し、より堅牢な並列実行が可能です。
-
-    - `next_case()` で次のケースとその `TaskContext` を返す。
-    - `on_finish()` で `completions` に結果を記録する。
-    """
-
-    def __init__(
-        self,
-        resource_capacity: StandardResourceCapacity,
-        cases: list[T],
-        context_builder: Callable[[T], TaskContext] | None = None,
-        skip_controller: SkipController[T] | None = None,
-    ) -> None:
-        self._resource_capacity = resource_capacity
-        self._pending_cases = list(cases)
-        self._context_builder = context_builder
-        self._skip_controller = skip_controller
-        self.completions: list[StandardCompletion[T]] = []
-
-    @property
-    def resource_capacity(self) -> StandardResourceCapacity:
-        return self._resource_capacity
-
-    @property
-    def total_case_count(self) -> int:
-        return len(self.completions) + len(self._pending_cases)
-
-    def _build_context(self, case: T) -> TaskContext:
-        if self._context_builder is None:
-            return {}
-        return dict(self._context_builder(case))
-
-    def next_case(self) -> tuple[T, TaskContext] | None:
-        """待機中ケースの先頭を取り出して (case, context) を返す。存在しなければ None を返す。"""
-        if self._pending_cases:
-            case = self._pending_cases.pop(0)
-            return case, self._build_context(case)
-        return None
-
-    def dispatch_decision(self, case: T, context: TaskContext) -> DispatchDecision:
-        if self._skip_controller is None:
-            return DispatchDecision.run()
-        decision = cast(object, self._skip_controller.should_skip(case, context))
-        if not isinstance(decision, DispatchDecision):
-            raise TypeError(
-                "skip_controller.should_skip must return "
-                "experiment_runner.protocols.DispatchDecision."
-            )
-        return decision
-
-    def on_finish(
-        self,
-        case: T,
-        context: TaskContext,
-        result: ExecutionResult | int,
-    ) -> None:
-        """完了時に `completions` に結果を記録する（context は複製して保存）。"""
-        normalized_result = coerce_execution_result(result)
-        self.completions.append(
-            StandardCompletion(
-                case=case,
-                context=dict(context),
-                result=normalized_result,
-            )
-        )
-        if self._skip_controller is not None:
-            self._skip_controller.update(case, context, normalized_result)
-
-    def is_completed(self) -> bool:
-        return not self._pending_cases
-
-
-class StandardRunner(Generic[T, U]):
+class StandardRunner(Generic[T]):
     """スケジューラとワーカーを使ってケースを並列実行するランナー。
 
     - spawn コンテキストでケースごとに fresh child process を起動
@@ -329,7 +226,7 @@ class StandardRunner(Generic[T, U]):
         self.on_case_started = on_case_started
         self.on_case_finished = on_case_finished
 
-    def run(self, worker: Worker[T, U]) -> None:
+    def run(self, worker: Worker[T]) -> None:
         """ケースを並列実行する。
 
         spawn コンテキストで fresh child process を起動し、
@@ -348,23 +245,11 @@ class StandardRunner(Generic[T, U]):
         """
         # ワーカーが pickle 化可能であることを確認
         check_picklable(worker, name="Worker")
-        self._execute_with_spawned_processes(worker, self._resolve_total_cases())
-
-    def _resolve_total_cases(self) -> int:
-        total_case_count = getattr(self.scheduler, "total_case_count", None)
-        if isinstance(total_case_count, int) and total_case_count >= 0:
-            return total_case_count
-
-        total_cases = len(self.scheduler.completions)
-        if hasattr(self.scheduler, "_pending_cases"):
-            return total_cases + len(self.scheduler._pending_cases)  # type: ignore[attr-defined]
-        if hasattr(self.scheduler, "_pending_entries"):
-            return total_cases + len(self.scheduler._pending_entries)  # type: ignore[attr-defined]
-        return total_cases
+        self._execute_with_spawned_processes(worker, self.scheduler.total_case_count)
 
     def _execute_with_spawned_processes(
         self,
-        worker: Worker[T, U],
+        worker: Worker[T],
         total_cases: int,
     ) -> None:
         """
@@ -393,9 +278,9 @@ class StandardRunner(Generic[T, U]):
                     if job is None:
                         break
                     case, context = job
-                    decision = self._resolve_dispatch_decision(case, context)
-                    if decision.action == "skip":
-                        result = build_skipped_result(decision.message, source="runner")
+                    skip_reason = self._resolve_skip_reason(case, context)
+                    if skip_reason is not None:
+                        result = build_skipped_result(skip_reason, source="runner")
                         self.scheduler.on_finish(
                             case,
                             context,
@@ -472,21 +357,18 @@ class StandardRunner(Generic[T, U]):
                 )
             self._update_monitor_state(total_cases, 0)
 
-    def _resolve_dispatch_decision(
+    def _resolve_skip_reason(
         self,
         case: T,
         context: TaskContext,
-    ) -> DispatchDecision:
-        decision_fn = getattr(self.scheduler, "dispatch_decision", None)
-        if decision_fn is None:
-            return DispatchDecision.run()
-        decision = cast(object, decision_fn(case, context))
-        if not isinstance(decision, DispatchDecision):
-            raise TypeError(
-                "scheduler.dispatch_decision must return "
-                "experiment_runner.protocols.DispatchDecision."
-            )
-        return decision
+    ) -> str | None:
+        skip_controller = self.scheduler.skip_controller
+        if skip_controller is None:
+            return None
+        skip_reason = cast(object, skip_controller.should_skip(case, context))
+        if skip_reason is not None and not isinstance(skip_reason, str):
+            raise TypeError("skip_controller.should_skip must return str | None.")
+        return skip_reason
 
     def _finish_timed_out_processes(
         self,
@@ -533,9 +415,11 @@ class StandardRunner(Generic[T, U]):
         self,
         child: _RunningProcess[T],
     ) -> ExecutionResult:
-        result: ExecutionResult | int | None = None
+        result: ExecutionResult | None = None
         try:
-            result = cast(ExecutionResult | int, child.receiver.recv())
+            received = child.receiver.recv()
+            if isinstance(received, ExecutionResult):
+                result = received
         except (EOFError, OSError, TypeError, ValueError):
             result = None
         finally:
@@ -543,9 +427,8 @@ class StandardRunner(Generic[T, U]):
             child.process.join()
 
         if result is not None:
-            normalized = coerce_execution_result(result)
             if child.process.exitcode in {0, None}:
-                return normalized
+                return result
 
         return build_parent_exit_result(
             child.process.exitcode,

@@ -116,6 +116,21 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 - `result/`
   - `result/<run_name>/` ごとに JSON、JSONL、ログ、図を置く。
 
+`experiment_runner` を使う実験で、実験側が実装する対象は次の 5 点に絞ります。
+
+- `task`
+  - `task(case, context)` を 1 case の研究ロジックとして実装します。
+  - case ごとの結果 record の書き込みは `task` の責務にします。
+- `cases`
+  - 多重 `for` や直積展開は実験側で終えて、case 列として scheduler に渡します。
+- 環境初期化
+  - `context_builder(case)` で `TaskContext` を作ります。
+  - 必要なら `initializer(context)` を用意し、child の先頭で実行させます。
+- ケースごとのリソース推定
+  - `resource_estimate(case)` を用意します。
+- `SkipController`
+  - 起動前 skip が必要なときだけ実装します。
+
 実装時点で、少なくとも次の配置と名前を README に明記します。
 
 - 実験コードの topic パス
@@ -127,7 +142,7 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 `experiment_runner` を使う場合の入口は次です。
 
 - `StandardWorker`
-- `StandardScheduler` または `StandardFullResourceScheduler`
+- `StandardFullResourceScheduler`
 - `StandardRunner`
 - 監視が必要な場合は `RuntimeMonitor`
 
@@ -136,16 +151,20 @@ process 管理や GPU 割当は runner 側の責務であり、実験 script 側
 - case ごとの fresh child process lifecycle
 - timeout と child cleanup
 - child / parent の diagnostics 記録
+- `ExecutionResult` の completion 管理
 - `environment_variables` の child 反映
+- GPU / CPU / worker slot の割当
 - worker start / finish の host 側観測点
 
 実装時にやらないことは次です。
 
 - 実験 script 内で独自の mini-runner を書く
+- 実験 script 内で独自の scheduler を書く
 - GPU slot 管理を script 側で持つ
 - `CUDA_VISIBLE_DEVICES` や `XLA_*` を script 側で直接組み立てる
 - JAX / XLA env が必要な場合に `jax_util.xla_env` を通さない
 - native crash / signal / timeout の回収を script 側で独自実装する
+- `ExecutionResult` 以外の completion 契約を topic 側へ足す
 - partial run を前提にした resume protocol を作る
 - ad hoc な result path 命名を増やす
 
