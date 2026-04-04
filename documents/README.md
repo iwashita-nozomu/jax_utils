@@ -41,6 +41,7 @@
 
 - [REVIEW_PROCESS.md](/workspace/documents/REVIEW_PROCESS.md)
 - [WORKFLOW_INVENTORY.md](/workspace/documents/WORKFLOW_INVENTORY.md)
+- [workflow-references.md](/workspace/documents/workflow-references.md)
 - [AGENTS_COORDINATION.md](/workspace/documents/AGENTS_COORDINATION.md)
 - [WORKTREE_SCOPE_TEMPLATE.md](/workspace/documents/WORKTREE_SCOPE_TEMPLATE.md)
 

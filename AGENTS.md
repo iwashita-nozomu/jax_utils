@@ -11,6 +11,7 @@
 1. `agents/CODEX_WORKFLOWS.md`
 1. `agents/TASK_WORKFLOWS.md`
 1. `agents/skills/README.md`
+1. `documents/workflow-references.md`
 1. `documents/AGENTS_COORDINATION.md`
 
 ## Request Routing
@@ -66,6 +67,8 @@
 - `agents/` は team shape、workflow、template、shared skill の正本です。
 - `agents/CODEX_WORKFLOWS.md` は Codex-first の workflow と subagent 運用の正本です。
 - `agents/skills/` は tool 非依存の skill 文書正本です。
+- `documents/workflow-references.md` は workflow、review、agent system を設計するときに参照した外部資料の索引です。
+- `references/` は参考文献そのものの置き場です。
 - `.agents/skills/` は Codex / Copilot などの自動発見向け shim です。
 - `.codex/config.toml` と `.codex/agents/*.toml` は Codex の project-scoped runtime config です。
 - `CLAUDE.md` は Claude 用の薄い adapter です。
@@ -78,6 +81,7 @@
 - ローカル仮想環境は作りません。Docker 構成を正本にします。
 - 正本の文書は `documents/`、補助知見は `notes/`、日付ログは `diary/` に置きます。
 - agent system を更新するときは、まず `agents/` を直し、その後に tool adapter を追随させます。
+- workflow、review、agent system を外部根拠で更新したときは、`documents/workflow-references.md` に出典を追記します。
 - role 一覧、handoff、skill 説明を tool 固有ファイルへ重複記載しません。
 - Codex subagent は explicit に頼む場合だけ使い、parent が最終編集責任を持ちます。
 - Codex subagent は routing で必要性が出たときだけ使います。常時 spawn する運用にはしません。
