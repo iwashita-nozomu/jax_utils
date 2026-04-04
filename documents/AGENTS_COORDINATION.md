@@ -6,11 +6,14 @@
 
 ## 正本
 
+- repo-wide entrypoint: `AGENTS.md`
 - チーム定義と role permission: `agents/agents_config.json`
 - agent 間やり取りの規約: `agents/COMMUNICATION_PROTOCOL.md`
 - runtime 実装: `scripts/agent_tools/agent_team.py`
 - 人間向け要約: `agents/README.md`
+- Codex-first subagent workflow: `agents/CODEX_WORKFLOWS.md`
 - task workflow カタログ: `agents/TASK_WORKFLOWS.md`
+- shared skill canon: `agents/skills/README.md`
 
 agent 間の handoff、review、response、escalation の書き方は
 `agents/COMMUNICATION_PROTOCOL.md` を参照する。
@@ -62,7 +65,9 @@ GitHub Actions の automation mirror は `.github/workflows/agent-coordination.y
 
 - role 定義は `agents/agents_config.json` だけで管理する。
 - 人間向けの team summary は `agents/README.md` だけに置く。
-- この文書と `.github/AGENTS.md` は thin entrypoint とし、role 一覧や flow を再掲しない。
+- skill 説明は `agents/skills/` だけに置く。
+- Codex の subagent 設定は `.codex/config.toml` と `.codex/agents/*.toml` で管理する。
+- `AGENTS.md`、`CLAUDE.md`、この文書、`.github/AGENTS.md`、`.github/copilot-instructions.md` は thin entrypoint とし、role 一覧や flow を再掲しない。
 - GitHub Actions では reviewer-return loop を含む handoff spine を通し、specialist role も workflow input から有効化できるようにする。
 - `implementer` 以外が repo ファイルを触る workflow は作らない。
 - artifact-only role を検査するときは、role 実行前の report snapshot と workspace snapshot の両方を取り、role 実行後の差分で write scope を判定する。

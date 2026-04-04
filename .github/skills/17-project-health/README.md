@@ -1,5 +1,7 @@
 # Skill 17: Project Health Monitoring
 
+この README は implementation surface です。repo-wide review の最上位入口は `agents/skills/project-review.md` に置きます。
+
 ## 概要
 
 プロジェクトの総合健全性を継続的に監視するスキル。

@@ -12,6 +12,14 @@
 - インテグレータ (Integrator): レビュー完了後の統合・マージ担当（自動化可、ただしポリシーを満たす場合のみ）。
 - 監査者 (Auditor): 証跡・結果（reports/）の確認と保管。
 
+## repo-wide review の入口
+
+- repo 全体レビュー、棚卸し、workflow 改造後の確認では `agents/skills/project-review.md` を最上位入口にします。
+- `comprehensive-review` は inventory と整合性確認、`project-health` は継続運用の drift 確認として使います。
+- 文書整理を伴う場合は `docs-completeness-review`、`md-style-check`、`docs-consistency-review` を必要に応じて追加します。
+- worktree を使う場合は `worktree-health` を追加します。
+- repo-wide review では findings を `fix now`、`follow-up`、`delete-ok` に分けます。
+
 ## レビュー前チェックリスト（PR 作成時）
 
 - `pytest` の該当テストを追加・更新し、ローカルで通ること。

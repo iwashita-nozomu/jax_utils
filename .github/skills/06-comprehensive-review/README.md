@@ -1,5 +1,7 @@
 # Skill 6: `comprehensive-review` — 包括レビュー Skill
 
+この README は implementation surface です。repo-wide review の最上位入口は `agents/skills/project-review.md` に置きます。
+
 ## 概要
 
 ドキュメント・Skill・ツール全体の整合性・完全性を統合的にレビュー。
@@ -244,6 +246,6 @@ Comprehensive Review 実施フロー：
 
 ## 参考資料
 
-- **設計文書**: `.github/COMPREHENSIVE_REVIEW_DESIGN.md`
-- **既存Skills**: `.github/skills/01-05/README.md`
-- **統合計画**: `.github/SKILLS_INTEGRATION_PLAN.md`
+- **shared skill canon**: `agents/skills/comprehensive-review.md`
+- **GitHub skill hub**: `.github/skills/README.md`
+- **実装ガイド**: `documents/SKILL_IMPLEMENTATION_GUIDE.md`

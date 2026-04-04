@@ -13,6 +13,8 @@
 
 このスキルは、PR レビューの標準化されたワークフローを提供します。
 
+Python 差分で `pyright`、`ruff`、warning 処理、型追跡を厳密に見る場合は、shared canon の `agents/skills/python-review.md` を優先します。
+
 ### 検証レイヤー
 
 | レイヤー | チェック対象 | 実施主体 | 自動化 |
@@ -213,6 +215,6 @@ PR レビュー完了後、以下テンプレートで報告書を作成：
 
 ## 参考資料
 
+- **shared skill canon**: `agents/skills/code-review.md`
 - **実装ガイド A-D 層**: `documents/SKILL_IMPLEMENTATION_GUIDE.md`
 - **レビュー手順**: `documents/REVIEW_PROCESS.md`
-- **統合計画**: `.github/SKILLS_INTEGRATION_PLAN.md`

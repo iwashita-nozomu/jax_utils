@@ -1,0 +1,101 @@
+version: 1
+
+skill_families:
+  - id: static-check
+    purpose: Fast baseline checks for code, docs, tests, and environment health.
+    canonical_doc: agents/skills/static-check.md
+    shim: .agents/skills/static-check/SKILL.md
+    implementation_paths:
+      - .github/skills/01-static-check
+      - .github/skills/09-type-checking
+      - .github/skills/10-documentation-validation
+      - .github/skills/11-test-execution
+      - .github/skills/15-docker-environment
+  - id: code-review
+    purpose: Review changes for correctness, architecture, and maintainability.
+    canonical_doc: agents/skills/code-review.md
+    shim: .agents/skills/code-review/SKILL.md
+    implementation_paths:
+      - .github/skills/02-code-review
+      - .github/skills/12-code-review-refactoring
+  - id: python-review
+    purpose: Review Python diffs with strict attention to pyright, ruff, and type-trace integrity.
+    canonical_doc: agents/skills/python-review.md
+    shim: .agents/skills/python-review/SKILL.md
+    implementation_paths:
+      - .github/skills/19-python-review
+  - id: docs-completeness-review
+    purpose: Review whether docs contain the sections, commands, rationale, and paths a reader needs.
+    canonical_doc: agents/skills/docs-completeness-review.md
+    shim: .agents/skills/docs-completeness-review/SKILL.md
+    implementation_paths:
+      - .github/skills/21-docs-completeness-review
+  - id: md-style-check
+    purpose: Check Markdown formatting, lint rules, and style consistency.
+    canonical_doc: agents/skills/md-style-check.md
+    shim: .agents/skills/md-style-check/SKILL.md
+    implementation_paths:
+      - .github/skills/22-md-style-check
+      - .github/skills/10-documentation-validation
+  - id: docs-consistency-review
+    purpose: Review contradictions, ambiguous language, and canon drift across docs.
+    canonical_doc: agents/skills/docs-consistency-review.md
+    shim: .agents/skills/docs-consistency-review/SKILL.md
+    implementation_paths:
+      - .github/skills/23-docs-consistency-review
+      - .github/skills/10-documentation-validation
+  - id: worktree-health
+    purpose: Review worktree scope, drift, and cleanup readiness.
+    canonical_doc: agents/skills/worktree-health.md
+    shim: .agents/skills/worktree-health/SKILL.md
+    implementation_paths:
+      - .github/skills/24-worktree-health
+  - id: experiment-lifecycle
+    purpose: Prepare, execute, and validate experiments.
+    canonical_doc: agents/skills/experiment-lifecycle.md
+    shim: .agents/skills/experiment-lifecycle/SKILL.md
+    implementation_paths:
+      - .github/skills/03-run-experiment
+      - .github/skills/08-experiment-initialization
+      - .github/skills/13-experiment-execution
+      - .github/skills/14-result-validation
+  - id: critical-review
+    purpose: Critique experimental claims and evidence quality.
+    canonical_doc: agents/skills/critical-review.md
+    shim: .agents/skills/critical-review/SKILL.md
+    implementation_paths:
+      - .github/skills/04-critical-review
+  - id: report-review
+    purpose: Review user-facing experiment reports for evidence traceability and presentation quality.
+    canonical_doc: agents/skills/report-review.md
+    shim: .agents/skills/report-review/SKILL.md
+    implementation_paths:
+      - .github/skills/18-report-review
+  - id: research-workflow
+    purpose: Manage iterative research work and cross-run comparison.
+    canonical_doc: agents/skills/research-workflow.md
+    shim: .agents/skills/research-workflow/SKILL.md
+    implementation_paths:
+      - .github/skills/05-research-workflow
+  - id: comprehensive-review
+    purpose: Run whole-repo reviews that span docs, tools, and integration points.
+    canonical_doc: agents/skills/comprehensive-review.md
+    shim: .agents/skills/comprehensive-review/SKILL.md
+    implementation_paths:
+      - .github/skills/06-comprehensive-review
+  - id: project-health
+    purpose: Watch operational health, automation health, and long-lived maintenance signals.
+    canonical_doc: agents/skills/project-health.md
+    shim: .agents/skills/project-health/SKILL.md
+    implementation_paths:
+      - .github/skills/07-health-monitor
+      - .github/skills/16-ci-cd-integration
+      - .github/skills/17-project-health
+  - id: project-review
+    purpose: Run repo-wide review across inventory, workflow health, tooling health, and operational drift.
+    canonical_doc: agents/skills/project-review.md
+    shim: .agents/skills/project-review/SKILL.md
+    implementation_paths:
+      - .github/skills/20-project-review
+      - .github/skills/06-comprehensive-review
+      - .github/skills/17-project-health

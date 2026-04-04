@@ -159,11 +159,13 @@ escalation 時は `decision_log.md` に以下を書く。
 - change_reviewer が regression risk を指摘する
 - implementer が修正と test evidence を返す
 
-`experimenter -> experiment_reviewer -> implementer`:
+`experimenter -> experiment_reviewer -> report_reviewer -> experimenter / implementer`:
 
 - experimenter が baseline または比較 run を出す
 - experiment_reviewer が fairness、overclaim、比較対象不足、再実行要否を指摘する
-- implementer が必要な修正を入れ、次の実験条件を明示して experimenter へ戻す
+- report_reviewer が report の概要、数値、図表、結論と根拠の対応を指摘する
+- report rewrite だけで直る場合は experimenter が report を直す
+- evidence 不足や protocol 破綻がある場合は implementer が必要な修正を入れ、次の実験条件を明示して experimenter へ戻す
 
 ## Repository-Wide Discussion Log
 

@@ -247,6 +247,7 @@ host 側で worker 状態や GPU 利用状況を見たい場合は、`RuntimeMon
 
 run 後は、必ず結果を report と note に整理します。
 批判的レビューの観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を正本にします。
+user-facing report の体裁と根拠導線は [experiment-report-style.md](/workspace/documents/experiment-report-style.md) を正本にし、`report_reviewer` の独立レビューを必須にします。
 
 最低限残すものは次です。
 
@@ -257,6 +258,7 @@ run 後は、必ず結果を report と note に整理します。
 - `Quantitative Summary:`
 - `Comparison Table:`
 - `Critical Review:`
+- `Report Review:`
 
 report 本文は次の構成を基本にします。
 
@@ -310,13 +312,21 @@ carry-over のルールは次です。
 1. `experimenter`
    - 同じ protocol で fresh run を実行する。
 1. `experimenter`
-   - `summary.json`、`cases.jsonl`、report を生成する。`notes/` を使う場合は対応する experiment note も生成する。
+   - `summary.json`、`cases.jsonl`、draft report を生成する。`notes/` を使う場合は対応する experiment note も生成する。
 1. `experiment_reviewer`
    - report と結果の読み方を批判的にレビューする。
    - [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を使って、math validity、evidence sufficiency、figure validity、overclaim を確認する。
+1. `report_reviewer`
+   - user-facing report を独立にレビューする。
+   - 実験の概要、主要数値、figure / table、結論と根拠の対応、limitations を確認する。
+   - review outcome を `report_rewrite_required`、`extra_validation_required`、`rerun_required`、`approved` のいずれかで返す。
+1. `experimenter`
+   - `report_rewrite_required` の場合、同じ result を使って report を書き直す。
+   - `extra_validation_required` の場合、同じ比較方針で追加検証を行う。
+   - `rerun_required` の場合、新しい run_name で fresh rerun を行う。
 1. `implementer`
-   - 必要な修正を入れる。
-1. 4-8 を終了条件まで反復する。
+   - code や protocol の修正が必要な場合だけ修正を入れる。
+1. 4-10 を終了条件まで反復する。
 1. `final_reviewer`
    - 最終 code と最終 claim を独立にレビューする。
 1. `verifier`
@@ -326,9 +336,12 @@ carry-over のルールは次です。
 
 - 毎回の実験で、結果とレポートを必ず生成する
 - code review と report review を分ける
+- `experiment_reviewer` と `report_reviewer` を分ける
 - 同じ protocol で再実行し、都合のよい subset に逃げない
 - 修正のたびに静的チェックを挟む
 - 良い結果だけでなく、失敗例、悪化例、未解決点も同じ note に残す
+- report review の outcome を `rewrite`、`extra validation`、`rerun` のどれかに明示する
+- 対処順は `rerun` → `extra validation` → `rewrite` → `approved` に固定する
 
 ### 3.1 各サイクルで必ず残すもの
 
@@ -343,6 +356,7 @@ carry-over のルールは次です。
 - report の所在
 - 置き場と命名規則の変更有無
 - `Critical Review:`
+- `Report Review:`
 - `Decision:`
 - `Next Idea:`
 

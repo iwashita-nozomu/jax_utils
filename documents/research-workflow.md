@@ -146,17 +146,20 @@
 1. `designer` が数式、実装方針、比較プロトコルを定める
 1. `experimenter` が baseline または現状 run を実行する
 1. `experiment_reviewer` が結果を批判的にレビューする
+1. `experimenter` が draft report をまとめる
+1. `report_reviewer` が user-facing report をレビューし、rewrite / 追加検証 / rerun を判定する
 1. `implementer` が必要な修正を入れる
 1. `change_reviewer` が code diff をレビューする
 1. `implementer` が review を反映する
 1. `experimenter` が同一プロトコルで再実行する
 1. `experiment_reviewer` が比較の妥当性と overclaim を再レビューする
-1. 終了条件を満たすまで 6-10 を反復する
+1. `report_reviewer` が report の更新版を再レビューする
+1. 終了条件を満たすまで 6-12 を反復する
 1. `final_reviewer` が最終的な claim と diff を独立にレビューする
 1. `verifier` が gate を実行する
 
 この loop では、`experimenter` は code を直しません。code を直すのは常に `implementer` です。
-逆に、`implementer` は「良さそうに見える結果」を根拠に勝手に claim を広げません。比較の妥当性と解釈の厳しさは `experiment_reviewer` が担います。
+逆に、`implementer` は「良さそうに見える結果」を根拠に勝手に claim を広げません。比較の妥当性と解釈の厳しさは `experiment_reviewer` が担い、reader-facing な report の厳しさは `report_reviewer` が担います。
 
 ## 6. 各プロセスで必須の記録項目
 

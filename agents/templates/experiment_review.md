@@ -36,3 +36,8 @@
 - Was the dimension / level sweep contiguous, and if not, was the exception justified?
 - Is the interpretation supported by the observed data, or is it speculative?
 - What evidence is still missing before the next code change or claim?
+
+## Boundary
+
+- Reader-facing report polish and evidence-map readability are reviewed in `report_review.md`.
+- This template stays focused on fairness, evidence sufficiency, and overclaim risk.

@@ -22,7 +22,8 @@
 - `./documents/` には正本だけを残し、proposal / report / summary / `.bak` のような履歴物は常設しません。
 - 一時的な分析や履歴を残したい場合は、新しいファイルを増やさず Git 履歴で追います。
 - 正本に昇格させる内容は、既存の canonical document へ統合してから元ファイルを削除します。
-- agent team の role 一覧と team shape は `agents/README.md` だけに要約を残し、`documents/AGENTS_COORDINATION.md` や `.github/AGENTS.md` へ再掲しません。
+- agent team の role 一覧と team shape は `agents/README.md` だけに要約を残し、`AGENTS.md`、`CLAUDE.md`、`documents/AGENTS_COORDINATION.md`、`.github/AGENTS.md` へ再掲しません。
+- skill の用途説明は `agents/skills/` だけに置き、tool 固有の adapter file へ重複記載しません。
 - `./notes/experiments/` のメモは実験ごとに分けます。
 - 削除予定の worktree から吸い出したメモは `./notes/worktrees/` に置きます。
 - `./diary/` は日付ファイルへ逐次追記する運用を基本とします。

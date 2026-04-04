@@ -213,13 +213,8 @@ config/
 
 ## References
 
-- [COMPREHENSIVE_REVIEW_DESIGN.md](../COMPREHENSIVE_REVIEW_DESIGN.md) - Design specification
+- [../../../agents/skills/comprehensive-review.md](../../../agents/skills/comprehensive-review.md) - Shared skill canon
 - [README.md](./README.md) - User guide
 - [documents/coding-conventions-python.md](../../documents/coding-conventions-python.md) - Python conventions
 - [.github/skills/README.md](../README.md) - Skills hub
-
----
-
-**Implementation Date**: 2026-04-01  
-**Status**: ✅ Ready for Testing  
 **Next Milestone**: Execute first comprehensive review (Week 1)

@@ -1,7 +1,8 @@
 # Agent Task Workflows
 
-この文書は、恒久的なエージェントチームで頻出すると想定される 10 個のタスクと、その workflow を定義するカタログです。
-実験主導タスクでの批判的レビュー観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を参照してください。
+この文書は、恒久的なエージェントチームで頻出すると想定される 10 個の task と、その workflow を定義する shared catalog です。
+Codex、Claude、GitHub Copilot などの runtime 差分には依存しません。
+実験主導タスクでの批判的レビュー観点は `documents/experiment-critical-review.md` を参照してください。
 
 ## 目的
 
@@ -10,20 +11,20 @@
 - 類似 task をまとめて、運用を過剰に複雑化させない
 - repo を直接編集する役は `implementer` に一本化する
 - 各 review の直後に、対象 role が feedback を受けて修正してから次段へ進む
-- 実験主導タスクでは `experimenter -> experiment_reviewer -> implementer` の反復を正本にする
+- 実験主導タスクでは `experimenter -> experiment_reviewer -> report_reviewer -> experimenter / implementer` の反復を正本にする
 
 ## 想定タスク 10 個
 
 | ID  | 想定タスク                                                | 主担当 workflow family | 有効化する専門ロール                         |
 | --- | --------------------------------------------------------- | ---------------------- | -------------------------------------------- |
 | T1  | solver / optimizer の局所バグ修正                         | Scoped Correction      | なし                                         |
-| T2  | アルゴリズム改善のための外部調査つき実装                  | Research-Driven Change | `researcher`, `experimenter`                 |
+| T2  | アルゴリズム改善のための外部調査つき実装                  | Research-Driven Change | `researcher`, `experimenter`, `report_reviewer` |
 | T3  | `base` / `solvers` / `optimizers` をまたぐ大規模 refactor | Large Delivery         | `scheduler`                                  |
 | T4  | 新 API / 新機能の追加                                     | Large Delivery         | `scheduler`                                  |
 | T5  | CI failure / flaky test の切り分けと修正                  | Scoped Correction      | なし                                         |
-| T6  | `experiment_runner` の拡張や運用改善                      | Platform and Infra     | `scheduler`, `infra_steward`, `experimenter` |
+| T6  | `experiment_runner` の拡張や運用改善                      | Platform and Infra     | `scheduler`, `infra_steward`, `experimenter`, `report_reviewer` |
 | T7  | Docker / GitHub Actions / 自動化基盤の拡張                | Platform and Infra     | `infra_steward`                              |
-| T8  | 性能ボトルネック調査と benchmark 主導の最適化             | Research-Driven Change | `researcher`, `experimenter`, `scheduler`    |
+| T8  | 性能ボトルネック調査と benchmark 主導の最適化             | Research-Driven Change | `researcher`, `experimenter`, `report_reviewer`, `scheduler`    |
 | T9  | 実装変更に追随する設計文書・README・テスト整合            | Scoped Correction      | なし                                         |
 | T10 | 依存更新、runtime 互換性対応、JAX 周辺 upgrade            | Platform and Infra     | `researcher`, `infra_steward`, `scheduler`   |
 
@@ -58,7 +59,7 @@
 1. `designer` が review を受けて設計を修正する。
 1. `experimenter` が baseline run と比較プロトコルを記録する。
 1. `experiment_reviewer` が baseline の妥当性と比較公平性を批判的にレビューする。
-   レビュー観点は [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) を使う。
+   レビュー観点は `documents/experiment-critical-review.md` を使う。
 1. `experimenter` が review を受けて experiment log を修正する。
 1. `implementer` が 1 つの change を実装する。
 1. `change_reviewer` が各 chunk を逐次レビューする。
@@ -66,7 +67,10 @@
 1. `experimenter` が同じ比較プロトコルで再実行する。
 1. `experiment_reviewer` が result interpretation と overclaim をレビューする。
    review では math validity、literature connection、evidence sufficiency、figure validity も確認する。
-1. `implementer` が experiment review を受け、指摘があれば修正する。再実験が必要と判定された場合は前の 5 手順を反復する。
+1. `experimenter` が user-facing report draft を作る。
+1. `report_reviewer` が report の概要、数値、図表、結論と根拠の対応をレビューする。
+1. `experimenter` が report review を受けて report を書き直す。追加検証や rerun が必要なら、前の実験手順へ戻す。
+1. `implementer` が experiment review または report review を受け、指摘があれば修正する。コード変更や protocol 修正が必要な場合は前の 5 手順を反復する。
 1. `final_reviewer` が research と diff の整合を見る。
 1. `implementer` が final review を受け、指摘があれば修正する。
 1. `verifier` がテストと benchmark を実行する。
@@ -140,7 +144,7 @@
 1. `designer` が review を受けて設計を修正する。
 1. `experimenter` が現行 runner の baseline operation を記録する。
 1. `experiment_reviewer` が観測性、比較条件、run 完走性をレビューする。
-   review では [experiment-critical-review.md](/workspace/documents/experiment-critical-review.md) の relevant 項目を使う。
+   review では `documents/experiment-critical-review.md` の relevant 項目を使う。
 1. `experimenter` が review を受けて baseline 記録を修正する。
 1. `implementer` が runner / scheduler / docs を更新する。
 1. `change_reviewer` が運用 regressions を確認する。
@@ -148,7 +152,10 @@
 1. `experimenter` が同じ運用シナリオを再実行する。
 1. `experiment_reviewer` が regression と overclaim をレビューする。
    report と code の両方を確認する必要がある場合は、その両方を見て evidence sufficiency を確認する。
-1. `implementer` が experiment review を受け、指摘があれば修正する。
+1. `experimenter` が運用 report draft を作る。
+1. `report_reviewer` が report の根拠、数値、図表、読者向け説明をレビューする。
+1. `experimenter` が report review を受けて report を書き直す。追加検証や rerun が必要なら実験手順へ戻す。
+1. `implementer` が experiment review または report review を受け、指摘があれば修正する。
 1. `final_reviewer` が安全性と observability を見る。
 1. `implementer` が final review を受け、指摘があれば修正する。
 1. `verifier` が runner 系テストを実行する。
@@ -196,7 +203,10 @@
 1. `experimenter` が同じ benchmark を再実行する。
 1. `experiment_reviewer` が改善主張の妥当性をレビューする。
    結論に必要な data と figure が揃っているかも確認する。
-1. `implementer` が experiment review を受け、指摘があれば修正する。
+1. `experimenter` が benchmark report draft を作る。
+1. `report_reviewer` が report の概要、数値、図表、結論と根拠の対応をレビューする。
+1. `experimenter` が report review を受けて report を書き直す。追加検証や rerun が必要なら benchmark 手順へ戻す。
+1. `implementer` が experiment review または report review を受け、指摘があれば修正する。
 1. `final_reviewer` が benchmark の妥当性を確認する。
 1. `implementer` が final review を受け、指摘があれば修正する。
 1. `verifier` が baseline 比較を実行する。

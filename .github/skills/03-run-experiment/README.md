@@ -246,7 +246,7 @@ ls -la experiments/smolyak_experiment/results/
 
 ## 参考資料
 
+- **shared skill canon**: `agents/skills/experiment-lifecycle.md`
 - **実験ワークフロー**: `documents/experiment-workflow.md`
 - **実験規約**: `documents/coding-conventions-experiments.md`
 - **レポート書き方**: `documents/experiment-report-style.md`
-- **統合計画**: `.github/SKILLS_INTEGRATION_PLAN.md`

@@ -37,6 +37,7 @@ workflow_families:
         - research_reviewer
         - experimenter
         - experiment_reviewer
+        - report_reviewer
     tasks:
       - T2
       - T8
@@ -77,6 +78,7 @@ workflow_families:
         - research_reviewer
         - experimenter
         - experiment_reviewer
+        - report_reviewer
         - scheduler
         - schedule_reviewer
         - infra_steward
@@ -112,6 +114,7 @@ tasks:
       - research_reviewer
       - experimenter
       - experiment_reviewer
+      - report_reviewer
     steps:
       - manager が改善目標と受け入れ条件を定義
       - manager_reviewer が intake を review
@@ -131,7 +134,10 @@ tasks:
       - implementer が review を受けて修正
       - experimenter が同じ比較プロトコルで再実行
       - experiment_reviewer が result interpretation と overclaim を review
-      - implementer が experiment review を受け、指摘があれば修正。再実験が必要と判定された場合は実験 loop を反復
+      - experimenter が user-facing report draft を作成
+      - report_reviewer が report の根拠、数値、図表、結論 traceability を review
+      - experimenter が report review を受けて report を書き直す。追加検証や rerun が必要なら実験 loop へ戻る
+      - implementer が experiment review または report review を受け、指摘があれば修正。再実験が必要と判定された場合は実験 loop を反復
       - final_reviewer が research と最終 diff を review
       - implementer が final review を受け、指摘があれば修正
       - verifier が test と benchmark を実行
@@ -203,6 +209,7 @@ tasks:
     specialists:
       - experimenter
       - experiment_reviewer
+      - report_reviewer
       - scheduler
       - schedule_reviewer
       - infra_steward
@@ -228,7 +235,10 @@ tasks:
       - implementer が review を受けて修正
       - experimenter が同じ運用シナリオを再実行
       - experiment_reviewer が regression と overclaim を review
-      - implementer が experiment review を受け、指摘があれば修正
+      - experimenter が運用 report draft を作成
+      - report_reviewer が report の根拠、数値、図表、結論 traceability を review
+      - experimenter が report review を受けて report を書き直す。追加検証や rerun が必要なら実験 loop へ戻る
+      - implementer が experiment review または report review を受け、指摘があれば修正
       - final_reviewer が安全性を最終 review
       - implementer が final review を受け、指摘があれば修正
       - verifier が runner 系 test を実行
@@ -262,6 +272,7 @@ tasks:
       - research_reviewer
       - experimenter
       - experiment_reviewer
+      - report_reviewer
       - scheduler
       - schedule_reviewer
     steps:
@@ -285,7 +296,10 @@ tasks:
       - implementer が review を受けて修正
       - experimenter が同じ benchmark を再実行
       - experiment_reviewer が改善主張の妥当性を review
-      - implementer が experiment review を受け、指摘があれば修正
+      - experimenter が benchmark report draft を作成
+      - report_reviewer が report の根拠、数値、図表、結論 traceability を review
+      - experimenter が report review を受けて report を書き直す。追加検証や rerun が必要なら benchmark loop へ戻る
+      - implementer が experiment review または report review を受け、指摘があれば修正
       - final_reviewer が benchmark 妥当性を最終 review
       - implementer が final review を受け、指摘があれば修正
       - verifier が benchmark を実行

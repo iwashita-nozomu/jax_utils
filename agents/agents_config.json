@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "team": {
     "id": "jax_util_permanent_team",
     "report_root": "reports/agents",
@@ -9,7 +9,7 @@
     "task_catalog": "agents/task_catalog.yaml",
     "communication_protocol": "agents/COMMUNICATION_PROTOCOL.md",
     "canonical_runtime": "scripts/agent_tools/agent_team.py",
-    "summary": "The manager is the single front-door role for intake, scoping, routing, and escalation. Design is mandatory before implementation. Experiment-driven tasks use an explicit experiment loop of experimenter -> experiment_reviewer -> implementer -> reviewers -> experimenter. Only implementer may modify repository source files."
+    "summary": "The manager is the single front-door role for intake, scoping, routing, and escalation. Design is mandatory before implementation. Experiment-driven tasks use an explicit experiment loop of experimenter -> experiment_reviewer -> report_reviewer -> experimenter or implementer -> reviewers -> experimenter. Only implementer may modify repository source files."
   },
   "always_on_roles": [
     {
@@ -234,15 +234,17 @@
         "comparison_tracking"
       ],
       "required_outputs": [
-        "experiment_log.md"
+        "experiment_log.md",
+        "experiment_report.md"
       ],
       "write_policy": {
         "mode": "runtime_outputs_plus_artifacts",
         "allowed_artifacts": [
-          "experiment_log"
+          "experiment_log",
+          "experiment_report"
         ],
         "requires_worktree_scope": true,
-        "notes": "The experimenter may write only run artifacts and runtime output directories explicitly listed in WORKTREE_SCOPE.md. It may not edit repository source files."
+        "notes": "The experimenter may write only run artifacts, experiment reports, and runtime output directories explicitly listed in WORKTREE_SCOPE.md. It may not edit repository source files."
       }
     },
     {
@@ -262,6 +264,25 @@
           "experiment_review"
         ],
         "notes": "The experiment reviewer critiques fairness, comparison targets, interpretation, and whether the next code change is actually justified by the evidence."
+      }
+    },
+    {
+      "id": "report_reviewer",
+      "activation": "benchmark_or_experiment_loop_needed",
+      "owns": [
+        "user_facing_report_review",
+        "evidence_traceability_review",
+        "figure_and_table_presentation_review"
+      ],
+      "required_outputs": [
+        "report_review.md"
+      ],
+      "write_policy": {
+        "mode": "artifacts_only",
+        "allowed_artifacts": [
+          "report_review"
+        ],
+        "notes": "The report reviewer independently checks user-facing experiment reports, including overview clarity, numeric grounding, figure/table readability, and whether rewrite, extra validation, or rerun is required."
       }
     },
     {
@@ -439,6 +460,16 @@
     },
     {
       "from": "experimenter",
+      "to": "report_reviewer",
+      "gate": "experiment report is ready"
+    },
+    {
+      "from": "report_reviewer",
+      "to": "experimenter",
+      "gate": "report review feedback is resolved or escalated"
+    },
+    {
+      "from": "experimenter",
       "to": "implementer",
       "gate": "baseline findings or validation feedback are approved or escalated"
     },
@@ -587,7 +618,8 @@
     {
       "roles": [
         "experimenter",
-        "experiment_reviewer"
+        "experiment_reviewer",
+        "report_reviewer"
       ],
       "mode": "isolated",
       "share_only": [
@@ -601,7 +633,9 @@
         "infra_notes.md",
         "infra_review.md",
         "experiment_log.md",
-        "experiment_review.md"
+        "experiment_report.md",
+        "experiment_review.md",
+        "report_review.md"
       ],
       "do_not_share": [
         "private_scratchpads",
@@ -659,6 +693,7 @@
         "infra_notes.md",
         "infra_review.md",
         "experiment_log.md",
+        "experiment_report.md",
         "experiment_review.md",
         "design_brief.md",
         "design_review.md"
@@ -687,7 +722,9 @@
         "infra_notes.md",
         "infra_review.md",
         "experiment_log.md",
+        "experiment_report.md",
         "experiment_review.md",
+        "report_review.md",
         "change_review.md",
         "diff",
         "verification.txt"
@@ -716,7 +753,9 @@
         "infra_notes.md",
         "infra_review.md",
         "experiment_log.md",
+        "experiment_report.md",
         "experiment_review.md",
+        "report_review.md",
         "change_review.md",
         "final_review.md",
         "diff",
@@ -740,7 +779,9 @@
         "change_review.md",
         "final_review.md",
         "experiment_log.md",
+        "experiment_report.md",
         "experiment_review.md",
+        "report_review.md",
         "research_notes.md",
         "research_review.md"
       ],
@@ -767,6 +808,10 @@
     {
       "role": "experiment_reviewer",
       "when": "experimenter is active"
+    },
+    {
+      "role": "report_reviewer",
+      "when": "experimenter is active and a user-facing report or summary is produced"
     },
     {
       "role": "scheduler",
@@ -807,7 +852,9 @@
     "research_notes": "research_notes.md",
     "research_review": "research_review.md",
     "experiment_log": "experiment_log.md",
+    "experiment_report": "experiment_report.md",
     "experiment_review": "experiment_review.md",
+    "report_review": "report_review.md",
     "schedule": "schedule.md",
     "schedule_review": "schedule_review.md",
     "infra_notes": "infra_notes.md",

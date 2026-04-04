@@ -1,58 +1,57 @@
-# 🤖 エージェント用ガイド（日本語）
+# エージェント用ガイド
 
-> GitHub Copilot や Cursor などの AI エージェントが jax_util プロジェクトで作業するためのガイド集
+この文書は、人間と各種 AI エージェントが共通の正本へたどり着くための日本語入口です。
 
-______________________________________________________________________
+## 最初に見る場所
 
-## 📚 3 回のクリックで目的到達
+1. `AGENTS.md`
+1. `agents/README.md`
+1. `agents/CODEX_WORKFLOWS.md`
+1. `agents/TASK_WORKFLOWS.md`
+1. `agents/skills/README.md`
 
-### **あなたは何をしたいですか？**
+## 目的別の入口
 
-#### 🔹 **「新しい実装を追加したい」**
-1. [agents/README.md](./README.md) — チームロール・権限を確認
-2. [TASK_WORKFLOWS.md](./TASK_WORKFLOWS.md) — 実装タスクの workflow を選択
-3. [documents/AGENT_TASK_MAP.md](../documents/AGENT_TASK_MAP.md#💻-実装者向けtask-11-20) — Task 11-20 を実行
+### 実装を進めたい
 
-#### 🔹 **「実験・検証をしたい」**
-1. [agents/README.md](./README.md) — experimenter ロール確認
-2. [TASK_WORKFLOWS.md](./TASK_WORKFLOWS.md) — 実験タスクの workflow を選択  
-3. [documents/research-workflow.md](../documents/research-workflow.md) — 実験設計・比較・改造ガイド
+1. `agents/README.md` で role と権限を見る
+1. `agents/TASK_WORKFLOWS.md` で task family を選ぶ
+1. Python 差分なら `agents/skills/python-review.md` を読む
+1. `documents/coding-conventions-project.md` と対象分野の規約を読む
 
-#### 🔹 **「コードレビューをしたい」**
-1. [agents/COMMUNICATION_PROTOCOL.md](./COMMUNICATION_PROTOCOL.md) — review メッセージの書き方
-2. [documents/REVIEW_PROCESS.md](../documents/REVIEW_PROCESS.md) — レビュー項目・チェックリスト
-3. [reviews/](../reviews/) — 既存レビュー報告を参照
+### 実験を回したい
 
-#### 🔹 **「タスク全体を管理したい」**
-1. [agents/README.md](./README.md) — manager ロール確認
-2. [TASK_WORKFLOWS.md](./TASK_WORKFLOWS.md) — タスク引き継ぎ workflow
-3. [documents/AGENT_TASK_CHECKLIST.md](../documents/AGENT_TASK_CHECKLIST.md) — 管理者向けチェックリスト
+1. `agents/TASK_WORKFLOWS.md` で experimenter を含む workflow を選ぶ
+1. `agents/skills/experiment-lifecycle.md` を読む
+1. `agents/skills/critical-review.md` と `agents/skills/report-review.md` を読む
+1. `documents/experiment-workflow.md` と `documents/research-workflow.md` を読む
 
-#### 🔹 **「全タスク 50 個を把握したい」**
-1. [documents/AGENT_TASK_INDEX_GUIDE.md](../documents/AGENT_TASK_INDEX_GUIDE.md) — ドキュメント 3つ の役割説明
-2. [documents/AGENT_TASK_MAP.md](../documents/AGENT_TASK_MAP.md) — 50 タスク詳細マップ
-3. [documents/AGENT_TASK_VALIDATION_REPORT.md](../documents/AGENT_TASK_VALIDATION_REPORT.md) — テスト・リソース検証
+### レビューしたい
 
-______________________________________________________________________
+1. `agents/COMMUNICATION_PROTOCOL.md` で handoff / review / response を確認する
+1. `agents/skills/code-review.md`、`agents/skills/python-review.md`、`agents/skills/docs-completeness-review.md`、`agents/skills/md-style-check.md`、`agents/skills/docs-consistency-review.md`、`agents/skills/worktree-health.md`、`agents/skills/critical-review.md`、`agents/skills/report-review.md`、`agents/skills/project-review.md` のどれかを選ぶ
+1. `documents/REVIEW_PROCESS.md` を読む
 
-## 🎯 エージェント向けスキル別ガイド
+### agent system 自体を直したい
 
-### 📋 **コーディング・実装スキル**
+1. `agents/README.md` を shared canon として更新する
+1. `agents/CODEX_WORKFLOWS.md` と `.codex/agents/*.toml` を見直す
+1. `agents/skills/README.md` と該当 skill 文書を更新する
+1. その後に `AGENTS.md`、`CLAUDE.md`、`.github/AGENTS.md`、`.github/copilot-instructions.md` を追随させる
 
-| タスク | ファイル | ロール | 時間 |
-|--------|---------|--------|------|
-| 新規モジュール実装 | [TASK_WORKFLOWS.md](./TASK_WORKFLOWS.md#-モジュール実装workflow) | implementer | 2-3h |
-| テスト追加 | [coding-conventions-testing.md](../documents/coding-conventions-testing.md) | implementer | 1-2h |
-| ドキュメント更新 | [TASK_WORKFLOWS.md](./TASK_WORKFLOWS.md#-ドキュメント更新workflow) | implementer | 30min-1h |
-| 型エラー削減 | [task.md](../task.md) | implementer | 2-3h |
+## Tool ごとの入口
 
-**参考規約:**
-- [Python コーディング規約](../documents/coding-conventions-python.md)
-- [テスト規約](../documents/coding-conventions-testing.md)
-- [Markdown 記法](../documents/coding-conventions.md)
+- primary runtime: Codex
+- 共通入口: `AGENTS.md`
+- Codex subagent config: `.codex/config.toml` と `.codex/agents/`
+- Claude: `CLAUDE.md`
+- GitHub Copilot: `.github/copilot-instructions.md`
+- auto-discovery される skill shim: `.agents/skills/`
 
-______________________________________________________________________
+## 置き場のルール
 
-**最後に更新:** 2026-04-01  
-**対象:** GitHub Copilot, Cursor, Claude, その他 AI エージェント  
-**言語:** 日本語 (Japanese)
+- shared canon は `agents/` に置く
+- Codex の custom subagent は `.codex/agents/` に置く
+- skill の説明正本は `agents/skills/` に置く
+- tool 固有の補足は adapter にだけ置く
+- 実装用スクリプトや GitHub Actions 連携は `.github/skills/` と `.github/workflows/` に置く

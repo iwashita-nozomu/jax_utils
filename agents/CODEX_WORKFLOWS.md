@@ -1,0 +1,149 @@
+# Codex Workflows
+
+この文書は、Codex を primary runtime として使うときの workflow と subagent 運用の正本です。
+
+## Scope
+
+- `AGENTS.md` から最初に読む Codex-specific supplement
+- `.codex/config.toml` と `.codex/agents/*.toml` の意味を示す
+- built-in agent と custom agent の使い分けを固定する
+- ユーザーの依頼文から workflow と subagent をどう選ぶかを固定する
+
+## Primary Runtime
+
+- 当面の primary runtime は Codex です。
+- Claude と GitHub Copilot は adapter として残します。
+- shared canon は引き続き `agents/` に置きます。
+
+## Intake Flow
+
+1. ユーザーの依頼を `agents/TASK_WORKFLOWS.md` の workflow family に分類する
+1. `agents/skills/README.md` から必要な skill family を選ぶ
+1. 完了前に必要な review を決める
+1. その場で解けるなら parent が進める
+1. 調査、文書整理、レビュー、実験計画を分けたいときだけ subagent を使う
+1. parent が最終方針、最終編集、最終応答を持つ
+
+## Built-In Agents
+
+- `default`: 汎用 fallback
+- `worker`: 実装や修正を進める execution-focused agent
+- `explorer`: 読み取り中心の codebase exploration agent
+
+この repo では `.codex/agents/explorer.toml` と `.codex/agents/worker.toml` を置き、built-in agent に repo-specific instruction を上書きします。
+
+## Project-Scoped Custom Agents
+
+- `.codex/agents/docs_workflow_steward.toml`
+  - `AGENTS.md`、`agents/`、adapter file、repo canon の整理と文書更新
+- `.codex/agents/docs_researcher.toml`
+  - official docs の確認、外部仕様の照合、主張を弱める根拠探し
+- `.codex/agents/docs_completeness_reviewer.toml`
+  - 文書の欠落、説明不足、入口不足を潰す
+- `.codex/agents/docs_consistency_reviewer.toml`
+  - 文書間の矛盾、曖昧性、canon drift を潰す
+- `.codex/agents/reviewer.toml`
+  - findings-first review。主張にはかなり批判的に当たる
+- `.codex/agents/python_reviewer.toml`
+  - Python diff を pyright、ruff、型追跡で潰す
+- `.codex/agents/project_reviewer.toml`
+  - repo-wide な inventory、workflow health、tooling health を潰す
+- `.codex/agents/worktree_health_reviewer.toml`
+  - 現在の worktree の scope drift と cleanup risk を潰す
+- `.codex/agents/experiment_planner.toml`
+  - 実験設計、resource estimate、skip、result/report 整理
+- `.codex/agents/report_reviewer.toml`
+  - user-facing experiment report の独立レビュー
+
+## Subagent Rules
+
+- Codex は explicit に頼まれたときだけ subagent を spawn します。
+- parent agent が write responsibility を持ちます。
+- subagent は基本 read-only で使います。
+- 並列化は探索、レビュー、資料確認に使います。
+- 並列の write-heavy 実装は避けます。
+- `max_depth` は `1` に固定し、再帰的 fan-out を防ぎます。
+- review では「通す理由」より「止める理由」を優先して探します。
+- 実験や設計の主張がある場合は、必要に応じて `docs_researcher` を足して文献や仕様の反証を探します。
+- `experiments/report/<run_name>.md` を閉じる前には、`report_reviewer` か同等の `report-review` 実施を要求します。
+- `python/` 配下の差分では、必要に応じて `python_reviewer` を使い、pyright と ruff を review 根拠に含めます。
+- repo 全体レビューや棚卸しでは、必要に応じて `project_reviewer` を使います。
+- 文書整理では、必要に応じて `docs_completeness_reviewer` と `docs_consistency_reviewer` を使います。
+- worktree 運用では、必要に応じて `worktree_health_reviewer` を使います。
+
+## Routing Table
+
+| User Request Pattern | Workflow Family | Skill Family | Required Review | Default Codex Flow |
+| -------------------- | --------------- | ------------ | --------------- | ------------------ |
+| 局所バグ修正、テスト修正、README 追随 | `Scoped Correction` | `static-check`, `code-review` | 実装後に `code-review`。Python 差分なら `python-review`。必要なら `reviewer` | parent 直処理。必要なら `explorer` → parent 実装 → `python_reviewer` または `reviewer` |
+| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 比較条件の確認と、結果主張の前に `critical-review`。user-facing report の完了前に `report-review`。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `explorer` で調査 → parent 実装 → `reviewer` → report draft 後に `report_reviewer` |
+| 大規模 refactor、新 API | `Large Delivery` | `code-review` | 設計差分と公開面を `code-review`。Python 公開面なら `python-review`。実装後に `reviewer` | `explorer` で影響範囲確認 → parent または `worker` 実装 → `python_reviewer` または `reviewer` |
+| Python module change、pyright warning cleanup、type boundary refactor | `Scoped Correction` または `Large Delivery` | `python-review`, `static-check` | `pyright` と `ruff` を確認し、`python-review` を通す | parent 実装 → `python_reviewer`。必要なら `reviewer` を追加 |
+| 実験準備、run、result/report 整理 | `Research-Driven Change` または `Platform and Infra` | `experiment-lifecycle`, `critical-review`, `report-review` | run 前に比較条件確認、run 後に `critical-review`。report 完了前に `report-review`。主張が強いなら `docs_researcher` で文献確認 | `experiment_planner` で既存構成と計画を確認 → parent 更新 → report draft 後に `report_reviewer` |
+| 文書整理、workflow 整理、notes 吸収 | `Scoped Correction` または `Platform and Infra` | `docs-completeness-review`, `md-style-check`, `docs-consistency-review` | 変更後に `docs-consistency-review`。Markdown 変更なら `md-style-check`。必要なら `comprehensive-review` | `docs_workflow_steward` → `docs_completeness_reviewer` / `docs_consistency_reviewer` |
+| 現在の worktree 健全性確認、scope drift 確認 | `Platform and Infra` | `worktree-health` | `worktree-health` を通し、必要なら `project-review` へ拡張 | `worktree_health_reviewer` |
+| repo 全体レビュー、棚卸し | `Platform and Infra` | `project-review` | `project-review` を正本にし、必要なら `comprehensive-review` と `project-health` を併用 | `project_reviewer`、必要なら `docs_researcher` を並列 |
+
+## Recommended Patterns
+
+### 1. Repo Exploration
+
+- parent が task を分割する
+- `explorer` に affected area の調査を依頼する
+- parent が結果を統合して実装方針を決める
+
+### 2. Docs And Workflow Cleanup
+
+- `docs_workflow_steward` に shared canon と adapter の重複を洗わせる
+- `docs_completeness_reviewer` に missing section、missing command、missing path を洗わせる
+- `docs_consistency_reviewer` に canon drift、矛盾、曖昧性を洗わせる
+- Markdown 変更があるなら `md-style-check` を通す
+- 必要なら `docs_researcher` に official docs の確認を並列で依頼する
+- parent が正本へ反映する
+
+### 2.5. Repo-Wide Project Review
+
+- `project_reviewer` に inventory、workflow health、tooling health を見させる
+- worktree を含む作業なら `worktree_health_reviewer` に scope drift と cleanup risk を見させる
+- 必要なら `docs_researcher` を並列で使い、外部仕様との差分を確認する
+- findings を `fix now`、`follow-up`、`delete-ok` に分ける
+- parent が cleanup、notes 吸収、削除判断を反映する
+
+### 3. Implementation And Review
+
+- 実装前に `explorer` で影響範囲を確認する
+- parent が実装する
+- 実装後に `reviewer` へ review を依頼する
+- Python diff では `python_reviewer` に、pyright、ruff、型追跡、warning 処理を重点確認させる
+- 主張が強い場合や upstream 根拠が必要な場合は `docs_researcher` を追加する
+
+### 4. Experiment Planning
+
+- `experiment_planner` に cases、resource estimate、skip 条件、result / report layout を確認させる
+- result や claim を出す前に `critical-review` の観点を当てる
+- report draft が出たら `report_reviewer` に、概要、数値、図表、結論と根拠の対応を確認させる
+- `report_reviewer` が `report_rewrite_required` を返したら report だけを書き直す
+- `report_reviewer` か `critical-review` が `extra_validation_required` か `rerun_required` を返したら、実験 loop を閉じずに再実行へ戻す
+- 結論を閉じる前に、必要なら `docs_researcher` で関連文献や仕様の反証を探す
+- parent が実験コードと文書を更新する
+
+## Prompting Patterns
+
+- `Spawn an explorer to map the affected files and tests before editing.`
+- `Spawn docs_workflow_steward and docs_researcher in parallel, then merge their findings before editing.`
+- `Use reviewer after the patch and report findings first.`
+- `Use python_reviewer for Python diffs, especially when pyright warnings, type boundaries, or dtype flow changed.`
+- `Use docs_completeness_reviewer and docs_consistency_reviewer after doc-heavy changes.`
+- `Use worktree_health_reviewer before closing or deleting a worktree, or when scope drift is suspected.`
+- `Use project_reviewer for repo-wide review, inventory, and workflow-health audits.`
+- `Use experiment_planner to inspect cases, resource estimates, skip logic, and report layout.`
+- `Use report_reviewer after the report draft and require a rewrite, extra validation, or rerun decision.`
+- `When claims look strong, spawn docs_researcher to find caveats and contrary sources before accepting them.`
+
+## Codex Control Points
+
+- project-scoped config: `.codex/config.toml`
+- project-scoped custom agents: `.codex/agents/*.toml`
+- shared instructions: `AGENTS.md`
+- shared skills: `.agents/skills/`
+- running thread inspection: `/agent`

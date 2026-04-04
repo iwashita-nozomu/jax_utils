@@ -110,3 +110,13 @@
 ### Next Check
 
 <!-- The next concrete experiment or code change justified by this report. -->
+
+## Report Review Readiness
+
+### Evidence Map
+
+<!-- List each major claim and the figure/table/JSON summary that supports it. -->
+
+### Reader-Facing Risks
+
+<!-- Note places where the report may still confuse readers or require rewrite. -->

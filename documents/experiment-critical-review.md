@@ -1,7 +1,7 @@
 # 実験の批判的レビュー手順
 
 この文書は、実験コード、結果レポート、図表、結論の妥当性を批判的にレビューするための正本です。
-個別の実験 topic に依存しない review 観点をまとめ、`experiment_reviewer` と `change_reviewer` が共通に参照できる形にします。
+個別の実験 topic に依存しない review 観点をまとめ、`experiment_reviewer`、`report_reviewer`、`change_reviewer` が共通に参照できる形にします。
 
 実験全体の標準手順は [experiment-workflow.md](/workspace/documents/experiment-workflow.md) を参照してください。
 レポート本文の構成は [experiment-report-style.md](/workspace/documents/experiment-report-style.md) を参照してください。
@@ -29,6 +29,9 @@
 - `experiment_reviewer`
   - protocol、結果、図表、解釈、結論をまとめて見る。
   - 特に、比較公平性、evidence の十分性、overclaim、図表の妥当性を見る。
+- `report_reviewer`
+  - user-facing report を独立に見る。
+  - 特に、実験の概要、主要数値の見せ方、図表の読みやすさ、結論と根拠の対応、rewrite / 追加検証 / rerun の判定を見る。
 
 数学的妥当性は code だけでは完結しないため、
 
@@ -185,6 +188,8 @@ AI に要約や論点抽出を補助させても、math validity、figure validi
 
 レポート review では、少なくとも次を順に確認します。
 
+この section は `report_reviewer` が必ず読みます。
+
 ### 6.1 Question-Claim Alignment
 
 - 問いに答える構造になっているか
@@ -212,6 +217,17 @@ AI に要約や論点抽出を補助させても、math validity、figure validi
 
 - 核となる計算式が本文か補足にあるか
 - 変数定義、仮定、boundary condition が省略されていないか
+
+### 6.6 Review Outcome
+
+- `report_rewrite_required`
+  - evidence は足りているが、説明順、数値の見せ方、図表導線、結論の書き方が弱い
+- `extra_validation_required`
+  - 同じコードと比較方針のまま、追加 table、追加 figure、追加 narrow run が必要
+- `rerun_required`
+  - case set 不一致、条件変更、partial run 混入、protocol 汚染がある
+- `approved`
+  - reader-facing report として閉じてよい
 
 ## 7. レビュー結果の書き方
 

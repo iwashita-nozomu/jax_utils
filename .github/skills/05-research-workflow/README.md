@@ -249,6 +249,6 @@ Final: PR create + Publication plan
 
 ## 参考資料
 
+- **shared skill canon**: `agents/skills/research-workflow.md`
 - **研究ワークフロー**: `documents/research-workflow.md`
 - **実験ワークフロー**: `documents/experiment-workflow.md`
-- **統合計画**: `.github/SKILLS_INTEGRATION_PLAN.md`

@@ -3,7 +3,7 @@
 JAX ベースの数値計算ユーティリティと、実験実行基盤をまとめたリポジトリです。
 ライブラリ本体の実装、実験コード、実験結果、規約文書を 1 つのリポジトリで管理します。
 
-この README は人間向けの作業入口です。AI エージェント向けの入口は `agents/README.md` です。
+この README は人間向けの作業入口です。AI エージェント向けの共通入口は `AGENTS.md`、共有正本は `agents/` です。
 
 ## 何が入っているか
 
@@ -214,5 +214,5 @@ make tools-help
 - 規約と運用: `documents/README.md`
 - 実験全体: `experiments/README.md`
 - 補助メモ: `notes/README.md`
-- エージェント運用: `agents/README.md`
+- エージェント運用: `AGENTS.md` と `agents/README.md`
 - スクリプト一覧: `scripts/README.md`

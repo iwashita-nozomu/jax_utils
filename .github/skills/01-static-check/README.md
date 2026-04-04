@@ -148,6 +148,5 @@ PR 作成前に以下を確認：
 
 ## 参考資料
 
-- **CLI リファレンス**: `documents/AI_AGENT_CUSTOMIZATION_RESEARCH_2026.md` - CLI エージェント・コマンドラインリファレンス
+- **shared skill canon**: `agents/skills/static-check.md`
 - **実装ガイド**: `documents/SKILL_IMPLEMENTATION_GUIDE.md`
-- **統合計画**: `.github/SKILLS_INTEGRATION_PLAN.md`
