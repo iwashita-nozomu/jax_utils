@@ -328,6 +328,18 @@ review artifact では、次のラベルで切り分けます。
   - `Implementation Change:` loop、vectorization、memory layout、scheduler の変更
 - 比較では、どの層の変更が差を生んだかを混ぜないようにします。
 
+## 10.5 HLO 解析と XLA flag 調査
+
+HLO dump や compiler behavior を根拠に改造する場合は、通常の `Research-Driven Change` loop に次を追加します。
+
+- baseline と change 後で、同じ関数、同じ case、同じ backend 条件の HLO dump を採取します。
+- HLO 取得は `jax_util.hlo.dump` を正面 API とし、tag と dump path を固定します。
+- HLO 差分は `scripts/hlo/summarize_hlo_jsonl.py` などで集計し、raw JSONL だけで判断しません。
+- JAX / XLA env は `jax_util.xla_env` を正本とし、script 側で `XLA_*` を場当たり的に組み立てることを禁止します。
+- 1 反復で同時に複数の XLA flag と code change を混ぜることを禁止します。code change か flag change のどちらか 1 種類だけを変えます。
+- HLO の変化だけで改善と判断しません。runtime metric、failure kind、backend 条件を同じ比較表に並べます。
+- report を閉じる場合は、代表的な HLO 差分と実測差分を同じ report から辿れるようにします。
+
 ## 11. 生成物と carry-over
 
 - raw JSONL、HTML、SVG、大きい log は `experiments/<topic>/result/<run_name>/` に残します。

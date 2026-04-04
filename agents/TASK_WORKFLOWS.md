@@ -29,6 +29,18 @@ Codex、Claude、GitHub Copilot などの runtime 差分には依存しません
 1. `rerun_required` なら fresh run をやり直す。必要なら `implementer` が code か protocol を修正する
 1. exit criteria を満たすまで 3-10 を反復する
 
+### Niche Subflow: HLO 解析と compiler tuning
+
+HLO dump、XLA flag、compiler behavior を仮説の中心に置く場合は、上の loop に次を追加します。
+
+1. baseline と change 後で、同じ関数、同じ case、同じ backend 条件で HLO dump を採取する
+1. `jax_util.hlo.dump` を正面 API とし、tag と dump path を固定する
+1. `scripts/hlo/summarize_hlo_jsonl.py` で HLO 差分を集計する
+1. `jax_util.xla_env` と `initializer(context)` を通して env を固定する
+1. 1 反復で同時に複数の XLA flag と code change を混ぜない
+1. HLO 差分、runtime metric、failure kind を同じ note / report で並べる
+1. HLO の変化だけで改善と判定せず、`experiment_reviewer` が定量 evidence を要求する
+
 ## 想定タスク 10 個
 
 | ID  | 想定タスク                                                | 主担当 workflow family | 有効化する専門ロール                         |

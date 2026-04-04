@@ -35,6 +35,11 @@
   - skill: `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review`
   - required review: 外部調査、比較条件、exit criteria を先に固定する。各反復で `implement -> run -> critical-review -> report-review` を通し、`report_rewrite_required`、`extra_validation_required`、`rerun_required` のいずれかが解消するまで loop を閉じない
   - subagent: `docs_researcher` または `explorer` で調査、`experiment_planner` で protocol と run layout を確認、実装後に `reviewer`、report draft 後に `report_reviewer`
+- HLO 解析、XLA flag 調査、compiler behavior 比較
+  - workflow: `Research-Driven Change`
+  - skill: `research-workflow`, `experiment-lifecycle`, `python-review`, `critical-review`
+  - required review: baseline と change 後で HLO dump、runtime metric、`xla_env` / `XLA_*` 方針を同じ protocol で比較する。flag か code は 1 回の反復で 1 種類だけ変え、`critical-review` を通す。user-facing report を閉じるなら `report-review` も通す
+  - subagent: `hlo_investigator` で HLO dump と flag 仮説を整理し、必要なら `docs_researcher` で XLA / JAX の仕様確認、実装後に `python_reviewer`
 - 大規模 refactor、新 API
   - workflow: `Large Delivery`
   - skill: `code-review`

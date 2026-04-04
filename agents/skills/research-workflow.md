@@ -67,6 +67,25 @@
 - `report_rewrite_required`、`extra_validation_required`、`rerun_required`、`approved` の最終判断
 - 次の変更案か、終了判断
 
+## Niche Subflow: HLO Analysis And Compiler-Tuning
+
+次のような依頼では、この subflow を使います。
+
+- HLO dump を比較して bottleneck を探したい
+- `XLA_*` や `JAX_PLATFORMS` の方針変更を検証したい
+- compiler behavior の変化を code change と一緒に追いたい
+
+手順は次です。
+
+1. 対象関数、case、backend 条件、run_name、dump path を固定する
+1. baseline と change 後で、同じ protocol の HLO dump を採取する
+1. `scripts/hlo/summarize_hlo_jsonl.py` で差分を集計する
+1. `jax_util.xla_env` と child initializer を使い、env 初期化点を固定する
+1. code change か flag change のどちらか 1 種類だけを変える
+1. HLO 差分、runtime metric、failure kind を同じ比較表で扱う
+1. HLO の見た目ではなく、`critical-review` で定量 evidence を要求する
+1. user-facing report を閉じる場合は、代表 HLO 差分と実測差分を両方残す
+
 ## Implementation Surface
 
 - `.github/skills/05-research-workflow/`

@@ -52,6 +52,8 @@
   - 現在の worktree の scope drift と cleanup risk を潰す
 - `.codex/agents/experiment_planner.toml`
   - 実験設計、resource estimate、skip、result/report 整理
+- `.codex/agents/hlo_investigator.toml`
+  - HLO dump、compiler behavior、XLA flag 仮説、`xla_env` の使い方を整理する
 - `.codex/agents/report_reviewer.toml`
   - user-facing experiment report の独立レビュー
 
@@ -78,6 +80,7 @@
 | -------------------- | --------------- | ------------ | --------------- | ------------------ |
 | 局所バグ修正、テスト修正、README 追随 | `Scoped Correction` | `static-check`, `code-review` | 実装後に `code-review`。Python 差分なら `python-review`。必要なら `reviewer` | parent 直処理。必要なら `explorer` → parent 実装 → `python_reviewer` または `reviewer` |
 | 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 外部調査、比較条件、exit criteria を先に固定し、各反復で `critical-review` と `report-review` を通す。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り loop を閉じない。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `docs_researcher` または `explorer` で調査 → `experiment_planner` で protocol 固定 → parent 実装 → `reviewer` → run → `report_reviewer`。decision に応じて rewrite / extra validation / rerun / re-implement を反復 |
+| HLO 解析、XLA flag 調査、compiler behavior 比較 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `python-review`, `critical-review` | baseline と change 後で HLO dump、runtime metric、`xla_env` / `XLA_*` 方針を同じ protocol で比較する。flag か code は 1 回の反復で 1 種類だけ変え、`critical-review` を通す。report を閉じるなら `report-review` も通す | `hlo_investigator` で dump / flag 仮説を整理 → 必要なら `docs_researcher` で仕様確認 → parent 実装 → `python_reviewer` → run → `critical-review`。decision に応じて HLO 再採取、追加検証、fresh rerun を反復 |
 | 大規模 refactor、新 API | `Large Delivery` | `code-review` | 設計差分と公開面を `code-review`。Python 公開面なら `python-review`。実装後に `reviewer` | `explorer` で影響範囲確認 → parent または `worker` 実装 → `python_reviewer` または `reviewer` |
 | Python module change、pyright warning cleanup、type boundary refactor | `Scoped Correction` または `Large Delivery` | `python-review`, `static-check` | `pyright` と `ruff` を確認し、`python-review` を通す | parent 実装 → `python_reviewer`。必要なら `reviewer` を追加 |
 | 実験準備、run、result/report 整理 | `Research-Driven Change` または `Platform and Infra` | `experiment-lifecycle`, `critical-review`, `report-review` | run 前に比較条件確認、run 後に `critical-review`。report 完了前に `report-review`。主張が強いなら `docs_researcher` で文献確認 | `experiment_planner` で既存構成と計画を確認 → parent 更新 → report draft 後に `report_reviewer` |
@@ -134,6 +137,18 @@
 - 結論を閉じる前に、必要なら `docs_researcher` で関連文献や仕様の反証を追加で探す
 - parent が実験コード、report、notes を更新する
 
+### 4.5. HLO Analysis And Compiler-Tuning Subflow
+
+- `hlo_investigator` に、対象関数、HLO dump path、比較対象 run、想定 bottleneck を整理させる
+- baseline と change 後で `jax_util.hlo.dump` の出力を同じ protocol で採取する
+- `scripts/hlo/summarize_hlo_jsonl.py` などで op 頻度、dialect、主要差分を集計する
+- `jax_util.xla_env` と `XLA_*` / `JAX_PLATFORMS` 方針を確認し、script 側の ad hoc env 分岐を禁止する
+- 1 回の反復では code change か flag change のどちらか 1 種類だけを変える
+- 実装後は `python_reviewer` に、型と env 初期化境界、warning 処理を重点確認させる
+- run 後は HLO 差分だけでなく runtime metric、failure kind、backend 条件も比較する
+- HLO が変わったことだけを根拠に改善と扱わず、`critical-review` で定量 evidence を要求する
+- report を閉じる場合は、代表 HLO 差分と runtime difference の両方を trace できるようにして `report-review` を通す
+
 ## Prompting Patterns
 
 - `Spawn an explorer to map the affected files and tests before editing.`
@@ -144,6 +159,7 @@
 - `Use worktree_health_reviewer before closing or deleting a worktree, or when scope drift is suspected.`
 - `Use project_reviewer for repo-wide review, inventory, and workflow-health audits.`
 - `Use experiment_planner to inspect cases, resource estimates, skip logic, and report layout.`
+- `Use hlo_investigator when HLO dumps, XLA flags, or compiler behavior are part of the hypothesis.`
 - `Use report_reviewer after the report draft and require a rewrite, extra validation, or rerun decision.`
 - `When claims look strong, spawn docs_researcher to find caveats and contrary sources before accepting them.`
 

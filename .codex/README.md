@@ -38,6 +38,8 @@
   - 現在の worktree の scope と cleanup readiness を確認する
 - `experiment_planner`
   - 実験の cases、resource estimate、skip、report layout を確認する
+- `hlo_investigator`
+  - HLO dump、compiler behavior、XLA flag 仮説を整理する
 - `report_reviewer`
   - user-facing experiment report の根拠、数値、図表、結論 traceability を確認する
 
@@ -59,6 +61,7 @@
 - repo 全体レビューや棚卸しは `project_reviewer` を使う
 - worktree の健全性確認は `worktree_health_reviewer` を使う
 - 実験計画や layout 確認は `experiment_planner` を使う
+- HLO dump や XLA flag の仮説整理は `hlo_investigator` を使う
 - report draft の独立レビューは `report_reviewer` を使う
 - 常に parent が最終編集責任を持つ
 - 書き込みは parent か `worker` / `docs_workflow_steward` に集約する
