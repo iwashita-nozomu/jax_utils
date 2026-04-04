@@ -71,6 +71,12 @@ skill_families:
     shim: .agents/skills/report-review/SKILL.md
     implementation_paths:
       - .github/skills/18-report-review
+  - id: literature-survey
+    purpose: Search papers, map prior art, and extract supporting and contradictory sources for research tasks.
+    canonical_doc: agents/skills/literature-survey.md
+    shim: .agents/skills/literature-survey/SKILL.md
+    implementation_paths:
+      - .github/skills/26-literature-survey
   - id: research-workflow
     purpose: Manage the outer loop of external research, implementation, experiment iteration, and hypothesis updates.
     canonical_doc: agents/skills/research-workflow.md

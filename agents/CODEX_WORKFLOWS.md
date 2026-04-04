@@ -38,6 +38,8 @@
   - `AGENTS.md`、`agents/`、adapter file、repo canon の整理と文書更新
 - `.codex/agents/docs_researcher.toml`
   - official docs の確認、外部仕様の照合、主張を弱める根拠探し
+- `.codex/agents/literature_researcher.toml`
+  - 論文探索、先行研究整理、支持文献と反証候補の抽出
 - `.codex/agents/docs_completeness_reviewer.toml`
   - 文書の欠落、説明不足、入口不足を潰す
 - `.codex/agents/docs_consistency_reviewer.toml`
@@ -79,6 +81,8 @@
 - `max_depth` は `1` に固定し、再帰的 fan-out を防ぎます。
 - review では「通す理由」より「止める理由」を優先して探します。
 - 実験や設計の主張がある場合は、必要に応じて `docs_researcher` を足して文献や仕様の反証を探します。
+- 論文や先行研究そのものを探すときは `docs_researcher` ではなく `literature_researcher` を使います。
+- vendor doc や API 仕様の確認は `literature_researcher` ではなく `docs_researcher` を使います。
 - `Research-Driven Change` では、外部調査、比較条件固定、実装、run、`critical-review`、`report-review` を 1 回で終わらせず、`report_rewrite_required`、`extra_validation_required`、`rerun_required` が解消するまで loop を回します。
 - `experiments/report/<run_name>.md` を閉じる前には、`report_reviewer` か同等の `report-review` 実施を要求します。
 - `python/` 配下の差分では、必要に応じて `python_reviewer` を使い、pyright と ruff を review 根拠に含めます。
@@ -92,7 +96,8 @@
 | User Request Pattern | Workflow Family | Skill Family | Required Review | Default Codex Flow |
 | -------------------- | --------------- | ------------ | --------------- | ------------------ |
 | 局所バグ修正、テスト修正、README 追随 | `Scoped Correction` | `static-check`, `code-review` | 実装後に `code-review`。Python 差分なら `python-review`。必要なら `reviewer` | parent 直処理。必要なら `explorer` → parent 実装 → `python_reviewer` または `reviewer` |
-| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 外部調査、比較条件、exit criteria を先に固定し、各反復で `critical-review` と `report-review` を通す。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り loop を閉じない。methodology、artifact、reporting policy を大きく変える場合は `research-perspective-review` も追加する。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `docs_researcher` または `explorer` で調査 → `experiment_planner` で protocol 固定 → 必要なら perspective reviewers を並列実行 → parent 実装 → `reviewer` → run → `report_reviewer`。decision に応じて rewrite / extra validation / rerun / re-implement を反復 |
+| 文献調査、先行研究整理、関連研究比較 | `Research-Driven Change` | `literature-survey` | survey、代表論文、反証候補、setting 差分を明示し、都合のよい引用集にしない | `literature_researcher` で論文探索 → 必要なら `docs_researcher` で仕様確認 → parent が `references/` や `notes/` に整理 |
+| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `literature-survey`, `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 外部調査、比較条件、exit criteria を先に固定し、各反復で `critical-review` と `report-review` を通す。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り loop を閉じない。methodology、artifact、reporting policy を大きく変える場合は `research-perspective-review` も追加する。実装後に `reviewer`。必要なら `docs_researcher` で仕様や反証を追加確認 | `literature_researcher` で論文探索 → 必要なら `docs_researcher` で仕様確認 → `experiment_planner` で protocol 固定 → 必要なら perspective reviewers を並列実行 → parent 実装 → `reviewer` → run → `report_reviewer`。decision に応じて rewrite / extra validation / rerun / re-implement を反復 |
 | HLO 解析、XLA flag 調査、compiler behavior 比較 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `python-review`, `critical-review` | baseline と change 後で HLO dump、runtime metric、`xla_env` / `XLA_*` 方針を同じ protocol で比較する。flag か code は 1 回の反復で 1 種類だけ変え、`critical-review` を通す。report を閉じるなら `report-review` も通す | `hlo_investigator` で dump / flag 仮説を整理 → 必要なら `docs_researcher` で仕様確認 → parent 実装 → `python_reviewer` → run → `critical-review`。decision に応じて HLO 再採取、追加検証、fresh rerun を反復 |
 | 大規模 refactor、新 API | `Large Delivery` | `code-review` | 設計差分と公開面を `code-review`。Python 公開面なら `python-review`。実装後に `reviewer` | `explorer` で影響範囲確認 → parent または `worker` 実装 → `python_reviewer` または `reviewer` |
 | Python module change、pyright warning cleanup、type boundary refactor | `Scoped Correction` または `Large Delivery` | `python-review`, `static-check` | `pyright` と `ruff` を確認し、`python-review` を通す | parent 実装 → `python_reviewer`。必要なら `reviewer` を追加 |
@@ -145,6 +150,14 @@
 - Python diff では `python_reviewer` に、pyright、ruff、型追跡、warning 処理を重点確認させる
 - 主張が強い場合や upstream 根拠が必要な場合は `docs_researcher` を追加する
 
+### 3.5. Literature Survey
+
+- `literature_researcher` に、問い、inclusion / exclusion、query pack、対象 setting を渡す
+- survey、代表論文、benchmark comparison paper を優先して集める
+- 支持文献と反証候補を分ける
+- vendor doc や API 仕様が絡むときだけ `docs_researcher` を追加する
+- parent が `references/` または `notes/` に `Known`, `Contested`, `Open` を整理する
+
 ### 4. Research-Driven Change Loop
 
 - `docs_researcher` または `explorer` で問い、比較対象、関連文献、反証候補を確認する
@@ -177,6 +190,7 @@
 
 - `Spawn an explorer to map the affected files and tests before editing.`
 - `Spawn docs_workflow_steward and docs_researcher in parallel, then merge their findings before editing.`
+- `Use literature_researcher for paper search and prior-art mapping before fixing the protocol or implementation.`
 - `Use reviewer after the patch and report findings first.`
 - `Use python_reviewer for Python diffs, especially when pyright warnings, type boundaries, or dtype flow changed.`
 - `Use docs_completeness_reviewer and docs_consistency_reviewer after doc-heavy changes.`

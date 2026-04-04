@@ -22,6 +22,8 @@
   - built-in `worker` を repo 用に上書きした implementation agent
 - `docs_researcher`
   - official docs と外部仕様の確認を担当する
+- `literature_researcher`
+  - 論文探索、先行研究整理、支持文献と反証候補の抽出を担当する
 - `docs_workflow_steward`
   - 文書、workflow、notes の整備を担当する
 - `docs_completeness_reviewer`
@@ -67,6 +69,7 @@
 
 - 局所修正なら parent がまず処理し、必要なら `explorer` と `reviewer` だけ使う
 - 文書整理や workflow 整理なら `docs_workflow_steward` を使う
+- 文献調査や先行研究整理なら `literature_researcher` を使う
 - 文書の不足は `docs_completeness_reviewer`、矛盾や曖昧性は `docs_consistency_reviewer` を使う
 - bounded な実装を切り出したいときだけ `worker` を使う
 - Python diff の厳密レビューは `python_reviewer` を使う

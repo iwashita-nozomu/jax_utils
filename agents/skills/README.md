@@ -24,6 +24,7 @@
 | `experiment-lifecycle` | 単一 run とその review / rerun 分岐 | `agents/skills/experiment-lifecycle.md` | `.github/skills/03-run-experiment/`, `.github/skills/08-experiment-initialization/`, `.github/skills/13-experiment-execution/`, `.github/skills/14-result-validation/` |
 | `critical-review` | 実験結果や主張の批判的評価 | `agents/skills/critical-review.md` | `.github/skills/04-critical-review/` |
 | `report-review` | ユーザー向け実験レポートの独立レビュー | `agents/skills/report-review.md` | `.github/skills/18-report-review/` |
+| `literature-survey` | 論文探索、先行研究整理、反証候補抽出を含む文献調査 | `agents/skills/literature-survey.md` | `.github/skills/26-literature-survey/` |
 | `research-workflow` | 外部調査、実装、実験反復、仮説更新を含む outer loop | `agents/skills/research-workflow.md` | `.github/skills/05-research-workflow/` |
 | `research-perspective-review` | 研究系変更を複数の独立視点で並列レビュー | `agents/skills/research-perspective-review.md` | `.github/skills/25-research-perspective-review/` |
 | `comprehensive-review` | repo 全体の横断レビュー | `agents/skills/comprehensive-review.md` | `.github/skills/06-comprehensive-review/` |

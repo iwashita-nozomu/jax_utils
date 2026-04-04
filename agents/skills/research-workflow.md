@@ -14,6 +14,7 @@
 
 ## Must Read Before Working
 
+- `agents/skills/literature-survey.md`
 - `agents/skills/experiment-lifecycle.md`
 - `agents/skills/critical-review.md`
 - `agents/skills/report-review.md`
@@ -39,7 +40,7 @@
 ## Standard Outer Loop
 
 1. `Question`、比較対象、exit criteria を固定する
-1. 外部調査を行い、採用候補と反証候補を整理する
+1. `literature-survey` を使って外部調査を行い、採用候補と反証候補を整理する
 1. 比較プロトコル、metrics、resource estimate、run layout を固定する
 1. baseline または current state を `experiment-lifecycle` で記録する
 1. `implementer` が 1 つの change を入れる
@@ -120,5 +121,6 @@ review 視点は次の 6 つです。
 
 ## Boundary
 
+- 文献探索そのものは `agents/skills/literature-survey.md` を使います。
 - 単発の実験実行と 1 run 内の分岐は `agents/skills/experiment-lifecycle.md` を使います。
 - 実装差分のレビューは `agents/skills/code-review.md` を使います。

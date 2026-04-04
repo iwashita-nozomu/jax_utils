@@ -120,7 +120,7 @@ tasks:
       - manager が改善目標と受け入れ条件を定義
       - manager_reviewer が intake を review
       - manager が review を受けて intake を修正
-      - researcher が外部調査
+      - researcher が literature-survey で外部調査
       - research_reviewer が調査を review
       - researcher が review を受けて調査を修正
       - manager が採用案と実験 exit criteria を決定
@@ -283,7 +283,7 @@ tasks:
       - manager が target metric を定義
       - manager_reviewer が intake を review
       - manager が review を受けて評価条件を修正
-      - researcher が候補手法を調査
+      - researcher が literature-survey で候補手法を調査
       - research_reviewer が調査を review
       - researcher が review を受けて調査を修正
       - scheduler が計測順序を作る

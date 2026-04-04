@@ -33,9 +33,14 @@
   - subagent: 通常は不要。Python 差分なら `python_reviewer`。必要なら `explorer`、修正後に `reviewer`
 - 外部調査つき実装、性能改善、比較実験
   - workflow: `Research-Driven Change`
-  - skill: `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review`
+  - skill: `literature-survey`, `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review`
   - required review: 外部調査、比較条件、exit criteria を先に固定する。各反復で `implement -> run -> critical-review -> report-review` を通し、`report_rewrite_required`、`extra_validation_required`、`rerun_required` のいずれかが解消するまで loop を閉じない。methodology、benchmark protocol、artifact、reporting policy を大きく変える場合は `research-perspective-review` も通す
-  - subagent: `docs_researcher` または `explorer` で調査、`experiment_planner` で protocol と run layout を確認、必要なら research perspective reviewers を並列実行、実装後に `reviewer`、report draft 後に `report_reviewer`
+  - subagent: `literature_researcher` で論文探索、必要なら `docs_researcher` で仕様確認、`experiment_planner` で protocol と run layout を確認、必要なら research perspective reviewers を並列実行、実装後に `reviewer`、report draft 後に `report_reviewer`
+- 文献調査、先行研究整理、関連研究比較
+  - workflow: `Research-Driven Change`
+  - skill: `literature-survey`
+  - required review: 支持文献だけでなく反証候補と限定条件も集める。survey、代表論文、benchmark comparison を優先し、setting の差を明示する
+  - subagent: `literature_researcher`。vendor doc や API 仕様が絡むときだけ `docs_researcher` を追加
 - HLO 解析、XLA flag 調査、compiler behavior 比較
   - workflow: `Research-Driven Change`
   - skill: `research-workflow`, `experiment-lifecycle`, `python-review`, `critical-review`
@@ -86,6 +91,7 @@
 - Codex subagent は explicit に頼む場合だけ使い、parent が最終編集責任を持ちます。
 - Codex subagent は routing で必要性が出たときだけ使います。常時 spawn する運用にはしません。
 - `Research-Driven Change` と実験結果を伴う依頼では、`critical-review` を省略して完了扱いにしません。
+- 文献調査が主タスクの依頼では、`literature-survey` を通さずに完了扱いにしません。
 - `Research-Driven Change` では、`baseline or current state -> implement -> run -> critical-review -> report-review -> rewrite or extra validation or rerun` の loop を省略して完了扱いにしません。
 - methodology、benchmark protocol、artifact、reporting policy を大きく変える研究系変更では、`research-perspective-review` を通さずに完了扱いにしません。
 - `experiments/report/<run_name>.md` を生成する依頼では、`report-review` を省略して完了扱いにしません。
