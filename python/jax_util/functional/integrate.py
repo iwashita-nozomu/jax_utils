@@ -11,6 +11,9 @@ from jax import tree_util
 from ..base import Vector
 from .protocols import Function, Integrator
 
+_DEFAULT_BATCH_TILE_TARGET_BYTES = 32 * 1024 * 1024
+_MIN_BATCH_TILE_TARGET_BYTES = 8 * 1024 * 1024
+
 
 # 責務: 被積分関数を指定した積分器へ委譲して積分値を返す。
 def _integrate_impl(f: Function, integrator: Integrator, /) -> Vector:
@@ -96,11 +99,11 @@ def _auto_problem_batch_tile_size(
 
     memory_limit = _device_memory_limit_bytes()
     if memory_limit is None:
-        target_bytes = 16 * 1024 * 1024
+        target_bytes = _DEFAULT_BATCH_TILE_TARGET_BYTES
     else:
         target_bytes = max(
-            4 * 1024 * 1024,
-            min(16 * 1024 * 1024, memory_limit // 1024),
+            _MIN_BATCH_TILE_TARGET_BYTES,
+            min(_DEFAULT_BATCH_TILE_TARGET_BYTES, memory_limit // 512),
         )
 
     tile_size = max(1, target_bytes // per_problem_bytes)
@@ -131,7 +134,10 @@ def _integrate_vmap_rule(axis_size: int, in_batched: Any, f: Function, integrato
         single_f = _tree_merge(f_batched, mapped_single_f, broadcast_f)
         return _integrate_impl(single_f, integrator)
 
-    out = lax.map(integrate_one, mapped_f, batch_size=tile_size)
+    if tile_size >= axis_size:
+        out = jax.vmap(integrate_one)(mapped_f)
+    else:
+        out = lax.map(integrate_one, mapped_f, batch_size=tile_size)
     out_batched = tree_util.tree_map(lambda _: True, out)
     return out, out_batched
 

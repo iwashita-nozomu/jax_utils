@@ -708,3 +708,260 @@ Interpretation:
 - loop skeleton の変更は、HLO op count や temp size だけでは見えにくいが、実行時には確かに効く。
 - 少なくとも `vmap` 本命ケースでは明確に前進。
 - `single_16d_l3_f32` のみ軽い悪化があるので、次は term traversal の中でも `current_extra_levels` 更新部分をもう少し詰めて、この outlier を確認する価値がある。
+
+### Idea 038
+
+Idea:
+
+- term loop で `current_offsets/current_lengths` も carry し、各 term で `rule_offsets/rule_lengths` を全軸 `take` し直さず、chosen axis だけ差分更新する。
+
+Why:
+
+- current 実装では term ごとに
+  - `current_offsets = take(rule_offsets, level_indices)`
+  - `current_lengths = take(rule_lengths, level_indices)`
+  を全軸分やり直していた。
+- `_next_term_extra_levels(...)` は「chosen axis を 1 つ進めて trailing axes を level 1 へ戻す」形なので、
+  - 軸 `< chosen`: そのまま
+  - 軸 `== chosen`: 1 段だけ進める
+  - 軸 `> chosen`: base level へ戻す
+  の差分更新で済むはず、という仮説。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) の `_next_term_extra_levels(...)` が `chosen axis` を返すように変更。
+- `_smolyak_plan_integral(...)` の term loop state を
+  - `(acc, current_extra_levels)`
+  から
+  - `(acc, current_extra_levels, current_offsets, current_lengths)`
+  へ広げた。
+- `current_offsets/current_lengths` は全軸 gather せず、chosen axis と base rule から `where(...)` で差分更新する形にした。
+
+Status:
+
+- `rejected`
+
+Validation:
+
+- `python3 -m py_compile python/jax_util/functional/smolyak.py python/jax_util/functional/integrate.py`
+- `python3 -m pytest python/tests/functional/test_integrate.py python/tests/functional/test_smolyak.py -q`
+- result: `30 passed`
+
+Result:
+
+- GPU probe で current 正本と比較。
+- baseline:
+  - `single_8d_l4_f32`: `32.51 ms`
+  - `batch_8d_l4_f32`: `36.76 ms`, throughput `6963.68/s`
+  - `single_16d_l3_f32`: `48.45 ms`
+  - `batch_16d_l3_f32`: `46.44 ms`, throughput `5512.14/s`
+- modified:
+  - `single_8d_l4_f32`: `46.49 ms`
+  - `batch_8d_l4_f32`: `44.31 ms`, throughput `5777.65/s`
+  - `single_16d_l3_f32`: `42.87 ms`
+  - `batch_16d_l3_f32`: `52.77 ms`, throughput `4851.30/s`
+
+Failed Because:
+
+- 全軸 gather は減ったが、その代わり term loop の carry に `current_offsets/current_lengths` という `O(d)` ベクトル 2 本を追加してしまった。
+- 結果として `while/fori_loop` の loop-carried state が太り、GPU 実行ではむしろ不利になった可能性が高い。
+- これは「Python レベルでの再計算削減」が、そのまま XLA 実行時の利益に変わらない典型例だった。
+
+Interpretation:
+
+- term traversal では「毎回 gather しない」ことより、「loop carry を小さく保つ」ことのほうが重要。
+- 以後の改造は
+  - state を増やさない
+  - もしくは state を増やしても scalar / small carry に留める
+  方向へ寄せるべき。
+- この案は revert した。
+
+### Idea 039
+
+Idea:
+
+- 1D Clenshaw-Curtis / difference-rule storage を device FFT ではなく host NumPy FFT で構築し、最後にだけ device へ載せる。
+
+Why:
+
+- 前回 baseline の hard failure は `integrator_init` に集中し、代表例として
+  - `2D level24 float32`: `_difference_rule_storage_device(...)` で OOM
+  - `2D level27 float32`: cuFFT plan failure
+  が出ていた。
+- 1D rule 構築は init-only work なので、runtime kernel である必要が薄い。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) に
+  - `_dct_type_one_numpy(...)`
+  - `_clenshaw_curtis_weights_numpy(...)`
+  - `_clenshaw_curtis_rule_numpy(...)`
+  - `_difference_rule_storage_host(...)`
+  を追加。
+- `SmolyakIntegrator.__init__` の rule storage builder を
+  - `_difference_rule_storage_device(...)`
+  から
+  - `_difference_rule_storage_host(...)`
+  へ切り替えた。
+
+Status:
+
+- `done`
+
+Validation:
+
+- `python3 -m py_compile python/jax_util/functional/smolyak.py`
+- `JAX_PLATFORMS=cpu PYTHONPATH=python python3 -m pytest python/tests/functional/test_integrate.py python/tests/functional/test_smolyak.py -q`
+- result: `31 passed`
+
+Representative Result:
+
+- previous baseline:
+  - `vmap_1d_l25_f64`: `integrator_init_seconds = 38.76 s`
+  - `vmap_16d_l3_f32`: `integrator_init_seconds = 2.64 s`
+- current probe:
+  - `vmap_1d_l25_f64`: `init = 8.19 s`, `warm = 4.21 s`, throughput `237.72/s`
+  - `vmap_16d_l3_f32`: `init = 0.0117 s`, `warm = 0.1430 s`, throughput `6994.77/s`
+
+Tradeoffs:
+
+- large rule storages still emit pinned-host allocation warnings during host->device staging
+- but the catastrophic cuFFT-side init failures disappeared in the tested range
+
+Interpretation:
+
+- init bottleneckにはかなり効く。
+- これは 1D 特化ではなく、全次元が共有する 1D rule builder の改善として意味がある。
+- 現時点では `accepted`.
+
+### Idea 040
+
+Idea:
+
+- `_decode_points_and_weights(...)` に `axis_count <= 4` の small-dim specialized path を入れ、generic mixed-radix decode の余計な stride 構築と weight matrix を避ける。
+
+Why:
+
+- previous baseline の pathological success / timeout frontier は
+  - `2D level24+`
+  - `4D level21`
+  のような low-dim high-level 帯に強く出ていた。
+- low dimension では decode 式を直接書いたほうが GPU integer path が素直になる可能性がある。
+
+Implementation:
+
+- [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py) の `_decode_points_and_weights(...)` に
+  - `axis_count == 2`
+  - `axis_count == 3`
+  - `axis_count == 4`
+  の specialized branch を追加。
+- points は axis ごとに `take` して `stack`
+- weights は axis ごとに `take` して積を取る
+
+Status:
+
+- `done`
+
+Validation:
+
+- `python3 -m py_compile python/jax_util/functional/smolyak.py`
+- `JAX_PLATFORMS=cpu PYTHONPATH=python python3 -m pytest python/tests/functional/test_integrate.py python/tests/functional/test_smolyak.py -q`
+- result: `31 passed`
+
+Representative Result:
+
+- baseline current code before specialization:
+  - `vmap_2d_l18_f32`: `4970.48/s`
+  - `vmap_4d_l12_f32`: `1057.05/s`
+  - `vmap_16d_l3_f32`: `6805.65/s`
+- after specialization:
+  - `vmap_2d_l18_f32`: `5055.13/s`
+  - `vmap_4d_l12_f32`: `1066.90/s`
+  - `vmap_16d_l3_f32`: `6994.77/s`
+
+Interpretation:
+
+- improvement は大きくないが、low-dim と mid-dim の representative case で一貫して微増だった。
+- 実装複雑度も限定的なので `accepted`.
+
+### Idea 041
+
+Idea:
+
+- small-dim specialized decode の `take(..., mode=\"clip\")` を direct indexing (`rule_nodes[idx]`) に置き換える。
+
+Why:
+
+- bounds-safe gather を外せば HLO が軽くなる可能性がある。
+
+Status:
+
+- `rejected`
+
+Result:
+
+- representative probe で
+  - `vmap_2d_l18_f32`: `5005/s -> 4859/s`
+  - `vmap_16d_l3_f32`: `7083/s -> 7061/s`
+  と、少なくとも明確な改善は出なかった。
+
+Interpretation:
+
+- generic path で以前だめだった傾向は small-dim path でも変わらなかった。
+- revert 済み。
+
+### Idea 042
+
+Idea:
+
+- scalar-valued integrand (`shape == ()` or `(1,)`) に対して singleton output axis を潰した fast path を入れる。
+
+Why:
+
+- scaling experiment の主な integrand は length-1 output なので、`tensordot` 周りが少し軽くなる可能性がある。
+
+Status:
+
+- `rejected`
+
+Result:
+
+- representative probe で
+  - `vmap_1d_l25_f64`: `240.48/s -> 240.68/s` で実質横ばい
+  - `vmap_2d_l18_f32`: `5005/s -> 4899/s`
+  - `vmap_16d_l3_f32`: `7083/s -> 6471/s`
+  と broad に悪化した。
+
+Interpretation:
+
+- singleton axis を消す利得より、extra branch / altered HLO のほうが重かった。
+- revert 済み。
+
+### Idea 043
+
+Idea:
+
+- decode の整数演算を「安全な範囲では `int32`」に落とす。
+
+Why:
+
+- GPU では `int64` より `int32` のほうが有利なことが多く、current decode は整数演算比率が高い。
+
+Status:
+
+- `rejected`
+
+Result:
+
+- representative probe で
+  - `vmap_1d_l25_f64`: `237.72/s -> 224.71/s`
+  - `vmap_2d_l18_f32`: `5055/s -> 4789/s`
+  - `vmap_4d_l12_f32`: `1066.9/s -> 1017.5/s`
+  - `vmap_16d_l3_f32`: `6994.8/s -> 6783.4/s`
+  と全体に悪化した。
+
+Interpretation:
+
+- 期待に反して、この実装では `int32` 化は有利に働かなかった。
+- cast / layout / generated code の都合で、単純な bit-width 縮小が勝ちにならない例だった。
+- revert 済み。

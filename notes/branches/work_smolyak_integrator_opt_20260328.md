@@ -7,7 +7,7 @@
 
 ## Current Signals
 
-- 現在の変更対象は `python/jax_util/functional/smolyak.py` と `experiments/smolyak_experiment/README.md`。
+- 現在の変更対象は `python/jax_util/functional/smolyak.py` と `experiments/functional/smolyak_scaling/README.md`。
 - `WORKTREE_SCOPE.md` は [WORKTREE_SCOPE.md](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/WORKTREE_SCOPE.md) に配置した。
 - action log は [worktree_smolyak_integrator_opt_2026-03-28.md](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/notes/worktrees/worktree_smolyak_integrator_opt_2026-03-28.md) を使う。
 

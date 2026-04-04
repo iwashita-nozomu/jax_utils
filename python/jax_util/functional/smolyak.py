@@ -92,6 +92,15 @@ def _dct_type_one(values: Vector, /) -> Vector:
     return jnp.fft.fft(extended).real[: values.shape[0]]
 
 
+def _dct_type_one_numpy(values: NDArray[np.float64], /) -> NDArray[np.float64]:
+    if values.ndim != 1:
+        raise ValueError("values must be a 1D array.")
+    if values.shape[0] <= 1:
+        return values
+    extended = np.concatenate([values, values[-2:0:-1]], axis=0)
+    return np.fft.fft(extended).real[: values.shape[0]]
+
+
 # 責務: FFT ベースの DCT-I により Clenshaw-Curtis の重み列を device 上で構成する。
 def _clenshaw_curtis_weights_device(num_intervals: int, /) -> Vector:
     scalar_dtype = jnp.float64
@@ -117,6 +126,27 @@ def _clenshaw_curtis_weights_device(num_intervals: int, /) -> Vector:
     return 0.5 * weights
 
 
+def _clenshaw_curtis_weights_numpy(num_intervals: int, /) -> NDArray[np.float64]:
+    coefficients = np.zeros((num_intervals + 1,), dtype=np.float64)
+    coefficients[0] = 1.0
+
+    if num_intervals >= 2:
+        mode_limit = num_intervals // 2
+        if mode_limit > 1:
+            modes = np.arange(1, mode_limit, dtype=np.int64)
+            frequencies = 2 * modes
+            updates = -1.0 / (4.0 * modes.astype(np.float64) ** 2 - 1.0)
+            coefficients[frequencies] = updates
+        coefficients[num_intervals] = -1.0 / (float(num_intervals * num_intervals) - 1.0)
+
+    transformed = _dct_type_one_numpy(coefficients)
+    scale = float(num_intervals)
+    weights = 2.0 * transformed / scale
+    weights[0] = transformed[0] / scale
+    weights[-1] = transformed[-1] / scale
+    return 0.5 * weights
+
+
 # 責務: level ごとの入れ子な Clenshaw-Curtis 則を device 配列で返す。
 def _clenshaw_curtis_rule_device(
     level: int,
@@ -136,6 +166,25 @@ def _clenshaw_curtis_rule_device(
     theta = jnp.pi * jnp.arange(num_intervals + 1, dtype=scalar_dtype) / float(num_intervals)
     nodes = 0.5 * jnp.cos(theta[::-1])
     weights = _clenshaw_curtis_weights_device(num_intervals)
+    return nodes, weights
+
+
+def _clenshaw_curtis_rule_numpy(
+    level: int,
+    /,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    if level < 1:
+        raise ValueError("level must be positive.")
+    if level == 1:
+        return (
+            np.asarray([0.0], dtype=np.float64),
+            np.asarray([1.0], dtype=np.float64),
+        )
+
+    num_intervals = 2 ** (level - 1)
+    theta = np.pi * np.arange(num_intervals + 1, dtype=np.float64) / float(num_intervals)
+    nodes = 0.5 * np.cos(theta[::-1])
+    weights = _clenshaw_curtis_weights_numpy(num_intervals)
     return nodes, weights
 
 
@@ -393,6 +442,51 @@ def _difference_rule_storage_device(
     return nodes_storage, weights_storage, offsets, lengths
 
 
+def _difference_rule_storage_host(
+    max_level: int,
+    /,
+) -> tuple[
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.int64],
+    NDArray[np.int64],
+]:
+    nodes_by_level: list[NDArray[np.float64]] = []
+    weights_by_level: list[NDArray[np.float64]] = []
+    lengths = np.empty((max_level,), dtype=np.int64)
+    previous_full_weights: NDArray[np.float64] | None = None
+
+    for current_level in range(1, max_level + 1):
+        full_nodes, full_weights = _clenshaw_curtis_rule_numpy(current_level)
+        if current_level == 1 or previous_full_weights is None:
+            diff_nodes = full_nodes
+            diff_weights = full_weights
+        else:
+            if current_level == 2:
+                overlap_indices = np.asarray([1], dtype=np.int32)
+            else:
+                overlap_indices = 2 * np.arange(previous_full_weights.shape[0], dtype=np.int32)
+            diff_weights = full_weights.copy()
+            diff_weights[overlap_indices] -= previous_full_weights
+            mask = np.abs(diff_weights) > 1e-15
+            diff_nodes = full_nodes[mask]
+            diff_weights = diff_weights[mask]
+        nodes_by_level.append(diff_nodes)
+        weights_by_level.append(diff_weights)
+        lengths[current_level - 1] = int(diff_nodes.shape[0])
+        previous_full_weights = full_weights
+
+    offsets = np.empty((max_level,), dtype=np.int64)
+    total_length = 0
+    for current_level, length in enumerate(lengths):
+        offsets[current_level] = total_length
+        total_length += int(length)
+
+    nodes_storage = np.concatenate(nodes_by_level, axis=0)
+    weights_storage = np.concatenate(weights_by_level, axis=0)
+    return nodes_storage, weights_storage, offsets, lengths
+
+
 def _count_smolyak_terms(
     dimension: int,
     level: int,
@@ -508,6 +602,67 @@ def _decode_points_and_weights(
     local_point_indices = jnp.asarray(local_point_indices, dtype=jnp.int64)
     if axis_count == 1:
         rule_indices = axis_offsets[:, jnp.newaxis] + local_point_indices[jnp.newaxis, :]
+        points = jnp.take(rule_nodes, rule_indices, mode="clip")
+        axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
+        point_weights = jnp.prod(axis_weights, axis=0)
+        return points, point_weights
+    if axis_count == 2:
+        axis1_lengths = axis_lengths[1]
+        local_axis0 = lax.div(local_point_indices, axis1_lengths)
+        local_axis1 = lax.rem(local_point_indices, axis1_lengths)
+        rule_index0 = axis_offsets[0] + local_axis0
+        rule_index1 = axis_offsets[1] + local_axis1
+        point0 = jnp.take(rule_nodes, rule_index0, mode="clip")
+        point1 = jnp.take(rule_nodes, rule_index1, mode="clip")
+        weight0 = jnp.take(rule_weights, rule_index0, mode="clip")
+        weight1 = jnp.take(rule_weights, rule_index1, mode="clip")
+        return jnp.stack([point0, point1], axis=0), weight0 * weight1
+    if axis_count == 3:
+        axis1_lengths = axis_lengths[1]
+        axis2_lengths = axis_lengths[2]
+        axis0_stride = axis1_lengths * axis2_lengths
+        local_axis0 = lax.div(local_point_indices, axis0_stride)
+        remainder01 = lax.rem(local_point_indices, axis0_stride)
+        local_axis1 = lax.div(remainder01, axis2_lengths)
+        local_axis2 = lax.rem(remainder01, axis2_lengths)
+        rule_index0 = axis_offsets[0] + local_axis0
+        rule_index1 = axis_offsets[1] + local_axis1
+        rule_index2 = axis_offsets[2] + local_axis2
+        point0 = jnp.take(rule_nodes, rule_index0, mode="clip")
+        point1 = jnp.take(rule_nodes, rule_index1, mode="clip")
+        point2 = jnp.take(rule_nodes, rule_index2, mode="clip")
+        weight0 = jnp.take(rule_weights, rule_index0, mode="clip")
+        weight1 = jnp.take(rule_weights, rule_index1, mode="clip")
+        weight2 = jnp.take(rule_weights, rule_index2, mode="clip")
+        return jnp.stack([point0, point1, point2], axis=0), weight0 * weight1 * weight2
+    if axis_count == 4:
+        axis1_lengths = axis_lengths[1]
+        axis2_lengths = axis_lengths[2]
+        axis3_lengths = axis_lengths[3]
+        axis0_stride = axis1_lengths * axis2_lengths * axis3_lengths
+        axis1_stride = axis2_lengths * axis3_lengths
+        local_axis0 = lax.div(local_point_indices, axis0_stride)
+        remainder012 = lax.rem(local_point_indices, axis0_stride)
+        local_axis1 = lax.div(remainder012, axis1_stride)
+        remainder12 = lax.rem(remainder012, axis1_stride)
+        local_axis2 = lax.div(remainder12, axis3_lengths)
+        local_axis3 = lax.rem(remainder12, axis3_lengths)
+        rule_index0 = axis_offsets[0] + local_axis0
+        rule_index1 = axis_offsets[1] + local_axis1
+        rule_index2 = axis_offsets[2] + local_axis2
+        rule_index3 = axis_offsets[3] + local_axis3
+        point0 = jnp.take(rule_nodes, rule_index0, mode="clip")
+        point1 = jnp.take(rule_nodes, rule_index1, mode="clip")
+        point2 = jnp.take(rule_nodes, rule_index2, mode="clip")
+        point3 = jnp.take(rule_nodes, rule_index3, mode="clip")
+        weight0 = jnp.take(rule_weights, rule_index0, mode="clip")
+        weight1 = jnp.take(rule_weights, rule_index1, mode="clip")
+        weight2 = jnp.take(rule_weights, rule_index2, mode="clip")
+        weight3 = jnp.take(rule_weights, rule_index3, mode="clip")
+        return (
+            jnp.stack([point0, point1, point2, point3], axis=0),
+            weight0 * weight1 * weight2 * weight3,
+        )
     else:
         reversed_suffix_products = jnp.cumprod(
             lax.rev(axis_lengths[1:], dimensions=(0,)),
@@ -525,10 +680,10 @@ def _decode_points_and_weights(
             axis_lengths[:, jnp.newaxis],
         )
         rule_indices = axis_offsets[:, jnp.newaxis] + local_axis_indices
-    points = jnp.take(rule_nodes, rule_indices, mode="clip")
-    axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
-    point_weights = jnp.prod(axis_weights, axis=0)
-    return points, point_weights
+        points = jnp.take(rule_nodes, rule_indices, mode="clip")
+        axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
+        point_weights = jnp.prod(axis_weights, axis=0)
+        return points, point_weights
 
 
 def _next_term_extra_levels(
@@ -801,15 +956,15 @@ class SmolyakIntegrator(eqx.Module):
                 dimension_weights=self.dimension_weights,
             )
             (
-                rule_nodes,
-                rule_weights,
+                rule_nodes_np,
+                rule_weights_np,
                 rule_offsets_np,
                 rule_lengths_np,
-            ) = _difference_rule_storage_device(max_rule_level)
+            ) = _difference_rule_storage_host(max_rule_level)
             rule_offsets_np = _cast_index_array(rule_offsets_np, resolved_index_dtype, name="rule_offsets")
             rule_lengths_np = _cast_index_array(rule_lengths_np, resolved_index_dtype, name="rule_lengths")
-            self.rule_nodes = jnp.asarray(rule_nodes, dtype=dtype)
-            self.rule_weights = jnp.asarray(rule_weights, dtype=dtype)
+            self.rule_nodes = jnp.asarray(rule_nodes_np, dtype=dtype)
+            self.rule_weights = jnp.asarray(rule_weights_np, dtype=dtype)
             self.rule_offsets = jnp.asarray(rule_offsets_np)
             self.rule_lengths = jnp.asarray(rule_lengths_np)
         else:

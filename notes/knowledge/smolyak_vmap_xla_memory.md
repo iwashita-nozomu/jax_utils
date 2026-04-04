@@ -135,6 +135,77 @@ runtime trade-off:
   - `while` の入れ子の減らし方
   を詰めるのが筋
 
+### 0.6 Wrapper-Level Batching Reprobe on 2026-04-03
+
+上の wrapper-level batching は memory 面では正しかったが、最初の heuristic は tile を小さく切りすぎていた。
+[integrate.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/integrate.py) で次の 2 点を入れて reprobe した。
+
+- target tile budget を `16 MiB -> 32 MiB`、下限を `4 MiB -> 8 MiB` に引き上げた
+- `auto_tile >= axis_size` なら `lax.map(...)` を使わず plain `jax.vmap(...)` を通す fast path を追加した
+
+reprobe:
+
+- [/tmp/smolyak_integrate_custom_vmap_reprobe_20260403.json](/tmp/smolyak_integrate_custom_vmap_reprobe_20260403.json)
+- [/tmp/xla_dump_integrate_tile479/module_1203.jit_run.sm_8.9_gpu_after_optimizations-memory-usage-report.txt](/tmp/xla_dump_integrate_tile479/module_1203.jit_run.sm_8.9_gpu_after_optimizations-memory-usage-report.txt)
+- [/tmp/xla_dump_integrate_tile479/module_1203.jit_run.sm_8.9_gpu_after_optimizations-buffer-assignment.txt](/tmp/xla_dump_integrate_tile479/module_1203.jit_run.sm_8.9_gpu_after_optimizations-buffer-assignment.txt)
+
+代表ケース:
+
+- GPU
+- `dimension=1`
+- `level=12`
+- `dtype=float32`
+- outer batch size `1000`
+
+結果:
+
+- old wrapper batching:
+  - `auto_tile=239`
+  - `warm_runtime_ms ≈ 27.211`
+  - `throughput ≈ 36749 integrals/s`
+- current wrapper batching:
+  - `auto_tile=479`
+  - `warm_runtime_ms ≈ 15.992`
+  - `throughput ≈ 62532 integrals/s`
+
+この改善後も compiled temp は小さいままだった。
+
+- current batch `Total bytes used = 350954` (`342.7 KiB`)
+- 主な temp は
+  - `2 x s64[16384]`
+  - `2 x f32[16384]`
+  - `2 x f32[16384,1]`
+  - `f32[2,479,1]`
+  - `f32[479]`
+  - `f32[479,1]`
+
+つまり
+
+- old plain `vmap` の主犯 `f32[1000,16384]`
+- old wrapper batching の小 temp
+
+の中間ではなく、`small-temp` 側を維持したまま runtime をかなり戻せた。
+
+別ケースでも完全な 1D 専用改善ではないことを確認した。
+
+- `4D, level4, float32, batch=1000`
+  - old wrapper batching throughput `≈ 9782/s`
+  - current wrapper batching throughput `≈ 10145/s`
+
+また、小 batch では `auto_tile >= axis_size` になって plain `vmap` fast path へ落ちる。
+
+- `1D, level12, batch=32`: `tile=32`, `warm_ms ≈ 3.340`
+- `1D, level12, batch=128`: `tile=128`, `warm_ms ≈ 3.641`
+
+現時点の解釈:
+
+- wrapper-level batching という境界は維持してよい
+- ただし小 batch まで `lax.map` に落とすのは損
+- 次の主戦場は
+  - `smolyak.py` 本体の term / decode / point-block 側
+  - とくに tile 化された batch path の中で残る `while/gather` の削減
+
+
 ### 1. Single vs Batch Memory Analysis
 
 実験ファイル:
@@ -395,3 +466,98 @@ Source:
 - OpenXLA HLO / buffer assignment:
   - https://openxla.org/xla/hlo_dumps
   - https://openxla.org/xla/hlo_to_thunks
+
+## 2026-04-04 Bottleneck Identification
+
+current code の representative case として
+
+- `dimension=2`
+- `level=18`
+- `dtype=float32`
+- outer batch size `1000`
+
+で fresh dump を取り直した。
+
+files:
+
+- [/tmp/xla_dump_smolyak_current_2d18/module_0011.jit_compiled_single.sm_8.9_gpu_after_optimizations-memory-usage-report.txt](/tmp/xla_dump_smolyak_current_2d18/module_0011.jit_compiled_single.sm_8.9_gpu_after_optimizations-memory-usage-report.txt)
+- [/tmp/xla_dump_smolyak_current_2d18/module_0013.jit_compiled_batch.sm_8.9_gpu_after_optimizations-memory-usage-report.txt](/tmp/xla_dump_smolyak_current_2d18/module_0013.jit_compiled_batch.sm_8.9_gpu_after_optimizations-memory-usage-report.txt)
+- [/tmp/xla_dump_smolyak_current_2d18/module_0013.jit_compiled_batch.sm_8.9_gpu_after_optimizations-buffer-assignment.txt](/tmp/xla_dump_smolyak_current_2d18/module_0013.jit_compiled_batch.sm_8.9_gpu_after_optimizations-buffer-assignment.txt)
+- [/tmp/xla_dump_smolyak_current_2d18/module_0013.jit_compiled_batch.thunk_sequence.txt](/tmp/xla_dump_smolyak_current_2d18/module_0013.jit_compiled_batch.thunk_sequence.txt)
+
+### What Dominates Time
+
+静的 HLO なので厳密な wall-time 比率までは出ないが、buffer assignment と thunk sequence から支配演算はかなり絞れる。
+
+- batch path の最大 temp は `gemm_fusion_dot.141 = f32[479,16384]`
+- これは約 `31,391,744 bytes`
+- `compiled_batch` 全体の live bytes `~32.22 MiB` のほぼ大半を占める
+
+thunk sequence でも主系列は
+
+- `input_concatenate_fusion_1`
+- `gemm_fusion_dot_141`
+- `input_reduce_fusion`
+
+になっている。
+
+したがって current `vmap` path の支配演算は
+
+1. `values[tile_batch, chunk]` の batched 関数値行列生成
+2. その後段の `exp + weight multiply + reduce`
+
+である。
+
+source 対応は
+
+- points block 構築: [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py#L813)
+- non-suffix path の `vmap(f)` と縮約: [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py#L822) [smolyak.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/smolyak.py#L824)
+- wrapper-level tile loop: [integrate.py](/workspace/.worktrees/work-smolyak-integrator-opt-20260328/python/jax_util/functional/integrate.py#L140)
+
+### What Does Not Dominate
+
+- `broadcast_in_dim` 自体はもう主犯ではない
+- wrapper batching の `wrapped_slice` / `dynamic_update_slice` は見えるが、サイズ・launch 規模とも二次要因
+- Smolyak 固有の `divide/remainder/gather/while` は single path では主役だが、current batch path では `gemm + reduce` より一段下
+
+single path では事情が違い、`compiled_single` の temp は `~195.6 KiB` しかない。こちらは
+
+- `input_convert_gather_reduce_fusion`
+- `input_reduce_fusion`
+- small `while`
+
+が中心で、Smolyak decode / gather が相対的に重い。
+
+### Interpretation
+
+「積分の本質」は `f(x)` の大量評価と重み付き和なので、`gemm/reduce` が支配すること自体は自然である。
+ただし current implementation は、その本質計算を
+
+- まず `values[tile_batch, chunk]` として materialize
+- そのあと縮約
+
+という形で実行している。ここはまだ改善余地がある。
+
+### Immediate Design Space
+
+一般 `f` を保ったまま `values[tile_batch, chunk]` を小さくする手段は 3 段ある。
+
+1. plain JAX:
+   - `chunk -> point_tiles`
+   - tile ごとに `vmap(f)`
+   - tile partial sum を即時加算
+2. Pallas:
+   - point / weight load
+   - `f` evaluation
+   - partial reduction
+   を block kernel 化
+3. C++ / CUDA custom call:
+   - さらに低レベルだが、現時点ではやりすぎ
+
+現時点の推奨順は
+
+1. tile-local partial sum を plain JAX で試す
+2. まだ temp / launch overhead が残るなら Pallas
+3. custom call は最後
+
+である。

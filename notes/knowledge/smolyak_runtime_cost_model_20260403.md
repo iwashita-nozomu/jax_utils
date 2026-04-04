@@ -69,6 +69,45 @@ main loop の phase は概ね次の順。
 
 GPU kernel 単位の細かい profiler が必要になるのは、「関数評価」「gather」「整数 decode」「縮約」のどれが fused kernel 内で支配的かをさらに分けたい段階から。
 
+### Helper-Level Microbenchmark On GPU
+
+`term update` と `decode` のどちらを次に触るべきかを切り分けるため、`16D, level3, float32` の representative input で helper 単体計測を行った。
+
+条件:
+
+- GPU
+- `dimension=16`
+- `level=3`
+- `chunk_size=16384`
+- `_next_term_extra_levels(...)`
+- `_decode_points_and_weights(...)`
+
+実測:
+
+- `_next_term_extra_levels` 1 回:
+  - `0.275 ms`
+  - `temp_size_in_bytes = 1284`
+- `_next_term_extra_levels` を `5000` 回回す `fori_loop`:
+  - `652.76 ms`
+  - `temp_size_in_bytes = 2817`
+- `_decode_points_and_weights` 1 回:
+  - `0.218 ms`
+  - `temp_size_in_bytes = 16`
+  - `output_size_in_bytes = 1,114,128`
+
+ここから言えること:
+
+- `term update` は tiny helper ではあるが、GPU 上では「ほぼ無料」とまでは言えない
+- 少なくとも `16D` では `_next_term_extra_levels(...)` の 1 回あたり wall time は `_decode_points_and_weights(...)` 1 回と同程度のオーダーにある
+- 一方で `decode` は temp が小さくても出力テンソルが大きく、`points/weights` の materialization そのものが main loop に効く
+
+したがって、次の改造候補としては
+
+- `term update` を scalar / small carry のまま軽くする
+- `decode` の output 形を小さくするか、その直後の消費まで fused に寄せる
+
+の 2 本を引き続き主戦場として扱うのが妥当。
+
 ## Cost Terms
 
 以下では `d = dimension`, `L = level`, `q = chunk_size`, `B = outer batch size`, `m = output width` と書く。
