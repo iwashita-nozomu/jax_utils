@@ -6,25 +6,23 @@ from typing import Any, cast
 
 import numpy as np
 from numpy.typing import NDArray
-from scipy.fft import dct
 
 
 import equinox as eqx
 import jax
 import jax.numpy as jnp
+from jax import lax
 from jax.typing import DTypeLike
 
 from ..base import DEFAULT_DTYPE, Vector
 from .protocols import Function
 
-
-# NumPy 配列を JAX 配列へ変換する補助関数。
-def _to_jax_arrays(
-    *arrays: NDArray[np.floating[Any]],
-    dtype: DTypeLike,
-) -> tuple[jax.Array, ...]:
-    """1 つ以上の NumPy 配列を指定 dtype の JAX 配列へ変換する。"""
-    return tuple(jnp.asarray(arr, dtype=dtype) for arr in arrays)
+_SUPPORTED_INDEX_DTYPES: dict[str, np.dtype[Any]] = {
+    "int8": np.dtype(np.int8),
+    "uint8": np.dtype(np.uint8),
+    "int16": np.dtype(np.int16),
+    "int32": np.dtype(np.int32),
+}
 
 
 # 責務: 正の整数値の上限に対して最小限の unsigned dtype を選ぶ。
@@ -84,35 +82,99 @@ def _clenshaw_curtis_nodes_from_keys(
     return 0.5 * np.cos(np.pi * numerators / denominators)
 
 
-# 責務: DCT-I により Clenshaw-Curtis の重み列を安定に構成する。
-def _clenshaw_curtis_weights(num_intervals: int, /) -> NDArray[np.floating[Any]]:
-    coefficients = np.zeros(num_intervals + 1, dtype=np.float64)
-    coefficients[0] = 1.0
+# 責務: even extension + FFT により DCT-I を device 上で構成する。
+def _dct_type_one(values: Vector, /) -> Vector:
+    if values.ndim != 1:
+        raise ValueError("values must be a 1D array.")
+    if values.shape[0] <= 1:
+        return values
+    extended = jnp.concatenate([values, values[-2:0:-1]], axis=0)
+    return jnp.fft.fft(extended).real[: values.shape[0]]
 
-    for mode in range(1, (num_intervals // 2) + 1):
-        frequency = 2 * mode
-        if frequency < num_intervals:
-            coefficients[frequency] = -1.0 / (4.0 * mode * mode - 1.0)
 
-    if num_intervals % 2 == 0:
-        coefficients[num_intervals] = -1.0 / (num_intervals * num_intervals - 1.0)
+def _dct_type_one_numpy(values: NDArray[np.float64], /) -> NDArray[np.float64]:
+    if values.ndim != 1:
+        raise ValueError("values must be a 1D array.")
+    if values.shape[0] <= 1:
+        return values
+    extended = np.concatenate([values, values[-2:0:-1]], axis=0)
+    return np.fft.fft(extended).real[: values.shape[0]]
 
-    transformed = dct(coefficients, type=1)
-    weights = np.empty(num_intervals + 1, dtype=np.float64)
-    weights[0] = transformed[0] / num_intervals
-    weights[-1] = transformed[-1] / num_intervals
-    weights[1:-1] = 2.0 * transformed[1:-1] / num_intervals
+
+# 責務: FFT ベースの DCT-I により Clenshaw-Curtis の重み列を device 上で構成する。
+def _clenshaw_curtis_weights_device(num_intervals: int, /) -> Vector:
+    scalar_dtype = jnp.float64
+    coefficients = jnp.zeros((num_intervals + 1,), dtype=scalar_dtype)
+    coefficients = coefficients.at[0].set(jnp.asarray(1.0, dtype=scalar_dtype))
+
+    if num_intervals >= 2:
+        mode_limit = num_intervals // 2
+        if mode_limit > 1:
+            modes = jnp.arange(1, mode_limit, dtype=jnp.int32)
+            frequencies = 2 * modes
+            updates = -1.0 / (4.0 * modes.astype(scalar_dtype) ** 2 - 1.0)
+            coefficients = coefficients.at[frequencies].set(updates)
+        coefficients = coefficients.at[num_intervals].set(
+            -1.0 / (float(num_intervals * num_intervals) - 1.0)
+        )
+
+    transformed = _dct_type_one(coefficients)
+    scale = jnp.asarray(float(num_intervals), dtype=scalar_dtype)
+    weights = 2.0 * transformed / scale
+    weights = weights.at[0].set(transformed[0] / scale)
+    weights = weights.at[-1].set(transformed[-1] / scale)
     return 0.5 * weights
 
 
-# 責務: level ごとの入れ子な Clenshaw-Curtis 則をホスト側 NumPy 配列で返す。
-def _clenshaw_curtis_rule_numpy(
+def _clenshaw_curtis_weights_numpy(num_intervals: int, /) -> NDArray[np.float64]:
+    coefficients = np.zeros((num_intervals + 1,), dtype=np.float64)
+    coefficients[0] = 1.0
+
+    if num_intervals >= 2:
+        mode_limit = num_intervals // 2
+        if mode_limit > 1:
+            modes = np.arange(1, mode_limit, dtype=np.int64)
+            frequencies = 2 * modes
+            updates = -1.0 / (4.0 * modes.astype(np.float64) ** 2 - 1.0)
+            coefficients[frequencies] = updates
+        coefficients[num_intervals] = -1.0 / (float(num_intervals * num_intervals) - 1.0)
+
+    transformed = _dct_type_one_numpy(coefficients)
+    scale = float(num_intervals)
+    weights = 2.0 * transformed / scale
+    weights[0] = transformed[0] / scale
+    weights[-1] = transformed[-1] / scale
+    return 0.5 * weights
+
+
+# 責務: level ごとの入れ子な Clenshaw-Curtis 則を device 配列で返す。
+def _clenshaw_curtis_rule_device(
     level: int,
     /,
-) -> tuple[NDArray[np.floating[Any]], NDArray[np.floating[Any]]]:
+) -> tuple[Vector, Vector]:
     if level < 1:
         raise ValueError("level must be positive.")
 
+    if level == 1:
+        return (
+            jnp.asarray([0.0], dtype=jnp.float64),
+            jnp.asarray([1.0], dtype=jnp.float64),
+        )
+
+    num_intervals = 2 ** (level - 1)
+    scalar_dtype = jnp.float64
+    theta = jnp.pi * jnp.arange(num_intervals + 1, dtype=scalar_dtype) / float(num_intervals)
+    nodes = 0.5 * jnp.cos(theta[::-1])
+    weights = _clenshaw_curtis_weights_device(num_intervals)
+    return nodes, weights
+
+
+def _clenshaw_curtis_rule_numpy(
+    level: int,
+    /,
+) -> tuple[NDArray[np.float64], NDArray[np.float64]]:
+    if level < 1:
+        raise ValueError("level must be positive.")
     if level == 1:
         return (
             np.asarray([0.0], dtype=np.float64),
@@ -120,58 +182,64 @@ def _clenshaw_curtis_rule_numpy(
         )
 
     num_intervals = 2 ** (level - 1)
-    theta = np.pi * np.arange(num_intervals + 1, dtype=np.float64) / num_intervals
+    theta = np.pi * np.arange(num_intervals + 1, dtype=np.float64) / float(num_intervals)
     nodes = 0.5 * np.cos(theta[::-1])
-    weights = _clenshaw_curtis_weights(num_intervals)
+    weights = _clenshaw_curtis_weights_numpy(num_intervals)
     return nodes, weights
 
 
 # 責務: level ごとの入れ子な Clenshaw-Curtis 則を [-0.5, 0.5] 上で返す。
 def clenshaw_curtis_rule(level: int, /) -> tuple[Vector, Vector]:
-    nodes_np, weights_np = _clenshaw_curtis_rule_numpy(level)
+    nodes, weights = _clenshaw_curtis_rule_device(level)
     return cast(
         tuple[Vector, Vector],
-        _to_jax_arrays(nodes_np, weights_np, dtype=DEFAULT_DTYPE),
+        (
+            jnp.asarray(nodes, dtype=DEFAULT_DTYPE),
+            jnp.asarray(weights, dtype=DEFAULT_DTYPE),
+        ),
     )
 
 
-# 責務: 入れ子な 1 次元積分則から差分積分則を NumPy 上で構築する。
-def _difference_rule_numpy(
+# 責務: 入れ子な 1 次元積分則から差分積分則を device 上で構築する。
+def _difference_rule_device(
     level: int,
     /,
-) -> tuple[
-    NDArray[np.floating[Any]],
-    NDArray[np.floating[Any]],
-]:
-    nodes, weights = _clenshaw_curtis_rule_numpy(level)
-    node_keys = _clenshaw_curtis_node_keys(level)
+) -> tuple[Vector, Vector]:
+    nodes, weights = _clenshaw_curtis_rule_device(level)
     if level == 1:
         return nodes, weights
 
-    previous_keys = _clenshaw_curtis_node_keys(level - 1)
-    previous_weights = _clenshaw_curtis_rule_numpy(level - 1)[1]
+    previous_weights = _clenshaw_curtis_rule_device(level - 1)[1]
+    return _difference_rule_from_full_rule_device(level, nodes, weights, previous_weights)
 
-    all_keys = np.concatenate([node_keys, previous_keys], axis=0)
-    all_weights = np.concatenate([weights, -previous_weights], axis=0)
-    unique_keys, inverse = np.unique(all_keys, axis=0, return_inverse=True)
 
-    unique_weights = np.zeros(unique_keys.shape[0], dtype=all_weights.dtype)
-    np.add.at(unique_weights, inverse, all_weights)
-
-    mask = np.abs(unique_weights) > 1e-15
-    filtered_keys = unique_keys[mask]
-    filtered_weights = unique_weights[mask]
-    filtered_nodes = _clenshaw_curtis_nodes_from_keys(filtered_keys)
-    order = np.argsort(filtered_nodes)
-    return filtered_nodes[order], filtered_weights[order]
+def _difference_rule_from_full_rule_device(
+    level: int,
+    nodes: Vector,
+    weights: Vector,
+    previous_weights: Vector | None,
+    /,
+) -> tuple[Vector, Vector]:
+    if level == 1 or previous_weights is None:
+        return nodes, weights
+    if level == 2:
+        overlap_indices = jnp.asarray([1], dtype=jnp.int32)
+    else:
+        overlap_indices = 2 * jnp.arange(previous_weights.shape[0], dtype=jnp.int32)
+    diff_weights = weights.at[overlap_indices].add(-previous_weights)
+    mask = jnp.abs(diff_weights) > 1e-15
+    return nodes[mask], diff_weights[mask]
 
 
 # 責務: Clenshaw-Curtis の差分積分則 Delta_level を構築する。
 def difference_rule(level: int, /) -> tuple[Vector, Vector]:
-    diff_nodes_np, diff_weights_np = _difference_rule_numpy(level)
+    diff_nodes, diff_weights = _difference_rule_device(level)
     return cast(
         tuple[Vector, Vector],
-        _to_jax_arrays(diff_nodes_np, diff_weights_np, dtype=DEFAULT_DTYPE),
+        (
+            jnp.asarray(diff_nodes, dtype=DEFAULT_DTYPE),
+            jnp.asarray(diff_weights, dtype=DEFAULT_DTYPE),
+        ),
     )
 
 
@@ -195,30 +263,173 @@ def multi_indices(dimension: int, max_norm: int, /) -> NDArray[np.unsignedintege
     return indices
 
 
-# 責務: Smolyak level と次元から必要な最大 1 次元差分則 level を返す。
-def _max_difference_rule_level(dimension: int, level: int, /) -> int:
+def _normalize_dimension_weights(
+    dimension: int,
+    dimension_weights: tuple[int, ...] | None,
+    /,
+) -> tuple[int, ...] | None:
+    if dimension_weights is None:
+        return None
+    if len(dimension_weights) != dimension:
+        raise ValueError("dimension_weights must have length equal to dimension.")
+    normalized = tuple(int(weight) for weight in dimension_weights)
+    if any(weight < 1 for weight in normalized):
+        raise ValueError("dimension_weights must be positive integers.")
+    return normalized
+
+
+def _resolve_index_dtype(index_dtype: str | None, /) -> np.dtype[Any] | None:
+    if index_dtype in (None, "auto"):
+        return None
+    if index_dtype not in _SUPPORTED_INDEX_DTYPES:
+        raise ValueError(f"index_dtype must be one of {sorted(_SUPPORTED_INDEX_DTYPES)} or None.")
+    return _SUPPORTED_INDEX_DTYPES[index_dtype]
+
+
+def _cast_index_array(
+    array: NDArray[np.integer[Any]],
+    index_dtype: np.dtype[Any] | None,
+    /,
+    *,
+    name: str,
+) -> NDArray[np.integer[Any]]:
+    if index_dtype is None:
+        return array
+    if array.size == 0:
+        return array.astype(index_dtype, copy=False)
+    info = np.iinfo(index_dtype)
+    min_value = int(np.min(array))
+    max_value = int(np.max(array))
+    if min_value < info.min or max_value > info.max:
+        raise OverflowError(
+            f"{name} values [{min_value}, {max_value}] do not fit in {index_dtype.name}."
+        )
+    return array.astype(index_dtype, copy=False)
+
+
+def _weighted_multi_indices(
+    dimension: int,
+    level: int,
+    dimension_weights: tuple[int, ...],
+    /,
+) -> NDArray[np.unsignedinteger[Any]]:
+    if dimension < 1:
+        raise ValueError("dimension must be positive.")
+    if level < 1:
+        raise ValueError("level must be positive.")
+
+    budget = level - 1
+    max_level = 1 + max(budget // weight for weight in dimension_weights)
+    index_dtype = _compact_unsigned_dtype(max(max_level, dimension, 1))
+    count_cache: dict[tuple[int, int], int] = {}
+
+    def count(axis: int, remaining_budget: int) -> int:
+        key = (axis, remaining_budget)
+        cached = count_cache.get(key)
+        if cached is not None:
+            return cached
+        if axis == dimension:
+            return 1
+        weight = dimension_weights[axis]
+        total = 0
+        for extra_level in range((remaining_budget // weight) + 1):
+            total += count(axis + 1, remaining_budget - extra_level * weight)
+        count_cache[key] = total
+        return total
+
+    num_indices = count(0, budget)
+    indices = np.empty((num_indices, dimension), dtype=index_dtype)
+    current = np.ones((dimension,), dtype=index_dtype)
+
+    def fill(axis: int, remaining_budget: int, row: int) -> int:
+        if axis == dimension:
+            indices[row] = current
+            return row + 1
+        weight = dimension_weights[axis]
+        for extra_level in range((remaining_budget // weight) + 1):
+            current[axis] = 1 + extra_level
+            row = fill(axis + 1, remaining_budget - extra_level * weight, row)
+        return row
+
+    fill(0, budget, 0)
+    return indices
+
+
+# 責務: Smolyak 多重指数 i の 1-ノルム上限 q = d + l - 1 を返す。
+def _max_multi_index_norm(dimension: int, level: int, /) -> int:
     return dimension + level - 1
 
 
+# 責務: Smolyak level と次元から必要な最大 1 次元差分則 level を返す。
+def _max_difference_rule_level(
+    dimension: int,
+    level: int,
+    /,
+    *,
+    dimension_weights: tuple[int, ...] | None = None,
+) -> int:
+    del dimension
+    if dimension_weights is None:
+        return level
+    budget = level - 1
+    return 1 + max(budget // weight for weight in dimension_weights)
+
+
+def _axis_level_ceilings_numpy(
+    dimension: int,
+    level: int,
+    /,
+    *,
+    dimension_weights: tuple[int, ...] | None = None,
+) -> NDArray[np.int32]:
+    if level < 1:
+        raise ValueError("level must be positive.")
+    if dimension_weights is None:
+        return np.full((dimension,), level, dtype=np.int32)
+    budget = level - 1
+    return np.asarray(
+        [1 + (budget // weight) for weight in dimension_weights],
+        dtype=np.int32,
+    )
+
+
+def _term_generation_weights_numpy(
+    dimension: int,
+    dimension_weights: tuple[int, ...] | None,
+    /,
+) -> NDArray[np.int32]:
+    if dimension_weights is None:
+        return np.ones((dimension,), dtype=np.int32)
+    return np.asarray(dimension_weights, dtype=np.int32)
+
+
 # 責務: level ごとの差分則を flat storage と offset/length へまとめる。
-def _difference_rule_storage_numpy(
+def _difference_rule_storage_device(
     max_level: int,
     /,
 ) -> tuple[
-    NDArray[np.floating[Any]],
-    NDArray[np.floating[Any]],
+    Vector,
+    Vector,
     NDArray[np.int64],
     NDArray[np.int64],
 ]:
-    nodes_by_level: list[NDArray[np.floating[Any]]] = []
-    weights_by_level: list[NDArray[np.floating[Any]]] = []
+    nodes_by_level: list[Vector] = []
+    weights_by_level: list[Vector] = []
     lengths = np.empty((max_level,), dtype=np.int64)
+    previous_full_weights: Vector | None = None
 
     for current_level in range(1, max_level + 1):
-        nodes_np, weights_np = _difference_rule_numpy(current_level)
-        nodes_by_level.append(nodes_np)
-        weights_by_level.append(weights_np)
-        lengths[current_level - 1] = nodes_np.shape[0]
+        full_nodes, full_weights = _clenshaw_curtis_rule_device(current_level)
+        diff_nodes, diff_weights = _difference_rule_from_full_rule_device(
+            current_level,
+            full_nodes,
+            full_weights,
+            previous_full_weights,
+        )
+        nodes_by_level.append(diff_nodes)
+        weights_by_level.append(diff_weights)
+        lengths[current_level - 1] = int(diff_nodes.shape[0])
+        previous_full_weights = full_weights
 
     offsets = np.empty((max_level,), dtype=np.int64)
     total_length = 0
@@ -226,76 +437,129 @@ def _difference_rule_storage_numpy(
         offsets[current_level] = total_length
         total_length += int(length)
 
-    nodes_storage = np.empty((total_length,), dtype=np.float64)
-    weights_storage = np.empty((total_length,), dtype=np.float64)
-    for current_level, (nodes_np, weights_np) in enumerate(zip(nodes_by_level, weights_by_level, strict=True)):
-        start = int(offsets[current_level])
-        stop = start + int(lengths[current_level])
-        nodes_storage[start:stop] = nodes_np
-        weights_storage[start:stop] = weights_np
-
+    nodes_storage = jnp.concatenate(nodes_by_level, axis=0)
+    weights_storage = jnp.concatenate(weights_by_level, axis=0)
     return nodes_storage, weights_storage, offsets, lengths
 
 
-# 責務: 最大 level までの 1 次元差分則 storage を初期化する。
-def _initialize_rule_storage(
-    dimension: int,
-    prepared_level: int,
-    dtype: DTypeLike,
+def _difference_rule_storage_host(
+    max_level: int,
     /,
 ) -> tuple[
-    Vector,
-    Vector,
-    jax.Array,
-    jax.Array,
+    NDArray[np.float64],
+    NDArray[np.float64],
+    NDArray[np.int64],
+    NDArray[np.int64],
 ]:
-    if prepared_level < 1:
-        raise ValueError("prepared_level must be positive.")
-    max_rule_level = _max_difference_rule_level(dimension, prepared_level)
-    rule_nodes_np, rule_weights_np, rule_offsets_np, rule_lengths_np = _difference_rule_storage_numpy(
-        max_rule_level
-    )
-    return (
-        jnp.asarray(rule_nodes_np, dtype=dtype),
-        jnp.asarray(rule_weights_np, dtype=dtype),
-        jnp.asarray(rule_offsets_np, dtype=jnp.int64),
-        jnp.asarray(rule_lengths_np, dtype=jnp.int64),
-    )
+    nodes_by_level: list[NDArray[np.float64]] = []
+    weights_by_level: list[NDArray[np.float64]] = []
+    lengths = np.empty((max_level,), dtype=np.int64)
+    previous_full_weights: NDArray[np.float64] | None = None
+
+    for current_level in range(1, max_level + 1):
+        full_nodes, full_weights = _clenshaw_curtis_rule_numpy(current_level)
+        if current_level == 1 or previous_full_weights is None:
+            diff_nodes = full_nodes
+            diff_weights = full_weights
+        else:
+            if current_level == 2:
+                overlap_indices = np.asarray([1], dtype=np.int32)
+            else:
+                overlap_indices = 2 * np.arange(previous_full_weights.shape[0], dtype=np.int32)
+            diff_weights = full_weights.copy()
+            diff_weights[overlap_indices] -= previous_full_weights
+            mask = np.abs(diff_weights) > 1e-15
+            diff_nodes = full_nodes[mask]
+            diff_weights = diff_weights[mask]
+        nodes_by_level.append(diff_nodes)
+        weights_by_level.append(diff_weights)
+        lengths[current_level - 1] = int(diff_nodes.shape[0])
+        previous_full_weights = full_weights
+
+    offsets = np.empty((max_level,), dtype=np.int64)
+    total_length = 0
+    for current_level, length in enumerate(lengths):
+        offsets[current_level] = total_length
+        total_length += int(length)
+
+    nodes_storage = np.concatenate(nodes_by_level, axis=0)
+    weights_storage = np.concatenate(weights_by_level, axis=0)
+    return nodes_storage, weights_storage, offsets, lengths
 
 
-# 責務: active level に対応する term index と評価点数メタデータを初期化する。
-def _initialize_term_plan(
+def _count_smolyak_terms(
     dimension: int,
     level: int,
-    rule_lengths: jax.Array,
     /,
-) -> tuple[
-    jax.Array,
-    jax.Array,
-    int,
-    int,
-]:
-    if dimension < 1:
-        raise ValueError("dimension must be positive.")
-    if level < 1:
-        raise ValueError("level must be positive.")
+    *,
+    dimension_weights: tuple[int, ...] | None = None,
+) -> int:
+    if dimension_weights is None:
+        return comb(dimension + level - 1, dimension)
+    budget = level - 1
+    dp = [0] * (budget + 1)
+    dp[0] = 1
+    for weight in dimension_weights:
+        next_dp = [0] * (budget + 1)
+        for used_budget, count in enumerate(dp):
+            if count == 0:
+                continue
+            max_extra = (budget - used_budget) // weight
+            for extra_level in range(max_extra + 1):
+                next_dp[used_budget + extra_level * weight] += count
+        dp = next_dp
+    return sum(dp)
 
-    max_norm = _max_difference_rule_level(dimension, level)
-    term_levels_np = multi_indices(dimension, max_norm).astype(np.int32, copy=False)
-    term_levels = jnp.asarray(term_levels_np, dtype=jnp.int32)
-    rule_lengths_i64 = jnp.asarray(rule_lengths, dtype=jnp.int64)
-    axis_lengths = rule_lengths_i64[term_levels.astype(jnp.int64) - 1]
-    term_num_points = jnp.prod(axis_lengths, axis=1)
 
-    num_terms = int(term_levels_np.shape[0])
-    num_evaluation_points = int(jnp.sum(term_num_points).item())
+def _count_evaluation_points(
+    level: int,
+    rule_lengths_np: NDArray[np.integer[Any]],
+    generation_weights_np: NDArray[np.int32],
+    /,
+) -> int:
+    budget = level - 1
+    dp = [0] * (budget + 1)
+    dp[0] = 1
+    for weight in generation_weights_np:
+        next_dp = [0] * (budget + 1)
+        for used_budget, count in enumerate(dp):
+            if count == 0:
+                continue
+            max_extra = (budget - used_budget) // int(weight)
+            for extra_level in range(max_extra + 1):
+                next_dp[used_budget + extra_level * int(weight)] += count * int(
+                    rule_lengths_np[extra_level]
+                )
+        dp = next_dp
+    return sum(dp)
 
-    return (
-        term_levels,
-        term_num_points,
-        num_terms,
-        num_evaluation_points,
-    )
+
+def _max_suffix_points(
+    level: int,
+    rule_lengths_np: NDArray[np.integer[Any]],
+    generation_weights_np: NDArray[np.int32],
+    suffix_ndim: int,
+    /,
+) -> int:
+    if suffix_ndim == 0:
+        return 1
+    budget = level - 1
+    suffix_weights = generation_weights_np[-suffix_ndim:]
+    dp = [-1] * (budget + 1)
+    dp[0] = 1
+    for weight in suffix_weights:
+        next_dp = [-1] * (budget + 1)
+        for used_budget, count in enumerate(dp):
+            if count < 0:
+                continue
+            max_extra = (budget - used_budget) // int(weight)
+            for extra_level in range(max_extra + 1):
+                next_budget = used_budget + extra_level * int(weight)
+                candidate = count * int(rule_lengths_np[extra_level])
+                if candidate > next_dp[next_budget]:
+                    next_dp[next_budget] = candidate
+        dp = next_dp
+    return max(dp)
 
 
 # 責務: 1 次元差分則 storage と term plan の保持量を byte 単位で見積もる。
@@ -304,8 +568,8 @@ def _storage_bytes(
     rule_weights: jax.Array,
     rule_offsets: jax.Array,
     rule_lengths: jax.Array,
-    term_levels: jax.Array,
-    term_num_points: jax.Array,
+    generation_weights: jax.Array,
+    axis_level_ceilings: jax.Array,
     /,
 ) -> int:
     return (
@@ -313,191 +577,338 @@ def _storage_bytes(
         + int(rule_weights.nbytes)
         + int(rule_offsets.nbytes)
         + int(rule_lengths.nbytes)
-        + int(term_levels.nbytes)
-        + int(term_num_points.nbytes)
+        + int(generation_weights.nbytes)
+        + int(axis_level_ceilings.nbytes)
     )
 
 
-# 責務: 軸レベルから 1 次元差分則の flat storage 上の開始位置と長さを取得する。
-def _rule_segment(
-    axis_levels: jax.Array,
-    axis: int,
-    rule_offsets: jax.Array,
-    rule_lengths: jax.Array,
+def _decode_points_and_weights(
+    local_point_indices: jax.Array,
+    axis_offsets: jax.Array,
+    axis_lengths: jax.Array,
+    rule_nodes: Vector,
+    rule_weights: Vector,
     /,
 ) -> tuple[jax.Array, jax.Array]:
-    level_index = axis_levels[axis] - 1
-    rule_offset = jnp.take(rule_offsets, level_index, mode="clip")
-    rule_length = jnp.take(rule_lengths, level_index, mode="clip")
-    return rule_offset, rule_length
+    axis_count = int(axis_offsets.shape[0])
+    point_count = int(local_point_indices.shape[0])
+    if axis_count == 0:
+        return (
+            jnp.zeros((0, point_count), dtype=rule_nodes.dtype),
+            jnp.ones((point_count,), dtype=rule_weights.dtype),
+        )
+    axis_offsets = jnp.asarray(axis_offsets, dtype=jnp.int64)
+    axis_lengths = jnp.asarray(axis_lengths, dtype=jnp.int64)
+    local_point_indices = jnp.asarray(local_point_indices, dtype=jnp.int64)
+    if axis_count == 1:
+        rule_indices = axis_offsets[:, jnp.newaxis] + local_point_indices[jnp.newaxis, :]
+        points = jnp.take(rule_nodes, rule_indices, mode="clip")
+        axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
+        point_weights = jnp.prod(axis_weights, axis=0)
+        return points, point_weights
+    if axis_count == 2:
+        axis1_lengths = axis_lengths[1]
+        local_axis0 = lax.div(local_point_indices, axis1_lengths)
+        local_axis1 = lax.rem(local_point_indices, axis1_lengths)
+        rule_index0 = axis_offsets[0] + local_axis0
+        rule_index1 = axis_offsets[1] + local_axis1
+        point0 = jnp.take(rule_nodes, rule_index0, mode="clip")
+        point1 = jnp.take(rule_nodes, rule_index1, mode="clip")
+        weight0 = jnp.take(rule_weights, rule_index0, mode="clip")
+        weight1 = jnp.take(rule_weights, rule_index1, mode="clip")
+        return jnp.stack([point0, point1], axis=0), weight0 * weight1
+    if axis_count == 3:
+        axis1_lengths = axis_lengths[1]
+        axis2_lengths = axis_lengths[2]
+        axis0_stride = axis1_lengths * axis2_lengths
+        local_axis0 = lax.div(local_point_indices, axis0_stride)
+        remainder01 = lax.rem(local_point_indices, axis0_stride)
+        local_axis1 = lax.div(remainder01, axis2_lengths)
+        local_axis2 = lax.rem(remainder01, axis2_lengths)
+        rule_index0 = axis_offsets[0] + local_axis0
+        rule_index1 = axis_offsets[1] + local_axis1
+        rule_index2 = axis_offsets[2] + local_axis2
+        point0 = jnp.take(rule_nodes, rule_index0, mode="clip")
+        point1 = jnp.take(rule_nodes, rule_index1, mode="clip")
+        point2 = jnp.take(rule_nodes, rule_index2, mode="clip")
+        weight0 = jnp.take(rule_weights, rule_index0, mode="clip")
+        weight1 = jnp.take(rule_weights, rule_index1, mode="clip")
+        weight2 = jnp.take(rule_weights, rule_index2, mode="clip")
+        return jnp.stack([point0, point1, point2], axis=0), weight0 * weight1 * weight2
+    if axis_count == 4:
+        axis1_lengths = axis_lengths[1]
+        axis2_lengths = axis_lengths[2]
+        axis3_lengths = axis_lengths[3]
+        axis0_stride = axis1_lengths * axis2_lengths * axis3_lengths
+        axis1_stride = axis2_lengths * axis3_lengths
+        local_axis0 = lax.div(local_point_indices, axis0_stride)
+        remainder012 = lax.rem(local_point_indices, axis0_stride)
+        local_axis1 = lax.div(remainder012, axis1_stride)
+        remainder12 = lax.rem(remainder012, axis1_stride)
+        local_axis2 = lax.div(remainder12, axis3_lengths)
+        local_axis3 = lax.rem(remainder12, axis3_lengths)
+        rule_index0 = axis_offsets[0] + local_axis0
+        rule_index1 = axis_offsets[1] + local_axis1
+        rule_index2 = axis_offsets[2] + local_axis2
+        rule_index3 = axis_offsets[3] + local_axis3
+        point0 = jnp.take(rule_nodes, rule_index0, mode="clip")
+        point1 = jnp.take(rule_nodes, rule_index1, mode="clip")
+        point2 = jnp.take(rule_nodes, rule_index2, mode="clip")
+        point3 = jnp.take(rule_nodes, rule_index3, mode="clip")
+        weight0 = jnp.take(rule_weights, rule_index0, mode="clip")
+        weight1 = jnp.take(rule_weights, rule_index1, mode="clip")
+        weight2 = jnp.take(rule_weights, rule_index2, mode="clip")
+        weight3 = jnp.take(rule_weights, rule_index3, mode="clip")
+        return (
+            jnp.stack([point0, point1, point2, point3], axis=0),
+            weight0 * weight1 * weight2 * weight3,
+        )
+    else:
+        reversed_suffix_products = jnp.cumprod(
+            lax.rev(axis_lengths[1:], dimensions=(0,)),
+            dtype=jnp.int64,
+        )
+        axis_strides = jnp.concatenate(
+            [
+                lax.rev(reversed_suffix_products, dimensions=(0,)),
+                jnp.ones((1,), dtype=jnp.int64),
+            ],
+            axis=0,
+        )
+        local_axis_indices = lax.rem(
+            lax.div(local_point_indices[jnp.newaxis, :], axis_strides[:, jnp.newaxis]),
+            axis_lengths[:, jnp.newaxis],
+        )
+        rule_indices = axis_offsets[:, jnp.newaxis] + local_axis_indices
+        points = jnp.take(rule_nodes, rule_indices, mode="clip")
+        axis_weights = jnp.take(rule_weights, rule_indices, mode="clip")
+        point_weights = jnp.prod(axis_weights, axis=0)
+        return points, point_weights
 
 
-# 責務: 固定次元ベクトルの指定軸だけを新しい値へ置き換える。
-def _replace_axis_value(
-    point: Vector,
-    axis: int,
-    value: jax.Array,
+def _next_term_extra_levels(
+    current_extra_levels: jax.Array,
+    generation_weights: jax.Array,
+    budget: int,
     /,
-) -> Vector:
-    value_vector = jnp.reshape(jnp.asarray(value, dtype=point.dtype), (1,))
-    return jnp.concatenate((point[:axis], value_vector, point[axis + 1 :]), axis=0)
+) -> tuple[jax.Array, jax.Array]:
+    dimension = int(current_extra_levels.shape[0])
+    extra_levels_i32 = current_extra_levels.astype(jnp.int32)
 
-
-# 責務: 固定した prefix のもとで最後の 1 軸だけを batched 評価して積分へ加算する。
-def _integrate_last_axis(
-    f: Function,
-    axis_levels: jax.Array,
-    axis: int,
-    prefix_point: Vector,
-    prefix_weight: jax.Array,
-    acc: Vector,
-    rule_nodes: Vector,
-    rule_weights: Vector,
-    rule_offsets: jax.Array,
-    rule_lengths: jax.Array,
-    *,
-    chunk_size: int,
-) -> Vector:
-    rule_offset, rule_length = _rule_segment(axis_levels, axis, rule_offsets, rule_lengths)
-    flat_chunk_indices = jnp.arange(chunk_size, dtype=jnp.int64)
-
-    def chunk_body(chunk_index: int, leaf_acc: Vector) -> Vector:
-        start = jnp.asarray(chunk_index, dtype=jnp.int64) * chunk_size
-        local_indices = start + flat_chunk_indices
-        valid_mask = local_indices < rule_length
-        safe_local_indices = jnp.where(valid_mask, local_indices, 0)
-        flat_indices = rule_offset + safe_local_indices
-        axis_nodes = jnp.take(rule_nodes, flat_indices, mode="clip")
-        axis_weights = jnp.take(rule_weights, flat_indices, mode="clip")
-
-        def inject_axis_node(axis_node: Vector) -> Vector:
-            return _replace_axis_value(prefix_point, axis, axis_node)
-
-        points = jax.vmap(
-            inject_axis_node,
-            in_axes=0,
-            out_axes=-1,
-        )(axis_nodes)
-        values = jax.vmap(f, in_axes=-1, out_axes=-1)(points)
-        masked_weights = jnp.where(valid_mask, prefix_weight * axis_weights, 0)
-        return leaf_acc + jnp.tensordot(values, masked_weights, axes=(-1, 0))
-
-    num_chunks = jnp.floor_divide(rule_length + chunk_size - 1, chunk_size)
-    return jax.lax.fori_loop(0, num_chunks, chunk_body, acc)
-
-
-# 責務: 固定次元の Python 再帰で prefix を伸ばしながら term 積分を評価する。
-def _integrate_term_recursive(
-    f: Function,
-    axis_levels: jax.Array,
-    axis: int,
-    prefix_point: Vector,
-    prefix_weight: jax.Array,
-    acc: Vector,
-    rule_nodes: Vector,
-    rule_weights: Vector,
-    rule_offsets: jax.Array,
-    rule_lengths: jax.Array,
-    *,
-    chunk_size: int,
-) -> Vector:
-    if axis == prefix_point.shape[0] - 1:
-        return _integrate_last_axis(
-            f,
-            axis_levels,
-            axis,
-            prefix_point,
-            prefix_weight,
-            acc,
-            rule_nodes,
-            rule_weights,
-            rule_offsets,
-            rule_lengths,
-            chunk_size=chunk_size,
+    def choose_axis_body(
+        axis: int,
+        carry: tuple[jax.Array, jax.Array],
+    ) -> tuple[jax.Array, jax.Array]:
+        prefix_cost, chosen_axis = carry
+        extra_level = extra_levels_i32[axis]
+        axis_weight = generation_weights[axis]
+        can_increment = prefix_cost + axis_weight * (extra_level + 1) <= budget
+        next_prefix_cost = prefix_cost + axis_weight * extra_level
+        next_chosen_axis = jnp.where(
+            can_increment,
+            jnp.asarray(axis, dtype=jnp.int32),
+            chosen_axis,
         )
+        return next_prefix_cost, next_chosen_axis
 
-    rule_offset, rule_length = _rule_segment(axis_levels, axis, rule_offsets, rule_lengths)
+    _, chosen_axis = lax.fori_loop(
+        0,
+        dimension,
+        choose_axis_body,
+        (
+            jnp.asarray(0, dtype=jnp.int32),
+            jnp.asarray(-1, dtype=jnp.int32),
+        ),
+    )
+    has_next = chosen_axis >= 0
+    safe_axis = jnp.where(has_next, chosen_axis, 0)
+    incremented = current_extra_levels.at[safe_axis].add(
+        jnp.asarray(1, dtype=current_extra_levels.dtype)
+    )
+    axis_indices = jnp.arange(dimension, dtype=jnp.int32)
+    candidate_next_extra_levels = jnp.where(
+        axis_indices <= safe_axis,
+        incremented,
+        jnp.zeros_like(current_extra_levels),
+    )
+    next_extra_levels = jnp.where(
+        has_next,
+        candidate_next_extra_levels,
+        current_extra_levels,
+    )
+    return next_extra_levels, has_next
 
-    def axis_body(local_index: int, loop_acc: Vector) -> Vector:
-        flat_index = rule_offset + jnp.asarray(local_index, dtype=jnp.int64)
-        axis_node = jnp.take(rule_nodes, flat_index, mode="clip")
-        axis_weight = jnp.take(rule_weights, flat_index, mode="clip")
-        next_point = _replace_axis_value(prefix_point, axis, axis_node)
-        next_weight = prefix_weight * axis_weight
-        return _integrate_term_recursive(
-            f,
-            axis_levels,
-            axis + 1,
-            next_point,
-            next_weight,
-            loop_acc,
-            rule_nodes,
-            rule_weights,
-            rule_offsets,
-            rule_lengths,
-            chunk_size=chunk_size,
-        )
 
-    return jax.lax.fori_loop(0, rule_length, axis_body, acc)
-
-
-# 責務: 差分則 storage と term index table に基づいて Smolyak 積分を逐次実行する。
 def _smolyak_plan_integral(
     f: Function,
-    term_levels: jax.Array,
-    term_num_points: jax.Array,
+    dimension: int,
+    dtype: DTypeLike,
     rule_nodes: Vector,
     rule_weights: Vector,
     rule_offsets: jax.Array,
     rule_lengths: jax.Array,
+    generation_weights: jax.Array,
+    term_budget: int,
+    num_terms: int,
     *,
     chunk_size: int,
+    batched_suffix_ndim: int,
+    max_suffix_points: int,
 ) -> Vector:
-    zero_point = jnp.zeros((term_levels.shape[1],), dtype=rule_nodes.dtype)
+    rule_offsets = jnp.asarray(rule_offsets, dtype=jnp.int64)
+    rule_lengths = jnp.asarray(rule_lengths, dtype=jnp.int64)
+    generation_weights = jnp.asarray(generation_weights, dtype=jnp.int32)
+    zero_point = jnp.zeros((dimension,), dtype=dtype)
     initial_value = jnp.zeros_like(f(zero_point))
+    suffix_ndim = batched_suffix_ndim
+    prefix_ndim = dimension - suffix_ndim
+    if max_suffix_points < 1:
+        raise ValueError("max_suffix_points must be positive.")
+    prefix_chunk_size = max(1, chunk_size // max_suffix_points)
+    fixed_suffix_local_indices = jnp.arange(max_suffix_points, dtype=jnp.int64)
+    fixed_prefix_local_indices = jnp.arange(prefix_chunk_size, dtype=jnp.int64)
 
-    def term_body(term_index: int, acc: Vector) -> Vector:
-        axis_levels = term_levels[term_index]
-        return _integrate_term_recursive(
-            f,
-            axis_levels,
-            0,
-            zero_point,
-            jnp.asarray(1.0, dtype=rule_weights.dtype),
-            acc,
-            rule_nodes,
-            rule_weights,
-            rule_offsets,
-            rule_lengths,
-            chunk_size=chunk_size,
+    def term_body(
+        _: int,
+        state: tuple[Vector, jax.Array],
+    ) -> tuple[Vector, jax.Array]:
+        acc, current_extra_levels = state
+        current_levels = current_extra_levels.astype(jnp.int32) + 1
+        level_indices = current_levels - 1
+        current_offsets = jnp.take(rule_offsets, level_indices, mode="clip")
+        current_lengths = jnp.take(rule_lengths, level_indices, mode="clip")
+        term_total_points = jnp.prod(current_lengths, dtype=jnp.int64)
+
+        prefix_offsets = current_offsets[:prefix_ndim]
+        prefix_lengths = current_lengths[:prefix_ndim]
+        suffix_offsets = current_offsets[prefix_ndim:]
+        suffix_lengths = current_lengths[prefix_ndim:]
+
+        suffix_points_per_prefix = (
+            jnp.asarray(1, dtype=jnp.int64)
+            if suffix_ndim == 0
+            else jnp.prod(suffix_lengths, dtype=jnp.int64)
         )
+        prefix_point_count = lax.div(term_total_points, suffix_points_per_prefix)
 
-    return jax.lax.fori_loop(0, term_levels.shape[0], term_body, initial_value)
+        if suffix_ndim == 0:
+            suffix_valid_mask = jnp.ones((1,), dtype=jnp.bool_)
+            suffix_points = jnp.zeros((0, 1), dtype=rule_nodes.dtype)
+            suffix_weights = jnp.ones((1,), dtype=rule_weights.dtype)
+        else:
+            suffix_valid_mask = fixed_suffix_local_indices < suffix_points_per_prefix
+            suffix_points, suffix_point_weights = _decode_points_and_weights(
+                fixed_suffix_local_indices,
+                suffix_offsets,
+                suffix_lengths,
+                rule_nodes,
+                rule_weights,
+            )
+            suffix_weights = suffix_point_weights * suffix_valid_mask.astype(rule_weights.dtype)
+
+        def prefix_chunk_body(prefix_chunk_index: int, term_acc: Vector) -> Vector:
+            prefix_start = jnp.asarray(prefix_chunk_index, dtype=jnp.int64) * prefix_chunk_size
+            prefix_local_indices = prefix_start + fixed_prefix_local_indices
+            prefix_valid_mask = prefix_local_indices < prefix_point_count
+            prefix_points, prefix_point_weights = _decode_points_and_weights(
+                prefix_local_indices,
+                prefix_offsets,
+                prefix_lengths,
+                rule_nodes,
+                rule_weights,
+            )
+            prefix_weights = prefix_point_weights * prefix_valid_mask.astype(rule_weights.dtype)
+
+            if suffix_ndim == 0:
+                values = jax.vmap(f, in_axes=1, out_axes=-1)(prefix_points)
+                return term_acc + jnp.tensordot(values, prefix_weights, axes=(-1, 0))
+
+            prefix_points_grid = jnp.broadcast_to(
+                prefix_points[:, :, jnp.newaxis],
+                (prefix_ndim, prefix_chunk_size, max_suffix_points),
+            )
+            suffix_points_grid = jnp.broadcast_to(
+                suffix_points[:, jnp.newaxis, :],
+                (suffix_ndim, prefix_chunk_size, max_suffix_points),
+            )
+            points_grid = jnp.concatenate([prefix_points_grid, suffix_points_grid], axis=0)
+
+            weight_grid = prefix_weights[:, jnp.newaxis] * suffix_weights[jnp.newaxis, :]
+            masked_weight_grid = weight_grid * (
+                prefix_valid_mask[:, jnp.newaxis] & suffix_valid_mask[jnp.newaxis, :]
+            ).astype(rule_weights.dtype)
+            values = jax.vmap(
+                lambda point_block: jax.vmap(f, in_axes=1, out_axes=-1)(point_block),
+                in_axes=1,
+                out_axes=-2,
+            )(points_grid)
+            return term_acc + jnp.tensordot(values, masked_weight_grid, axes=((-2, -1), (0, 1)))
+
+        num_prefix_chunks = lax.div(
+            prefix_point_count + prefix_chunk_size - 1,
+            jnp.asarray(prefix_chunk_size, dtype=jnp.int64),
+        )
+        updated_acc = jax.lax.fori_loop(0, num_prefix_chunks, prefix_chunk_body, acc)
+        next_extra_levels, _ = _next_term_extra_levels(
+            current_extra_levels,
+            generation_weights,
+            term_budget,
+        )
+        return updated_acc, next_extra_levels
+
+    initial_state = (initial_value, jnp.zeros((dimension,), dtype=jnp.uint8))
+    if num_terms <= np.iinfo(np.int32).max:
+        final_state = jax.lax.fori_loop(0, num_terms, term_body, initial_state)
+        return final_state[0]
+
+    def while_body(state: tuple[Vector, jax.Array, jax.Array]) -> tuple[Vector, jax.Array, jax.Array]:
+        acc, current_extra_levels, remaining_terms = state
+        updated_acc, next_extra_levels = term_body(0, (acc, current_extra_levels))
+        return updated_acc, next_extra_levels, remaining_terms - 1
+
+    def cond_fun(state: tuple[Vector, jax.Array, jax.Array]) -> jax.Array:
+        return state[2] > 0
+
+    final_state = jax.lax.while_loop(
+        cond_fun,
+        while_body,
+        (initial_value, jnp.zeros((dimension,), dtype=jnp.uint8), jnp.asarray(num_terms, dtype=jnp.int64)),
+    )
+    return final_state[0]
 
 
 class SmolyakIntegrator(eqx.Module):
-    dimension: int
-    level: int
-    prepared_level: int
+    dimension: int = eqx.field(static=True)
+    level: int = eqx.field(static=True)
+    prepared_level: int = eqx.field(static=True)
+    dimension_weights: tuple[int, ...] | None = eqx.field(static=True)
+    index_dtype_name: str = eqx.field(static=True)
     dtype: DTypeLike = eqx.field(static=True)
     chunk_size: int = eqx.field(static=True)
+    batched_suffix_ndim: int = eqx.field(static=True)
+    max_suffix_points: int = eqx.field(static=True)
+    term_budget: int = eqx.field(static=True)
     rule_nodes: Vector
     rule_weights: Vector
     rule_offsets: jax.Array
     rule_lengths: jax.Array
-    term_levels: jax.Array
-    term_num_points: jax.Array
-    num_terms: int
-    num_evaluation_points: int
-    storage_bytes: int
+    generation_weights: jax.Array
+    axis_level_ceilings: jax.Array
+    active_axis_count: int = eqx.field(static=True)
+    num_terms: int = eqx.field(static=True)
+    num_evaluation_points: int = eqx.field(static=True)
+    storage_bytes: int = eqx.field(static=True)
 
     def __init__(
         self,
         dimension: int,
         level: int,
         prepared_level: int | None = None,
+        dimension_weights: tuple[int, ...] | None = None,
+        index_dtype: str | None = None,
         dtype: DTypeLike = DEFAULT_DTYPE,
         chunk_size: int = 16384,
+        batched_suffix_ndim: int = 0,
         _rule_storage: tuple[Vector, Vector, jax.Array, jax.Array] | None = None,
     ):
         if dimension < 1:
@@ -506,42 +917,89 @@ class SmolyakIntegrator(eqx.Module):
             raise ValueError("level must be positive.")
         if chunk_size < 1:
             raise ValueError("chunk_size must be positive.")
+        if batched_suffix_ndim < 0 or batched_suffix_ndim > dimension:
+            raise ValueError("batched_suffix_ndim must be between 0 and dimension.")
         resolved_prepared_level = level if prepared_level is None else prepared_level
         if resolved_prepared_level < level:
             raise ValueError("prepared_level must be greater than or equal to level.")
+        if resolved_prepared_level > np.iinfo(np.uint8).max:
+            raise ValueError("prepared_level must be at most 255 for uint8 term generation.")
 
         self.dimension = dimension
         self.level = level
         self.prepared_level = resolved_prepared_level
+        self.dimension_weights = _normalize_dimension_weights(dimension, dimension_weights)
+        resolved_index_dtype = _resolve_index_dtype(index_dtype)
+        self.index_dtype_name = "auto" if resolved_index_dtype is None else resolved_index_dtype.name
         self.dtype = dtype
         self.chunk_size = chunk_size
+        self.batched_suffix_ndim = batched_suffix_ndim
+        self.term_budget = level - 1
+        axis_level_ceilings_np = _axis_level_ceilings_numpy(
+            dimension,
+            level,
+            dimension_weights=self.dimension_weights,
+        )
+        if int(np.max(axis_level_ceilings_np)) > np.iinfo(np.uint8).max:
+            raise ValueError("axis level ceilings must fit in uint8.")
+        self.axis_level_ceilings = jnp.asarray(axis_level_ceilings_np, dtype=jnp.int32)
+        self.active_axis_count = int(np.count_nonzero(axis_level_ceilings_np > 1))
+        generation_weights_np = _term_generation_weights_numpy(
+            dimension,
+            self.dimension_weights,
+        )
+        self.generation_weights = jnp.asarray(generation_weights_np, dtype=jnp.int32)
         if _rule_storage is None:
+            max_rule_level = _max_difference_rule_level(
+                dimension,
+                resolved_prepared_level,
+                dimension_weights=self.dimension_weights,
+            )
             (
-                self.rule_nodes,
-                self.rule_weights,
-                self.rule_offsets,
-                self.rule_lengths,
-            ) = _initialize_rule_storage(dimension, resolved_prepared_level, dtype)
+                rule_nodes_np,
+                rule_weights_np,
+                rule_offsets_np,
+                rule_lengths_np,
+            ) = _difference_rule_storage_host(max_rule_level)
+            rule_offsets_np = _cast_index_array(rule_offsets_np, resolved_index_dtype, name="rule_offsets")
+            rule_lengths_np = _cast_index_array(rule_lengths_np, resolved_index_dtype, name="rule_lengths")
+            self.rule_nodes = jnp.asarray(rule_nodes_np, dtype=dtype)
+            self.rule_weights = jnp.asarray(rule_weights_np, dtype=dtype)
+            self.rule_offsets = jnp.asarray(rule_offsets_np)
+            self.rule_lengths = jnp.asarray(rule_lengths_np)
         else:
             (
                 self.rule_nodes,
                 self.rule_weights,
                 self.rule_offsets,
-                self.rule_lengths,
+            self.rule_lengths,
             ) = _rule_storage
-        (
-            self.term_levels,
-            self.term_num_points,
-            self.num_terms,
-            self.num_evaluation_points,
-        ) = _initialize_term_plan(dimension, level, self.rule_lengths)
+            rule_offsets_np = np.asarray(self.rule_offsets)
+            rule_lengths_np = np.asarray(self.rule_lengths)
+
+        self.num_terms = _count_smolyak_terms(
+            dimension,
+            level,
+            dimension_weights=self.dimension_weights,
+        )
+        self.num_evaluation_points = _count_evaluation_points(
+            level,
+            rule_lengths_np,
+            generation_weights_np,
+        )
+        self.max_suffix_points = _max_suffix_points(
+            level,
+            rule_lengths_np,
+            generation_weights_np,
+            batched_suffix_ndim,
+        )
         self.storage_bytes = _storage_bytes(
             self.rule_nodes,
             self.rule_weights,
             self.rule_offsets,
             self.rule_lengths,
-            self.term_levels,
-            self.term_num_points,
+            self.generation_weights,
+            self.axis_level_ceilings,
         )
 
     def integrate(self, f: Function, /) -> Vector:
@@ -549,13 +1007,18 @@ class SmolyakIntegrator(eqx.Module):
         # トレース失敗を避けるため module 側の jitting は行わない。
         return _smolyak_plan_integral(
             f,
-            self.term_levels,
-            self.term_num_points,
+            self.dimension,
+            self.dtype,
             self.rule_nodes,
             self.rule_weights,
             self.rule_offsets,
             self.rule_lengths,
+            self.generation_weights,
+            self.term_budget,
+            self.num_terms,
             chunk_size=self.chunk_size,
+            batched_suffix_ndim=self.batched_suffix_ndim,
+            max_suffix_points=self.max_suffix_points,
         )
 
     # 責務: より細かい疎格子を使う次レベルの積分器を返す。
@@ -566,8 +1029,11 @@ class SmolyakIntegrator(eqx.Module):
                 dimension=self.dimension,
                 level=next_level,
                 prepared_level=self.prepared_level,
+                dimension_weights=self.dimension_weights,
+                index_dtype=self.index_dtype_name,
                 dtype=self.dtype,
                 chunk_size=self.chunk_size,
+                batched_suffix_ndim=self.batched_suffix_ndim,
                 _rule_storage=(
                     self.rule_nodes,
                     self.rule_weights,
@@ -579,8 +1045,11 @@ class SmolyakIntegrator(eqx.Module):
             dimension=self.dimension,
             level=next_level,
             prepared_level=next_level,
+            dimension_weights=self.dimension_weights,
+            index_dtype=self.index_dtype_name,
             dtype=self.dtype,
             chunk_size=self.chunk_size,
+            batched_suffix_ndim=self.batched_suffix_ndim,
         )
 
 
@@ -590,15 +1059,21 @@ def initialize_smolyak_integrator(
     level: int,
     *,
     prepared_level: int | None = None,
+    dimension_weights: tuple[int, ...] | None = None,
+    index_dtype: str | None = None,
     dtype: DTypeLike = DEFAULT_DTYPE,
     chunk_size: int = 16384,
+    batched_suffix_ndim: int = 0,
 ) -> SmolyakIntegrator:
     return SmolyakIntegrator(
         dimension=dimension,
         level=level,
         prepared_level=prepared_level,
+        dimension_weights=dimension_weights,
+        index_dtype=index_dtype,
         dtype=dtype,
         chunk_size=chunk_size,
+        batched_suffix_ndim=batched_suffix_ndim,
     )
 
 

@@ -1,13 +1,13 @@
 {
   "experiment": "smolyak_scaling_benchmark",
-  "started_at_utc": "2026-03-28T11:57:08.263382+00:00",
-  "finished_at_utc": "2026-03-28T11:57:40.510221+00:00",
-  "run_wall_seconds": 32.246839,
+  "started_at_utc": "2026-04-03T12:49:06.276318+00:00",
+  "finished_at_utc": "2026-04-03T12:49:06.987949+00:00",
+  "run_wall_seconds": 0.711631,
   "platform": "cpu",
   "gpu_indices": [],
   "workers_per_gpu": 1,
   "dimensions": [
-    1
+    2
   ],
   "levels": [
     1
@@ -21,24 +21,26 @@
   "timeout_seconds": 180,
   "coeff_start": -0.55,
   "coeff_stop": 0.65,
-  "jsonl_output_path": "/tmp/smolyak_scaling_smoke.jsonl",
+  "jsonl_output_path": "/tmp/opt_smolyak_scaling_smoke.jsonl",
   "results_branch": "results/functional-smolyak-scaling",
-  "worktree_path": "/workspace",
-  "script_path": "/workspace/experiments/functional/smolyak_scaling/run_smolyak_scaling.py",
+  "worktree_path": "/workspace/.worktrees/work-smolyak-integrator-opt-20260328",
+  "script_path": "/workspace/.worktrees/work-smolyak-integrator-opt-20260328/experiments/functional/smolyak_scaling/run_smolyak_scaling.py",
   "gpu_preallocation_disabled": true,
-  "git_branch": "main",
-  "git_commit": "df29546e229bd2e71887f4e399e254c6a1e65bc5",
+  "git_branch": "work/smolyak-integrator-opt-20260328",
+  "git_commit": "25f2345d2eb70bb8d4428654186ae1076e0fb5fa",
   "cases": [
     {
-      "status": "ok",
+      "status": "failed",
+      "failure_kind": "error",
       "case_id": 0,
-      "dimension": 1,
+      "dimension": 2,
       "level": 1,
       "dtype_name": "float32",
-      "backend": "cpu",
-      "device_kind": "cpu",
-      "visible_device_id": 0,
+      "error": "AttributeError: 'SmolyakIntegrator' object has no attribute 'term_levels'",
+      "traceback": "Traceback (most recent call last):\n  File \"/workspace/.worktrees/work-smolyak-integrator-opt-20260328/experiments/functional/smolyak_scaling/run_smolyak_scaling.py\", line 614, in _run_case_task\n    result = _run_single_case(case, run_config)\n  File \"/workspace/.worktrees/work-smolyak-integrator-opt-20260328/experiments/functional/smolyak_scaling/run_smolyak_scaling.py\", line 336, in _run_single_case\n    jax.block_until_ready(integrator.term_levels)\n  File \"/usr/local/lib/python3.10/dist-packages/equinox/_module/_module.py\", line 583, in __getattribute__\n    out = super().__getattribute__(name)\nAttributeError: 'SmolyakIntegrator' object has no attribute 'term_levels'\n",
+      "worker_label": "cpu-w0",
       "assigned_gpu_index": "cpu",
+      "gpu_slot": null,
       "cpu_affinity": [
         0,
         1,
@@ -72,65 +74,42 @@
         29,
         30,
         31
-      ],
-      "num_terms": 1,
-      "num_points": 1,
-      "num_evaluation_points": 1,
-      "storage_bytes": 36,
-      "rule_nodes_dtype": "float32",
-      "rule_weights_dtype": "float32",
-      "chunk_size": 16384,
-      "expected": 1.0126519120775512,
-      "actual": 1.0,
-      "num_accuracy_problems": 1,
-      "mean_abs_err": 0.01265191207755123,
-      "var_abs_err": 0.0,
-      "max_abs_err": 0.01265191207755123,
-      "num_repeats": 1,
-      "integrator_init_seconds": 0.10903817799771787,
-      "device_transfer_seconds": 0.012177280001196777,
-      "warmup_seconds": 0.20336604800104396,
-      "batched_integral_seconds": 0.00027269999918644316,
-      "avg_integral_seconds": 0.00027269999918644316,
-      "process_rss_mb": 547.7890625,
-      "device_memory_stats": null,
-      "worker_label": "cpu-0",
-      "gpu_slot": 0
+      ]
     }
   ],
   "summary_by_dtype": [
     {
       "dtype_name": "float32",
       "num_cases": 1,
-      "num_success": 1,
-      "num_failure": 0,
-      "max_mean_abs_err": 0.01265191207755123,
-      "mean_mean_abs_err": 0.01265191207755123,
-      "max_var_abs_err": 0.0,
-      "mean_var_abs_err": 0.0,
-      "mean_avg_integral_seconds": 0.00027269999918644316,
-      "min_avg_integral_seconds": 0.00027269999918644316,
-      "max_avg_integral_seconds": 0.00027269999918644316
+      "num_success": 0,
+      "num_failure": 1,
+      "max_mean_abs_err": null,
+      "mean_mean_abs_err": null,
+      "max_var_abs_err": null,
+      "mean_var_abs_err": null,
+      "mean_avg_integral_seconds": null,
+      "min_avg_integral_seconds": null,
+      "max_avg_integral_seconds": null
     }
   ],
   "frontier_by_dtype_and_level": [
     {
       "dtype_name": "float32",
       "level": 1,
-      "max_success_dimension": 1,
-      "min_failure_dimension": null,
-      "num_success": 1,
-      "num_failure": 0
+      "max_success_dimension": null,
+      "min_failure_dimension": 2,
+      "num_success": 0,
+      "num_failure": 1
     }
   ],
   "frontier_by_dtype_and_dimension": [
     {
       "dtype_name": "float32",
-      "dimension": 1,
-      "max_success_level": 1,
-      "min_failure_level": null,
-      "num_success": 1,
-      "num_failure": 0
+      "dimension": 2,
+      "max_success_level": null,
+      "min_failure_level": 1,
+      "num_success": 0,
+      "num_failure": 1
     }
   ]
 }

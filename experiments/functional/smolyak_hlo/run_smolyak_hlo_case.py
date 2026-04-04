@@ -16,6 +16,10 @@ WORKSPACE_ROOT = Path(__file__).resolve().parents[3]
 PYTHON_ROOT = WORKSPACE_ROOT / "python"
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
 RESULTS_BRANCH_NAME = "results/functional-smolyak-hlo"
+if str(PYTHON_ROOT) not in sys.path:
+    sys.path.insert(0, str(PYTHON_ROOT))
+
+from jax_util.xla_env import build_env_for_profile
 
 
 # 責務: CLI から platform 指定だけを先に抜き出して JAX import 前に反映する。
@@ -36,19 +40,63 @@ def _jax_platform_name(platform: str, /) -> str:
     return platform
 
 
-def _configure_preimport_xla_env(argv: list[str], /) -> None:
-    from jax_util.xla_env import build_cpu_env, build_gpu_env
+def _preparse_optional_arg(argv: list[str], flag: str, /) -> str | None:
+    for index, token in enumerate(argv):
+        if token == flag and index + 1 < len(argv):
+            return argv[index + 1]
+        if token.startswith(f"{flag}="):
+            return token.split("=", 1)[1]
+    return None
 
+
+def _parse_optional_bool_flag(value: str | None, /) -> bool | None:
+    if value is None:
+        return None
+    normalized = value.strip().lower()
+    if normalized in ("1", "true", "yes", "on"):
+        return True
+    if normalized in ("0", "false", "no", "off"):
+        return False
+    raise ValueError(f"Invalid boolean flag: {value}")
+
+
+def _configure_preimport_xla_env(argv: list[str], /) -> None:
     platform = _preparse_platform(argv)
-    env_vars = (
-        build_cpu_env(enable_hlo_dump=True)
-        if platform == "cpu"
-        else build_gpu_env(
-            jax_platform_name=_jax_platform_name(platform),
+    jax_platform_name = os.environ.get("JAX_PLATFORMS")
+    if jax_platform_name is None:
+        jax_platform_name = _jax_platform_name(platform)
+        os.environ["JAX_PLATFORMS"] = jax_platform_name
+    os.environ["JAX_UTIL_ENABLE_HLO_DUMP"] = "1"
+    os.environ.update(
+        build_env_for_profile(
+            platform,
+            jax_platform_name=jax_platform_name,
+            disable_preallocation=True,
+            memory_fraction=(
+                float(_preparse_optional_arg(argv, "--xla-memory-fraction"))
+                if _preparse_optional_arg(argv, "--xla-memory-fraction") is not None
+                else None
+            ),
+            allocator=_preparse_optional_arg(argv, "--xla-allocator"),
+            tf_gpu_allocator=_preparse_optional_arg(argv, "--xla-tf-gpu-allocator"),
+            use_cuda_host_allocator=_parse_optional_bool_flag(
+                _preparse_optional_arg(argv, "--xla-use-cuda-host-allocator")
+            ),
+            xla_memory_scheduler=_preparse_optional_arg(argv, "--xla-memory-scheduler"),
+            xla_gpu_enable_while_loop_double_buffering=_parse_optional_bool_flag(
+                _preparse_optional_arg(argv, "--xla-gpu-enable-while-loop-double-buffering")
+            ),
+            xla_latency_hiding_scheduler_rerun=(
+                int(_preparse_optional_arg(argv, "--xla-latency-hiding-scheduler-rerun"))
+                if _preparse_optional_arg(argv, "--xla-latency-hiding-scheduler-rerun") is not None
+                else None
+            ),
+            jax_compiler_enable_remat_pass=_parse_optional_bool_flag(
+                _preparse_optional_arg(argv, "--jax-compiler-enable-remat-pass")
+            ),
             enable_hlo_dump=True,
         )
     )
-    os.environ.update(env_vars)
 
 
 _configure_preimport_xla_env(sys.argv[1:])
@@ -271,6 +319,20 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
         "num_repeats": args.num_repeats,
         "coeff_start": args.coeff_start,
         "coeff_stop": args.coeff_stop,
+        "xla_config": {
+            "memory_fraction": args.xla_memory_fraction,
+            "allocator": args.xla_allocator,
+            "tf_gpu_allocator": args.xla_tf_gpu_allocator,
+            "use_cuda_host_allocator": _parse_optional_bool_flag(args.xla_use_cuda_host_allocator),
+            "memory_scheduler": args.xla_memory_scheduler,
+            "while_loop_double_buffering": _parse_optional_bool_flag(
+                args.xla_gpu_enable_while_loop_double_buffering
+            ),
+            "latency_hiding_scheduler_rerun": args.xla_latency_hiding_scheduler_rerun,
+            "jax_compiler_enable_remat_pass": _parse_optional_bool_flag(
+                args.jax_compiler_enable_remat_pass
+            ),
+        },
         "json_path": str(output_path),
         "jsonl_path": str(jsonl_path),
         "summary_path": str(summary_path),
@@ -289,7 +351,7 @@ def _run_case(args: argparse.Namespace, output_path: Path, /) -> dict[str, Any]:
 # 責務: CLI 引数を組み立てる。
 def _build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Dump and summarize HLO for a single Smolyak integration case.")
-    parser.add_argument("--platform", type=str, choices=("cpu", "gpu"), default="cpu")
+    parser.add_argument("--platform", type=str, choices=("cpu", "gpu"), default=os.environ.get("JAX_PLATFORMS", "cpu"))
     parser.add_argument("--dimension", type=int, default=4)
     parser.add_argument("--level", type=int, default=3)
     parser.add_argument("--prepared-level", type=int, default=None)
@@ -298,6 +360,14 @@ def _build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--num-repeats", type=int, default=16)
     parser.add_argument("--coeff-start", type=float, default=-0.55)
     parser.add_argument("--coeff-stop", type=float, default=0.65)
+    parser.add_argument("--xla-memory-fraction", type=float, default=None)
+    parser.add_argument("--xla-allocator", type=str, default=None)
+    parser.add_argument("--xla-tf-gpu-allocator", type=str, default=None)
+    parser.add_argument("--xla-use-cuda-host-allocator", type=str, default=None)
+    parser.add_argument("--xla-memory-scheduler", type=str, default=None)
+    parser.add_argument("--xla-gpu-enable-while-loop-double-buffering", type=str, default=None)
+    parser.add_argument("--xla-latency-hiding-scheduler-rerun", type=int, default=None)
+    parser.add_argument("--jax-compiler-enable-remat-pass", type=str, default=None)
     parser.add_argument("--output", type=Path, default=None)
     return parser
 

@@ -129,6 +129,47 @@ def test_integrate_supports_vector_valued_integrands() -> None:
     assert jnp.allclose(value, expected, atol=5.0e-6)
 
 
+# 責務: Monte Carlo 積分器が主要浮動小数点 dtype で解析解に近い値を返すことを確認する。
+def test_monte_carlo_dtype_accuracy_smoke() -> None:
+    dtype_specs = [
+        (jnp.float16, 5.0e-3),
+        (jnp.bfloat16, 1.0e-2),
+        (jnp.float32, 5.0e-6),
+        (jnp.float64, 1.0e-8),
+    ]
+    expected_scalar = 1.0 / 12.0
+    report: list[dict[str, object]] = []
+
+    for dtype, atol in dtype_specs:
+        integrator = MonteCarloIntegrator(
+            dimension=1,
+            num_samples=4096,
+            key=jax.random.PRNGKey(10),
+            sampler=_MidpointCubeSampler(),
+        )
+        expected = jnp.asarray([expected_scalar], dtype=dtype)
+        value = integrate(
+            Func(lambda x, out_dtype=dtype: jnp.asarray([x[0] ** 2], dtype=out_dtype)),
+            integrator,
+        )
+        abs_err = float(jnp.max(jnp.abs(value.astype(jnp.float64) - expected.astype(jnp.float64))))
+        report.append({
+            "dtype": str(dtype),
+            "expected": _to_host_list(expected),
+            "actual": _to_host_list(value),
+            "abs_err": abs_err,
+            "atol": atol,
+        })
+        assert abs_err < atol
+
+    print(json.dumps({
+        "case": "functional_monte_carlo_dtype_accuracy",
+        "source_file": SOURCE_FILE,
+        "test": "test_monte_carlo_dtype_accuracy_smoke",
+        "results": report,
+    }))
+
+
 # 責務: デフォルト sampler が [-0.5, 0.5]^d 内の点列を返すことを確認する。
 def test_uniform_cube_samples_returns_points_inside_normalized_domain() -> None:
     _, samples = uniform_cube_samples(jax.random.PRNGKey(3), 3, 256)
@@ -154,18 +195,30 @@ def test_monte_carlo_integrator_update_samples_returns_new_integrator() -> None:
         key=jax.random.PRNGKey(4),
     )
     updated = integrator.update_samples()
+    _, old_chunk = integrator.sampler(
+        integrator.key,
+        integrator.dimension,
+        min(integrator.chunk_size, integrator.num_samples),
+    )
+    _, new_chunk = updated.sampler(
+        updated.key,
+        updated.dimension,
+        min(updated.chunk_size, updated.num_samples),
+    )
 
     print(json.dumps({
         "case": "functional_monte_carlo_update_samples",
         "source_file": SOURCE_FILE,
         "test": "test_monte_carlo_integrator_update_samples_returns_new_integrator",
-        "old_shape": list(integrator.samples.shape),
-        "new_shape": list(updated.samples.shape),
+        "old_chunk_shape": list(old_chunk.shape),
+        "new_chunk_shape": list(new_chunk.shape),
         "same_key": bool(np.array_equal(np.asarray(integrator.key), np.asarray(updated.key))),
     }))
-    assert updated.samples.shape == integrator.samples.shape
+    assert updated.chunk_size == integrator.chunk_size
+    assert updated.num_samples == integrator.num_samples
+    assert new_chunk.shape == old_chunk.shape
     assert not bool(jnp.array_equal(integrator.key, updated.key))
-    assert not bool(jnp.array_equal(integrator.samples, updated.samples))
+    assert not bool(jnp.array_equal(old_chunk, new_chunk))
 
 
 def _run_all_tests() -> None:
