@@ -21,6 +21,7 @@ workflow_families:
       - T9
   - id: research_driven_change
     name: Research-Driven Change
+    summary: 外部調査、比較条件固定、実装、実験 review、report review を反復する outer loop。
     roles:
       always_on:
         - manager
@@ -129,6 +130,7 @@ tasks:
       - experimenter が baseline run と比較プロトコルを記録
       - experiment_reviewer が baseline と比較公平性を review
       - experimenter が review を受けて experiment log を修正
+      - ここから research-driven loop を開始
       - implementer が 1 つの change を実装
       - change_reviewer が diff を review
       - implementer が review を受けて修正
@@ -136,8 +138,10 @@ tasks:
       - experiment_reviewer が result interpretation と overclaim を review
       - experimenter が user-facing report draft を作成
       - report_reviewer が report の根拠、数値、図表、結論 traceability を review
-      - experimenter が report review を受けて report を書き直す。追加検証や rerun が必要なら実験 loop へ戻る
-      - implementer が experiment review または report review を受け、指摘があれば修正。再実験が必要と判定された場合は実験 loop を反復
+      - report_rewrite_required なら experimenter が同じ result で report を書き直して report_reviewer へ戻る
+      - extra_validation_required なら experimenter が同じ仮説で追加検証を行い experiment_reviewer へ戻る
+      - rerun_required または protocol 修正要求なら implementer が code か protocol を直し、fresh rerun のため loop 先頭へ戻る
+      - exit criteria を満たすまで loop を閉じない
       - final_reviewer が research と最終 diff を review
       - implementer が final review を受け、指摘があれば修正
       - verifier が test と benchmark を実行
@@ -291,6 +295,7 @@ tasks:
       - experimenter が baseline benchmark を実行
       - experiment_reviewer が metric 妥当性と比較条件を review
       - experimenter が review を受けて benchmark log を修正
+      - ここから research-driven loop を開始
       - implementer が測定と最適化を実装
       - change_reviewer が妥当性を review
       - implementer が review を受けて修正
@@ -298,7 +303,10 @@ tasks:
       - experiment_reviewer が改善主張の妥当性を review
       - experimenter が benchmark report draft を作成
       - report_reviewer が report の根拠、数値、図表、結論 traceability を review
-      - experimenter が report review を受けて report を書き直す。追加検証や rerun が必要なら benchmark loop へ戻る
+      - report_rewrite_required なら experimenter が同じ result で report を書き直して report_reviewer へ戻る
+      - extra_validation_required なら experimenter が同じ benchmark 仮説で追加検証を行い experiment_reviewer へ戻る
+      - rerun_required または benchmark protocol 修正要求なら implementer が code か protocol を直し、fresh rerun のため loop 先頭へ戻る
+      - exit criteria を満たすまで loop を閉じない
       - implementer が experiment review または report review を受け、指摘があれば修正
       - final_reviewer が benchmark 妥当性を最終 review
       - implementer が final review を受け、指摘があれば修正

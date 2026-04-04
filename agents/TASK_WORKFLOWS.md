@@ -13,6 +13,22 @@ Codex、Claude、GitHub Copilot などの runtime 差分には依存しません
 - 各 review の直後に、対象 role が feedback を受けて修正してから次段へ進む
 - 実験主導タスクでは `experimenter -> experiment_reviewer -> report_reviewer -> experimenter / implementer` の反復を正本にする
 
+## Research-Driven Change Family の明示ループ
+
+`Research-Driven Change` では、外部調査つき実装、性能改善、比較検証を次の outer loop で扱います。
+
+1. 外部調査と比較条件を固定する
+1. baseline または current state を同じ protocol で記録する
+1. `implementer` が 1 つの change を入れる
+1. `experimenter` が同じ protocol で run する
+1. `experiment_reviewer` が evidence と overclaim を批判的にレビューする
+1. `experimenter` が report draft を作る
+1. `report_reviewer` が reader-facing な report をレビューする
+1. `report_rewrite_required` なら report だけを書き直す
+1. `extra_validation_required` なら同じ仮説で追加検証を行う
+1. `rerun_required` なら fresh run をやり直す。必要なら `implementer` が code か protocol を修正する
+1. exit criteria を満たすまで 3-10 を反復する
+
 ## 想定タスク 10 個
 
 | ID  | 想定タスク                                                | 主担当 workflow family | 有効化する専門ロール                         |
@@ -61,6 +77,7 @@ Codex、Claude、GitHub Copilot などの runtime 差分には依存しません
 1. `experiment_reviewer` が baseline の妥当性と比較公平性を批判的にレビューする。
    レビュー観点は `documents/experiment-critical-review.md` を使う。
 1. `experimenter` が review を受けて experiment log を修正する。
+1. ここから `Research-Driven Change` の loop を開始する。
 1. `implementer` が 1 つの change を実装する。
 1. `change_reviewer` が各 chunk を逐次レビューする。
 1. `implementer` が review を受けて修正する。
@@ -69,8 +86,10 @@ Codex、Claude、GitHub Copilot などの runtime 差分には依存しません
    review では math validity、literature connection、evidence sufficiency、figure validity も確認する。
 1. `experimenter` が user-facing report draft を作る。
 1. `report_reviewer` が report の概要、数値、図表、結論と根拠の対応をレビューする。
-1. `experimenter` が report review を受けて report を書き直す。追加検証や rerun が必要なら、前の実験手順へ戻す。
-1. `implementer` が experiment review または report review を受け、指摘があれば修正する。コード変更や protocol 修正が必要な場合は前の 5 手順を反復する。
+1. `experimenter` が `report_rewrite_required` を受けた場合、同じ result で report を書き直して `report_reviewer` へ戻す。
+1. `experimenter` が `extra_validation_required` を受けた場合、同じ比較プロトコルに追加検証を加えて `experiment_reviewer` へ戻す。
+1. `implementer` が `rerun_required` または protocol 修正要求を受けた場合、code か protocol を修正し、fresh rerun のために loop 先頭へ戻す。
+1. 両 review が通り、exit criteria を満たすまで loop を閉じない。
 1. `final_reviewer` が research と diff の整合を見る。
 1. `implementer` が final review を受け、指摘があれば修正する。
 1. `verifier` がテストと benchmark を実行する。
@@ -197,6 +216,7 @@ Codex、Claude、GitHub Copilot などの runtime 差分には依存しません
 1. `experiment_reviewer` が metric 妥当性と比較条件をレビューする。
    review では figure validity と literature connection も確認する。
 1. `experimenter` が review を受けて benchmark log を修正する。
+1. ここから `Research-Driven Change` の loop を開始する。
 1. `implementer` が測定コードと最適化を入れる。
 1. `change_reviewer` が可読性や数値安定性を確認する。
 1. `implementer` が review を受けて修正する。
@@ -205,7 +225,10 @@ Codex、Claude、GitHub Copilot などの runtime 差分には依存しません
    結論に必要な data と figure が揃っているかも確認する。
 1. `experimenter` が benchmark report draft を作る。
 1. `report_reviewer` が report の概要、数値、図表、結論と根拠の対応をレビューする。
-1. `experimenter` が report review を受けて report を書き直す。追加検証や rerun が必要なら benchmark 手順へ戻す。
+1. `experimenter` が `report_rewrite_required` を受けた場合、同じ result で report を書き直して `report_reviewer` へ戻す。
+1. `experimenter` が `extra_validation_required` を受けた場合、同じ benchmark protocol に追加検証を加えて `experiment_reviewer` へ戻す。
+1. `implementer` が `rerun_required` または benchmark protocol 修正要求を受けた場合、code か protocol を修正し、fresh rerun のために loop 先頭へ戻す。
+1. 両 review が通り、exit criteria を満たすまで loop を閉じない。
 1. `implementer` が experiment review または report review を受け、指摘があれば修正する。
 1. `final_reviewer` が benchmark の妥当性を確認する。
 1. `implementer` が final review を受け、指摘があれば修正する。

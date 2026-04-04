@@ -65,6 +65,7 @@
 - `max_depth` は `1` に固定し、再帰的 fan-out を防ぎます。
 - review では「通す理由」より「止める理由」を優先して探します。
 - 実験や設計の主張がある場合は、必要に応じて `docs_researcher` を足して文献や仕様の反証を探します。
+- `Research-Driven Change` では、外部調査、比較条件固定、実装、run、`critical-review`、`report-review` を 1 回で終わらせず、`report_rewrite_required`、`extra_validation_required`、`rerun_required` が解消するまで loop を回します。
 - `experiments/report/<run_name>.md` を閉じる前には、`report_reviewer` か同等の `report-review` 実施を要求します。
 - `python/` 配下の差分では、必要に応じて `python_reviewer` を使い、pyright と ruff を review 根拠に含めます。
 - repo 全体レビューや棚卸しでは、必要に応じて `project_reviewer` を使います。
@@ -76,7 +77,7 @@
 | User Request Pattern | Workflow Family | Skill Family | Required Review | Default Codex Flow |
 | -------------------- | --------------- | ------------ | --------------- | ------------------ |
 | 局所バグ修正、テスト修正、README 追随 | `Scoped Correction` | `static-check`, `code-review` | 実装後に `code-review`。Python 差分なら `python-review`。必要なら `reviewer` | parent 直処理。必要なら `explorer` → parent 実装 → `python_reviewer` または `reviewer` |
-| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 比較条件の確認と、結果主張の前に `critical-review`。user-facing report の完了前に `report-review`。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `explorer` で調査 → parent 実装 → `reviewer` → report draft 後に `report_reviewer` |
+| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 外部調査、比較条件、exit criteria を先に固定し、各反復で `critical-review` と `report-review` を通す。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り loop を閉じない。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `docs_researcher` または `explorer` で調査 → `experiment_planner` で protocol 固定 → parent 実装 → `reviewer` → run → `report_reviewer`。decision に応じて rewrite / extra validation / rerun / re-implement を反復 |
 | 大規模 refactor、新 API | `Large Delivery` | `code-review` | 設計差分と公開面を `code-review`。Python 公開面なら `python-review`。実装後に `reviewer` | `explorer` で影響範囲確認 → parent または `worker` 実装 → `python_reviewer` または `reviewer` |
 | Python module change、pyright warning cleanup、type boundary refactor | `Scoped Correction` または `Large Delivery` | `python-review`, `static-check` | `pyright` と `ruff` を確認し、`python-review` を通す | parent 実装 → `python_reviewer`。必要なら `reviewer` を追加 |
 | 実験準備、run、result/report 整理 | `Research-Driven Change` または `Platform and Infra` | `experiment-lifecycle`, `critical-review`, `report-review` | run 前に比較条件確認、run 後に `critical-review`。report 完了前に `report-review`。主張が強いなら `docs_researcher` で文献確認 | `experiment_planner` で既存構成と計画を確認 → parent 更新 → report draft 後に `report_reviewer` |
@@ -117,15 +118,21 @@
 - Python diff では `python_reviewer` に、pyright、ruff、型追跡、warning 処理を重点確認させる
 - 主張が強い場合や upstream 根拠が必要な場合は `docs_researcher` を追加する
 
-### 4. Experiment Planning
+### 4. Research-Driven Change Loop
 
-- `experiment_planner` に cases、resource estimate、skip 条件、result / report layout を確認させる
-- result や claim を出す前に `critical-review` の観点を当てる
+- `docs_researcher` または `explorer` で問い、比較対象、関連文献、反証候補を確認する
+- `experiment_planner` に cases、resource estimate、skip 条件、result / report layout、exit criteria を確認させる
+- parent が 1 つの change だけを実装する
+- `reviewer` と必要なら `python_reviewer` を通してから run する
+- `experimenter` が同じ protocol で baseline または current state と change 後を比較する
+- `critical-review` で比較公平性、evidence sufficiency、overclaim を潰す
 - report draft が出たら `report_reviewer` に、概要、数値、図表、結論と根拠の対応を確認させる
-- `report_reviewer` が `report_rewrite_required` を返したら report だけを書き直す
-- `report_reviewer` か `critical-review` が `extra_validation_required` か `rerun_required` を返したら、実験 loop を閉じずに再実行へ戻す
-- 結論を閉じる前に、必要なら `docs_researcher` で関連文献や仕様の反証を探す
-- parent が実験コードと文書を更新する
+- `report_reviewer` が `report_rewrite_required` を返したら、同じ result で report だけを書き直して再レビューする
+- `critical-review` か `report-review` が `extra_validation_required` を返したら、同じ仮説のまま追加 case、追加 figure、追加集計を行って再レビューする
+- `critical-review` か `report-review` が `rerun_required` を返したら、fresh `run_name` で再実行し、必要なら parent が code か protocol を修正してから loop を回し直す
+- 両 review が通り、exit criteria を満たしたときだけ loop を閉じる
+- 結論を閉じる前に、必要なら `docs_researcher` で関連文献や仕様の反証を追加で探す
+- parent が実験コード、report、notes を更新する
 
 ## Prompting Patterns
 

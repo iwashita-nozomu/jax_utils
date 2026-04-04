@@ -39,6 +39,7 @@ Other docs should link here and to the machine-readable/runtime canon instead of
 - Experiment-driven tasks use an explicit loop: `experimenter -> experiment_reviewer -> report_reviewer -> experimenter / implementer -> reviewers -> experimenter`.
 - `experiment_reviewer` critiques comparison fairness, quantitative summaries, and overclaim risk before the next code change is justified.
 - `report_reviewer` independently critiques the user-facing report, its evidence traceability, and whether the report needs rewrite, extra validation, or rerun.
+- `Research-Driven Change` は `research -> protocol fix -> implement -> run -> experiment review -> report review -> rewrite or extra validation or rerun` の outer loop として扱います。
 - Only `implementer` may modify repository source files.
 - `experimenter` may write only run artifacts, experiment reports, and runtime output directories explicitly listed in `WORKTREE_SCOPE.md`.
 - `manager`, reviewers, `researcher`, `scheduler`, `infra_steward`, `verifier`, and `auditor` are artifact-only and write only to the run bundle under `reports/agents/<run-id>/`.
@@ -98,6 +99,7 @@ python3 scripts/agent_tools/validate_role_write_scope.py \
 - Capture both a report-dir snapshot and a workspace-change snapshot before an artifact-only role runs, then validate against both after the role writes.
 - Record scope, risk, and acceptance decisions in the report bundle.
 - `Research-Driven Change` と実験結果を伴う依頼では、`critical-review` を通さずに完了扱いにしません。
+- `Research-Driven Change` では、`report_rewrite_required`、`extra_validation_required`、`rerun_required` の判断が解消する前に loop を閉じて完了扱いにしません。
 - `experiments/report/<run_name>.md` を生成する依頼では、`report-review` を通さずに完了扱いにしません。
 - repo-wide な文書整理や workflow 改造では、変更後 review を通さずに完了扱いにしません。
 

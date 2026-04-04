@@ -51,7 +51,7 @@ skill_families:
     implementation_paths:
       - .github/skills/24-worktree-health
   - id: experiment-lifecycle
-    purpose: Prepare, execute, and validate experiments.
+    purpose: Run a single experiment protocol, then branch through review, rewrite, extra validation, or rerun.
     canonical_doc: agents/skills/experiment-lifecycle.md
     shim: .agents/skills/experiment-lifecycle/SKILL.md
     implementation_paths:
@@ -72,7 +72,7 @@ skill_families:
     implementation_paths:
       - .github/skills/18-report-review
   - id: research-workflow
-    purpose: Manage iterative research work and cross-run comparison.
+    purpose: Manage the outer loop of external research, implementation, experiment iteration, and hypothesis updates.
     canonical_doc: agents/skills/research-workflow.md
     shim: .agents/skills/research-workflow/SKILL.md
     implementation_paths:

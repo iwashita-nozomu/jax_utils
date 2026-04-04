@@ -32,9 +32,9 @@
   - subagent: 通常は不要。Python 差分なら `python_reviewer`。必要なら `explorer`、修正後に `reviewer`
 - 外部調査つき実装、性能改善、比較実験
   - workflow: `Research-Driven Change`
-  - skill: `research-workflow`, `experiment-lifecycle`, `critical-review`
-  - required review: 比較条件の確認と、結果主張の前に `critical-review`。`experiments/report/<run_name>.md` を閉じる前に `report-review`
-  - subagent: `explorer` で調査、report draft が出たら `report_reviewer`、実装後に `reviewer`
+  - skill: `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review`
+  - required review: 外部調査、比較条件、exit criteria を先に固定する。各反復で `implement -> run -> critical-review -> report-review` を通し、`report_rewrite_required`、`extra_validation_required`、`rerun_required` のいずれかが解消するまで loop を閉じない
+  - subagent: `docs_researcher` または `explorer` で調査、`experiment_planner` で protocol と run layout を確認、実装後に `reviewer`、report draft 後に `report_reviewer`
 - 大規模 refactor、新 API
   - workflow: `Large Delivery`
   - skill: `code-review`
@@ -77,6 +77,7 @@
 - Codex subagent は explicit に頼む場合だけ使い、parent が最終編集責任を持ちます。
 - Codex subagent は routing で必要性が出たときだけ使います。常時 spawn する運用にはしません。
 - `Research-Driven Change` と実験結果を伴う依頼では、`critical-review` を省略して完了扱いにしません。
+- `Research-Driven Change` では、`baseline or current state -> implement -> run -> critical-review -> report-review -> rewrite or extra validation or rerun` の loop を省略して完了扱いにしません。
 - `experiments/report/<run_name>.md` を生成する依頼では、`report-review` を省略して完了扱いにしません。
 - repo-wide な整理や workflow 改造では、変更後の review を省略して完了扱いにしません。
 - `python/` 配下を触る依頼では、`pyright` と `ruff` を無視した review を完了扱いにしません。

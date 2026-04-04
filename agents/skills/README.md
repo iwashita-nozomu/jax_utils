@@ -21,10 +21,10 @@
 | `md-style-check` | Markdown の体裁と lint の確認 | `agents/skills/md-style-check.md` | `.github/skills/22-md-style-check/`, `.github/skills/10-documentation-validation/` |
 | `docs-consistency-review` | 文書間の矛盾と曖昧性のレビュー | `agents/skills/docs-consistency-review.md` | `.github/skills/23-docs-consistency-review/`, `.github/skills/10-documentation-validation/` |
 | `worktree-health` | worktree の scope と健全性の確認 | `agents/skills/worktree-health.md` | `.github/skills/24-worktree-health/` |
-| `experiment-lifecycle` | 実験の準備、実行、結果整理 | `agents/skills/experiment-lifecycle.md` | `.github/skills/03-run-experiment/`, `.github/skills/08-experiment-initialization/`, `.github/skills/13-experiment-execution/`, `.github/skills/14-result-validation/` |
+| `experiment-lifecycle` | 単一 run とその review / rerun 分岐 | `agents/skills/experiment-lifecycle.md` | `.github/skills/03-run-experiment/`, `.github/skills/08-experiment-initialization/`, `.github/skills/13-experiment-execution/`, `.github/skills/14-result-validation/` |
 | `critical-review` | 実験結果や主張の批判的評価 | `agents/skills/critical-review.md` | `.github/skills/04-critical-review/` |
 | `report-review` | ユーザー向け実験レポートの独立レビュー | `agents/skills/report-review.md` | `.github/skills/18-report-review/` |
-| `research-workflow` | 反復研究、比較、記録の整理 | `agents/skills/research-workflow.md` | `.github/skills/05-research-workflow/` |
+| `research-workflow` | 外部調査、実装、実験反復、仮説更新を含む outer loop | `agents/skills/research-workflow.md` | `.github/skills/05-research-workflow/` |
 | `comprehensive-review` | repo 全体の横断レビュー | `agents/skills/comprehensive-review.md` | `.github/skills/06-comprehensive-review/` |
 | `project-health` | 継続運用、監視、CI 健全性 | `agents/skills/project-health.md` | `.github/skills/07-health-monitor/`, `.github/skills/16-ci-cd-integration/`, `.github/skills/17-project-health/` |
 | `project-review` | repo-wide な棚卸しと全体レビュー | `agents/skills/project-review.md` | `.github/skills/20-project-review/`, `.github/skills/06-comprehensive-review/`, `.github/skills/17-project-health/` |

@@ -31,6 +31,12 @@
 - `report_rewrite_required`、`extra_validation_required`、`rerun_required` の判断
 - 次の比較実験に必要な手順
 
+## Role In Research-Driven Change
+
+- この skill は `Research-Driven Change` の inner loop です。
+- 外側の仮説更新、外部調査、次の change 決定は `agents/skills/research-workflow.md` が扱います。
+- この skill は 1 つの protocol と 1 回の run、またはその直後の rewrite / extra validation / rerun 分岐を扱います。
+
 ## Required Review Chain
 
 1. `experimenter` が run を完了させ、result と report draft を作る

@@ -12,6 +12,7 @@
 - 各改造の狙いと副作用を、実験前後で比較できる形にする
 - 実験コード、result ディレクトリ、report、summary note を一貫した流れでつなぐ
 - 途中の思いつきではなく、記録された判断に基づいて順次改造する
+- 外部調査つき実装、性能改善、比較検証を、明示的な review 付き loop として扱う
 
 ## 2. 基本ルール
 
@@ -24,6 +25,33 @@
 - 各結果の provenance を残します。使った code、commit、branch、command、seed、environment、入力条件を追えるようにします。
 - run は fresh 実行で完走させます。途中停止 run を resume の正本にせず、停止理由を記録して 0 からやり直します。
 - claim は evidence に合わせます。実験範囲を越えた一般化を避け、仮定と限界を本文で明示します。
+
+## 2.5 Research-Driven Change の canonical loop
+
+外部調査つき実装、性能改善、比較検証では、次の outer loop を正本にします。
+
+1. 問い、比較対象、exit criteria を固定する
+1. 外部調査を行い、採用候補と反証候補を残す
+1. 比較プロトコルと run layout を固定する
+1. baseline または current state を記録する
+1. 1 つの code change を入れる
+1. 同じ protocol で run する
+1. `experiment_reviewer` が evidence sufficiency と overclaim を批判的にレビューする
+1. `report_reviewer` が user-facing report をレビューする
+1. decision に応じて loop を戻す
+
+decision は次の 4 つに固定します。
+
+- `report_rewrite_required`
+  - 同じ result を使って report だけを書き直します
+- `extra_validation_required`
+  - 同じ仮説のまま追加 case、追加 figure、追加集計を行います
+- `rerun_required`
+  - fresh `run_name` で rerun します。必要なら code か protocol を修正します
+- `approved`
+  - exit criteria を満たしていれば loop を閉じます。満たしていなければ次の change を設計します
+
+この loop は 1 回で終える前提にしません。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り、結論を閉じることを禁止します。
 
 ## 3. 文献ベースの要点
 
@@ -160,6 +188,8 @@
 
 この loop では、`experimenter` は code を直しません。code を直すのは常に `implementer` です。
 逆に、`implementer` は「良さそうに見える結果」を根拠に勝手に claim を広げません。比較の妥当性と解釈の厳しさは `experiment_reviewer` が担い、reader-facing な report の厳しさは `report_reviewer` が担います。
+
+この loop の内側で、1 回の run と rewrite / extra validation / rerun 分岐を扱う実務手順は [experiment-workflow.md](/workspace/documents/experiment-workflow.md) を正本にします。
 
 ## 6. 各プロセスで必須の記録項目
 
