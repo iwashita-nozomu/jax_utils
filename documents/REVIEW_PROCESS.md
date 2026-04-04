@@ -16,9 +16,19 @@
 
 - repo 全体レビュー、棚卸し、workflow 改造後の確認では `agents/skills/project-review.md` を最上位入口にします。
 - `comprehensive-review` は inventory と整合性確認、`project-health` は継続運用の drift 確認として使います。
+- scope に experiments、reports、benchmark protocol、research docs が入る場合は `agents/skills/research-perspective-review.md` を追加します。
 - 文書整理を伴う場合は `docs-completeness-review`、`md-style-check`、`docs-consistency-review` を必要に応じて追加します。
 - worktree を使う場合は `worktree-health` を追加します。
 - repo-wide review では findings を `fix now`、`follow-up`、`delete-ok` に分けます。
+
+研究系の perspective review では、少なくとも次を別々のエージェントで確認します。
+
+- reproducibility
+- scientific-computing
+- benchmark
+- artifact
+- fair-data
+- ml-science-reporting
 
 ## レビュー前チェックリスト（PR 作成時）
 

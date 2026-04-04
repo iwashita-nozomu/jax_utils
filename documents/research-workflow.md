@@ -64,6 +64,34 @@ decision は次の 4 つに固定します。
 - Bartz-Beielstein らは、benchmark では goal、problem instance、algorithm instance、performance measure、analysis を先に定義し、問題クラスを越えた一般化に慎重であるべきだと述べています。
 - NeurIPS checklist は、claim を実験範囲に合わせ、assumptions と limitations を明示し、再現に必要な code、data、command、environment を示すことを求めています。
 
+## 3.5 参照する外部規範
+
+研究 workflow の review 観点は、少なくとも次を参照します。
+
+- Sandve et al., Ten Simple Rules for Reproducible Computational Research
+  - https://doi.org/10.1371/journal.pcbi.1003285
+- Wilson et al., Best Practices for Scientific Computing
+  - https://doi.org/10.1371/journal.pbio.1001745
+- van der Kouwe et al., Benchmarking Crimes
+  - https://doi.org/10.48550/arXiv.1801.02381
+- ACM Artifact Review and Badging
+  - https://www.acm.org/publications/policies/artifact-review-and-badging-current
+- FAIR Guiding Principles
+  - https://doi.org/10.1038/sdata.2016.18
+- NeurIPS Paper Checklist
+  - https://nips.cc/public/guides/PaperChecklist
+- REFORMS
+  - https://reforms.cs.princeton.edu/
+
+これらは同じ観点ではありません。少なくとも次の独立視点として扱います。
+
+- reproducibility
+- scientific-computing
+- benchmark
+- artifact
+- fair-data
+- ml-science-reporting
+
 ## 4. 標準 workflow
 
 ### Step 1. 問いを固定する
@@ -235,6 +263,25 @@ decision は次の 4 つに固定します。
 - case 数が少ない場合や分布が歪む場合は、中央値や rank ベースの比較を優先します。
 - 有意差検定を必須にはしませんが、ばらつきが大きいときは effect size、分位点、再現 run の差を少なくとも言葉で扱います。
 - 「改善なし」も結果です。改善が見えなかった場合は、その条件帯と failure pattern を残します。
+
+## 6.8 観点別に必要になる補助 workflow
+
+研究 scope が大きい場合は、通常の `Research-Driven Change` loop に加えて次の補助 workflow を使います。
+
+- `reproducibility-hardening`
+  - provenance、seed、command、environment、rerunability を固める
+- `scientific-computing-hardening`
+  - incremental change、testing、automation、prototype discipline を固める
+- `benchmark-design-and-fairness`
+  - baseline、case mix、measurement rule、confounder を固める
+- `artifact-readiness-and-packaging`
+  - code、script、raw result、environment、rerun bundle を固める
+- `fair-data-packaging`
+  - metadata、result path、naming、再利用性を固める
+- `ml-science-reporting-checklist`
+  - assumptions、limitations、uncertainty、reader-facing reporting を固める
+
+これらは top-level family を増やすのではなく、`Research-Driven Change` の niche workflow として使います。
 
 ## 7. 実験コードを書くときのコツ
 

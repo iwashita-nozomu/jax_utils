@@ -46,6 +46,18 @@
   - findings-first review。主張にはかなり批判的に当たる
 - `.codex/agents/python_reviewer.toml`
   - Python diff を pyright、ruff、型追跡で潰す
+- `.codex/agents/reproducibility_reviewer.toml`
+  - provenance、seed、command、environment、rerunability を潰す
+- `.codex/agents/scientific_computing_reviewer.toml`
+  - incremental change、testing、automation、prototype discipline を潰す
+- `.codex/agents/benchmark_reviewer.toml`
+  - benchmark fairness、confounders、anti-pattern を潰す
+- `.codex/agents/artifact_reviewer.toml`
+  - artifact package、rerunability、raw result の十分性を潰す
+- `.codex/agents/fair_data_reviewer.toml`
+  - metadata、命名、再利用性、result / note path の整理を潰す
+- `.codex/agents/ml_science_reviewer.toml`
+  - assumptions、limitations、uncertainty、checklist closure を潰す
 - `.codex/agents/project_reviewer.toml`
   - repo-wide な inventory、workflow health、tooling health を潰す
 - `.codex/agents/worktree_health_reviewer.toml`
@@ -71,6 +83,7 @@
 - `experiments/report/<run_name>.md` を閉じる前には、`report_reviewer` か同等の `report-review` 実施を要求します。
 - `python/` 配下の差分では、必要に応じて `python_reviewer` を使い、pyright と ruff を review 根拠に含めます。
 - repo 全体レビューや棚卸しでは、必要に応じて `project_reviewer` を使います。
+- 研究や実験を含む repo-wide review では、必要に応じて research perspective reviewers を並列で使います。
 - 文書整理では、必要に応じて `docs_completeness_reviewer` と `docs_consistency_reviewer` を使います。
 - worktree 運用では、必要に応じて `worktree_health_reviewer` を使います。
 
@@ -79,14 +92,14 @@
 | User Request Pattern | Workflow Family | Skill Family | Required Review | Default Codex Flow |
 | -------------------- | --------------- | ------------ | --------------- | ------------------ |
 | 局所バグ修正、テスト修正、README 追随 | `Scoped Correction` | `static-check`, `code-review` | 実装後に `code-review`。Python 差分なら `python-review`。必要なら `reviewer` | parent 直処理。必要なら `explorer` → parent 実装 → `python_reviewer` または `reviewer` |
-| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 外部調査、比較条件、exit criteria を先に固定し、各反復で `critical-review` と `report-review` を通す。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り loop を閉じない。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `docs_researcher` または `explorer` で調査 → `experiment_planner` で protocol 固定 → parent 実装 → `reviewer` → run → `report_reviewer`。decision に応じて rewrite / extra validation / rerun / re-implement を反復 |
+| 外部調査つき実装、性能改善、比較検証 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `critical-review`, `report-review` | 外部調査、比較条件、exit criteria を先に固定し、各反復で `critical-review` と `report-review` を通す。`report_rewrite_required`、`extra_validation_required`、`rerun_required` が残る限り loop を閉じない。methodology、artifact、reporting policy を大きく変える場合は `research-perspective-review` も追加する。実装後に `reviewer`。必要なら `docs_researcher` で反証探し | `docs_researcher` または `explorer` で調査 → `experiment_planner` で protocol 固定 → 必要なら perspective reviewers を並列実行 → parent 実装 → `reviewer` → run → `report_reviewer`。decision に応じて rewrite / extra validation / rerun / re-implement を反復 |
 | HLO 解析、XLA flag 調査、compiler behavior 比較 | `Research-Driven Change` | `research-workflow`, `experiment-lifecycle`, `python-review`, `critical-review` | baseline と change 後で HLO dump、runtime metric、`xla_env` / `XLA_*` 方針を同じ protocol で比較する。flag か code は 1 回の反復で 1 種類だけ変え、`critical-review` を通す。report を閉じるなら `report-review` も通す | `hlo_investigator` で dump / flag 仮説を整理 → 必要なら `docs_researcher` で仕様確認 → parent 実装 → `python_reviewer` → run → `critical-review`。decision に応じて HLO 再採取、追加検証、fresh rerun を反復 |
 | 大規模 refactor、新 API | `Large Delivery` | `code-review` | 設計差分と公開面を `code-review`。Python 公開面なら `python-review`。実装後に `reviewer` | `explorer` で影響範囲確認 → parent または `worker` 実装 → `python_reviewer` または `reviewer` |
 | Python module change、pyright warning cleanup、type boundary refactor | `Scoped Correction` または `Large Delivery` | `python-review`, `static-check` | `pyright` と `ruff` を確認し、`python-review` を通す | parent 実装 → `python_reviewer`。必要なら `reviewer` を追加 |
 | 実験準備、run、result/report 整理 | `Research-Driven Change` または `Platform and Infra` | `experiment-lifecycle`, `critical-review`, `report-review` | run 前に比較条件確認、run 後に `critical-review`。report 完了前に `report-review`。主張が強いなら `docs_researcher` で文献確認 | `experiment_planner` で既存構成と計画を確認 → parent 更新 → report draft 後に `report_reviewer` |
 | 文書整理、workflow 整理、notes 吸収 | `Scoped Correction` または `Platform and Infra` | `docs-completeness-review`, `md-style-check`, `docs-consistency-review` | 変更後に `docs-consistency-review`。Markdown 変更なら `md-style-check`。必要なら `comprehensive-review` | `docs_workflow_steward` → `docs_completeness_reviewer` / `docs_consistency_reviewer` |
 | 現在の worktree 健全性確認、scope drift 確認 | `Platform and Infra` | `worktree-health` | `worktree-health` を通し、必要なら `project-review` へ拡張 | `worktree_health_reviewer` |
-| repo 全体レビュー、棚卸し | `Platform and Infra` | `project-review` | `project-review` を正本にし、必要なら `comprehensive-review` と `project-health` を併用 | `project_reviewer`、必要なら `docs_researcher` を並列 |
+| repo 全体レビュー、棚卸し | `Platform and Infra` | `project-review` | `project-review` を正本にし、必要なら `comprehensive-review` と `project-health` を併用。scope に research / experiment が入る場合は `research-perspective-review` を追加する | `project_reviewer`、必要なら `docs_researcher` を並列。research scope なら perspective reviewers も並列 |
 
 ## Recommended Patterns
 
@@ -110,8 +123,19 @@
 - `project_reviewer` に inventory、workflow health、tooling health を見させる
 - worktree を含む作業なら `worktree_health_reviewer` に scope drift と cleanup risk を見させる
 - 必要なら `docs_researcher` を並列で使い、外部仕様との差分を確認する
+- research / experiment scope を含む場合は、`reproducibility_reviewer`、`scientific_computing_reviewer`、`benchmark_reviewer`、`artifact_reviewer`、`fair_data_reviewer`、`ml_science_reviewer` を並列で使う
 - findings を `fix now`、`follow-up`、`delete-ok` に分ける
 - parent が cleanup、notes 吸収、削除判断を反映する
+
+### 2.6. Research Perspective Review Pack
+
+- `reproducibility_reviewer` に provenance、seed、command、environment、rerunability を見させる
+- `scientific_computing_reviewer` に incremental change、testing、automation、prototype discipline を見させる
+- `benchmark_reviewer` に fairness、case mix、confounder、benchmark anti-pattern を見させる
+- `artifact_reviewer` に code、script、raw result、environment、artifact package の十分性を見させる
+- `fair_data_reviewer` に metadata、命名、result path、再利用性を見させる
+- `ml_science_reviewer` に assumptions、limitations、uncertainty、checklist closure を見させる
+- parent が perspective ごとの findings を `fix now`、`follow-up`、`delete-ok` に再分類して反映する
 
 ### 3. Implementation And Review
 
@@ -158,6 +182,7 @@
 - `Use docs_completeness_reviewer and docs_consistency_reviewer after doc-heavy changes.`
 - `Use worktree_health_reviewer before closing or deleting a worktree, or when scope drift is suspected.`
 - `Use project_reviewer for repo-wide review, inventory, and workflow-health audits.`
+- `Use the research perspective reviewers in parallel when review scope includes experiments, benchmark protocols, reports, or research notes.`
 - `Use experiment_planner to inspect cases, resource estimates, skip logic, and report layout.`
 - `Use hlo_investigator when HLO dumps, XLA flags, or compiler behavior are part of the hypothesis.`
 - `Use report_reviewer after the report draft and require a rewrite, extra validation, or rerun decision.`

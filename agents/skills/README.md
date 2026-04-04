@@ -25,6 +25,7 @@
 | `critical-review` | 実験結果や主張の批判的評価 | `agents/skills/critical-review.md` | `.github/skills/04-critical-review/` |
 | `report-review` | ユーザー向け実験レポートの独立レビュー | `agents/skills/report-review.md` | `.github/skills/18-report-review/` |
 | `research-workflow` | 外部調査、実装、実験反復、仮説更新を含む outer loop | `agents/skills/research-workflow.md` | `.github/skills/05-research-workflow/` |
+| `research-perspective-review` | 研究系変更を複数の独立視点で並列レビュー | `agents/skills/research-perspective-review.md` | `.github/skills/25-research-perspective-review/` |
 | `comprehensive-review` | repo 全体の横断レビュー | `agents/skills/comprehensive-review.md` | `.github/skills/06-comprehensive-review/` |
 | `project-health` | 継続運用、監視、CI 健全性 | `agents/skills/project-health.md` | `.github/skills/07-health-monitor/`, `.github/skills/16-ci-cd-integration/`, `.github/skills/17-project-health/` |
 | `project-review` | repo-wide な棚卸しと全体レビュー | `agents/skills/project-review.md` | `.github/skills/20-project-review/`, `.github/skills/06-comprehensive-review/`, `.github/skills/17-project-health/` |

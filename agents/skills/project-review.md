@@ -16,6 +16,7 @@ repo 全体を横断して、構成、文書、skills、ツール、静的健全
 
 - `agents/skills/comprehensive-review.md`
 - `agents/skills/project-health.md`
+- scope に research / experiment が入る場合は `agents/skills/research-perspective-review.md`
 - `agents/CODEX_WORKFLOWS.md`
 - `documents/REVIEW_PROCESS.md`
 - 必要なら `documents/AGENTS_COORDINATION.md`
@@ -31,7 +32,7 @@ repo 全体を横断して、構成、文書、skills、ツール、静的健全
 ## Outputs
 
 - findings-first の project-wide review
-- `inventory`, `static-health`, `workflow-health`, `tooling-health`, `follow-up` の各 section
+- `inventory`, `static-health`, `workflow-health`, `research-evidence-health`, `tooling-health`, `follow-up` の各 section
 - `fix now`, `follow-up`, `delete-ok` の切り分け
 
 ## Mandatory Phases
@@ -45,6 +46,9 @@ repo 全体を横断して、構成、文書、skills、ツール、静的健全
 1. `Workflow Health`
    - routing、skill canon、subagent、adapter の導線が揃っているか確認する
    - 文書整理を伴う場合は `docs-completeness-review` と `docs-consistency-review` を含める
+1. `Research Evidence Health`
+   - scope に experiments、reports、benchmark protocol、research docs が入る場合は `research-perspective-review` を含める
+   - reproducibility、scientific computing、benchmark、artifact、FAIR data、ML-science reporting の観点を別々に確認する
 1. `Tooling Health`
    - scripts、CI、GitHub implementation surface、runtime helper の破綻を確認する
 1. `Worktree Health`
@@ -59,6 +63,7 @@ repo 全体を横断して、構成、文書、skills、ツール、静的健全
 - stale file、duplicate file、unreferenced file が残っていないか確認した
 - review 対象に応じた `pyright`、`ruff`、整合 check を見た
 - workflow 改造後に routing と subagent 導線を追った
+- research / experiment scope では perspective review pack を通し、観点ごとの差分を分けて記録した
 - tool 実装面が shared canon から取り残されていない
 - worktree を使う作業では scope drift と cleanup risk を確認した
 - health issue と one-off cleanup を混同していない

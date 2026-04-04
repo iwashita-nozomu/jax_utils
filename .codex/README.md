@@ -32,6 +32,18 @@
   - diff と設計の妥当性を確認する
 - `python_reviewer`
   - Python diff を pyright、ruff、型追跡で確認する
+- `reproducibility_reviewer`
+  - provenance、seed、command、environment、rerunability を確認する
+- `scientific_computing_reviewer`
+  - incremental change、testing、automation、prototype discipline を確認する
+- `benchmark_reviewer`
+  - benchmark fairness、confounder、anti-pattern を確認する
+- `artifact_reviewer`
+  - artifact package、rerunability、raw result の十分性を確認する
+- `fair_data_reviewer`
+  - metadata、命名、再利用性、result / note path を確認する
+- `ml_science_reviewer`
+  - assumptions、limitations、uncertainty、checklist closure を確認する
 - `project_reviewer`
   - repo-wide な棚卸し、workflow health、tooling health を確認する
 - `worktree_health_reviewer`
@@ -58,6 +70,7 @@
 - 文書の不足は `docs_completeness_reviewer`、矛盾や曖昧性は `docs_consistency_reviewer` を使う
 - bounded な実装を切り出したいときだけ `worker` を使う
 - Python diff の厳密レビューは `python_reviewer` を使う
+- 研究 scope の repo-wide review では research perspective reviewers を並列で使う
 - repo 全体レビューや棚卸しは `project_reviewer` を使う
 - worktree の健全性確認は `worktree_health_reviewer` を使う
 - 実験計画や layout 確認は `experiment_planner` を使う

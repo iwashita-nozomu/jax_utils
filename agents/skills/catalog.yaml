@@ -77,6 +77,12 @@ skill_families:
     shim: .agents/skills/research-workflow/SKILL.md
     implementation_paths:
       - .github/skills/05-research-workflow
+  - id: research-perspective-review
+    purpose: Run independent research-focused reviews across reproducibility, benchmarking, artifacts, FAIR data, and reporting.
+    canonical_doc: agents/skills/research-perspective-review.md
+    shim: .agents/skills/research-perspective-review/SKILL.md
+    implementation_paths:
+      - .github/skills/25-research-perspective-review
   - id: comprehensive-review
     purpose: Run whole-repo reviews that span docs, tools, and integration points.
     canonical_doc: agents/skills/comprehensive-review.md

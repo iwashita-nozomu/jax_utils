@@ -67,6 +67,19 @@
 - `report_rewrite_required`、`extra_validation_required`、`rerun_required`、`approved` の最終判断
 - 次の変更案か、終了判断
 
+## Perspective Review Pack
+
+methodology、benchmark protocol、artifact policy、reporting policy を大きく変える場合は `agents/skills/research-perspective-review.md` を追加します。
+
+review 視点は次の 6 つです。
+
+- reproducibility
+- scientific-computing
+- benchmark
+- artifact
+- fair-data
+- ml-science-reporting
+
 ## Niche Subflow: HLO Analysis And Compiler-Tuning
 
 次のような依頼では、この subflow を使います。
@@ -85,6 +98,21 @@
 1. HLO 差分、runtime metric、failure kind を同じ比較表で扱う
 1. HLO の見た目ではなく、`critical-review` で定量 evidence を要求する
 1. user-facing report を閉じる場合は、代表 HLO 差分と実測差分を両方残す
+
+## Perspective-Driven Niche Workflows
+
+- `reproducibility-hardening`
+  - provenance、seed、command、environment を固める
+- `scientific-computing-hardening`
+  - incremental change、testing、automation、prototype discipline を固める
+- `benchmark-design-and-fairness`
+  - case mix、baseline、confounder、measurement rule を固める
+- `artifact-readiness-and-packaging`
+  - code、script、raw result、environment、rerun bundle を固める
+- `fair-data-packaging`
+  - metadata、命名、結果の再利用性を固める
+- `ml-science-reporting-checklist`
+  - assumptions、limitations、uncertainty、reader-facing reporting を固める
 
 ## Implementation Surface
 

@@ -31,6 +31,7 @@ skill の説明正本は `agents/skills/` に置きます。
 | `critical-review` | `04-critical-review/` |
 | `report-review` | `18-report-review/` |
 | `research-workflow` | `05-research-workflow/` |
+| `research-perspective-review` | `25-research-perspective-review/` |
 | `comprehensive-review` | `06-comprehensive-review/` |
 | `project-health` | `07-health-monitor/`, `16-ci-cd-integration/`, `17-project-health/` |
 | `project-review` | `20-project-review/`, `06-comprehensive-review/`, `17-project-health/` |
