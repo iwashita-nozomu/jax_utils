@@ -36,7 +36,8 @@
 | `results/smolyak-validation-20260328` | [results_smolyak_validation_20260328.md](/workspace/notes/branches/results_smolyak_validation_20260328.md) | Smolyak validation と結果保存 | active | `keep-while-active` |
 | `results/smolyak-experiment-20260321` | [results_smolyak_experiment_20260321.md](/workspace/notes/branches/results_smolyak_experiment_20260321.md) | `smolyak_experiment` と配置設計 | archived | `delete-ok` |
 | `work/experiment-runner-refactor-20260330` | [work_experiment_runner_refactor_20260330.md](/workspace/notes/branches/work_experiment_runner_refactor_20260330.md) | experiment_runner 改造 | archived | `delete-ok` |
-| `work/nn-develop-20260318` | [work_nn_develop_20260318.md](/workspace/notes/branches/work_nn_develop_20260318.md) | neuralnetwork 層別訓練開発 | active | `keep-while-active` |
+| `work/nn-develop-20260318` | [work_nn_develop_20260318.md](/workspace/notes/branches/work_nn_develop_20260318.md) | neuralnetwork 層別訓練の旧 worktree | archived | `delete-ok` |
+| `work/nn-develop-20260404` | [work_nn_develop_20260404.md](/workspace/notes/branches/work_nn_develop_20260404.md) | neuralnetwork 層別訓練の新 worktree | active | `keep-while-active` |
 | `work/smolyak-improvement-20260318` | [work_smolyak_improvement_20260318.md](/workspace/notes/branches/work_smolyak_improvement_20260318.md) | Smolyak 実験簡略化と運用整理 | archived | `delete-ok` |
 | `work/smolyak-integrator-lead-20260328` | [work_smolyak_integrator_lead_20260328.md](/workspace/notes/branches/work_smolyak_integrator_lead_20260328.md) | Smolyak integrator 方向付け | active | `keep-while-active` |
 | `work/smolyak-integrator-opt-20260328` | [work_smolyak_integrator_opt_20260328.md](/workspace/notes/branches/work_smolyak_integrator_opt_20260328.md) | Smolyak integrator 最適化 | active | `keep-while-active` |

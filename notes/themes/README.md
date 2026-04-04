@@ -29,5 +29,14 @@
 
 ## Current Themes
 
+- [01_rbm_and_contrastive_divergence.md](/workspace/notes/themes/01_rbm_and_contrastive_divergence.md)
+- [02_convergence_and_optimality.md](/workspace/notes/themes/02_convergence_and_optimality.md)
+- [03_gpu_and_parallelization.md](/workspace/notes/themes/03_gpu_and_parallelization.md)
+- [04_progressive_neural_networks_and_meta_learning.md](/workspace/notes/themes/04_progressive_neural_networks_and_meta_learning.md)
+- [05_bellman_equation_and_deep_learning.md](/workspace/notes/themes/05_bellman_equation_and_deep_learning.md)
+- [bellman_bp.md](/workspace/notes/themes/bellman_bp.md)
+- [bellman_bp_chat_summary.md](/workspace/notes/themes/bellman_bp_chat_summary.md)
+- [desigin.md](/workspace/notes/themes/desigin.md)
 - [experiment_runner.md](/workspace/notes/themes/experiment_runner.md)
+- [layer_wise_train.md](/workspace/notes/themes/layer_wise_train.md)
 - [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md)

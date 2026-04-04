@@ -105,8 +105,28 @@ def sequential_train_step(
     raise NotImplementedError("experimental sequential training path is not implemented")
 
 
+class GradientTrainer(eqx.Module):
+    """層ごとの trainer を束ねる薄い実験用ラッパー。"""
+
+    layer_trainers: Tuple[SingleLayerBackprop, ...]
+
+    def __call__(
+        self,
+        model: NeuralNetwork,
+        x: Matrix,
+        optim: PyTreeOptimizationProblem,
+    ) -> tuple[NeuralNetwork, Tuple[SingleLayerBackprop, ...]]:
+        return sequential_train_step(
+            model=model,
+            trainers=self.layer_trainers,
+            x=x,
+            optim=optim,
+        )
+
+
 __all__ = [
     "PyTreeOptim",
     "GradientBackprop",
+    "GradientTrainer",
     "sequential_train_step",
 ]

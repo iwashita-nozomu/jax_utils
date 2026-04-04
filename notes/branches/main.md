@@ -45,7 +45,8 @@
 | `work/smolyak-tuning-20260316` | merged knowledge retained | [smolyak_integrator.md](/workspace/notes/themes/smolyak_integrator.md) | `delete-ok` |
 | `work/jaxutil-test-expansion-20260317` | merged | branch note のみで十分 | `delete-ok` |
 | `work/editing-20260316` | archived | branch note と worktree note を保持 | `delete-ok` |
-| `work/nn-develop-20260318` | active | active worktree 側で継続 | `keep-while-active` |
+| `work/nn-develop-20260318` | archived / absorbed | `neuralnetwork` と note を `main` へ carry-over 済み | `delete-ok` |
+| `work/nn-develop-20260404` | active | refreshed nn worktree 側で継続 | `keep-while-active` |
 | `results/smolyak-validation-20260328` | active | active worktree 側で継続 | `keep-while-active` |
 | `work/smolyak-integrator-lead-20260328` | active | active worktree 側で継続 | `keep-while-active` |
 | `work/smolyak-integrator-opt-20260328` | active | active worktree 側で継続 | `keep-while-active` |
