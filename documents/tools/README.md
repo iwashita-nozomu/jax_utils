@@ -306,7 +306,7 @@ ______________________________________________________________________
 
 - `pyright` — Python型チェック
 - `ruff` — Python リント・フォーマット
-- `black` — Python コードフォーマッタ
+- `mdformat` — Markdown 整形
 - `pytest` — Python テストフレームワーク
 - `markdownlint` — Markdown チェック（オプション）
 

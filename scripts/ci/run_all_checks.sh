@@ -2,9 +2,10 @@
 set -euo pipefail
 
 # ═══════════════════════════════════════════════════════════════════════════
-# 統合 CI スクリプト
+# Python baseline CI スクリプト
 #
-# 用途: pytest + pyright + pydocstyle + ruff を一括実行してプロジェクト品質を検証
+# 用途: `python/` と `python/tests/` を中心に pytest + pyright + pydocstyle + ruff を実行
+#       して Python baseline の健全性を検証
 #
 # 使用方法:
 #   bash scripts/ci/run_all_checks.sh           # 全テスト・解析実行
@@ -24,9 +25,10 @@ set -euo pipefail
 #   - 1: テスト失敗 または解析エラー
 #
 # 関連ドキュメント:
-#   - scripts/ci/README.md: ローカル CI 実行ガイド
-#   - documents/FILE_CHECKLIST_OPERATIONS.md#チェックリスト3: テスト実行
-#   - .github/workflows/ci.yml: GitHub Actions ワークフロー（同等チェックを直接実行）
+#   - scripts/README.md: スクリプト全体の入口
+#   - documents/REVIEW_PROCESS.md: review 時の標準手順
+#   - documents/FILE_CHECKLIST_OPERATIONS.md: ファイル単位チェックの手順
+#   - .github/workflows/ci.yml: GitHub Actions ワークフロー
 #
 # ═══════════════════════════════════════════════════════════════════════════
 
@@ -71,7 +73,7 @@ export CUDA_VISIBLE_DEVICES="${CUDA_VISIBLE_DEVICES:-}"
 export NVIDIA_VISIBLE_DEVICES="${NVIDIA_VISIBLE_DEVICES:-}"
 
 echo "════════════════════════════════════════════════════════════════"
-echo "📋 統合 CI セッション開始"
+echo "📋 Python baseline CI セッション開始"
 echo "════════════════════════════════════════════════════════════════"
 echo ""
 echo "Python interpreter: ${PYTHON_BIN}"

@@ -199,14 +199,14 @@ pyright python/
 ruff check python/
 
 # 1-3. 自動フォーマット（オプション）
-black python/
-```yaml
+ruff format python/
+```
 
 **確認項目:**
 
 - [ ] pyright エラー数 = 0
 - [ ] ruff エラー数 = 0
-- [ ] black フォーマット可能
+- [ ] `ruff format` で整形可能
 
 ## ステップ2: テスト実行（10分～）
 

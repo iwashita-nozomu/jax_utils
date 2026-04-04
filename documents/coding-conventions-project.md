@@ -123,6 +123,7 @@ docker run -it -v /workspace:/workspace jax_util:latest bash
 - `task.md` は実装の進行管理に使います。
 - 粒度はファイル単位で統一します。
 - 完了した項目は `task.md` から削除し、仕様や判断は `documents/` に残します。
+- `task.md` には現在の未解決タスクだけを書きます。完了済みの計画、古い branch 状態、dated summary を残すことを禁止します。
 
 ## 8. ブランチ運用
 

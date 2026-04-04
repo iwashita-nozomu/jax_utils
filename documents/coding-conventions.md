@@ -23,7 +23,7 @@
 
 ### 実行方法
 
-````bash
+```bash
 # 単一ファイル編集後
 mdformat path/to/file.md
 
@@ -32,7 +32,7 @@ mdformat path/to/docs/ scripts/
 
 # 修正前に確認（ドライラン）
 mdformat --check path/to/file.md
-```yaml
+```
 
 ## 対象ファイル
 
@@ -61,4 +61,3 @@ Markdown 整形とリンク監査は `mdformat` や `scripts/tools/audit_and_fix
 - [テスト規約](./coding-conventions-testing.md)
 - [ログ規約](./coding-conventions-logging.md)
 - [プロジェクト運用規約](./coding-conventions-project.md)
-````
