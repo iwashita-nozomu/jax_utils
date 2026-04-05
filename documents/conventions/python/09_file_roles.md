@@ -11,6 +11,8 @@
 ## 規約
 
 - `python/jax_util/base/`: 型・定数・作用素・環境設定を置きます。
+- `python/jax_util/differential_equations/`: 微分方程式の problem catalog、operator protocol、論文や benchmark で再利用する concrete problem module を置きます。
+- `python/jax_util/differential_equations/` の concrete problem は 1 問題 1 ファイルで置きます。
 - `python/jax_util/hlo/`: HLO ダンプと解析補助だけを置きます。
 - `python/jax_util/solvers/`: 数値ソルバと、その計算に直接関わる補助を置きます。
 - `python/jax_util/optimizers/`: `solvers` を利用する最適化アルゴリズムを置きます。

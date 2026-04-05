@@ -14,6 +14,7 @@
 
 - `python/jax_util/differential_equations/`
 - `python/tests/differential_equations/`
+- `documents/design/`
 - `notes/worktrees/worktree_differential_equations_problems_2026-04-05.md`
 - `WORKTREE_SCOPE.md`
 
@@ -30,6 +31,7 @@
 ## Initial Plan
 
 1. `differential_equations` package を新設する
+1. problem catalog の責務と拡張境界を文書で固定する
 1. 問題定義と problem set を表す最小の型を置く
 1. import と validation の最小 test を足す
 1. 以後の ODE / PDE 問題追加はこの package 配下で行う

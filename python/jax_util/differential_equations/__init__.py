@@ -1,17 +1,25 @@
 """Differential-equation problem catalogs."""
 
-from .problem_set import (
+from .problem import (
     ConditionKind,
     DifferentialEquationProblem,
     EquationKind,
-    ProblemSet,
-    build_problem_set,
+)
+from .protocols import (
+    DifferentialEquationOperator,
+    DifferentialEquationTag,
+    DifferentialEquationTerm,
+    ResidualFunction,
+    StateFunction,
 )
 
 __all__ = [
     "ConditionKind",
     "DifferentialEquationProblem",
+    "DifferentialEquationOperator",
+    "DifferentialEquationTag",
+    "DifferentialEquationTerm",
     "EquationKind",
-    "ProblemSet",
-    "build_problem_set",
+    "ResidualFunction",
+    "StateFunction",
 ]

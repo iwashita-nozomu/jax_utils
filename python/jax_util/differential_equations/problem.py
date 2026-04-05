@@ -1,10 +1,11 @@
-"""Core types for differential equation problem catalogs."""
+"""Core metadata for one differential-equation problem."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Literal
+from typing import Literal
 
+from .protocols import DifferentialEquationTerm
 
 EquationKind = Literal["ode", "pde", "dae", "integro_differential", "other"]
 ConditionKind = Literal["initial_value", "boundary_value", "terminal_value", "mixed", "other"]
@@ -23,8 +24,10 @@ class DifferentialEquationProblem:
     description: str = ""
     tags: tuple[str, ...] = ()
     references: tuple[str, ...] = ()
+    terms: tuple[DifferentialEquationTerm, ...] = ()
 
     def __post_init__(self) -> None:
+        """Validate problem metadata and tagged operator terms."""
         if not self.name:
             raise ValueError("Problem name must not be empty.")
         if self.state_dimension < 1:
@@ -35,31 +38,23 @@ class DifferentialEquationProblem:
             start, end = self.time_interval
             if end <= start:
                 raise ValueError("time_interval must satisfy start < end.")
-
-
-@dataclass(frozen=True, slots=True)
-class ProblemSet:
-    """Named collection of differential-equation problems."""
-
-    name: str
-    problems: tuple[DifferentialEquationProblem, ...]
-
-    def __post_init__(self) -> None:
-        if not self.name:
-            raise ValueError("Problem set name must not be empty.")
-        names = [problem.name for problem in self.problems]
-        if len(names) != len(set(names)):
-            raise ValueError("Problem names must be unique inside one problem set.")
+        term_names = [term.name for term in self.terms]
+        if len(term_names) != len(set(term_names)):
+            raise ValueError("Term names must be unique inside one problem.")
 
     @property
-    def problem_names(self) -> tuple[str, ...]:
-        return tuple(problem.name for problem in self.problems)
+    def equation_terms(self) -> tuple[DifferentialEquationTerm, ...]:
+        """Return terms interpreted as residual equations."""
+        return tuple(term for term in self.terms if term.assumes_zero_rhs)
+
+    @property
+    def equation_term_names(self) -> tuple[str, ...]:
+        """Return the names of equation terms in this problem."""
+        return tuple(term.name for term in self.equation_terms)
 
 
-def build_problem_set(
-    name: str,
-    problems: Iterable[DifferentialEquationProblem],
-) -> ProblemSet:
-    """Build a validated problem set from an iterable."""
-
-    return ProblemSet(name=name, problems=tuple(problems))
+__all__ = [
+    "ConditionKind",
+    "DifferentialEquationProblem",
+    "EquationKind",
+]

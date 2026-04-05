@@ -16,6 +16,7 @@
 ## `jax_util` 詳細設計
 
 - [base_components.md](/workspace/documents/design/jax_util/base_components.md)
+- [differential_equations.md](/workspace/documents/design/jax_util/differential_equations.md)
 - [solvers.md](/workspace/documents/design/jax_util/solvers.md)
 - [optimizers.md](/workspace/documents/design/jax_util/optimizers.md)
 - [hlo.md](/workspace/documents/design/jax_util/hlo.md)
@@ -23,6 +24,7 @@
 ## 更新ルール
 
 - base の型・Protocol を変えた場合は [base_components.md](/workspace/documents/design/jax_util/base_components.md) と [protocols.md](/workspace/documents/design/protocols.md) を更新します。
+- `differential_equations` の公開 API や責務境界を変えた場合は [differential_equations.md](/workspace/documents/design/jax_util/differential_equations.md) を更新します。
 - `solvers` / `optimizers` / `hlo` の公開 API や責務を変えた場合は、対応する `documents/design/jax_util/*.md` を更新します。
 - `experiment_runner` の契約を変えた場合は [experiment_runner.md](/workspace/documents/experiment_runner.md) を更新します。
 

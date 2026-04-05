@@ -8,8 +8,8 @@
 構成とナビゲーション:
 
 - `README.md` — このファイル。各設計の目次と依存関係の中央集約を含みます。
-- `template.md` — 新規設計作成時のテンプレート。
 - `hlo.md` — HLO ダンプの設計（`python/jax_util/hlo/` に対応）。
+- `differential_equations.md` — 微分方程式 problem catalog の設計（`python/jax_util/differential_equations/`）。
 - `optimizers.md` — 最適化器（`python/jax_util/optimizers/`）。
 - `solvers.md` — 線形ソルバ（`python/jax_util/solvers/`）。
 - `base_components.md` — 型エイリアス、共通プロトコル、`LinOp` など基盤要素。
@@ -18,6 +18,7 @@
 
 - `jax_util` のサブモジュール間依存の指針:
   - `base` は基盤（型、protocols、環境設定）として他のサブモジュールの第一の依存先です。
+  - `differential_equations` は import-safe な metadata layer とし、solver や experiment code から参照される側に置きます。
   - `solvers` は数値線形代数を提供し、`optimizers` が KKT などで利用します。
   - `hlo` は副次的なツール（ダンプ/解析）であり、通常は実行時に明示的に有効化します。
 
@@ -33,4 +34,4 @@
 
 メンテナンス:
 
-- 新しい設計を追加する場合は、まず `template.md` をコピーして `README.md` にリンクを追加してください。
+- 新しい設計を追加する場合は、既存の個別設計文書と同じ見出し構成を踏襲し、`README.md` にリンクを追加してください。

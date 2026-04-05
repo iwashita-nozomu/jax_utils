@@ -13,6 +13,7 @@
 - `snake_case.py` を使ってください。
 - 略語は一般的なもののみ許可します（例: `pcg`, `minres`, `kkt`, `hlo`）。
 - 役割が分かる語を置き、意味のない接尾辞（`_util` の乱用等）は避けます。
+- `python/jax_util/differential_equations/` の concrete problem file は `<problem_name>.py` とし、1 file に 1 problem だけを置きます。
 
 ### 禁止/注意
 
@@ -60,6 +61,13 @@
 - **内部実装**: 先頭 `_`。
   - 例: `_pdipm_solve`, `_sym_ortho`
 
+### module import 規約
+
+- concrete problem module の canonical import は `jax_util.differential_equations.<problem_name>.<symbol>` に固定します。
+- `differential_equations` の concrete problem は package root の `__init__.py` で平坦に再 export しません。
+- 各 concrete problem module は少なくとも `problem` を公開し、必要なら `*_term` と `make_*` を公開します。
+- したがって、利用側は `from jax_util.differential_equations.lotka_volterra import problem` のように読み込みます。
+
 ### テスト用補助
 
 - テストファイルでは `test_*` を使います。
@@ -71,3 +79,4 @@
 - `initialize_kkt_state`（公開）→ `_kkt_block_solver`（内部）
 - `OptimizationProblem`（汎用）→ `VectorOptimizationProblem` / `PyTreeOptimizationProblem` / `FunctionalOptimizationProblem`（空間特殊化）
 - `ConstrainedOptimizationProblem`（汎用）→ `ConstrainedVectorOptimizationProblem` / `ConstrainedPyTreeOptimizationProblem`
+- `jax_util.differential_equations.lotka_volterra.problem`（canonical import）

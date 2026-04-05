@@ -11,16 +11,18 @@
 
 ### レイヤ構造
 
-| レイヤ                | 依存先                              | 役割                     |
-| --------------------- | ----------------------------------- | ------------------------ |
-| `jax_util.base`       | なし（標準ライブラリ / JAX 等のみ） | 型・定数・作用素の基盤。 |
-| `jax_util.hlo`        | `base`                              | HLO ダンプと解析補助。   |
-| `jax_util.solvers`    | `base`                              | 数値ソルバとソルバ補助。 |
-| `jax_util.optimizers` | `base`, `solvers`                   | 最適化アルゴリズム。     |
+| レイヤ                            | 依存先                              | 役割                                        |
+| --------------------------------- | ----------------------------------- | ------------------------------------------- |
+| `jax_util.base`                   | なし（標準ライブラリ / JAX 等のみ） | 型・定数・作用素の基盤。                    |
+| `jax_util.differential_equations` | `base`                              | 微分方程式の problem catalog と残差作用素。 |
+| `jax_util.hlo`                    | `base`                              | HLO ダンプと解析補助。                      |
+| `jax_util.solvers`                | `base`                              | 数値ソルバとソルバ補助。                    |
+| `jax_util.optimizers`             | `base`, `solvers`                   | 最適化アルゴリズム。                        |
 
 ### 制約
 
 - `base` は `solvers` / `optimizers` / `hlo` に依存しません。
+- `differential_equations` は `base` のみを利用し、`solvers` / `optimizers` / `functional` / `neuralnetwork` を import しません。
 - `hlo` は `solvers` / `optimizers` に依存しません。
 - `solvers` は `optimizers` を import しません。
 - `optimizers` は `base` と `solvers` のみを利用します。
