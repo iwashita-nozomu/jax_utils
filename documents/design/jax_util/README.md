@@ -10,6 +10,8 @@
 - `README.md` — このファイル。各設計の目次と依存関係の中央集約を含みます。
 - `template.md` — 新規設計作成時のテンプレート。
 - `hlo.md` — HLO ダンプの設計（`python/jax_util/hlo/` に対応）。
+- `lagrangian_newton.md` — 実験的な `neuralnetwork/lagrangian_newton/` サブモジュールの数理設計。Bellman 型の単段階部分問題 `F_k` と reduced functional `\widetilde F_k` を関数空間の中で整理し、global KKT は companion lens として扱います。
+- `lagrangian_newton_impl.md` — `lagrangian_newton.md` を受けた実装設計。有限次元化、責務分割、再利用資産、最初の code slice、検証方針を扱います。
 - `optimizers.md` — 最適化器（`python/jax_util/optimizers/`）。
 - `solvers.md` — 線形ソルバ（`python/jax_util/solvers/`）。
 - `base_components.md` — 型エイリアス、共通プロトコル、`LinOp` など基盤要素。

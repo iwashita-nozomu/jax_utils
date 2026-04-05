@@ -7,6 +7,7 @@
 ### レイヤー別訓練の理論基盤
 
 **`layer-wise-training-references.md`**
+
 - **管理者**: Project NN Architecture Design
 - **対象モジュール**: `python/jax_util/neuralnetwork/sequential_train.py`
 - **設計ドキュメント**: `notes/themes/desigin.md`
@@ -17,15 +18,17 @@
   - 入手方法と推奨読了順序
 
 **主要参考文献**:
+
 1. Ivakhnenko & Lapa (1965) - GMDH の創始
-2. Hinton et al. (2006) - 深層信念ネット
-3. **Bengio et al. (2007)** - 貪欲層別訓練の収束解析 ⭐
-4. Ben-Nun & Hoefler (2018) - 並列化分析
-5. Boyd & Parikh (2011) - ブロック座標降下法
+1. Hinton et al. (2006) - 深層信念ネット
+1. **Bengio et al. (2007)** - 貪欲層別訓練の収束解析 ⭐
+1. Ben-Nun & Hoefler (2018) - 並列化分析
+1. Boyd & Parikh (2011) - ブロック座標降下法
 
 ### Bellman 型逆伝播と双対・計量
 
 **`bellman-backprop-references.md`**
+
 - **管理者**: Bellman / Backprop note
 - **対象ノート**: `notes/themes/bellman_bp.md`
 - **内容**:
@@ -35,20 +38,51 @@
   - Bellman 型の記法に引き寄せた短い要約
 
 **主要参考文献**:
+
 1. Baydin et al. (2018) - reverse-mode AD survey
-2. Frostig et al. (2021) - linearization + transposition
-3. Schwedes, Funke, Ham (2016) - Riesz 表現と mesh dependence
-4. dolfin-adjoint docs - dual と Riesz representation
-5. van Erp et al. (2022) - 引き戻し計量の Gram 行列
+1. Frostig et al. (2021) - linearization + transposition
+1. Schwedes, Funke, Ham (2016) - Riesz 表現と mesh dependence
+1. dolfin-adjoint docs - dual と Riesz representation
+1. van Erp et al. (2022) - 引き戻し計量の Gram 行列
+
+### ラグランジアン Newton 型 NN 学習
+
+**`lagrangian-newton-references.md`**
+
+- **管理者**: `neuralnetwork/lagrangian_newton` worktree
+- **対象モジュール**: `python/jax_util/neuralnetwork/lagrangian_newton/`
+- **数理設計**: `documents/design/jax_util/lagrangian_newton.md`
+- **実装設計**: `documents/design/jax_util/lagrangian_newton_impl.md`
+- **内容**:
+  - Hessian-free / Gauss-Newton / regularized GGN の入口整理
+  - 学習を制約付き最適化 / 最適制御として捉える文献の整理
+  - repo 内の `pdipm.py` と `kkt_solver.py` へ接続するための数値最適化基盤の整理
+  - 詳細な prior-art report への入口
+
+**主要参考文献**:
+
+1. Martens (2010) - Hessian-free optimization
+1. Evens et al. (2021) - augmented Lagrangian as optimal control
+1. Cai et al. (2019) - Gram-Gauss-Newton
+1. Arbel et al. (2023) - Gauss-Newton の implicit bias
+1. Adeoye et al. (2024) - regularized Gauss-Newton
 
 ### その他の研究領域
 
 - `sparse_grid/`
   - Smolyak 積分、sparse-grid combination technique、adaptive sparse grid に関する一次資料です。
+- `lagrangian_newton/`
+  - Lagrangian Newton / lifted training / dual-metric 系のローカル保存文献です。
 
 ## アクセスガイド
 
 - **desigin.md から**: `notes/themes/desigin.md` → `参考文献` セクション → [参考文献詳細へ](layer-wise-training-references.md)
-- **sequential_train.py の背景理論を知りたい**: [Bengio et al. (2007)の詳細解説](layer-wise-training-references.md#3-貪欲層別訓練の収束解析-2007-%E2%AD%90-最重要)
-- **層別訓練の歴史を学ぶ**: [層別訓練の歴史セクション](layer-wise-training-references.md#層別訓練の歴史)
+- **sequential_train.py の背景理論を知りたい**: [Bengio et al. (2007)の詳細解説](layer-wise-training-references.md#3-%E8%B2%AA%E6%AC%B2%E5%B1%A4%E5%88%A5%E8%A8%93%E7%B7%B4%E3%81%AE%E5%8F%8E%E6%9D%9F%E8%A7%A3%E6%9E%90-2007-%E2%AD%90-%E6%9C%80%E9%87%8D%E8%A6%81)
+- **層別訓練の歴史を学ぶ**: [層別訓練の歴史セクション](layer-wise-training-references.md#%E5%B1%A4%E5%88%A5%E8%A8%93%E7%B7%B4%E3%81%AE%E6%AD%B4%E5%8F%B2)
 - **Bellman 型逆伝播の双対・質量行列を確認したい**: [Bellman 型逆伝播と双対・計量の参考文献](bellman-backprop-references.md)
+- **Lagrangian Newton の数理設計を見たい**: [数理設計](../documents/design/jax_util/lagrangian_newton.md)
+- **Lagrangian Newton の実装設計を見たい**: [実装設計](../documents/design/jax_util/lagrangian_newton_impl.md)
+- **Lagrangian Newton の文献入口を見たい**: [参考文献詳細](lagrangian-newton-references.md)
+- **Lagrangian Newton のローカル文献束を見たい**: [reference bundle](lagrangian_newton/README.md)
+- **Lagrangian Newton の短い知見整理を見たい**: [theme note](../notes/themes/06_lagrangian_newton_and_constrained_training.md)
+- **Lagrangian Newton の先行研究レポートを見たい**: [prior-art report](../notes/themes/07_lagrangian_newton_prior_art_report_2026-04-05.md)

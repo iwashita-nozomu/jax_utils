@@ -34,6 +34,8 @@
 - [03_gpu_and_parallelization.md](/workspace/notes/themes/03_gpu_and_parallelization.md)
 - [04_progressive_neural_networks_and_meta_learning.md](/workspace/notes/themes/04_progressive_neural_networks_and_meta_learning.md)
 - [05_bellman_equation_and_deep_learning.md](/workspace/notes/themes/05_bellman_equation_and_deep_learning.md)
+- [06_lagrangian_newton_and_constrained_training.md](/workspace/notes/themes/06_lagrangian_newton_and_constrained_training.md)
+- [07_lagrangian_newton_prior_art_report_2026-04-05.md](/workspace/notes/themes/07_lagrangian_newton_prior_art_report_2026-04-05.md)
 - [bellman_bp.md](/workspace/notes/themes/bellman_bp.md)
 - [bellman_bp_chat_summary.md](/workspace/notes/themes/bellman_bp_chat_summary.md)
 - [desigin.md](/workspace/notes/themes/desigin.md)
