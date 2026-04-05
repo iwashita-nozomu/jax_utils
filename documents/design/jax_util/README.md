@@ -13,6 +13,7 @@
 - `optimizers.md` — 最適化器（`python/jax_util/optimizers/`）。
 - `solvers.md` — 線形ソルバ（`python/jax_util/solvers/`）。
 - `base_components.md` — 型エイリアス、共通プロトコル、`LinOp` など基盤要素。
+- `lagrangian_df_zero.md` — `DF=0` 型の layer-wise stationary update を扱う実験サブモジュールの設計。
 
 依存関係（中央集約）:
 

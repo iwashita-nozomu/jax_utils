@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD004 -->
+
 # 動的計画法
 
 ## 定式化
@@ -13,7 +15,7 @@ $$
 
 さらに，$\Phi_k \subset \mathcal{H}^1$ である．
 
-ニューラルネットワークの学習における損失関数は  $J:\Phi_N\to\mathbb{R}$ とし，各段における目的関数$V_k : \Phi_k^{m_k} \to \mathbb {R}$ があるとする．
+ニューラルネットワークの学習における損失関数は $J:\Phi_N\to\mathbb{R}$ とし，各段における目的関数$V_k : \Phi_k^{m_k} \to \mathbb {R}$ があるとする．
 
 コストは最終段における目的関数 $J[\phi_N]$ のみが有効なので再帰は
 
@@ -52,20 +54,23 @@ $$
 \sum_{i=1}^{m_{k+1}}{\left<p_{k+1,i},\phi_{k+1,i} - f_{k+1,i} (\phi_{k}) \right>}
 
 $$
+
 の全微分を考える
 
 $$
-    \delta \mathcal{L}_k
-     = \sum _{i=1}^{m_{k+1}}D_{\phi_{k+1.i}} V_{k+1}(\phi_{k+1}) [\delta\phi_{k+1,i}] \\
-     +\sum_{i=1}^{m_{k+1}} \left< p_{k+1,i}, \delta \phi_{k+1,i} \right> \\
-    + \sum_{i=1}^{m_k}\left< p_{k,i}, \delta \phi _{k,i} \right> \\
-    - \sum_{i=1}^{m_{k+1}}\sum_{j=1}^{m_k}\left< p_{k+1,i}, D_{\phi_{k,j}}f_{k+1,i}(\phi_k) [\delta \phi_{k,j}]\right> \\
-    - \sum_{i=1}^{m_k}\left< p_{k,i}, \delta f_{k,i}(\phi_{k-1})\right> \\
-    - \sum _{i=1}^{m_{k+1}}\left< p_{k+1,i}, \delta f_{k+1,i} (\phi_k )\right> \\
-    = \sum_{i=1}^{m_{k+1}}\left<D_{\phi_{k+1,i}} V_{k+1}(\phi_{k+1}) + p_{k+1,i}, \delta \phi_{k+1,i}\right> \\
-    + \sum _{i=1}^{m_k}\left< p_{k,i} - \sum_{j=1}^{m_{k+1}}(D_{\phi_{k,i}}f_{k+1,j}(\phi_k))^*p_{k+1,j}, \delta \phi_{k,i} \right> \\
-    - \sum_{i=0}^{m_k}\left< p_{k,i}, \delta f_{k,i}(\phi_{k-1})\right>
-     - \sum_{i=0}^{m_{k+1}}\left< p_{k+1,i}, \delta f_{k+1,i} (\phi_k )\right>
+\begin{aligned}
+\delta \mathcal{L}_k
+&= \sum _{i=1}^{m_{k+1}}D_{\phi_{k+1.i}} V_{k+1}(\phi_{k+1}) [\delta\phi_{k+1,i}] \\
+&\quad +\sum_{i=1}^{m_{k+1}} \left< p_{k+1,i}, \delta \phi_{k+1,i} \right> \\
+&\quad + \sum_{i=1}^{m_k}\left< p_{k,i}, \delta \phi _{k,i} \right> \\
+&\quad - \sum_{i=1}^{m_{k+1}}\sum_{j=1}^{m_k}\left< p_{k+1,i}, D_{\phi_{k,j}}f_{k+1,i}(\phi_k) [\delta \phi_{k,j}]\right> \\
+&\quad - \sum_{i=1}^{m_k}\left< p_{k,i}, \delta f_{k,i}(\phi_{k-1})\right> \\
+&\quad - \sum _{i=1}^{m_{k+1}}\left< p_{k+1,i}, \delta f_{k+1,i} (\phi_k )\right> \\
+&= \sum_{i=1}^{m_{k+1}}\left<D_{\phi_{k+1,i}} V_{k+1}(\phi_{k+1}) + p_{k+1,i}, \delta \phi_{k+1,i}\right> \\
+&\quad + \sum _{i=1}^{m_k}\left< p_{k,i} - \sum_{j=1}^{m_{k+1}}(D_{\phi_{k,i}}f_{k+1,j}(\phi_k))^*p_{k+1,j}, \delta \phi_{k,i} \right> \\
+&\quad - \sum_{i=0}^{m_k}\left< p_{k,i}, \delta f_{k,i}(\phi_{k-1})\right> \\
+&\quad - \sum_{i=0}^{m_{k+1}}\left< p_{k+1,i}, \delta f_{k+1,i} (\phi_k )\right>
+\end{aligned}
 $$
 
 と変形できる．
@@ -105,11 +110,33 @@ $$
 \delta \mathcal{L} = - \sum_{i=1}^{m_k}\left< p_{k,i}, \delta f_{k,i}(\phi_{k-1})\right>
 $$
 
-となる．すると，
+となる．ここで，固定した prefix state $\phi_{k-1}$ に対する function-level reduced functional を
 
-$$D_{f_{k,i}} \tilde{F} (f_k) [h_i] = - \left< p_{k,i}, h_i(\phi_{k-1})\right>$$
+$$
+\widetilde F_k^{\mathrm{func}}(f_k) := \widehat F_k(f_k(\phi_{k-1}))
+$$
 
-となる．よって，$\Delta f_{k,i} = p_{k,i} $ が最急方向である．
+と書くと，admissible variation $h_k$ に対して
+
+$$
+D_f \widetilde F_k^{\mathrm{func}}(f_k)[h_k]
+=
+{}-\sum_{i=1}^{m_k}\left< p_{k,i}, h_{k,i}(\phi_{k-1})\right>
+$$
+
+となる．したがって stationarity は，
+
+$$
+D_f \widetilde F_k^{\mathrm{func}}(f_k)=0
+\iff
+\sum_{i=1}^{m_k}\left< p_{k,i}, h_{k,i}(\phi_{k-1})\right>=0
+\quad
+\forall h_k
+$$
+
+であり，$p_k$ が可到達 variation を annihilate する条件と読める．
+ここではまだ metric を入れていないので，この式だけから $\Delta f_k = p_k$ と言うことはできない．
+最急方向を決めるには，reachable tangent 上の計量と Riesz map が別途必要である．
 
 ### 逆伝播状態
 
@@ -143,7 +170,24 @@ $$
 \mathcal{T}_{\phi_{k,i}}\mathcal{M}_k = span\{\partial_{\theta_k^ \alpha}f_k (\phi_{k-1};\theta_k)\}
 $$
 
+したがって parameter variation $\delta \theta_k$ に対しては
 
+$$
+D_{\theta_k}\widetilde F_k(\theta_k)[\delta \theta_k]
+=
+-\left<
+p_k,
+D_\theta f_k(\phi_{k-1};\theta_k)[\delta \theta_k]
+\right>
+$$
+
+であり，stationarity は
+
+$$
+(D_{\theta_k}f_k(\phi_{k-1};\theta_k))^*p_k = 0
+$$
+
+に落ちる．
 
 ## 式展開
 

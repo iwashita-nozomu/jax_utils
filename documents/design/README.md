@@ -19,6 +19,7 @@
 - [solvers.md](/workspace/documents/design/jax_util/solvers.md)
 - [optimizers.md](/workspace/documents/design/jax_util/optimizers.md)
 - [hlo.md](/workspace/documents/design/jax_util/hlo.md)
+- [lagrangian_df_zero.md](/workspace/documents/design/jax_util/lagrangian_df_zero.md)
 
 ## 更新ルール
 
