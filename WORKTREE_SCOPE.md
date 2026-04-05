@@ -60,6 +60,8 @@
 
 - `python3 -m pyright /workspace/.worktrees/nn-df-zero-20260404/python/jax_util/neuralnetwork/lagrangian_df_zero`
 - `python3 -m pytest -q python/tests/neuralnetwork`
+- `python3 -m mdformat --check documents/design/README.md documents/design/jax_util/README.md documents/design/jax_util/lagrangian_df_zero.md notes/themes/README.md notes/themes/06_lagrangian_df_zero.md notes/themes/bellman_bp.md notes/worktrees/worktree_nn_df_zero_2026-04-04.md references/README.md references/lagrangian_df_zero/README.md references/lagrangian_df_zero/catalog.md`
+- `python3 scripts/tools/check_markdown_lint.py documents/design/README.md documents/design/jax_util/README.md documents/design/jax_util/lagrangian_df_zero.md notes/themes/README.md notes/themes/06_lagrangian_df_zero.md notes/themes/bellman_bp.md notes/worktrees/worktree_nn_df_zero_2026-04-04.md references/README.md references/lagrangian_df_zero/README.md references/lagrangian_df_zero/catalog.md`
 - `git diff --check`
 
 ## Additional Rules
