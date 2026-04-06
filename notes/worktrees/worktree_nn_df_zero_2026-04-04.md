@@ -58,3 +58,10 @@
 - `Validation Command:` `python3 scripts/tools/check_markdown_lint.py notes/themes/06_lagrangian_df_zero.md notes/worktrees/worktree_nn_df_zero_2026-04-04.md`
 - `Validation Command:` `git diff --check`
 - `Result Summary:` survey note だけ読んでも、この project における `DF=0`、`theta_residual`、full KKT root、局所更新方程式の関係が追えるようになった。
+- `Question:` exact `DF=0` を主問題とするとき、`\widetilde F_k` の局所二次近似は定義上必要か。それとも local solver / minimizer 判定のための追加構造としてだけ要るのか。
+- `Change:` `notes/themes/07_df_zero_and_local_quadratic_models.md` を追加し、二次近似なしの exact root と、二次近似ありの local quadratic model を分けて比較した。
+- `Decision:` exact `DF=0` の定義に二次近似は入れない。二次近似は Newton / Gauss-Newton / trust-region と local minimizer 判定のための追加構造としてだけ導入する。
+- `Decision:` `G_k \Delta \theta_k = -\tilde p_k` は Hessian による Taylor 二次近似ではなく、induced metric による first-order local update として呼び分ける。
+- `Validation Command:` `python3 -m mdformat --check notes/themes/README.md notes/themes/06_lagrangian_df_zero.md notes/themes/07_df_zero_and_local_quadratic_models.md documents/design/jax_util/lagrangian_df_zero.md notes/worktrees/worktree_nn_df_zero_2026-04-04.md`
+- `Validation Command:` `python3 scripts/tools/check_markdown_lint.py notes/themes/README.md notes/themes/06_lagrangian_df_zero.md notes/themes/07_df_zero_and_local_quadratic_models.md documents/design/jax_util/lagrangian_df_zero.md notes/worktrees/worktree_nn_df_zero_2026-04-04.md`
+- `Result Summary:` exact root、local quadratic model、metric step の 3 つを同じ `DF=0` で言い換えないための比較ノートを追加した。

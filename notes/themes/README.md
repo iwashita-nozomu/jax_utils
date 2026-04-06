@@ -35,6 +35,7 @@
 - [04_progressive_neural_networks_and_meta_learning.md](/workspace/notes/themes/04_progressive_neural_networks_and_meta_learning.md)
 - [05_bellman_equation_and_deep_learning.md](/workspace/notes/themes/05_bellman_equation_and_deep_learning.md)
 - [06_lagrangian_df_zero.md](/workspace/notes/themes/06_lagrangian_df_zero.md)
+- [07_df_zero_and_local_quadratic_models.md](/workspace/notes/themes/07_df_zero_and_local_quadratic_models.md)
 - [bellman_bp.md](/workspace/notes/themes/bellman_bp.md)
 - [bellman_bp_chat_summary.md](/workspace/notes/themes/bellman_bp_chat_summary.md)
 - [desigin.md](/workspace/notes/themes/desigin.md)

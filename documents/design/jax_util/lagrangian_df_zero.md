@@ -985,5 +985,6 @@ Stage 0 で追加した targeted tests は次です。
 ## References
 
 - [06_lagrangian_df_zero.md](/workspace/notes/themes/06_lagrangian_df_zero.md)
+- [07_df_zero_and_local_quadratic_models.md](/workspace/notes/themes/07_df_zero_and_local_quadratic_models.md)
 - [Reference pack](/workspace/references/lagrangian_df_zero/README.md)
 - [Bellman / adjoint note](/workspace/notes/themes/bellman_bp.md)

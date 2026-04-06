@@ -505,4 +505,5 @@ parameter-space の Euclidean metric、function-space からの pullback metric�
 - [Reference pack overview](/workspace/references/lagrangian_df_zero/README.md)
 - [Reference catalog](/workspace/references/lagrangian_df_zero/catalog.md)
 - [Design note](/workspace/documents/design/jax_util/lagrangian_df_zero.md)
+- [DF=0 と局所二次モデルの比較](/workspace/notes/themes/07_df_zero_and_local_quadratic_models.md)
 - [Bellman notation note](/workspace/notes/themes/bellman_bp_chat_summary.md)
